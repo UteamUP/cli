@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-03-22
+
 ### Added
 - `uteamup image analyze <path>` command for AI-powered CMMS image analysis
 - Gemini AI configuration in CLI profiles (`geminiApiKey`, `geminiModel`)
@@ -17,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Config init prompts for Gemini settings with model selection
 - Support for `=` syntax in config commands (`ut config apikey=xyz`)
 - Image analyze requires authentication (login required)
+- CLIGuidelines.md with full release, packaging, and Homebrew documentation
 
 ## [0.1.0] — 2026-03-22
 
