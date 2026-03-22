@@ -92,6 +92,19 @@ You will be prompted for:
 			exportDir = strings.TrimSpace(exportDir)
 		}
 
+		fmt.Print("\n--- Gemini AI (Image Analysis) ---\n")
+		fmt.Print("Gemini API key (press Enter to skip): ")
+		geminiKey, _ := reader.ReadString('\n')
+		geminiKey = strings.TrimSpace(geminiKey)
+
+		fmt.Println("Available models: gemini-pro-latest, gemini-3.1-pro-preview, gemini-3.1-flash-lite-preview, gemini-2.5-pro, gemini-2.5-flash")
+		fmt.Print("Gemini model [gemini-3.1-flash-lite-preview]: ")
+		geminiModel, _ := reader.ReadString('\n')
+		geminiModel = strings.TrimSpace(geminiModel)
+		if geminiModel == "" {
+			geminiModel = "gemini-3.1-flash-lite-preview"
+		}
+
 		profile := config.Profile{
 			Name:           name,
 			APIKey:         apiKey,
@@ -102,6 +115,8 @@ You will be prompted for:
 			MaxRetries:     3,
 			ExportJSON:     exportJSON,
 			ExportDir:      exportDir,
+			GeminiAPIKey:   geminiKey,
+			GeminiModel:    geminiModel,
 		}
 
 		profileKey := strings.ToLower(strings.ReplaceAll(name, " ", "-"))
@@ -176,8 +191,12 @@ Examples:
 			profile.ExportJSON = strings.ToLower(value) == "true" || value == "1" || strings.ToLower(value) == "yes"
 		case "exportDir", "exportdir":
 			profile.ExportDir = value
+		case "geminiApiKey", "geminiapikey":
+			profile.GeminiAPIKey = value
+		case "geminiModel", "geminimodel":
+			profile.GeminiModel = value
 		default:
-			return fmt.Errorf("unknown config key %q — valid keys: baseUrl, apiKey, secret, logLevel, requestTimeout, maxRetries, exportJson, exportDir", key)
+			return fmt.Errorf("unknown config key %q — valid keys: baseUrl, apiKey, secret, logLevel, requestTimeout, maxRetries, exportJson, exportDir, geminiApiKey, geminiModel", key)
 		}
 
 		cfg.Profiles[cfg.ActiveProfile] = *profile

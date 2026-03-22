@@ -35,6 +35,9 @@ type Profile struct {
 	MaxRetries     int    `json:"maxRetries"`
 	ExportJSON     bool   `json:"exportJson"`
 	ExportDir      string `json:"exportDir,omitempty"`
+	// Gemini AI settings for image analysis
+	GeminiAPIKey string `json:"geminiApiKey,omitempty"`
+	GeminiModel  string `json:"geminiModel,omitempty"`
 }
 
 // ConfigDir returns ~/.uteamup.
@@ -162,6 +165,12 @@ func applyEnvOverrides(cfg *Config) {
 	if v := os.Getenv("UTEAMUP_LOG_LEVEL"); v != "" {
 		p.LogLevel = v
 	}
+	if v := os.Getenv("GEMINI_API_KEY"); v != "" {
+		p.GeminiAPIKey = v
+	}
+	if v := os.Getenv("GEMINI_MODEL"); v != "" {
+		p.GeminiModel = v
+	}
 
 	cfg.Profiles[cfg.ActiveProfile] = p
 }
@@ -209,6 +218,20 @@ func (c *Config) RedactedSummary() string {
 		exportDir = "~/.uteamup/exports"
 	}
 
+	geminiKey := "(not set)"
+	if p.GeminiAPIKey != "" {
+		if len(p.GeminiAPIKey) > 8 {
+			geminiKey = p.GeminiAPIKey[:8] + "..."
+		} else {
+			geminiKey = "***"
+		}
+	}
+
+	geminiModel := p.GeminiModel
+	if geminiModel == "" {
+		geminiModel = "(default: gemini-3.1-flash-lite-preview)"
+	}
+
 	return fmt.Sprintf(`Active Profile: %s (%s)
   Base URL:        %s
   API Key:         %s
@@ -217,9 +240,12 @@ func (c *Config) RedactedSummary() string {
   Request Timeout: %dms
   Max Retries:     %d
   Export JSON:     %v
-  Export Dir:      %s`,
+  Export Dir:      %s
+  Gemini API Key:  %s
+  Gemini Model:    %s`,
 		c.ActiveProfile, p.Name,
 		p.BaseURL, apiKey, secret,
 		p.LogLevel, p.RequestTimeout, p.MaxRetries,
-		p.ExportJSON, exportDir)
+		p.ExportJSON, exportDir,
+		geminiKey, geminiModel)
 }
