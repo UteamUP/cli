@@ -195,8 +195,10 @@ Examples:
 			profile.GeminiAPIKey = value
 		case "geminiModel", "geminimodel":
 			profile.GeminiModel = value
+		case "googleMapsApiKey", "googlemapsapikey", "mapsApiKey", "mapsapikey":
+			profile.GoogleMapsAPIKey = value
 		default:
-			return fmt.Errorf("unknown config key %q — valid keys: baseUrl, apiKey, secret, logLevel, requestTimeout, maxRetries, exportJson, exportDir, geminiApiKey, geminiModel", key)
+			return fmt.Errorf("unknown config key %q — valid keys: baseUrl, apiKey, secret, logLevel, requestTimeout, maxRetries, exportJson, exportDir, geminiApiKey, geminiModel, googleMapsApiKey", key)
 		}
 
 		cfg.Profiles[cfg.ActiveProfile] = *profile

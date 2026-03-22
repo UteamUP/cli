@@ -8,8 +8,9 @@ import (
 )
 
 // ExtractEXIF extracts useful EXIF fields from the image at filePath.
-// It returns a map with keys "date_taken", "camera_make", "camera_model"
-// when available. Returns an empty map on any error (never fails).
+// It returns a map with keys "date_taken", "camera_make", "camera_model",
+// "GPSLatitude", "GPSLongitude" when available.
+// Returns an empty map on any error (never fails).
 func ExtractEXIF(filePath string) map[string]interface{} {
 	result := make(map[string]interface{})
 
@@ -50,6 +51,13 @@ func ExtractEXIF(filePath string) map[string]interface{} {
 		if val, err := md.StringVal(); err == nil {
 			result["camera_model"] = val
 		}
+	}
+
+	// GPS coordinates
+	lat, lng, err := x.LatLong()
+	if err == nil {
+		result["GPSLatitude"] = lat
+		result["GPSLongitude"] = lng
 	}
 
 	return result

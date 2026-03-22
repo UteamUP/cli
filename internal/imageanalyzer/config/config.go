@@ -20,6 +20,7 @@ type GeminiConfig struct {
 	RequestsPerMinute int     `yaml:"requests_per_minute"`
 	MaxRetries        int     `yaml:"max_retries"`
 	TimeoutSeconds    int     `yaml:"timeout_seconds"`
+	GoogleMapsAPIKey  string  `yaml:"google_maps_api_key"`
 }
 
 // ScanConfig holds settings for image scanning and discovery.
@@ -154,6 +155,15 @@ func WithModel(model string) ConfigOption {
 	}
 }
 
+// WithGoogleMapsAPIKey overrides the Google Maps API key for reverse geocoding.
+func WithGoogleMapsAPIKey(key string) ConfigOption {
+	return func(c *AppConfig) {
+		if key != "" {
+			c.Gemini.GoogleMapsAPIKey = key
+		}
+	}
+}
+
 // LoadConfig reads a YAML config file, applies environment variable overrides,
 // and then applies any functional option overrides. If the config file does not
 // exist, defaults are used.
@@ -227,6 +237,9 @@ func LoadConfig(configPath string, opts ...ConfigOption) (*AppConfig, error) {
 	}
 	if v := os.Getenv("RENAMED_IMAGES_FOLDER"); v != "" {
 		cfg.Scan.RenamedImagesFolder = v
+	}
+	if v := os.Getenv("GOOGLE_MAPS_API_KEY"); v != "" {
+		cfg.Gemini.GoogleMapsAPIKey = v
 	}
 
 	// Apply functional option overrides (CLI flags take highest precedence).

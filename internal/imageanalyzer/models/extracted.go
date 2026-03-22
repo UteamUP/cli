@@ -89,6 +89,45 @@ func (e *ExtractedData) GetDescription() string {
 	}
 }
 
+// GetVendorName returns the suggested vendor name from whichever entity is populated.
+// Falls back to manufacturer/brand if no vendor is specified.
+func (e *ExtractedData) GetVendorName() string {
+	switch {
+	case e.Asset != nil:
+		if v := ptrStr(e.Asset.SuggestedVendor); v != "" {
+			return v
+		}
+		return ptrStr(e.Asset.ManufacturerBrand)
+	case e.Tool != nil:
+		if v := ptrStr(e.Tool.SuggestedVendor); v != "" {
+			return v
+		}
+		return ptrStr(e.Tool.ManufacturerBrand)
+	case e.Part != nil:
+		if v := ptrStr(e.Part.SuggestedVendor); v != "" {
+			return v
+		}
+		return ptrStr(e.Part.ManufacturerBrand)
+	case e.Chemical != nil:
+		if v := ptrStr(e.Chemical.SuggestedVendor); v != "" {
+			return v
+		}
+		return ptrStr(e.Chemical.ManufacturerName)
+	default:
+		return ""
+	}
+}
+
+// GetLocationName returns the suggested location from whichever entity is populated.
+func (e *ExtractedData) GetLocationName() string {
+	switch {
+	case e.Asset != nil:
+		return ptrStr(e.Asset.SuggestedLocation)
+	default:
+		return ""
+	}
+}
+
 // GetBrand returns the manufacturer/brand from whichever entity is populated.
 func (e *ExtractedData) GetBrand() string {
 	switch {
