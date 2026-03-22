@@ -439,6 +439,55 @@ status: Active
 
 ---
 
+## Version Management
+
+### Check Current Version
+
+```bash
+ut version
+```
+
+### Upgrade
+
+```bash
+brew update && brew upgrade uteamup
+```
+
+### Downgrade to a Specific Version
+
+```bash
+# 1. Roll back the Homebrew formula to the desired version
+cd $(brew --repo UteamUP/tap)
+git log --oneline Formula/uteamup.rb       # find the commit for the version you want
+git checkout <commit-hash> -- Formula/uteamup.rb
+brew reinstall uteamup
+brew pin uteamup                            # prevent auto-upgrade
+
+# To unpin later:
+brew unpin uteamup
+```
+
+Or download a specific release binary directly:
+
+```bash
+# macOS Apple Silicon example (change version and arch as needed)
+brew uninstall uteamup
+curl -L https://github.com/UteamUP/cli/releases/download/v0.1.0/uteamup_0.1.0_darwin_arm64.tar.gz | tar xz
+sudo mv uteamup /usr/local/bin/
+sudo ln -sf /usr/local/bin/uteamup /usr/local/bin/ut
+```
+
+### Pin Version (Prevent Auto-upgrade)
+
+```bash
+brew pin uteamup       # stay on current version
+brew unpin uteamup     # allow upgrades again
+```
+
+All releases are available at: https://github.com/UteamUP/cli/releases
+
+---
+
 ## Development
 
 ### Prerequisites
