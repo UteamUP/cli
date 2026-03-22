@@ -148,15 +148,15 @@ Examples:
 		if model == "" {
 			model = "gemini-3.1-flash-lite-preview (default)"
 		}
-		fmt.Fprintf(os.Stderr, "\n=== UteamUP Image Analyzer ===\n")
-		fmt.Fprintf(os.Stderr, "  Source:  %s\n", absImagePath)
-		fmt.Fprintf(os.Stderr, "  Output:  %s\n", absOutputDir)
-		fmt.Fprintf(os.Stderr, "  Images:  %d found\n", imageCount)
-		fmt.Fprintf(os.Stderr, "  Model:   %s\n", model)
+		fmt.Printf("\n=== UteamUP Image Analyzer ===\n")
+		fmt.Printf("  Source:  %s\n", absImagePath)
+		fmt.Printf("  Output:  %s\n", absOutputDir)
+		fmt.Printf("  Images:  %d found\n", imageCount)
+		fmt.Printf("  Model:   %s\n", model)
 		if imageDryRun {
-			fmt.Fprintf(os.Stderr, "  Mode:    DRY RUN (cost estimate only)\n")
+			fmt.Printf("  Mode:    DRY RUN (cost estimate only)\n")
 		}
-		fmt.Fprintf(os.Stderr, "==============================\n\n")
+		fmt.Printf("==============================\n\n")
 
 		if imageVerbose {
 			fmt.Fprintf(os.Stderr, "Analyzer: %s\n", analyzerDir)
