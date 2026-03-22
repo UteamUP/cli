@@ -454,7 +454,8 @@ make build        # Build bin/uteamup + bin/ut
 make test         # Run all tests with race detection
 make lint         # Run golangci-lint
 make check        # fmt + vet + lint + test + build
-make install      # Install to $GOPATH/bin
+make install      # Rebuild + install uteamup & ut to /usr/local/bin (adds PATH to .zshrc)
+make uninstall    # Remove uteamup & ut from /usr/local/bin
 ```
 
 ### Release
