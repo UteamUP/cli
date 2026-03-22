@@ -4,7 +4,7 @@ COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
 DATE=$(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 LDFLAGS=-ldflags "-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)"
 
-.PHONY: build test lint install clean release fmt vet check package-msi package-pkg
+.PHONY: build test lint install clean release fmt vet check package-msi package-pkg uninstall
 
 build:
 	go build $(LDFLAGS) -o bin/$(BINARY) .
@@ -17,8 +17,27 @@ test:
 lint:
 	golangci-lint run ./...
 
-install:
-	go install $(LDFLAGS) .
+INSTALL_DIR=/usr/local/bin
+
+install: build
+	@echo "Installing uteamup and ut to $(INSTALL_DIR)..."
+	@sudo mkdir -p $(INSTALL_DIR)
+	@sudo cp bin/$(BINARY) $(INSTALL_DIR)/$(BINARY)
+	@sudo ln -sf $(INSTALL_DIR)/$(BINARY) $(INSTALL_DIR)/ut
+	@# Ensure /usr/local/bin is in PATH via .zshrc
+	@if ! grep -q '$(INSTALL_DIR)' "$$HOME/.zshrc" 2>/dev/null; then \
+		echo '' >> "$$HOME/.zshrc"; \
+		echo '# UteamUP CLI' >> "$$HOME/.zshrc"; \
+		echo 'export PATH="$(INSTALL_DIR):$$PATH"' >> "$$HOME/.zshrc"; \
+		echo "Added $(INSTALL_DIR) to PATH in ~/.zshrc — run 'source ~/.zshrc' or open a new terminal."; \
+	fi
+	@echo "Installed: $(INSTALL_DIR)/uteamup and $(INSTALL_DIR)/ut"
+	@$(INSTALL_DIR)/$(BINARY) version
+
+uninstall:
+	@echo "Removing uteamup and ut from $(INSTALL_DIR)..."
+	@sudo rm -f $(INSTALL_DIR)/uteamup $(INSTALL_DIR)/ut
+	@echo "Uninstalled. PATH entry in ~/.zshrc left intact (remove manually if desired)."
 
 clean:
 	rm -rf bin/ dist/
