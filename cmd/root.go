@@ -94,6 +94,7 @@ func init() {
 	rootCmd.AddCommand(authCmd)
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(completionCmd)
+	rootCmd.AddCommand(imageCmd)
 
 	// Register domain commands
 	registerDomainCommands()
