@@ -23,10 +23,21 @@ type OAuthTokenResponse struct {
 }
 
 // LoginResponse represents the backend login endpoint response.
+// Maps to ProfileModel in C# backend.
 type LoginResponse struct {
-	Token        string `json:"token"`
-	RefreshToken string `json:"refreshToken,omitempty"`
-	ExpiresIn    int    `json:"expiresIn,omitempty"`
+	AccessToken     string `json:"accessToken"`
+	RefreshToken    string `json:"refreshToken,omitempty"`
+	TokenExpiry     string `json:"tokenExpiry,omitempty"`
+	DefaultTenantID int    `json:"defaultTenantId,omitempty"`
+	HasTenants      bool   `json:"hasTenants"`
+	TenantCount     int    `json:"tenantCount"`
+}
+
+// TenantInfo represents a tenant from the my-tenants endpoint.
+type TenantInfo struct {
+	ID   int    `json:"id"`
+	Guid string `json:"guid"`
+	Name string `json:"name"`
 }
 
 // AuthClient handles authentication flows.
@@ -78,21 +89,71 @@ func (a *AuthClient) LoginWithCredentials(email, password string) (*TokenData, e
 		return nil, clierrors.NewAuthError("parsing login response", err)
 	}
 
-	expiresIn := loginResp.ExpiresIn
-	if expiresIn == 0 {
-		expiresIn = 86400 // default 24h
+	// Parse expiry from response or default to 7 days
+	expiresAt := time.Now().Add(7 * 24 * time.Hour)
+	if loginResp.TokenExpiry != "" {
+		if parsed, err := time.Parse(time.RFC3339, loginResp.TokenExpiry); err == nil {
+			expiresAt = parsed
+		}
 	}
 
 	token := &TokenData{
-		AccessToken:  loginResp.Token,
+		AccessToken:  loginResp.AccessToken,
 		RefreshToken: loginResp.RefreshToken,
-		ExpiresAt:    time.Now().Add(time.Duration(expiresIn) * time.Second),
+		ExpiresAt:    expiresAt,
 		AuthMethod:   "login",
 		Email:        email,
 	}
 
+	// Fetch tenants to get tenant ID and GUID
+	tenants, err := a.fetchMyTenants(token.AccessToken)
+	if err != nil {
+		a.logger.Warn("could not fetch tenants: %v", err)
+	} else if len(tenants) > 0 {
+		// Use the first tenant (or match DefaultTenantId)
+		selected := tenants[0]
+		for _, t := range tenants {
+			if t.ID == loginResp.DefaultTenantID {
+				selected = t
+				break
+			}
+		}
+		token.TenantID = selected.ID
+		token.TenantGuid = selected.Guid
+		token.TenantName = selected.Name
+		a.logger.Info("selected tenant: %s (ID: %d)", selected.Name, selected.ID)
+	}
+
 	a.logger.Info("login successful for %s", email)
 	return token, nil
+}
+
+// fetchMyTenants calls GET /api/tenant/my-tenants with the access token.
+func (a *AuthClient) fetchMyTenants(accessToken string) ([]TenantInfo, error) {
+	req, err := http.NewRequest("GET", a.baseURL+"/api/tenant/my-tenants", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := a.httpClient().Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("my-tenants returned %d: %s", resp.StatusCode, string(body))
+	}
+
+	var tenants []TenantInfo
+	if err := json.Unmarshal(body, &tenants); err != nil {
+		return nil, fmt.Errorf("parsing tenants: %w", err)
+	}
+
+	return tenants, nil
 }
 
 // LoginWithAPIKey authenticates using OAuth 2.0 + PKCE with an API key.

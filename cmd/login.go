@@ -110,6 +110,9 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	if token.Email != "" {
 		fmt.Printf("Logged in as: %s\n", token.Email)
 	}
+	if token.TenantName != "" {
+		fmt.Printf("Tenant: %s (ID: %d)\n", token.TenantName, token.TenantID)
+	}
 	fmt.Printf("Token expires: %s\n", token.ExpiresAt.Format("2006-01-02 15:04:05 UTC"))
 
 	return nil

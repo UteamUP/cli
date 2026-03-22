@@ -12,7 +12,7 @@ import (
 
 const tokenFileName = "token.json"
 
-// TokenData holds cached authentication tokens.
+// TokenData holds cached authentication tokens and tenant context.
 type TokenData struct {
 	AccessToken  string    `json:"accessToken"`
 	RefreshToken string    `json:"refreshToken,omitempty"`
@@ -20,6 +20,9 @@ type TokenData struct {
 	AuthMethod   string    `json:"authMethod"` // "login" or "apikey"
 	Email        string    `json:"email,omitempty"`
 	Profile      string    `json:"profile"`
+	TenantID     int       `json:"tenantId,omitempty"`
+	TenantGuid   string    `json:"tenantGuid,omitempty"`
+	TenantName   string    `json:"tenantName,omitempty"`
 }
 
 // IsValid returns true if the token exists and is not expired (with 5-minute margin).
