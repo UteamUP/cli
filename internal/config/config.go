@@ -36,8 +36,9 @@ type Profile struct {
 	ExportJSON     bool   `json:"exportJson"`
 	ExportDir      string `json:"exportDir,omitempty"`
 	// Gemini AI settings for image analysis
-	GeminiAPIKey string `json:"geminiApiKey,omitempty"`
-	GeminiModel  string `json:"geminiModel,omitempty"`
+	GeminiAPIKey     string `json:"geminiApiKey,omitempty"`
+	GeminiModel      string `json:"geminiModel,omitempty"`
+	GoogleMapsAPIKey string `json:"googleMapsApiKey,omitempty"`
 }
 
 // ConfigDir returns ~/.uteamup.
@@ -171,6 +172,9 @@ func applyEnvOverrides(cfg *Config) {
 	if v := os.Getenv("GEMINI_MODEL"); v != "" {
 		p.GeminiModel = v
 	}
+	if v := os.Getenv("GOOGLE_MAPS_API_KEY"); v != "" {
+		p.GoogleMapsAPIKey = v
+	}
 
 	cfg.Profiles[cfg.ActiveProfile] = p
 }
@@ -232,6 +236,15 @@ func (c *Config) RedactedSummary() string {
 		geminiModel = "(default: gemini-3.1-flash-lite-preview)"
 	}
 
+	mapsKey := "(not set)"
+	if p.GoogleMapsAPIKey != "" {
+		if len(p.GoogleMapsAPIKey) > 8 {
+			mapsKey = p.GoogleMapsAPIKey[:8] + "..."
+		} else {
+			mapsKey = "***"
+		}
+	}
+
 	return fmt.Sprintf(`Active Profile: %s (%s)
   Base URL:        %s
   API Key:         %s
@@ -242,10 +255,12 @@ func (c *Config) RedactedSummary() string {
   Export JSON:     %v
   Export Dir:      %s
   Gemini API Key:  %s
-  Gemini Model:    %s`,
+  Gemini Model:    %s
+  Maps API Key:    %s`,
 		c.ActiveProfile, p.Name,
 		p.BaseURL, apiKey, secret,
 		p.LogLevel, p.RequestTimeout, p.MaxRetries,
 		p.ExportJSON, exportDir,
-		geminiKey, geminiModel)
+		geminiKey, geminiModel,
+		mapsKey)
 }

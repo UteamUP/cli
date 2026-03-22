@@ -93,6 +93,7 @@ func (s *ImageScanner) ScanFolder() ([]models.ImageInfo, error) {
 			phash = ph
 		}
 
+		exifData := ExtractEXIF(path)
 		img := models.ImageInfo{
 			Path:           path,
 			Filename:       filepath.Base(path),
@@ -100,8 +101,18 @@ func (s *ImageScanner) ScanFolder() ([]models.ImageInfo, error) {
 			FileSizeBytes:  fi.Size(),
 			SHA256Hash:     sha256,
 			PerceptualHash: phash,
-			EXIFMetadata:   ExtractEXIF(path),
+			EXIFMetadata:   exifData,
 		}
+
+		// Populate GPS fields from EXIF data.
+		if lat, ok := exifData["GPSLatitude"].(float64); ok {
+			if lng, ok := exifData["GPSLongitude"].(float64); ok {
+				img.GPSLatitude = lat
+				img.GPSLongitude = lng
+				img.HasGPS = true
+			}
+		}
+
 		images = append(images, img)
 		return nil
 	})

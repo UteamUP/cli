@@ -6,7 +6,7 @@ var AssetCSVColumns = []string{
 	"upc_number", "additional_info", "notes", "check_in_procedure", "check_out_procedure",
 	"icon_name", "suggested_vendor", "suggested_category", "suggested_location",
 	"manufacturer_brand", "visible_condition", "is_vehicle", "vehicle_type", "license_plate",
-	"related_to",
+	"vendor_name", "location_name", "related_to",
 	"image_paths", "original_filenames", "confidence_score", "flagged_for_review", "review_reason",
 }
 
@@ -15,7 +15,7 @@ var ToolCSVColumns = []string{
 	"name", "description", "width", "height", "length", "depth", "weight", "value",
 	"barcode_number", "serial_number", "reference_number", "model_number", "tool_number",
 	"additional_info", "notes", "suggested_vendor", "suggested_category",
-	"manufacturer_brand", "related_to",
+	"manufacturer_brand", "vendor_name", "location_name", "related_to",
 	"image_paths", "original_filenames", "confidence_score", "flagged_for_review", "review_reason",
 }
 
@@ -23,7 +23,8 @@ var ToolCSVColumns = []string{
 var PartCSVColumns = []string{
 	"name", "description", "serial_number", "reference_number", "model_number",
 	"part_number", "additional_info", "notes", "value",
-	"suggested_vendor", "suggested_category", "manufacturer_brand", "related_to",
+	"suggested_vendor", "suggested_category", "manufacturer_brand",
+	"vendor_name", "location_name", "related_to",
 	"image_paths", "original_filenames", "confidence_score", "flagged_for_review", "review_reason",
 }
 
@@ -36,7 +37,8 @@ var ChemicalCSVColumns = []string{
 	"respiratory_protection", "hand_protection", "eye_protection", "skin_protection",
 	"first_aid_measures", "firefighting_measures", "spill_leak_procedures", "disposal_considerations",
 	"unit_of_measure", "hazard_statements", "precautionary_statements",
-	"manufacturer_name", "suggested_vendor", "suggested_category", "related_to",
+	"manufacturer_name", "suggested_vendor", "suggested_category",
+	"vendor_name", "location_name", "related_to",
 	"image_paths", "original_filenames", "confidence_score", "flagged_for_review", "review_reason",
 }
 
@@ -44,6 +46,20 @@ var ChemicalCSVColumns = []string{
 var UnclassifiedCSVColumns = []string{
 	"original_filename", "image_path", "confidence_score",
 	"flagged_for_review", "review_reason", "classification_reasoning", "related_to",
+}
+
+// VendorCSVColumns defines the CSV column order for vendor exports.
+var VendorCSVColumns = []string{
+	"name", "description", "email", "website", "phone_number",
+	"referenced_by_entities", "entity_types", "reference_count", "image_paths",
+}
+
+// LocationCSVColumns defines the CSV column order for location exports.
+var LocationCSVColumns = []string{
+	"name", "description", "street", "city", "state", "zip_code", "postal_code",
+	"country", "google_place_id", "formatted_address", "latitude", "longitude",
+	"google_maps_url", "source",
+	"referenced_by_entities", "entity_types", "reference_count", "image_paths",
 }
 
 // CSVColumnsByType maps each entity type to its CSV column list.

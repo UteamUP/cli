@@ -72,6 +72,89 @@ func (e *CSVExporter) ExportCSVs(groups []models.ImageGroup, unclassified []mode
 	return result, nil
 }
 
+// ExportVendorCSV writes a CSV file containing detected vendor data.
+// Returns the file path on success.
+func (e *CSVExporter) ExportVendorCSV(vendors []models.DetectedVendor) (string, error) {
+	csvPath := filepath.Join(e.outputFolder, "vendors.csv")
+	f, err := os.Create(csvPath)
+	if err != nil {
+		return "", fmt.Errorf("creating vendor CSV: %w", err)
+	}
+	defer f.Close()
+
+	w := csv.NewWriter(f)
+	defer w.Flush()
+
+	if err := w.Write(models.VendorCSVColumns); err != nil {
+		return "", err
+	}
+
+	for _, v := range vendors {
+		record := []string{
+			v.Name,
+			v.Description,
+			v.Email,
+			v.Website,
+			v.PhoneNumber,
+			strings.Join(v.EntityNames, "; "),
+			strings.Join(v.EntityTypes, "; "),
+			fmt.Sprintf("%d", v.Count),
+			strings.Join(v.ImagePaths, "; "),
+		}
+		if err := w.Write(record); err != nil {
+			return "", err
+		}
+	}
+
+	return csvPath, nil
+}
+
+// ExportLocationCSV writes a CSV file containing detected location data.
+// Returns the file path on success.
+func (e *CSVExporter) ExportLocationCSV(locations []models.DetectedLocation) (string, error) {
+	csvPath := filepath.Join(e.outputFolder, "locations.csv")
+	f, err := os.Create(csvPath)
+	if err != nil {
+		return "", fmt.Errorf("creating location CSV: %w", err)
+	}
+	defer f.Close()
+
+	w := csv.NewWriter(f)
+	defer w.Flush()
+
+	if err := w.Write(models.LocationCSVColumns); err != nil {
+		return "", err
+	}
+
+	for _, loc := range locations {
+		record := []string{
+			loc.Name,
+			loc.Description,
+			loc.Street,
+			loc.City,
+			loc.State,
+			loc.ZipCode,
+			loc.PostalCode,
+			loc.Country,
+			loc.GooglePlaceId,
+			loc.FormattedAddress,
+			fmt.Sprintf("%f", loc.Latitude),
+			fmt.Sprintf("%f", loc.Longitude),
+			loc.GoogleMapsUrl,
+			loc.Source,
+			strings.Join(loc.EntityNames, "; "),
+			strings.Join(loc.EntityTypes, "; "),
+			fmt.Sprintf("%d", loc.Count),
+			strings.Join(loc.ImagePaths, "; "),
+		}
+		if err := w.Write(record); err != nil {
+			return "", err
+		}
+	}
+
+	return csvPath, nil
+}
+
 // writeCSV writes a single CSV file for the given entity type.
 func (e *CSVExporter) writeCSV(path string, columns []string, groups []models.ImageGroup, etype models.EntityType) error {
 	f, err := os.Create(path)
@@ -136,6 +219,14 @@ func (e *CSVExporter) buildRow(group models.ImageGroup, etype models.EntityType)
 			row[k] = v
 		}
 	}
+
+	// Populate vendor_name from suggested_vendor or manufacturer_brand.
+	vendorName := data.GetVendorName()
+	row["vendor_name"] = vendorName
+
+	// Populate location_name from suggested_location.
+	locationName := data.GetLocationName()
+	row["location_name"] = locationName
 
 	row["related_to"] = primary.RelatedTo
 	row["image_paths"] = strings.Join(group.AllImagePaths(), "; ")

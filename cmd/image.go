@@ -26,6 +26,7 @@ var (
 	imageResume              bool
 	imageSimilarityThreshold float64
 	imageConfidenceThreshold float64
+	imageMapsAPIKey          string
 )
 
 var imageCmd = &cobra.Command{
@@ -68,6 +69,9 @@ Examples:
 				if imageModel == "" && profile.GeminiModel != "" {
 					imageModel = profile.GeminiModel
 				}
+				if imageMapsAPIKey == "" && profile.GoogleMapsAPIKey != "" {
+					imageMapsAPIKey = profile.GoogleMapsAPIKey
+				}
 			}
 		}
 
@@ -100,6 +104,7 @@ Examples:
 		opts = append(opts, iaconfig.WithNoRename(imageNoRename))
 		opts = append(opts, iaconfig.WithAPIKey(imageAPIKey))
 		opts = append(opts, iaconfig.WithModel(imageModel))
+		opts = append(opts, iaconfig.WithGoogleMapsAPIKey(imageMapsAPIKey))
 		if cmd.Flags().Changed("max-cost") {
 			opts = append(opts, iaconfig.WithMaxCost(&imageMaxCost))
 		}
@@ -232,6 +237,7 @@ func init() {
 	imageAnalyzeCmd.Flags().BoolVar(&imageResume, "resume", false, "Resume from checkpoint if available")
 	imageAnalyzeCmd.Flags().Float64Var(&imageSimilarityThreshold, "similarity-threshold", 0.75, "Grouping similarity threshold (0.0-1.0)")
 	imageAnalyzeCmd.Flags().Float64Var(&imageConfidenceThreshold, "confidence-threshold", 0.5, "Minimum confidence to classify (0.0-1.0)")
+	imageAnalyzeCmd.Flags().StringVar(&imageMapsAPIKey, "maps-api-key", "", "Google Maps API key for reverse geocoding GPS coordinates")
 
 	imageCmd.AddCommand(imageAnalyzeCmd)
 	imageCmd.AddCommand(imageStatusCmd)

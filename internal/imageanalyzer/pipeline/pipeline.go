@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
+	"strings"
 	"time"
 
 	"github.com/schollz/progressbar/v3"
@@ -15,10 +17,12 @@ import (
 	"github.com/uteamup/cli/internal/imageanalyzer/checkpoint"
 	iaconfig "github.com/uteamup/cli/internal/imageanalyzer/config"
 	"github.com/uteamup/cli/internal/imageanalyzer/exporter"
+	"github.com/uteamup/cli/internal/imageanalyzer/geocoder"
 	"github.com/uteamup/cli/internal/imageanalyzer/grouper"
 	"github.com/uteamup/cli/internal/imageanalyzer/imageutil"
 	"github.com/uteamup/cli/internal/imageanalyzer/models"
 	"github.com/uteamup/cli/internal/imageanalyzer/scanner"
+	"github.com/uteamup/cli/internal/imageanalyzer/vendorlookup"
 )
 
 // Pipeline orchestrates the 4-phase image analysis pipeline.
@@ -84,6 +88,17 @@ func (p *Pipeline) Run() error {
 	fmt.Printf("    To analyze:     %d\n", len(imagesToAnalyze))
 	fmt.Printf("    Duplicates:     %d\n", duplicatesFound)
 	fmt.Printf("    Edit pairs:     %d\n\n", len(editPairs))
+
+	// Report GPS stats.
+	gpsCount := 0
+	for _, img := range imagesToAnalyze {
+		if img.HasGPS {
+			gpsCount++
+		}
+	}
+	if gpsCount > 0 {
+		fmt.Printf("    With GPS data:  %d\n\n", gpsCount)
+	}
 
 	// Dry-run: estimate cost and stop.
 	if p.config.Processing.DryRun {
@@ -219,6 +234,58 @@ func (p *Pipeline) Run() error {
 	fmt.Printf("  Groups formed:  %d\n", len(groups))
 	fmt.Printf("  Unclassified:   %d\n\n", len(unclassified))
 
+	// ── Phase 3b: Extract vendors and locations ────────────────────────
+	fmt.Println("Phase 3b: Extracting vendors and locations...")
+	log.Printf("Phase 3b: Extracting vendors and locations")
+
+	vendors := extractVendors(groups)
+	locations := extractLocations(groups, allImages)
+
+	// Reverse geocode GPS locations if geocoder available.
+	geocoderAPIKey := p.config.Gemini.GoogleMapsAPIKey
+	if geocoderAPIKey != "" {
+		geo := geocoder.NewGeocoder(geocoderAPIKey)
+		for i, loc := range locations {
+			if loc.HasGPS && loc.FormattedAddress == "" {
+				result, err := geo.ReverseGeocode(loc.Latitude, loc.Longitude)
+				if err == nil {
+					applyGeocodeResult(&locations[i], result)
+				} else {
+					log.Printf("Reverse geocode failed for (%.6f, %.6f): %v", loc.Latitude, loc.Longitude, err)
+				}
+			}
+		}
+	} else if hasGPSLocations(locations) {
+		// Try Nominatim as free fallback.
+		geo := geocoder.NewGeocoder("")
+		for i, loc := range locations {
+			if loc.HasGPS && loc.FormattedAddress == "" {
+				result, err := geo.ReverseGeocode(loc.Latitude, loc.Longitude)
+				if err == nil {
+					applyGeocodeResult(&locations[i], result)
+				} else {
+					log.Printf("Nominatim reverse geocode failed for (%.6f, %.6f): %v", loc.Latitude, loc.Longitude, err)
+				}
+			}
+		}
+	}
+
+	// Enrich vendors with online information via Gemini.
+	if p.config.Gemini.APIKey != "" && len(vendors) > 0 {
+		lookup, err := vendorlookup.NewVendorLookup(p.config.Gemini.APIKey, p.config.Gemini.Model)
+		if err == nil {
+			defer lookup.Close()
+			log.Println("Looking up vendor information online...")
+			fmt.Println("  Looking up vendor information online...")
+			lookup.EnrichBatch(ctx, vendors)
+		} else {
+			log.Printf("Warning: could not create vendor lookup: %v", err)
+		}
+	}
+
+	fmt.Printf("  Vendors found:   %d\n", len(vendors))
+	fmt.Printf("  Locations found: %d\n\n", len(locations))
+
 	// ── Phase 4: Export ────────────────────────────────────────────────
 	fmt.Println("Phase 4: Exporting CSVs...")
 	log.Printf("Phase 4: Exporting CSVs")
@@ -236,6 +303,24 @@ func (p *Pipeline) Run() error {
 	}
 	for entityType, csvPath := range csvFiles {
 		fmt.Printf("  CSV written: %s -> %s\n", entityType, csvPath)
+	}
+
+	if len(vendors) > 0 {
+		vendorPath, err := exp.ExportVendorCSV(vendors)
+		if err != nil {
+			log.Printf("Warning: failed to export vendor CSV: %v", err)
+		} else {
+			fmt.Printf("  CSV written: vendors -> %s\n", vendorPath)
+		}
+	}
+
+	if len(locations) > 0 {
+		locationPath, err := exp.ExportLocationCSV(locations)
+		if err != nil {
+			log.Printf("Warning: failed to export location CSV: %v", err)
+		} else {
+			fmt.Printf("  CSV written: locations -> %s\n", locationPath)
+		}
 	}
 
 	if p.config.Processing.RenameImages {
@@ -257,6 +342,234 @@ func (p *Pipeline) Run() error {
 
 	fmt.Printf("\n=== Pipeline complete in %.1fs ===\n", duration)
 	return nil
+}
+
+// extractVendors iterates all groups and extracts unique vendor names from
+// suggested_vendor and manufacturer_brand fields.
+func extractVendors(groups []models.ImageGroup) []models.DetectedVendor {
+	vendorMap := make(map[string]*models.DetectedVendor) // key: lowercase vendor name
+
+	for _, g := range groups {
+		data := g.Primary.ExtractedData
+		entityName := data.GetName()
+		entityType := string(g.Primary.Classification.PrimaryType)
+		imagePaths := g.AllImagePaths()
+
+		// Collect vendor names from suggested_vendor and manufacturer_brand.
+		var vendorNames []string
+		vendorName := data.GetVendorName()
+		if vendorName != "" {
+			vendorNames = append(vendorNames, vendorName)
+		}
+		brand := data.GetBrand()
+		if brand != "" && !strings.EqualFold(brand, vendorName) {
+			vendorNames = append(vendorNames, brand)
+		}
+
+		for _, vn := range vendorNames {
+			key := strings.ToLower(strings.TrimSpace(vn))
+			if key == "" {
+				continue
+			}
+			if existing, ok := vendorMap[key]; ok {
+				existing.Count++
+				existing.EntityNames = appendUnique(existing.EntityNames, entityName)
+				existing.EntityTypes = appendUnique(existing.EntityTypes, entityType)
+				existing.ImagePaths = appendUnique(existing.ImagePaths, imagePaths...)
+			} else {
+				vendorMap[key] = &models.DetectedVendor{
+					Name:        vn,
+					EntityNames: []string{entityName},
+					EntityTypes: []string{entityType},
+					ImagePaths:  imagePaths,
+					Count:       1,
+				}
+			}
+		}
+	}
+
+	vendors := make([]models.DetectedVendor, 0, len(vendorMap))
+	for _, v := range vendorMap {
+		vendors = append(vendors, *v)
+	}
+	return vendors
+}
+
+// extractLocations extracts unique locations from GPS data and suggested_location fields.
+// Nearby GPS coordinates (within ~100m) are clustered as the same location.
+func extractLocations(groups []models.ImageGroup, allImages []models.ImageInfo) []models.DetectedLocation {
+	var locations []models.DetectedLocation
+
+	// Build a map of image path -> ImageInfo for GPS lookup.
+	imageMap := make(map[string]models.ImageInfo, len(allImages))
+	for _, img := range allImages {
+		imageMap[img.Path] = img
+	}
+
+	// Extract GPS-based locations from images.
+	type gpsCluster struct {
+		lat, lng    float64
+		entityNames []string
+		entityTypes []string
+		imagePaths  []string
+		count       int
+	}
+	var gpsClusters []gpsCluster
+
+	for _, g := range groups {
+		entityName := g.Primary.ExtractedData.GetName()
+		entityType := string(g.Primary.Classification.PrimaryType)
+
+		for _, imgPath := range g.AllImagePaths() {
+			img, ok := imageMap[imgPath]
+			if !ok || !img.HasGPS {
+				continue
+			}
+
+			// Find existing cluster within ~100m.
+			found := false
+			for i := range gpsClusters {
+				if haversineDistance(gpsClusters[i].lat, gpsClusters[i].lng, img.GPSLatitude, img.GPSLongitude) < 100 {
+					gpsClusters[i].count++
+					gpsClusters[i].entityNames = appendUnique(gpsClusters[i].entityNames, entityName)
+					gpsClusters[i].entityTypes = appendUnique(gpsClusters[i].entityTypes, entityType)
+					gpsClusters[i].imagePaths = appendUnique(gpsClusters[i].imagePaths, imgPath)
+					found = true
+					break
+				}
+			}
+			if !found {
+				gpsClusters = append(gpsClusters, gpsCluster{
+					lat:         img.GPSLatitude,
+					lng:         img.GPSLongitude,
+					entityNames: []string{entityName},
+					entityTypes: []string{entityType},
+					imagePaths:  []string{imgPath},
+					count:       1,
+				})
+			}
+		}
+	}
+
+	// Convert GPS clusters to DetectedLocations.
+	for _, c := range gpsClusters {
+		locations = append(locations, models.DetectedLocation{
+			Latitude:    c.lat,
+			Longitude:   c.lng,
+			HasGPS:      true,
+			Source:      "gps_exif",
+			EntityNames: c.entityNames,
+			EntityTypes: c.entityTypes,
+			ImagePaths:  c.imagePaths,
+			Count:       c.count,
+		})
+	}
+
+	// Extract suggested locations from Gemini analysis (for entities without GPS).
+	suggestedMap := make(map[string]*models.DetectedLocation) // key: lowercase location name
+	for _, g := range groups {
+		data := g.Primary.ExtractedData
+		locName := data.GetLocationName()
+		if locName == "" {
+			continue
+		}
+
+		entityName := data.GetName()
+		entityType := string(g.Primary.Classification.PrimaryType)
+		imagePaths := g.AllImagePaths()
+
+		key := strings.ToLower(strings.TrimSpace(locName))
+		if existing, ok := suggestedMap[key]; ok {
+			existing.Count++
+			existing.EntityNames = appendUnique(existing.EntityNames, entityName)
+			existing.EntityTypes = appendUnique(existing.EntityTypes, entityType)
+			existing.ImagePaths = appendUnique(existing.ImagePaths, imagePaths...)
+		} else {
+			suggestedMap[key] = &models.DetectedLocation{
+				Name:        locName,
+				Source:      "gemini_suggested",
+				EntityNames: []string{entityName},
+				EntityTypes: []string{entityType},
+				ImagePaths:  imagePaths,
+				Count:       1,
+			}
+		}
+	}
+
+	for _, loc := range suggestedMap {
+		// Check if this suggested location overlaps with a GPS location by name.
+		duplicate := false
+		for i := range locations {
+			if strings.EqualFold(locations[i].Name, loc.Name) {
+				// Merge into existing GPS location.
+				locations[i].EntityNames = appendUnique(locations[i].EntityNames, loc.EntityNames...)
+				locations[i].EntityTypes = appendUnique(locations[i].EntityTypes, loc.EntityTypes...)
+				locations[i].ImagePaths = appendUnique(locations[i].ImagePaths, loc.ImagePaths...)
+				locations[i].Count += loc.Count
+				duplicate = true
+				break
+			}
+		}
+		if !duplicate {
+			locations = append(locations, *loc)
+		}
+	}
+
+	return locations
+}
+
+// applyGeocodeResult fills in all location fields from a reverse geocode result.
+func applyGeocodeResult(loc *models.DetectedLocation, result *geocoder.ReverseGeocodeResult) {
+	loc.FormattedAddress = result.FormattedAddress
+	loc.Street = result.Street
+	loc.City = result.City
+	loc.State = result.State
+	loc.ZipCode = result.ZipCode
+	loc.PostalCode = result.PostalCode
+	loc.Country = result.Country
+	loc.GooglePlaceId = result.GooglePlaceId
+	loc.GoogleMapsUrl = result.GoogleMapsUrl
+	loc.Source = "reverse_geocoded"
+	if loc.Name == "" {
+		loc.Name = result.LocationName
+	}
+}
+
+// hasGPSLocations returns true if any location has GPS coordinates.
+func hasGPSLocations(locations []models.DetectedLocation) bool {
+	for _, loc := range locations {
+		if loc.HasGPS {
+			return true
+		}
+	}
+	return false
+}
+
+// haversineDistance returns the distance in meters between two GPS coordinates.
+func haversineDistance(lat1, lng1, lat2, lng2 float64) float64 {
+	const earthRadiusM = 6371000.0
+	dLat := (lat2 - lat1) * math.Pi / 180
+	dLng := (lng2 - lng1) * math.Pi / 180
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Cos(lat1*math.Pi/180)*math.Cos(lat2*math.Pi/180)*
+			math.Sin(dLng/2)*math.Sin(dLng/2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+	return earthRadiusM * c
+}
+
+// appendUnique appends values to a slice, skipping duplicates.
+func appendUnique(slice []string, values ...string) []string {
+	seen := make(map[string]bool, len(slice))
+	for _, s := range slice {
+		seen[s] = true
+	}
+	for _, v := range values {
+		if !seen[v] {
+			slice = append(slice, v)
+			seen[v] = true
+		}
+	}
+	return slice
 }
 
 // printDryRun displays a cost estimate without making API calls.
