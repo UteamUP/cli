@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `uteamup image analyze <path>` command for AI-powered CMMS image analysis
+- Gemini AI configuration in CLI profiles (`geminiApiKey`, `geminiModel`)
+- `ut config apikey [key]` shortcut to get/set Gemini API key
+- `ut config model [name]` shortcut to get/set default Gemini model
+- `ut config model list` to display all available Gemini models
+- Pre-processing status banner showing image count, model, and output path
+- Config init prompts for Gemini settings with model selection
+- Support for `=` syntax in config commands (`ut config apikey=xyz`)
+- Image analyze requires authentication (login required)
+
+## [0.1.0] — 2026-03-22
+
+### Added
 - Initial project scaffold with Cobra CLI framework
 - Dual authentication: interactive login (email/password) and API key auth (OAuth 2.0 + PKCE)
 - `ut` shortname alias for `uteamup` binary
