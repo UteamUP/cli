@@ -178,7 +178,9 @@ Examples:
 // It checks (in order):
 //  1. UTEAMUP_IMAGE_ANALYZER_PATH environment variable
 //  2. Sibling directory ../UteamUP_ImageAnalyzer relative to the CLI binary
-//  3. ~/UteamUP_ImageAnalyzer
+//  3. Sibling directory ../UteamUP_ImageAnalyzer relative to the current working directory
+//  4. ~/UteamUP_ImageAnalyzer
+//  5. ~/UteamUP_Development/ActiveProjects/UteamUP_ImageAnalyzer
 func findAnalyzerDir() (string, error) {
 	// 1. Environment variable
 	if envPath := os.Getenv("UTEAMUP_IMAGE_ANALYZER_PATH"); envPath != "" {
@@ -201,11 +203,24 @@ func findAnalyzerDir() (string, error) {
 		}
 	}
 
-	// 3. Home directory
+	// 3. Sibling directory relative to current working directory
+	if cwd, err := os.Getwd(); err == nil {
+		cwdSibling := filepath.Join(cwd, "..", "UteamUP_ImageAnalyzer")
+		if absPath, err := filepath.Abs(cwdSibling); err == nil && isAnalyzerDir(absPath) {
+			return absPath, nil
+		}
+	}
+
+	// 4. Home directory
 	if homeDir, err := os.UserHomeDir(); err == nil {
 		homePath := filepath.Join(homeDir, "UteamUP_ImageAnalyzer")
 		if isAnalyzerDir(homePath) {
 			return homePath, nil
+		}
+		// 5. Common dev path
+		devPath := filepath.Join(homeDir, "UteamUP_Development", "ActiveProjects", "UteamUP_ImageAnalyzer")
+		if isAnalyzerDir(devPath) {
+			return devPath, nil
 		}
 	}
 
@@ -214,10 +229,12 @@ func findAnalyzerDir() (string, error) {
 Searched locations:
   1. UTEAMUP_IMAGE_ANALYZER_PATH environment variable (not set)
   2. Sibling directory ../UteamUP_ImageAnalyzer (relative to CLI binary)
-  3. ~/UteamUP_ImageAnalyzer
+  3. Sibling directory ../UteamUP_ImageAnalyzer (relative to current directory)
+  4. ~/UteamUP_ImageAnalyzer
+  5. ~/UteamUP_Development/ActiveProjects/UteamUP_ImageAnalyzer
 
 Install the image analyzer:
-  git clone https://github.com/uteamup/image-analyzer ~/UteamUP_ImageAnalyzer
+  git clone https://github.com/UteamUP/ImageAnalyzer ~/UteamUP_ImageAnalyzer
   cd ~/UteamUP_ImageAnalyzer
   python3 -m venv .venv
   .venv/bin/pip install -r requirements.txt

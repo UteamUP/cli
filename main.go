@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/uteamup/cli/cmd"
@@ -16,6 +17,7 @@ var (
 func main() {
 	cmd.SetBuildInfo(version, commit, date)
 	if err := cmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
 }
