@@ -141,7 +141,7 @@ func (a *GeminiAnalyzer) AnalyzeImage(ctx context.Context, imagePath string, ima
 func (a *GeminiAnalyzer) callGemini(ctx context.Context, imageBytes []byte) (string, error) {
 	resp, err := a.model.GenerateContent(ctx,
 		genai.Text(UnifiedAnalysisPrompt),
-		genai.ImageData("image/jpeg", imageBytes),
+		genai.ImageData("jpeg", imageBytes),
 	)
 	if err != nil {
 		return "", fmt.Errorf("Gemini GenerateContent: %w", err)
