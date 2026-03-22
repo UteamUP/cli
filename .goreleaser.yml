@@ -1,0 +1,102 @@
+version: 2
+
+project_name: uteamup
+
+before:
+  hooks:
+    - go mod tidy
+    - go vet ./...
+
+builds:
+  - id: uteamup
+    binary: uteamup
+    main: .
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - README.md
+      - CHANGELOG.md
+      - LICENSE
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+nfpms:
+  - id: packages
+    package_name: uteamup
+    vendor: UteamUP
+    homepage: https://uteamup.com
+    maintainer: UteamUP <support@uteamup.com>
+    description: UteamUP CLI - Command-line interface for the UteamUP platform
+    license: MIT
+    formats:
+      - deb
+      - rpm
+    bindir: /usr/bin
+    contents:
+      - src: ./packaging/linux/postinstall.sh
+        dst: /usr/share/uteamup/postinstall.sh
+        type: config
+    scripts:
+      postinstall: packaging/linux/postinstall.sh
+      preremove: packaging/linux/preremove.sh
+    deb:
+      lintian_overrides:
+        - statically-linked-binary
+    rpm:
+      group: Development/Tools
+
+brews:
+  - name: uteamup
+    repository:
+      owner: uteamup
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: https://uteamup.com
+    description: UteamUP CLI - Command-line interface for the UteamUP platform
+    license: MIT
+    install: |
+      bin.install "uteamup"
+      ln_sf bin/"uteamup", bin/"ut"
+    test: |
+      system "#{bin}/uteamup", "version"
+
+release:
+  github:
+    owner: uteamup
+    name: cli
+  draft: false
+  prerelease: auto

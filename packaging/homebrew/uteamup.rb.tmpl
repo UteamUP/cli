@@ -1,0 +1,41 @@
+# This is a template — GoReleaser fills in version, URL, and SHA256 automatically.
+# See .goreleaser.yml brews section for the actual configuration.
+
+class Uteamup < Formula
+  desc "UteamUP CLI — command-line interface for the UteamUP platform"
+  homepage "https://uteamup.com"
+  version "{{.Version}}"
+  license "MIT"
+
+  on_macos do
+    if Hardware::CPU.arm?
+      url "{{.ReleaseURL}}/uteamup_{{.Version}}_darwin_arm64.tar.gz"
+      sha256 "{{.SHA256.darwin_arm64}}"
+    else
+      url "{{.ReleaseURL}}/uteamup_{{.Version}}_darwin_amd64.tar.gz"
+      sha256 "{{.SHA256.darwin_amd64}}"
+    end
+  end
+
+  on_linux do
+    if Hardware::CPU.arm?
+      url "{{.ReleaseURL}}/uteamup_{{.Version}}_linux_arm64.tar.gz"
+      sha256 "{{.SHA256.linux_arm64}}"
+    else
+      url "{{.ReleaseURL}}/uteamup_{{.Version}}_linux_amd64.tar.gz"
+      sha256 "{{.SHA256.linux_amd64}}"
+    end
+  end
+
+  def install
+    bin.install "uteamup"
+    ln_sf bin/"uteamup", bin/"ut"
+
+    # Install shell completions
+    generate_completions_from_executable(bin/"uteamup", "completion")
+  end
+
+  test do
+    system "#{bin}/uteamup", "version"
+  end
+end
