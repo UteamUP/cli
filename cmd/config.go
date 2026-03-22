@@ -232,9 +232,136 @@ var configProfileCmd = &cobra.Command{
 	},
 }
 
+var configAPIKeyCmd = &cobra.Command{
+	Use:   "apikey [key]",
+	Short: "Get or set the Gemini API key",
+	Long: `Get or set the Gemini API key for image analysis.
+
+Examples:
+  ut config apikey                     # Show current key (redacted)
+  ut config apikey AIzaSy...           # Set the key
+  uteamup config apikey=AIzaSy...      # Also works with = syntax`,
+	Args: cobra.MaximumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := config.Load()
+		if err != nil {
+			return err
+		}
+		profile, err := cfg.ActiveProfileConfig()
+		if err != nil {
+			return err
+		}
+
+		// Parse key=value syntax from command name
+		value := ""
+		if len(args) == 1 {
+			value = args[0]
+			// Handle apikey=value syntax
+			if strings.Contains(value, "=") {
+				value = strings.SplitN(value, "=", 2)[1]
+			}
+		}
+
+		if value == "" {
+			// Show current key
+			display := "(not set)"
+			if profile.GeminiAPIKey != "" {
+				if len(profile.GeminiAPIKey) > 8 {
+					display = profile.GeminiAPIKey[:8] + "..." + profile.GeminiAPIKey[len(profile.GeminiAPIKey)-4:]
+				} else {
+					display = "***"
+				}
+			}
+			fmt.Printf("Gemini API Key: %s\n", display)
+			return nil
+		}
+
+		profile.GeminiAPIKey = value
+		cfg.Profiles[cfg.ActiveProfile] = *profile
+		if err := config.Save(cfg); err != nil {
+			return fmt.Errorf("saving config: %w", err)
+		}
+		fmt.Printf("Gemini API key updated (profile: %s)\n", cfg.ActiveProfile)
+		return nil
+	},
+}
+
+var configModelCmd = &cobra.Command{
+	Use:   "model [name]",
+	Short: "Get or set the default Gemini model",
+	Long: `Get or set the default Gemini model for image analysis.
+
+Examples:
+  ut config model                              # Show current model
+  ut config model gemini-3.1-pro-preview       # Set default model
+  ut config model list                         # List available models
+  uteamup config model=gemini-2.5-flash        # Also works with = syntax`,
+	Args: cobra.MaximumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := config.Load()
+		if err != nil {
+			return err
+		}
+		profile, err := cfg.ActiveProfileConfig()
+		if err != nil {
+			return err
+		}
+
+		value := ""
+		if len(args) == 1 {
+			value = args[0]
+			if strings.Contains(value, "=") {
+				value = strings.SplitN(value, "=", 2)[1]
+			}
+		}
+
+		if value == "" {
+			// Show current model
+			model := profile.GeminiModel
+			if model == "" {
+				model = "gemini-3.1-flash-lite-preview (default)"
+			}
+			fmt.Printf("Gemini Model: %s\n", model)
+			return nil
+		}
+
+		if value == "list" {
+			fmt.Println("Available Gemini models for image analysis:")
+			fmt.Println()
+			fmt.Println("  Pro models (higher accuracy, slower):")
+			fmt.Println("    gemini-pro-latest              Always points to newest pro (rolling)")
+			fmt.Println("    gemini-3.1-pro-preview         Latest explicit pro")
+			fmt.Println("    gemini-3-pro-preview           Previous gen pro")
+			fmt.Println("    gemini-2.5-pro                 Stable pro")
+			fmt.Println()
+			fmt.Println("  Flash models (faster, cheaper):")
+			fmt.Println("    gemini-3.1-flash-lite-preview  Default — fastest and cheapest")
+			fmt.Println("    gemini-3-flash-preview         Previous gen flash")
+			fmt.Println("    gemini-2.5-flash               Stable flash")
+			fmt.Println()
+			current := profile.GeminiModel
+			if current == "" {
+				current = "gemini-3.1-flash-lite-preview"
+			}
+			fmt.Printf("  Current: %s\n", current)
+			return nil
+		}
+
+		profile.GeminiModel = value
+		cfg.Profiles[cfg.ActiveProfile] = *profile
+		if err := config.Save(cfg); err != nil {
+			return fmt.Errorf("saving config: %w", err)
+		}
+		fmt.Printf("Gemini model set to %s (profile: %s)\n", value, cfg.ActiveProfile)
+		return nil
+	},
+}
+
 func init() {
 	configCmd.AddCommand(configInitCmd)
 	configCmd.AddCommand(configShowCmd)
 	configCmd.AddCommand(configSetCmd)
 	configCmd.AddCommand(configProfileCmd)
+	configCmd.AddCommand(configAPIKeyCmd)
+	configCmd.AddCommand(configModelCmd)
 }
