@@ -51,6 +51,17 @@ type AppConfig struct {
 	Processing ProcessingConfig `yaml:"processing"`
 }
 
+// defaultCheckpointPath returns the checkpoint file path inside ~/.uteamup/.
+func defaultCheckpointPath() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ".checkpoint.json"
+	}
+	dir := filepath.Join(home, ".uteamup")
+	_ = os.MkdirAll(dir, 0700)
+	return filepath.Join(dir, "image-checkpoint.json")
+}
+
 // DefaultConfig returns an AppConfig populated with all default values.
 func DefaultConfig() *AppConfig {
 	return &AppConfig{
@@ -76,7 +87,7 @@ func DefaultConfig() *AppConfig {
 			RenamePattern:                "{entity_type}_{name}_{seq}_{date}.{ext}",
 			GroupingSimilarityThreshold:   0.75,
 			ConfidenceThreshold:          0.5,
-			CheckpointFile:               ".checkpoint.json",
+			CheckpointFile:               defaultCheckpointPath(),
 		},
 	}
 }
