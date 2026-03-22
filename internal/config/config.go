@@ -33,6 +33,8 @@ type Profile struct {
 	LogLevel       string `json:"logLevel"`
 	RequestTimeout int    `json:"requestTimeout"`
 	MaxRetries     int    `json:"maxRetries"`
+	ExportJSON     bool   `json:"exportJson"`
+	ExportDir      string `json:"exportDir,omitempty"`
 }
 
 // ConfigDir returns ~/.uteamup.
@@ -202,14 +204,22 @@ func (c *Config) RedactedSummary() string {
 		secret = "***"
 	}
 
+	exportDir := p.ExportDir
+	if exportDir == "" {
+		exportDir = "~/.uteamup/exports"
+	}
+
 	return fmt.Sprintf(`Active Profile: %s (%s)
   Base URL:        %s
   API Key:         %s
   Secret:          %s
   Log Level:       %s
   Request Timeout: %dms
-  Max Retries:     %d`,
+  Max Retries:     %d
+  Export JSON:     %v
+  Export Dir:      %s`,
 		c.ActiveProfile, p.Name,
 		p.BaseURL, apiKey, secret,
-		p.LogLevel, p.RequestTimeout, p.MaxRetries)
+		p.LogLevel, p.RequestTimeout, p.MaxRetries,
+		p.ExportJSON, exportDir)
 }
