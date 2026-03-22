@@ -1,6 +1,6 @@
 # UteamUP CLI
 
-Command-line interface for the [UteamUP](https://uteamup.com) platform. Manage assets, work orders, users, and more from any terminal.
+Command-line interface for the [UteamUP](https://uteamup.com) platform. Manage assets, work orders, users, and more from any terminal. Includes AI-powered image analysis for CMMS inventory onboarding.
 
 Both `uteamup` and `ut` (shortname) are installed — they are identical.
 
@@ -21,17 +21,17 @@ Download the `.pkg` file from [Releases](https://github.com/uteamup/cli/releases
 
 **Debian / Ubuntu (.deb)**:
 ```bash
-sudo dpkg -i uteamup_1.0.0_amd64.deb
+sudo dpkg -i uteamup_0.3.0_amd64.deb
 ```
 
 **Fedora / RHEL / CentOS (.rpm)**:
 ```bash
-sudo rpm -i uteamup-1.0.0.x86_64.rpm
+sudo rpm -i uteamup-0.3.0.x86_64.rpm
 ```
 
 **Manual (tar.gz)**:
 ```bash
-tar xzf uteamup_1.0.0_linux_amd64.tar.gz
+tar xzf uteamup_0.3.0_linux_amd64.tar.gz
 sudo mv uteamup /usr/local/bin/
 sudo ln -sf /usr/local/bin/uteamup /usr/local/bin/ut
 ```
@@ -73,6 +73,63 @@ ut user list --page 1 --page-size 10
 
 ---
 
+## Image Analysis
+
+AI-powered image analysis for bulk CMMS inventory onboarding. Analyzes photos of equipment, tools, parts, and chemicals using Google Gemini Vision AI and exports structured CSV data ready for import.
+
+### Setup
+
+```bash
+# 1. Set your Gemini API key
+ut config apikey YOUR_GEMINI_API_KEY
+
+# 2. Choose a model (optional — defaults to gemini-3.1-flash-lite-preview)
+ut config model list                         # See available models
+ut config model gemini-3.1-pro-preview       # Use pro for higher accuracy
+```
+
+### Usage
+
+```bash
+ut image analyze ./photos                    # Analyze all images in folder
+ut image analyze ./photos --dry-run          # Estimate cost first
+ut image analyze ./photos --output ./results # Custom output directory
+ut img analyze ./photos --model gemini-pro-latest --verbose
+ut img analyze ./photos --no-rename          # Keep original filenames
+```
+
+### What It Does
+
+1. **Scans** folder for images (JPG, PNG, HEIC, WebP, TIFF, BMP)
+2. **Detects** iPhone edit pairs and duplicates automatically
+3. **Classifies** each image as asset, tool, part, or chemical using Gemini AI
+4. **Extracts** CMMS fields: name, serial number, model, manufacturer, condition, etc.
+5. **Detects multiple entities** per image (e.g., a machine with visible parts)
+6. **Links relationships** — parts/tools/chemicals linked to parent assets via `related_to`
+7. **Groups** duplicate images of the same item across photos
+8. **Exports** per-entity-type CSVs (`assets.csv`, `tools.csv`, `parts.csv`, `chemicals.csv`)
+9. **Renames** images with descriptive filenames (e.g., `asset_air_compressor_001_20260322.HEIC`)
+
+### Available Models
+
+| Model | Type | Best For |
+|-------|------|----------|
+| `gemini-pro-latest` | Pro | Always newest, may be unstable |
+| `gemini-3.1-pro-preview` | Pro | Highest accuracy |
+| `gemini-3.1-flash-lite-preview` | Flash Lite | **Default** — fastest, cheapest |
+| `gemini-3-flash-preview` | Flash | Previous gen |
+| `gemini-2.5-pro` | Pro | Stable |
+| `gemini-2.5-flash` | Flash | Stable |
+
+### Requirements
+
+- [UteamUP Image Analyzer](https://github.com/UteamUP/ImageAnalyzer) Python tool installed
+- Python 3.10+ with virtual environment
+- Google Gemini API key ([Get one here](https://aistudio.google.com/apikey))
+- Must be logged in (`uteamup login`)
+
+---
+
 ## Configuration
 
 Config is stored at `~/.uteamup/config.json`. Supports multiple profiles for different environments.
@@ -90,7 +147,9 @@ Config is stored at `~/.uteamup/config.json`. Supports multiple profiles for dif
       "baseUrl": "https://api.uteamup.com",
       "logLevel": "INFO",
       "requestTimeout": 30000,
-      "maxRetries": 3
+      "maxRetries": 3,
+      "geminiApiKey": "<Google Gemini API key>",
+      "geminiModel": "gemini-3.1-flash-lite-preview"
     },
     "development": {
       "name": "Development",
@@ -99,7 +158,9 @@ Config is stored at `~/.uteamup/config.json`. Supports multiple profiles for dif
       "baseUrl": "https://localhost:5002",
       "logLevel": "DEBUG",
       "requestTimeout": 30000,
-      "maxRetries": 1
+      "maxRetries": 1,
+      "geminiApiKey": "<Google Gemini API key>",
+      "geminiModel": "gemini-3.1-pro-preview"
     }
   }
 }
@@ -115,6 +176,8 @@ Environment variables override config file values (same names as the MCP server)
 | `UTEAMUP_SECRET` | API secret (64+ characters) |
 | `UTEAMUP_API_BASE_URL` | API endpoint URL |
 | `UTEAMUP_LOG_LEVEL` | Log level: TRACE, DEBUG, INFO, WARN, ERROR |
+| `GEMINI_API_KEY` | Google Gemini API key for image analysis |
+| `GEMINI_MODEL` | Default Gemini model name |
 
 ### Profile Management
 
@@ -232,8 +295,11 @@ Manage CLI configuration.
 | `config show` | Display current config (secrets redacted) |
 | `config set <key> <value>` | Set a value in the active profile |
 | `config profile <name>` | Switch active profile |
+| `config apikey [key]` | Get or set the Gemini API key |
+| `config model [name]` | Get or set the default Gemini model |
+| `config model list` | List available Gemini models |
 
-**Valid keys for `config set`:** `baseUrl`, `apiKey`, `secret`, `logLevel`, `requestTimeout`, `maxRetries`, `name`
+**Valid keys for `config set`:** `baseUrl`, `apiKey`, `secret`, `logLevel`, `requestTimeout`, `maxRetries`, `name`, `geminiApiKey`, `geminiModel`, `exportJson`, `exportDir`
 
 **Examples:**
 ```bash
@@ -242,6 +308,9 @@ ut config show
 ut config set baseUrl https://localhost:5002
 ut config set logLevel DEBUG
 ut config profile development
+ut config apikey AIzaSy...
+ut config model gemini-3.1-pro-preview
+ut config model list
 ```
 
 ### `uteamup version`
@@ -273,6 +342,38 @@ uteamup completion fish > ~/.config/fish/completions/uteamup.fish
 
 # PowerShell
 uteamup completion powershell | Out-String | Invoke-Expression
+```
+
+---
+
+### Image Commands
+
+#### `uteamup image` (aliases: `img`, `images`)
+
+AI-powered image analysis for CMMS inventory.
+
+| Action | Usage | Description |
+|--------|-------|-------------|
+| `analyze` | `ut image analyze <path> [flags]` | Analyze images in a folder |
+
+**Flags for `analyze`:**
+
+| Flag | Short | Description | Default |
+|------|-------|-------------|---------|
+| `--output` | `-o` | Output folder for CSVs | `./Output` |
+| `--model` | | Gemini model override | From config |
+| `--api-key` | | Gemini API key override | From config |
+| `--dry-run` | | Estimate cost only | `false` |
+| `--no-rename` | | Skip image renaming | `false` |
+| `--config` | | Config YAML override | |
+| `--verbose` | `-V` | Enable verbose output | `false` |
+
+**Examples:**
+```bash
+ut image analyze ./photos
+ut image analyze ./photos --dry-run
+ut img analyze ./photos --model gemini-3.1-pro-preview -o ./results
+ut img analyze ./photos --no-rename --verbose
 ```
 
 ---
