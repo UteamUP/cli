@@ -106,7 +106,15 @@ func (c *APIClient) CallTool(ctx context.Context, toolName string, args map[stri
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 
-		c.logger.Debug("POST %s/mcp tool=%s", c.baseURL, toolName)
+		// Send tenant context headers (required by backend)
+		if token.TenantID > 0 {
+			req.Header.Set("X-Tenant-ID", fmt.Sprintf("%d", token.TenantID))
+		}
+		if token.TenantGuid != "" {
+			req.Header.Set("X-Tenant-Guid", token.TenantGuid)
+		}
+
+		c.logger.Debug("POST %s/mcp tool=%s tenant=%d", c.baseURL, toolName, token.TenantID)
 
 		resp, err := c.httpClient().Do(req)
 		if err != nil {
