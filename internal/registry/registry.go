@@ -32,11 +32,22 @@ type FlagDef struct {
 	Required    bool
 }
 
+// HTTPMethod maps action names to HTTP methods for REST calls.
+var HTTPMethod = map[string]string{
+	"list":   "GET",
+	"get":    "GET",
+	"create": "POST",
+	"update": "PUT",
+	"delete": "DELETE",
+	"search": "GET",
+}
+
 // Action represents a single CLI action (list, get, create, etc.).
 type Action struct {
 	Name        string
 	Description string
 	ToolName    string // MCP tool name, e.g. "UteamupAssetList"
+	RESTPath    string // Optional REST override, e.g. "all" or "search"
 	Args        []ArgDef
 	Flags       []FlagDef
 }
@@ -46,6 +57,7 @@ type Domain struct {
 	Name        string
 	Aliases     []string
 	Description string
+	APIPath     string // REST base path, e.g. "/api/vendor". Auto-derived if empty.
 	Actions     []Action
 }
 
@@ -84,13 +96,13 @@ func buildDomainCommand(domain *Domain, apiClient *client.APIClient, logger *log
 	}
 
 	for _, action := range domain.Actions {
-		cmd.AddCommand(buildActionCommand(action, apiClient, logger, outputFormat))
+		cmd.AddCommand(buildActionCommand(domain, action, apiClient, logger, outputFormat))
 	}
 
 	return cmd
 }
 
-func buildActionCommand(action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string) *cobra.Command {
+func buildActionCommand(domain *Domain, action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string) *cobra.Command {
 	// Build usage string with positional args
 	use := action.Name
 	for _, arg := range action.Args {
@@ -105,7 +117,7 @@ func buildActionCommand(action Action, apiClient *client.APIClient, logger *logg
 		Use:   use,
 		Short: action.Description,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return executeAction(cmd, args, action, apiClient, logger, outputFormat)
+			return executeAction(cmd, args, domain, action, apiClient, logger, outputFormat)
 		},
 	}
 
@@ -158,7 +170,7 @@ func buildActionCommand(action Action, apiClient *client.APIClient, logger *logg
 	return cmd
 }
 
-func executeAction(cmd *cobra.Command, args []string, action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string) error {
+func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string) error {
 	toolArgs := make(map[string]any)
 
 	// Positional args
@@ -175,7 +187,6 @@ func executeAction(cmd *cobra.Command, args []string, action Action, apiClient *
 	// Flags
 	for _, flag := range action.Flags {
 		if !cmd.Flags().Changed(flag.Name) {
-			// Use default if set
 			if flag.Default != nil {
 				toolArgs[toCamelCase(flag.Name)] = flag.Default
 			}
@@ -197,18 +208,52 @@ func executeAction(cmd *cobra.Command, args []string, action Action, apiClient *
 		}
 	}
 
-	logger.Debug("calling tool %s with args %v", action.ToolName, toolArgs)
-
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	result, err := apiClient.CallTool(ctx, action.ToolName, toolArgs)
+	// Build REST endpoint path from domain and action
+	restPath := buildRESTPath(domain, action, toolArgs)
+	httpMethod := HTTPMethod[action.Name]
+	if httpMethod == "" {
+		httpMethod = "GET"
+	}
+
+	logger.Debug("calling %s %s (tool: %s) with args %v", httpMethod, restPath, action.ToolName, toolArgs)
+
+	result, err := apiClient.CallREST(ctx, httpMethod, restPath, toolArgs, action.Name)
 	if err != nil {
 		return err
 	}
 
 	format := output.ParseFormat(*outputFormat)
 	return output.Print(format, result)
+}
+
+// buildRESTPath constructs the REST API path from domain + action.
+func buildRESTPath(domain *Domain, action Action, args map[string]any) string {
+	basePath := domain.APIPath
+	if basePath == "" {
+		// Derive from domain name: "vendor" → "/api/vendor", "asset-type" → "/api/assettype"
+		basePath = "/api/" + strings.ReplaceAll(domain.Name, "-", "")
+	}
+
+	switch action.Name {
+	case "get", "update", "delete":
+		if id, ok := args["id"]; ok {
+			return fmt.Sprintf("%s/%v", basePath, id)
+		}
+	case "search":
+		if action.RESTPath != "" {
+			return basePath + "/" + action.RESTPath
+		}
+		return basePath + "/search"
+	case "list":
+		if action.RESTPath != "" {
+			return basePath + "/" + action.RESTPath
+		}
+	}
+
+	return basePath
 }
 
 func convertArg(value, argType string) any {
