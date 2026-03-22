@@ -3,37 +3,39 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/uteamup/cli/internal/config"
+	"github.com/uteamup/cli/internal/imageanalyzer/checkpoint"
+	iaconfig "github.com/uteamup/cli/internal/imageanalyzer/config"
+	"github.com/uteamup/cli/internal/imageanalyzer/pipeline"
 )
 
 var (
-	imageOutputDir string
-	imageModel     string
-	imageAPIKey    string
-	imageDryRun    bool
-	imageNoRename  bool
-	imageConfig    string
-	imageVerbose   bool
+	imageOutputDir           string
+	imageModel               string
+	imageAPIKey              string
+	imageDryRun              bool
+	imageNoRename            bool
+	imageConfig              string
+	imageVerbose             bool
+	imageMaxCost             float64
+	imageResume              bool
+	imageSimilarityThreshold float64
+	imageConfidenceThreshold float64
 )
 
 var imageCmd = &cobra.Command{
 	Use:     "image",
 	Aliases: []string{"img", "images"},
 	Short:   "Analyze images for CMMS inventory data",
-	Long: `Analyze images using the UteamUP Image Analyzer tool.
+	Long: `Analyze images using the UteamUP Image Analyzer.
 
 The image analyzer uses AI (Google Gemini) to process batches of images,
-extracting CMMS-relevant inventory data and exporting results to CSV.
-
-This command requires the UteamUP Image Analyzer Python tool to be installed.
-See: https://github.com/uteamup/image-analyzer`,
+extracting CMMS-relevant inventory data and exporting results to CSV.`,
 }
 
 var imageAnalyzeCmd = &cobra.Command{
@@ -50,15 +52,16 @@ Examples:
   uteamup image analyze ./photos --output ./results --dry-run
   uteamup img analyze ./photos --model gemini-2.5-pro --api-key AIza...
   uteamup img analyze /path/to/images -o /path/to/output --model gemini-2.5-flash --verbose
-  ut img analyze ./images --no-rename`,
+  ut img analyze ./images --no-rename
+  ut img analyze ./photos --max-cost 5.00 --confidence-threshold 0.7
+  ut img analyze ./photos --resume`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		imagePath := args[0]
 
-		// Load Gemini settings from CLI config (profile defaults)
+		// Load Gemini settings from CLI config (profile defaults).
 		if cfg, err := config.Load(); err == nil {
 			if profile, err := cfg.ActiveProfileConfig(); err == nil {
-				// Use config values as defaults when flags aren't explicitly set
 				if imageAPIKey == "" && profile.GeminiAPIKey != "" {
 					imageAPIKey = profile.GeminiAPIKey
 				}
@@ -68,13 +71,13 @@ Examples:
 			}
 		}
 
-		// Resolve the image path to absolute
+		// Resolve the image path to absolute.
 		absImagePath, err := filepath.Abs(imagePath)
 		if err != nil {
 			return fmt.Errorf("resolving image path: %w", err)
 		}
 
-		// Check that the image path exists
+		// Check that the image path exists.
 		info, err := os.Stat(absImagePath)
 		if err != nil {
 			return fmt.Errorf("image path %q does not exist: %w", absImagePath, err)
@@ -83,70 +86,72 @@ Examples:
 			return fmt.Errorf("image path %q is not a directory", absImagePath)
 		}
 
-		// Locate the image analyzer
-		analyzerDir, err := findAnalyzerDir()
-		if err != nil {
-			return err
-		}
-
-		// Check for Python venv
-		pythonBin := filepath.Join(analyzerDir, ".venv", "bin", "python")
-		if runtime.GOOS == "windows" {
-			pythonBin = filepath.Join(analyzerDir, ".venv", "Scripts", "python.exe")
-		}
-		if _, err := os.Stat(pythonBin); err != nil {
-			return fmt.Errorf("Python virtual environment not found at %s\n\nSetup instructions:\n  cd %s\n  python3 -m venv .venv\n  .venv/bin/pip install -r requirements.txt",
-				pythonBin, analyzerDir)
-		}
-
-		// Resolve output directory to absolute
+		// Resolve output directory to absolute.
 		absOutputDir, err := filepath.Abs(imageOutputDir)
 		if err != nil {
 			return fmt.Errorf("resolving output path: %w", err)
 		}
 
-		// Build the command arguments
-		cmdArgs := []string{"-m", "image_analyzer", "analyze", "--folder", absImagePath, "--output", absOutputDir}
+		// Build config options from CLI flags.
+		var opts []iaconfig.ConfigOption
+		opts = append(opts, iaconfig.WithFolderOverride(absImagePath))
+		opts = append(opts, iaconfig.WithOutputOverride(absOutputDir))
+		opts = append(opts, iaconfig.WithDryRun(imageDryRun))
+		opts = append(opts, iaconfig.WithNoRename(imageNoRename))
+		opts = append(opts, iaconfig.WithAPIKey(imageAPIKey))
+		opts = append(opts, iaconfig.WithModel(imageModel))
+		if cmd.Flags().Changed("max-cost") {
+			opts = append(opts, iaconfig.WithMaxCost(&imageMaxCost))
+		}
 
-		if imageDryRun {
-			cmdArgs = append(cmdArgs, "--dry-run")
+		// Load config (YAML file + env vars + CLI flag overrides).
+		configPath := imageConfig
+		if configPath == "" {
+			configPath = "config.yaml"
 		}
-		if imageNoRename {
-			cmdArgs = append(cmdArgs, "--no-rename")
+		cfg, err := iaconfig.LoadConfig(configPath, opts...)
+		if err != nil {
+			return fmt.Errorf("loading config: %w", err)
 		}
-		if imageVerbose {
-			cmdArgs = append(cmdArgs, "--verbose")
+
+		// Apply thresholds if explicitly set.
+		if cmd.Flags().Changed("similarity-threshold") {
+			cfg.Processing.GroupingSimilarityThreshold = imageSimilarityThreshold
 		}
-		if imageConfig != "" {
-			absConfig, err := filepath.Abs(imageConfig)
-			if err != nil {
-				return fmt.Errorf("resolving config path: %w", err)
+		if cmd.Flags().Changed("confidence-threshold") {
+			cfg.Processing.ConfidenceThreshold = imageConfidenceThreshold
+		}
+
+		// Validate config.
+		if errs := cfg.Validate(); len(errs) > 0 {
+			fmt.Fprintln(os.Stderr, "Configuration errors:")
+			for _, e := range errs {
+				fmt.Fprintf(os.Stderr, "  - %s\n", e)
 			}
-			cmdArgs = append(cmdArgs, "--config", absConfig)
+			return fmt.Errorf("invalid configuration")
 		}
 
-		// Build and run the command
-		execCmd := exec.Command(pythonBin, cmdArgs...)
-		execCmd.Dir = analyzerDir
-		execCmd.Env = append(os.Environ(), "PYTHONPATH="+filepath.Join(analyzerDir, "src"))
-
-		// Pass API key and model via env vars (Python config reads these)
-		if imageAPIKey != "" {
-			execCmd.Env = append(execCmd.Env, "GEMINI_API_KEY="+imageAPIKey)
+		// Count images for banner.
+		imageExts := map[string]bool{
+			".jpg": true, ".jpeg": true, ".png": true, ".webp": true,
+			".heic": true, ".heif": true, ".tiff": true, ".bmp": true,
 		}
-		if imageModel != "" {
-			execCmd.Env = append(execCmd.Env, "GEMINI_MODEL="+imageModel)
-		}
+		imageCount := 0
+		_ = filepath.WalkDir(absImagePath, func(path string, d os.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return nil
+			}
+			ext := strings.ToLower(filepath.Ext(path))
+			if imageExts[ext] {
+				imageCount++
+			}
+			return nil
+		})
 
-		execCmd.Stdout = os.Stdout
-		execCmd.Stderr = os.Stderr
-		execCmd.Stdin = os.Stdin
-
-		// Count images in source folder for status
-		imageCount := countImages(absImagePath)
+		// Print banner.
 		model := imageModel
 		if model == "" {
-			model = "gemini-3.1-flash-lite-preview (default)"
+			model = cfg.Gemini.Model
 		}
 		fmt.Printf("\n=== UteamUP Image Analyzer ===\n")
 		fmt.Printf("  Source:  %s\n", absImagePath)
@@ -156,124 +161,63 @@ Examples:
 		if imageDryRun {
 			fmt.Printf("  Mode:    DRY RUN (cost estimate only)\n")
 		}
-		fmt.Printf("==============================\n\n")
-
-		if imageVerbose {
-			fmt.Fprintf(os.Stderr, "Analyzer: %s\n", analyzerDir)
-			fmt.Fprintf(os.Stderr, "Command:  %s %s\n", pythonBin, strings.Join(cmdArgs, " "))
+		if imageResume {
+			fmt.Printf("  Resume:  enabled\n")
 		}
+		fmt.Printf("==============================\n")
 
-		if err := execCmd.Run(); err != nil {
-			if exitErr, ok := err.(*exec.ExitError); ok {
-				os.Exit(exitErr.ExitCode())
-			}
-			return fmt.Errorf("running image analyzer: %w", err)
-		}
-
-		return nil
+		// Create and run pipeline.
+		return pipeline.NewPipeline(cfg).Run()
 	},
 }
 
-// findAnalyzerDir locates the UteamUP Image Analyzer installation.
-// It checks (in order):
-//  1. UTEAMUP_IMAGE_ANALYZER_PATH environment variable
-//  2. Sibling directory ../UteamUP_ImageAnalyzer relative to the CLI binary
-//  3. Sibling directory ../UteamUP_ImageAnalyzer relative to the current working directory
-//  4. ~/UteamUP_ImageAnalyzer
-//  5. ~/UteamUP_Development/ActiveProjects/UteamUP_ImageAnalyzer
-func findAnalyzerDir() (string, error) {
-	// 1. Environment variable
-	if envPath := os.Getenv("UTEAMUP_IMAGE_ANALYZER_PATH"); envPath != "" {
-		absPath, err := filepath.Abs(envPath)
+var imageStatusCmd = &cobra.Command{
+	Use:   "status",
+	Short: "Show status of an in-progress image analysis",
+	Long: `Display the current checkpoint status for an image analysis run.
+
+Shows the number of processed images, type breakdown, and timing information
+from the checkpoint file.
+
+Examples:
+  uteamup image status
+  ut img status`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		checkpointPath := ".checkpoint.json"
+		if imageConfig != "" {
+			// Try to load checkpoint path from config.
+			if cfg, err := iaconfig.LoadConfig(imageConfig); err == nil {
+				checkpointPath = cfg.Processing.CheckpointFile
+			}
+		}
+
+		cp, err := checkpoint.Load(checkpointPath)
 		if err != nil {
-			return "", fmt.Errorf("resolving UTEAMUP_IMAGE_ANALYZER_PATH: %w", err)
+			return fmt.Errorf("loading checkpoint: %w", err)
 		}
-		if isAnalyzerDir(absPath) {
-			return absPath, nil
-		}
-		return "", fmt.Errorf("UTEAMUP_IMAGE_ANALYZER_PATH=%q does not contain a valid image analyzer installation", envPath)
-	}
 
-	// 2. Sibling directory relative to CLI binary
-	if exePath, err := os.Executable(); err == nil {
-		exeDir := filepath.Dir(exePath)
-		siblingPath := filepath.Join(exeDir, "..", "UteamUP_ImageAnalyzer")
-		if absPath, err := filepath.Abs(siblingPath); err == nil && isAnalyzerDir(absPath) {
-			return absPath, nil
-		}
-	}
+		status := cp.GetStatus()
 
-	// 3. Sibling directory relative to current working directory
-	if cwd, err := os.Getwd(); err == nil {
-		cwdSibling := filepath.Join(cwd, "..", "UteamUP_ImageAnalyzer")
-		if absPath, err := filepath.Abs(cwdSibling); err == nil && isAnalyzerDir(absPath) {
-			return absPath, nil
-		}
-	}
-
-	// 4. Home directory
-	if homeDir, err := os.UserHomeDir(); err == nil {
-		homePath := filepath.Join(homeDir, "UteamUP_ImageAnalyzer")
-		if isAnalyzerDir(homePath) {
-			return homePath, nil
-		}
-		// 5. Common dev path
-		devPath := filepath.Join(homeDir, "UteamUP_Development", "ActiveProjects", "UteamUP_ImageAnalyzer")
-		if isAnalyzerDir(devPath) {
-			return devPath, nil
-		}
-	}
-
-	return "", fmt.Errorf(`UteamUP Image Analyzer not found.
-
-Searched locations:
-  1. UTEAMUP_IMAGE_ANALYZER_PATH environment variable (not set)
-  2. Sibling directory ../UteamUP_ImageAnalyzer (relative to CLI binary)
-  3. Sibling directory ../UteamUP_ImageAnalyzer (relative to current directory)
-  4. ~/UteamUP_ImageAnalyzer
-  5. ~/UteamUP_Development/ActiveProjects/UteamUP_ImageAnalyzer
-
-Install the image analyzer:
-  git clone https://github.com/UteamUP/ImageAnalyzer ~/UteamUP_ImageAnalyzer
-  cd ~/UteamUP_ImageAnalyzer
-  python3 -m venv .venv
-  .venv/bin/pip install -r requirements.txt
-
-Or set the UTEAMUP_IMAGE_ANALYZER_PATH environment variable to point to your installation.`)
-}
-
-// countImages counts image files in a directory (recursively).
-func countImages(dir string) int {
-	imageExts := map[string]bool{
-		".jpg": true, ".jpeg": true, ".png": true, ".webp": true,
-		".heic": true, ".heif": true, ".tiff": true, ".bmp": true,
-	}
-	count := 0
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() {
+		if status.ProcessedCount == 0 {
+			fmt.Println("No checkpoint found. No analysis in progress.")
 			return nil
 		}
-		ext := strings.ToLower(filepath.Ext(path))
-		if imageExts[ext] {
-			count++
-		}
-		return nil
-	})
-	return count
-}
 
-// isAnalyzerDir checks whether the given directory looks like a valid image analyzer installation.
-func isAnalyzerDir(dir string) bool {
-	info, err := os.Stat(dir)
-	if err != nil || !info.IsDir() {
-		return false
-	}
-	// Check for the src/image_analyzer directory as a marker
-	srcDir := filepath.Join(dir, "src", "image_analyzer")
-	if info, err := os.Stat(srcDir); err == nil && info.IsDir() {
-		return true
-	}
-	return false
+		fmt.Println("\n=== Image Analysis Status ===")
+		fmt.Printf("  Processed:    %d images\n", status.ProcessedCount)
+		fmt.Printf("  Started:      %s\n", status.StartedAt)
+		fmt.Printf("  Last updated: %s\n", status.LastUpdated)
+		fmt.Printf("  Flagged:      %d\n", status.FlaggedCount)
+
+		if len(status.TypeBreakdown) > 0 {
+			fmt.Println("\n  Type breakdown:")
+			for entityType, count := range status.TypeBreakdown {
+				fmt.Printf("    %-15s %d\n", entityType, count)
+			}
+		}
+		fmt.Println("=============================")
+		return nil
+	},
 }
 
 func init() {
@@ -284,6 +228,11 @@ func init() {
 	imageAnalyzeCmd.Flags().BoolVar(&imageNoRename, "no-rename", false, "Skip image renaming after analysis")
 	imageAnalyzeCmd.Flags().StringVar(&imageConfig, "config", "", "Path to config.yaml override")
 	imageAnalyzeCmd.Flags().BoolVarP(&imageVerbose, "verbose", "V", false, "Enable verbose output")
+	imageAnalyzeCmd.Flags().Float64Var(&imageMaxCost, "max-cost", 0, "Maximum budget in USD (stops when reached)")
+	imageAnalyzeCmd.Flags().BoolVar(&imageResume, "resume", false, "Resume from checkpoint if available")
+	imageAnalyzeCmd.Flags().Float64Var(&imageSimilarityThreshold, "similarity-threshold", 0.75, "Grouping similarity threshold (0.0-1.0)")
+	imageAnalyzeCmd.Flags().Float64Var(&imageConfidenceThreshold, "confidence-threshold", 0.5, "Minimum confidence to classify (0.0-1.0)")
 
 	imageCmd.AddCommand(imageAnalyzeCmd)
+	imageCmd.AddCommand(imageStatusCmd)
 }
