@@ -34,3 +34,4 @@ SESSION_LOG_*.md
 # Config (secrets)
 config.json
 token.json
+Images/
