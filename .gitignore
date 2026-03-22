@@ -35,3 +35,10 @@ SESSION_LOG_*.md
 config.json
 token.json
 Images/
+
+# Superpowers
+superpowers/
+
+# Checkpoint
+.checkpoint.json
+.checkpoint.json.lock
