@@ -136,47 +136,103 @@ cp .env.example .env  # Add your GEMINI_API_KEY
 
 ## Release Process
 
-### Step-by-Step Release
+> **IMPORTANT**: Every release MUST follow these steps. Skipping any step will result in users not getting updates via `brew upgrade`, missing binaries, or stale Homebrew formulas.
 
-1. **Update CHANGELOG.md** — Move `[Unreleased]` items to a new version section:
-   ```markdown
-   ## [0.3.0] — 2026-03-22
-   ```
+### Prerequisites (One-Time Setup)
 
-2. **Commit the changelog:**
+1. **GITHUB_TOKEN** — Required for GoReleaser to create releases and push to Homebrew tap.
    ```bash
-   git add CHANGELOG.md
-   git commit -m "docs: update changelog for v0.3.0"
+   # Create a GitHub Personal Access Token with `repo` scope at:
+   # https://github.com/settings/tokens
+   # Then export it:
+   export GITHUB_TOKEN=ghp_your_token_here
+
+   # Optionally add to shell profile for persistence:
+   echo 'export GITHUB_TOKEN=ghp_your_token_here' >> ~/.zshrc
    ```
 
-3. **Tag the release:**
+2. **HOMEBREW_TAP_GITHUB_TOKEN** — Used by GoReleaser to push the formula to the tap.
+   This can be the same as `GITHUB_TOKEN` if it has `repo` scope on `UteamUP/homebrew-tap`.
    ```bash
-   git tag -a v0.3.0 -m "Release v0.3.0"
+   export HOMEBREW_TAP_GITHUB_TOKEN=$GITHUB_TOKEN
    ```
 
-4. **Push to all remotes:**
+3. **GoReleaser** — Must be installed:
    ```bash
-   git push origin main --tags
-   git push github main --tags
+   brew install goreleaser   # macOS
    ```
 
-5. **Run GoReleaser:**
-   ```bash
-   make release
-   ```
-   This automatically:
-   - Builds all 6 platform binaries (darwin/linux/windows × amd64/arm64)
-   - Creates archives (tar.gz for Unix, zip for Windows)
-   - Generates SHA256 checksums
-   - Creates GitHub release with all artifacts
-   - Publishes Homebrew formula to tap
-   - Generates .deb and .rpm packages
+### Step-by-Step Release Checklist
 
-6. **Build MSI (Windows, manual):**
-   ```bash
-   wix build packaging/msi/uteamup.wxs -o dist/uteamup.msi -arch x64
-   ```
-   Upload the MSI to the GitHub release manually.
+**Every time a new version is released, ALL of these steps must be completed:**
+
+```bash
+# === Step 1: Update CHANGELOG.md ===
+# Move [Unreleased] items to a new version section
+# Example: ## [0.4.0] — 2026-04-01
+
+# === Step 2: Commit the changelog and any final changes ===
+git add CHANGELOG.md
+git commit -m "docs: update changelog for vX.Y.Z"
+
+# === Step 3: Push code to BOTH remotes ===
+git push origin main
+git push github main
+
+# === Step 4: Create and push the version tag ===
+git tag -a vX.Y.Z -m "Release vX.Y.Z — brief description"
+git push origin vX.Y.Z
+git push github vX.Y.Z
+
+# === Step 5: Run GoReleaser (requires GITHUB_TOKEN) ===
+export GITHUB_TOKEN=ghp_your_token_here
+export HOMEBREW_TAP_GITHUB_TOKEN=$GITHUB_TOKEN
+make release
+# OR: goreleaser release --clean
+
+# === Step 6 (Optional): Build MSI for Windows ===
+# Requires WiX Toolset v4+ on Windows/CI
+wix build packaging/msi/uteamup.wxs -o dist/uteamup.msi -arch x64
+# Then upload MSI to the GitHub release manually:
+gh release upload vX.Y.Z dist/uteamup.msi --repo UteamUP/cli
+```
+
+### What GoReleaser Does Automatically (Step 5)
+
+When you run `make release`, GoReleaser:
+
+1. **Builds** all 6 platform binaries (darwin/linux/windows × amd64/arm64)
+2. **Creates archives** (tar.gz for Unix, zip for Windows)
+3. **Generates** SHA256 checksums (`checksums.txt`)
+4. **Creates** GitHub release at https://github.com/UteamUP/cli/releases with all artifacts
+5. **Updates Homebrew formula** at https://github.com/UteamUP/homebrew-tap/blob/main/Formula/uteamup.rb
+   - Auto-fills version, download URLs, and SHA256 hashes
+   - Users get the update via `brew update && brew upgrade uteamup`
+6. **Generates** .deb and .rpm Linux packages
+
+### Homebrew Tap Details
+
+- **Tap repository**: https://github.com/UteamUP/homebrew-tap
+- **Formula**: `Formula/uteamup.rb`
+- **GoReleaser config**: `.goreleaser.yml` → `brews` section
+- **Template**: `packaging/homebrew/uteamup.rb.tmpl` (reference only — GoReleaser generates the actual formula)
+
+**How `brew upgrade` works:**
+1. GoReleaser pushes updated `uteamup.rb` to `UteamUP/homebrew-tap` with new version + SHA256s
+2. User runs `brew update` → pulls latest formula from the tap
+3. User runs `brew upgrade uteamup` → downloads new binary from GitHub release
+
+**If Homebrew auto-update fails**, manually update the formula:
+```bash
+git clone git@github.com:UteamUP/homebrew-tap.git
+cd homebrew-tap
+# Edit Formula/uteamup.rb — update version, URLs, and SHA256s
+# Get SHA256s from the release checksums.txt:
+curl -sL https://github.com/UteamUP/cli/releases/download/vX.Y.Z/checksums.txt
+git add Formula/uteamup.rb
+git commit -m "Update uteamup to vX.Y.Z"
+git push
+```
 
 ### Snapshot Build (Testing)
 
@@ -187,6 +243,16 @@ make snapshot
 ```
 
 This creates all binaries in `dist/` without pushing to GitHub or Homebrew.
+
+### Troubleshooting Releases
+
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| `missing GITHUB_TOKEN` | Token not exported | `export GITHUB_TOKEN=ghp_...` |
+| Homebrew formula not updated | `HOMEBREW_TAP_GITHUB_TOKEN` missing or no repo scope | Set token with `repo` scope on `UteamUP/homebrew-tap` |
+| `brew upgrade` shows "already up-to-date" | Formula not pushed or `brew update` not run | Run `brew update` first; check tap formula version |
+| Tag already exists | Trying to re-release | Delete tag: `git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z` |
+| GoReleaser fails on build | Code doesn't compile | Run `make check` before releasing |
 
 ---
 
