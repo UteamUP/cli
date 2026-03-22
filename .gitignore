@@ -1,0 +1,36 @@
+# Binaries
+bin/
+dist/
+uteamup
+ut
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test
+*.test
+*.out
+coverage.txt
+
+# Go workspace
+go.work
+go.work.sum
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Session logs
+SESSION_LOG_*.md
+
+# Config (secrets)
+config.json
+token.json
