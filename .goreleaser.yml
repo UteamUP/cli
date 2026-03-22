@@ -81,7 +81,7 @@ nfpms:
 brews:
   - name: uteamup
     repository:
-      owner: uteamup
+      owner: UteamUP
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     directory: Formula
