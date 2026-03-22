@@ -127,7 +127,16 @@ func registerDomainCommands() {
 		apiClient = client.NewAPIClient("https://api.uteamup.com", 30*time.Second, false, client.DefaultRetryOptions(), logger)
 	}
 
-	for _, cmd := range registry.DefaultRegistry.BuildCommands(apiClient, logger, &outputFormat) {
+	// Build export config from active profile
+	exportCfg := &registry.ExportConfig{}
+	if cfg != nil {
+		if profile, profErr := cfg.ActiveProfileConfig(); profErr == nil {
+			exportCfg.Enabled = profile.ExportJSON
+			exportCfg.Dir = profile.ExportDir
+		}
+	}
+
+	for _, cmd := range registry.DefaultRegistry.BuildCommands(apiClient, logger, &outputFormat, exportCfg) {
 		rootCmd.AddCommand(cmd)
 	}
 }

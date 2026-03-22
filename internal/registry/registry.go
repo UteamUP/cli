@@ -2,7 +2,10 @@ package registry
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -13,6 +16,12 @@ import (
 	"github.com/uteamup/cli/internal/logging"
 	"github.com/uteamup/cli/internal/output"
 )
+
+// ExportConfig holds JSON export settings from the active profile.
+type ExportConfig struct {
+	Enabled bool
+	Dir     string // defaults to ~/.uteamup/exports
+}
 
 // ArgDef defines a positional argument.
 type ArgDef struct {
@@ -80,15 +89,15 @@ func Register(d *Domain) {
 }
 
 // BuildCommands generates Cobra commands for all registered domains.
-func (r *Registry) BuildCommands(apiClient *client.APIClient, logger *logging.Logger, outputFormat *string) []*cobra.Command {
+func (r *Registry) BuildCommands(apiClient *client.APIClient, logger *logging.Logger, outputFormat *string, export *ExportConfig) []*cobra.Command {
 	var commands []*cobra.Command
 	for _, domain := range r.domains {
-		commands = append(commands, buildDomainCommand(domain, apiClient, logger, outputFormat))
+		commands = append(commands, buildDomainCommand(domain, apiClient, logger, outputFormat, export))
 	}
 	return commands
 }
 
-func buildDomainCommand(domain *Domain, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string) *cobra.Command {
+func buildDomainCommand(domain *Domain, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string, export *ExportConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     domain.Name,
 		Aliases: domain.Aliases,
@@ -96,13 +105,13 @@ func buildDomainCommand(domain *Domain, apiClient *client.APIClient, logger *log
 	}
 
 	for _, action := range domain.Actions {
-		cmd.AddCommand(buildActionCommand(domain, action, apiClient, logger, outputFormat))
+		cmd.AddCommand(buildActionCommand(domain, action, apiClient, logger, outputFormat, export))
 	}
 
 	return cmd
 }
 
-func buildActionCommand(domain *Domain, action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string) *cobra.Command {
+func buildActionCommand(domain *Domain, action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string, export *ExportConfig) *cobra.Command {
 	// Build usage string with positional args
 	use := action.Name
 	for _, arg := range action.Args {
@@ -117,7 +126,7 @@ func buildActionCommand(domain *Domain, action Action, apiClient *client.APIClie
 		Use:   use,
 		Short: action.Description,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return executeAction(cmd, args, domain, action, apiClient, logger, outputFormat)
+			return executeAction(cmd, args, domain, action, apiClient, logger, outputFormat, export)
 		},
 	}
 
@@ -170,7 +179,7 @@ func buildActionCommand(domain *Domain, action Action, apiClient *client.APIClie
 	return cmd
 }
 
-func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string) error {
+func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string, export *ExportConfig) error {
 	toolArgs := make(map[string]any)
 
 	// Positional args
@@ -225,8 +234,54 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		return err
 	}
 
+	// Export JSON to file if enabled
+	if export != nil && export.Enabled && result != nil {
+		if exportErr := exportJSON(export, domain.Name, action.Name, result, logger); exportErr != nil {
+			logger.Warn("failed to export JSON: %v", exportErr)
+		}
+	}
+
 	format := output.ParseFormat(*outputFormat)
 	return output.Print(format, result)
+}
+
+// exportJSON writes the raw JSON response to a file in the export directory.
+func exportJSON(export *ExportConfig, domainName, actionName string, data json.RawMessage, logger *logging.Logger) error {
+	dir := export.Dir
+	if dir == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+		dir = filepath.Join(home, ".uteamup", "exports")
+	}
+	// Expand ~ if present
+	if strings.HasPrefix(dir, "~/") {
+		home, _ := os.UserHomeDir()
+		dir = filepath.Join(home, dir[2:])
+	}
+
+	if err := os.MkdirAll(dir, 0750); err != nil {
+		return fmt.Errorf("creating export dir: %w", err)
+	}
+
+	// Pretty-print the JSON
+	var pretty json.RawMessage
+	indented, err := json.MarshalIndent(json.RawMessage(data), "", "  ")
+	if err != nil {
+		pretty = data
+	} else {
+		pretty = indented
+	}
+
+	filename := fmt.Sprintf("%s_%s.json", domainName, actionName)
+	path := filepath.Join(dir, filename)
+	if err := os.WriteFile(path, pretty, 0640); err != nil {
+		return fmt.Errorf("writing export: %w", err)
+	}
+
+	logger.Info("exported JSON to %s", path)
+	return nil
 }
 
 // buildRESTPath constructs the REST API path from domain + action.

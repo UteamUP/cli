@@ -68,6 +68,30 @@ You will be prompted for:
 		secret, _ := reader.ReadString('\n')
 		secret = strings.TrimSpace(secret)
 
+		// Export JSON defaults: enabled for development profiles, disabled for production
+		isDev := strings.Contains(strings.ToLower(name), "dev") ||
+			strings.Contains(baseURL, "localhost")
+		exportDefault := "N"
+		if isDev {
+			exportDefault = "Y"
+		}
+		fmt.Printf("Export JSON responses to file? [%s] (y/n): ", exportDefault)
+		exportAnswer, _ := reader.ReadString('\n')
+		exportAnswer = strings.TrimSpace(strings.ToLower(exportAnswer))
+		exportJSON := isDev // default based on profile type
+		if exportAnswer == "y" || exportAnswer == "yes" {
+			exportJSON = true
+		} else if exportAnswer == "n" || exportAnswer == "no" {
+			exportJSON = false
+		}
+
+		exportDir := ""
+		if exportJSON {
+			fmt.Print("Export directory [~/.uteamup/exports]: ")
+			exportDir, _ = reader.ReadString('\n')
+			exportDir = strings.TrimSpace(exportDir)
+		}
+
 		profile := config.Profile{
 			Name:           name,
 			APIKey:         apiKey,
@@ -76,6 +100,8 @@ You will be prompted for:
 			LogLevel:       "INFO",
 			RequestTimeout: 30000,
 			MaxRetries:     3,
+			ExportJSON:     exportJSON,
+			ExportDir:      exportDir,
 		}
 
 		profileKey := strings.ToLower(strings.ReplaceAll(name, " ", "-"))
@@ -111,12 +137,13 @@ var configSetCmd = &cobra.Command{
 	Short: "Set a configuration value",
 	Long: `Set a value in the active profile's configuration.
 
-Valid keys: baseUrl, apiKey, secret, logLevel, requestTimeout, maxRetries
+Valid keys: baseUrl, apiKey, secret, logLevel, requestTimeout, maxRetries, exportJson, exportDir
 
 Examples:
   uteamup config set baseUrl https://localhost:5002
   ut config set logLevel DEBUG
-  ut config set maxRetries 5`,
+  ut config set exportJson true
+  ut config set exportDir ~/my-exports`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
@@ -145,8 +172,12 @@ Examples:
 			fmt.Sscanf(value, "%d", &profile.MaxRetries)
 		case "name":
 			profile.Name = value
+		case "exportJson", "exportjson":
+			profile.ExportJSON = strings.ToLower(value) == "true" || value == "1" || strings.ToLower(value) == "yes"
+		case "exportDir", "exportdir":
+			profile.ExportDir = value
 		default:
-			return fmt.Errorf("unknown config key %q — valid keys: baseUrl, apiKey, secret, logLevel, requestTimeout, maxRetries", key)
+			return fmt.Errorf("unknown config key %q — valid keys: baseUrl, apiKey, secret, logLevel, requestTimeout, maxRetries, exportJson, exportDir", key)
 		}
 
 		cfg.Profiles[cfg.ActiveProfile] = *profile
