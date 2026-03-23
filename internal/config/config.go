@@ -35,7 +35,9 @@ type Profile struct {
 	MaxRetries     int    `json:"maxRetries"`
 	ExportJSON     bool   `json:"exportJson"`
 	ExportDir      string `json:"exportDir,omitempty"`
-	// Gemini AI settings for image analysis
+	// Tenant override — use a specific tenant instead of the logged-in default
+	TenantGuid string `json:"tenantGuid,omitempty"`
+	// Gemini AI settings for image/video analysis
 	GeminiAPIKey     string `json:"geminiApiKey,omitempty"`
 	GeminiModel      string `json:"geminiModel,omitempty"`
 	GoogleMapsAPIKey string `json:"googleMapsApiKey,omitempty"`
@@ -166,6 +168,9 @@ func applyEnvOverrides(cfg *Config) {
 	if v := os.Getenv("UTEAMUP_LOG_LEVEL"); v != "" {
 		p.LogLevel = v
 	}
+	if v := os.Getenv("UTEAMUP_TENANT_GUID"); v != "" {
+		p.TenantGuid = v
+	}
 	if v := os.Getenv("GEMINI_API_KEY"); v != "" {
 		p.GeminiAPIKey = v
 	}
@@ -222,6 +227,11 @@ func (c *Config) RedactedSummary() string {
 		exportDir = "~/.uteamup/exports"
 	}
 
+	tenantGuid := p.TenantGuid
+	if tenantGuid == "" {
+		tenantGuid = "(default from login)"
+	}
+
 	geminiKey := "(not set)"
 	if p.GeminiAPIKey != "" {
 		if len(p.GeminiAPIKey) > 8 {
@@ -249,6 +259,7 @@ func (c *Config) RedactedSummary() string {
   Base URL:        %s
   API Key:         %s
   Secret:          %s
+  Tenant GUID:     %s
   Log Level:       %s
   Request Timeout: %dms
   Max Retries:     %d
@@ -259,6 +270,7 @@ func (c *Config) RedactedSummary() string {
   Maps API Key:    %s`,
 		c.ActiveProfile, p.Name,
 		p.BaseURL, apiKey, secret,
+		tenantGuid,
 		p.LogLevel, p.RequestTimeout, p.MaxRetries,
 		p.ExportJSON, exportDir,
 		geminiKey, geminiModel,

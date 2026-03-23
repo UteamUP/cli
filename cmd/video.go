@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
+	"github.com/uteamup/cli/internal/auth"
 	"github.com/uteamup/cli/internal/config"
 	vaconfig "github.com/uteamup/cli/internal/videoanalyzer/config"
 	"github.com/uteamup/cli/internal/videoanalyzer/pipeline"
@@ -58,20 +60,60 @@ Examples:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		videoPath := args[0]
 
-		// Load Gemini settings from CLI config (profile defaults).
-		if cfg, err := config.Load(); err == nil {
-			if profile, err := cfg.ActiveProfileConfig(); err == nil {
-				if videoAPIKey == "" && profile.GeminiAPIKey != "" {
-					videoAPIKey = profile.GeminiAPIKey
-				}
-				if videoModel == "" && profile.GeminiModel != "" {
-					videoModel = profile.GeminiModel
-				}
-				if videoMapsAPIKey == "" && profile.GoogleMapsAPIKey != "" {
-					videoMapsAPIKey = profile.GoogleMapsAPIKey
-				}
-			}
+		// ── Auth + Tenant + Plan Validation ────────────────────────────
+		token, err := auth.LoadToken()
+		if err != nil || token == nil || !token.IsValid() {
+			fmt.Fprintln(os.Stderr, "Not authenticated. Run \"uteamup login\" first.")
+			os.Exit(1)
 		}
+
+		// Load CLI config for profile settings.
+		cliCfg, err := config.Load()
+		if err != nil {
+			return fmt.Errorf("loading CLI config: %w", err)
+		}
+		profile, err := cliCfg.ActiveProfileConfig()
+		if err != nil {
+			return fmt.Errorf("loading active profile: %w", err)
+		}
+
+		// Load Gemini settings from profile.
+		if videoAPIKey == "" && profile.GeminiAPIKey != "" {
+			videoAPIKey = profile.GeminiAPIKey
+		}
+		if videoModel == "" && profile.GeminiModel != "" {
+			videoModel = profile.GeminiModel
+		}
+		if videoMapsAPIKey == "" && profile.GoogleMapsAPIKey != "" {
+			videoMapsAPIKey = profile.GoogleMapsAPIKey
+		}
+
+		// Determine which tenant to use: config override or logged-in tenant.
+		tenantGuid := profile.TenantGuid
+		if tenantGuid != "" && !strings.EqualFold(tenantGuid, token.TenantGuid) {
+			// Config specifies a different tenant than the one we're logged into.
+			// User must re-authenticate for that tenant.
+			fmt.Fprintf(os.Stderr, "Tenant mismatch: config specifies tenant %s but you are logged into tenant %s (%s).\n",
+				tenantGuid, token.TenantGuid, token.TenantName)
+			fmt.Fprintln(os.Stderr, "Please run \"uteamup login\" to re-authenticate with the correct tenant.")
+			os.Exit(1)
+		}
+		if tenantGuid == "" {
+			tenantGuid = token.TenantGuid
+		}
+
+		// Validate that the tenant has an active plan.
+		baseURL := profile.BaseURL
+		tenantInfo, err := auth.FetchTenantInfo(token.AccessToken, baseURL, tenantGuid)
+		if err != nil {
+			return fmt.Errorf("validating tenant: %w", err)
+		}
+		if !tenantInfo.HasPlan() {
+			fmt.Fprintf(os.Stderr, "Tenant %q does not have an active subscription plan.\n", tenantInfo.Name)
+			fmt.Fprintln(os.Stderr, "A plan is required to use video analysis. Visit https://app.uteamup.com/plans to subscribe.")
+			os.Exit(1)
+		}
+		fmt.Printf("  Tenant:  %s (plan: %s)\n", tenantInfo.Name, tenantInfo.PlanName)
 
 		// Resolve paths to absolute.
 		absVideoPath, err := filepath.Abs(videoPath)
