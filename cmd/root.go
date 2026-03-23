@@ -95,6 +95,7 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(completionCmd)
 	rootCmd.AddCommand(imageCmd)
+	rootCmd.AddCommand(videoCmd)
 
 	// Register domain commands
 	registerDomainCommands()

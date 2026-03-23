@@ -134,6 +134,65 @@ cp .env.example .env  # Add your GEMINI_API_KEY
 
 ---
 
+## Video Analysis
+
+### Usage
+
+```bash
+uteamup video analyze ./videos                               # Analyze all videos in folder
+uteamup video analyze ./recording.mp4                         # Analyze a single video file
+uteamup video analyze ./videos --dry-run                      # Cost estimate only
+uteamup vid analyze ./videos --model gemini-2.5-pro           # Override model
+ut vid analyze ./videos -o ./results --verbose                # Custom output, verbose
+ut video analyze ./walkthrough.mov --max-cost 5.00            # Budget cap
+ut video analyze ./videos --maps-api-key AIza...              # Enable GPS reverse geocoding
+```
+
+### Supported Formats
+
+| Format | MIME Type | Action |
+|--------|-----------|--------|
+| MP4 | video/mp4 | Analyzed by video pipeline |
+| MOV | video/quicktime | Analyzed by video pipeline |
+| GIF | image/gif | Routed to image analyzer |
+| Other | — | Skipped with warning |
+
+File format detection uses magic bytes (file header), not file extensions.
+
+### Requirements
+
+- Google Gemini API key (set via `ut config apikey` or `--api-key` flag)
+- No external dependencies required (built-in Go implementation)
+
+### How It Works
+
+1. **Validate** — Scan input path, detect MIME types via magic bytes, route GIFs to image analyzer
+2. **Upload + Analyze** — Upload each video to Gemini File API, poll until processed, send CMMS extraction prompt
+3. **Deduplicate** — Merge duplicate entities within same video (temporal dedup) and across videos (grouping)
+4. **Export** — Write CSVs: assets.csv, tools.csv, parts.csv, chemicals.csv, vendors.csv, locations.csv
+
+### GPS and Location
+
+Videos from mobile devices often contain GPS coordinates in container metadata. The video analyzer:
+- Extracts GPS from MP4/MOV metadata atoms (©xyz, ISO 6709)
+- Reverse geocodes coordinates using Google Maps API (if `--maps-api-key` provided) or Nominatim (free fallback)
+- Assigns detected entities to their GPS-derived locations in the CSV output
+
+### Vendor Enrichment
+
+When vendor/manufacturer names are detected, the analyzer performs a follow-up Gemini lookup to enrich vendor data with:
+- Official company website
+- Full legal company name
+- Business category
+
+Enriched data appears in `vendors.csv`. Lookups are cached per vendor name to avoid duplicates.
+
+### Cost Estimation
+
+Video analysis uses more tokens than image analysis. Use `--dry-run` to estimate costs before processing, and `--max-cost` to cap spending.
+
+---
+
 ## Release Process
 
 > **IMPORTANT**: Every release MUST follow these steps. Skipping any step will result in users not getting updates via `brew upgrade`, missing binaries, or stale Homebrew formulas.
