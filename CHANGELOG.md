@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] — 2026-03-23
+
+### Added
+- Video analyzer requires UteamUP authentication (login) and active tenant subscription plan
+- Interactive multi-tenant selector when user has access to multiple tenants and no `tenantGuid` is configured
+- `tenantGuid` field in CLI profile config (`~/.uteamup/config.json`) for tenant override
+- `UTEAMUP_TENANT_GUID` environment variable override
+- Tenant mismatch detection: re-authentication required when config tenant differs from logged-in tenant
+- Plan name and tenant name displayed in video analyzer banner
+
 ## [0.6.0] — 2026-03-23
 
 ### Added

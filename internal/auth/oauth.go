@@ -100,6 +100,41 @@ func FetchTenantInfo(accessToken, baseURL, tenantGuid string) (*TenantInfo, erro
 	return &tenants[0], nil
 }
 
+// FetchAllTenants calls the my-tenants endpoint and returns all tenants
+// the user has access to. Used for interactive tenant selection.
+func FetchAllTenants(accessToken, baseURL string) ([]TenantInfo, error) {
+	req, err := http.NewRequest("GET", strings.TrimRight(baseURL, "/")+"/api/tenant/my-tenants", nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{
+		Timeout: 15 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // dev support
+		},
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fetching tenants: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("my-tenants returned %d: %s", resp.StatusCode, string(body))
+	}
+
+	var tenants []TenantInfo
+	if err := json.Unmarshal(body, &tenants); err != nil {
+		return nil, fmt.Errorf("parsing tenants: %w", err)
+	}
+
+	return tenants, nil
+}
+
 // AuthClient handles authentication flows.
 type AuthClient struct {
 	baseURL  string

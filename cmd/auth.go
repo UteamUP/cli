@@ -39,6 +39,12 @@ token expiry, and the associated config profile.`,
 		}
 		fmt.Printf("  Method:      %s\n", token.AuthMethod)
 		fmt.Printf("  Profile:     %s\n", token.Profile)
+		if token.TenantName != "" {
+			fmt.Printf("  Tenant:      %s\n", token.TenantName)
+		}
+		if token.TenantGuid != "" {
+			fmt.Printf("  Tenant GUID: %s\n", token.TenantGuid)
+		}
 		fmt.Printf("  Expires:     %s\n", token.ExpiresAt.Format("2006-01-02 15:04:05 UTC"))
 
 		if token.IsValid() {
