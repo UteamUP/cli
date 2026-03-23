@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -90,20 +92,54 @@ Examples:
 
 		// Determine which tenant to use: config override or logged-in tenant.
 		tenantGuid := profile.TenantGuid
+		baseURL := profile.BaseURL
+
 		if tenantGuid != "" && !strings.EqualFold(tenantGuid, token.TenantGuid) {
 			// Config specifies a different tenant than the one we're logged into.
-			// User must re-authenticate for that tenant.
 			fmt.Fprintf(os.Stderr, "Tenant mismatch: config specifies tenant %s but you are logged into tenant %s (%s).\n",
 				tenantGuid, token.TenantGuid, token.TenantName)
 			fmt.Fprintln(os.Stderr, "Please run \"uteamup login\" to re-authenticate with the correct tenant.")
 			os.Exit(1)
 		}
+
+		// If no tenantGuid in config and user has multiple tenants, prompt for selection.
 		if tenantGuid == "" {
-			tenantGuid = token.TenantGuid
+			allTenants, err := auth.FetchAllTenants(token.AccessToken, baseURL)
+			if err != nil {
+				return fmt.Errorf("fetching tenants: %w", err)
+			}
+			if len(allTenants) == 0 {
+				fmt.Fprintln(os.Stderr, "No tenants found for this user.")
+				os.Exit(1)
+			}
+			if len(allTenants) == 1 {
+				tenantGuid = allTenants[0].Guid
+			} else {
+				// Interactive tenant selection.
+				fmt.Println("\nYou have access to multiple tenants. Select one:")
+				for i, t := range allTenants {
+					planLabel := "(no plan)"
+					if t.HasPlan() {
+						planLabel = t.PlanName
+					}
+					fmt.Printf("  %d. %s [%s]\n", i+1, t.Name, planLabel)
+				}
+				fmt.Print("\nSelect tenant (1-" + strconv.Itoa(len(allTenants)) + "): ")
+
+				scanner := bufio.NewScanner(os.Stdin)
+				if !scanner.Scan() {
+					return fmt.Errorf("no tenant selected")
+				}
+				choice, err := strconv.Atoi(strings.TrimSpace(scanner.Text()))
+				if err != nil || choice < 1 || choice > len(allTenants) {
+					return fmt.Errorf("invalid selection: choose 1-%d", len(allTenants))
+				}
+				tenantGuid = allTenants[choice-1].Guid
+				fmt.Printf("  Selected: %s\n", allTenants[choice-1].Name)
+			}
 		}
 
 		// Validate that the tenant has an active plan.
-		baseURL := profile.BaseURL
 		tenantInfo, err := auth.FetchTenantInfo(token.AccessToken, baseURL, tenantGuid)
 		if err != nil {
 			return fmt.Errorf("validating tenant: %w", err)
