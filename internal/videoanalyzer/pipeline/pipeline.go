@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/schollz/progressbar/v3"
+
 	"github.com/uteamup/cli/internal/imageanalyzer/exporter"
 	"github.com/uteamup/cli/internal/imageanalyzer/geocoder"
 	"github.com/uteamup/cli/internal/imageanalyzer/grouper"
@@ -94,31 +96,70 @@ func (p *Pipeline) Run() error {
 
 	var allResults []models.ImageAnalysisResult
 	var gpsLocations []videoGPSData
+	totalVideos := len(scanResult.Videos)
+
+	// Overall progress bar (0% to 100% across all videos).
+	overallBar := progressbar.NewOptions(totalVideos,
+		progressbar.OptionSetDescription("  Overall progress"),
+		progressbar.OptionSetWidth(40),
+		progressbar.OptionShowCount(),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "█",
+			SaucerHead:    "█",
+			SaucerPadding: "░",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}),
+		progressbar.OptionOnCompletion(func() { fmt.Println() }),
+	)
 
 	for i, video := range scanResult.Videos {
-		fmt.Printf("\n  Video %d/%d: %s\n", i+1, len(scanResult.Videos), video.Filename)
+		// Per-video header.
+		fmt.Printf("\n  ── Video %d/%d: %s (%s) ──\n", i+1, totalVideos, video.Filename, formatFileSize(video.SizeBytes))
 
 		// Check max cost.
 		if p.config.Processing.MaxCost != nil {
 			currentCost := va.CostTracker().TotalCost()
 			if currentCost.EstimatedCostUSD >= *p.config.Processing.MaxCost {
-				fmt.Printf("\n  Max cost limit reached ($%.4f >= $%.4f). Stopping.\n",
+				fmt.Printf("  Max cost limit reached ($%.4f >= $%.4f). Stopping.\n",
 					currentCost.EstimatedCostUSD, *p.config.Processing.MaxCost)
 				break
 			}
 		}
 
+		// Per-video progress: 4 steps (upload → process → analyze → extract GPS).
+		videoBar := progressbar.NewOptions(4,
+			progressbar.OptionSetDescription("    Uploading"),
+			progressbar.OptionSetWidth(30),
+			progressbar.OptionSetTheme(progressbar.Theme{
+				Saucer:        "▓",
+				SaucerHead:    "▓",
+				SaucerPadding: "░",
+				BarStart:      "[",
+				BarEnd:        "]",
+			}),
+			progressbar.OptionOnCompletion(func() { fmt.Println() }),
+		)
+
+		// Step 1: Upload + Process (handled inside AnalyzeVideo with spinner).
+		videoBar.Describe("    Uploading & processing")
 		results, err := va.AnalyzeVideo(ctx, video.Path, string(video.MIMEType))
 		if err != nil {
 			log.Printf("Phase 2: error analyzing %s: %v", video.Filename, err)
 			fmt.Printf("    Error: %v (skipping)\n", err)
+			_ = videoBar.Add(4) // Complete the per-video bar.
+			_ = overallBar.Add(1)
 			continue
 		}
+		_ = videoBar.Add(2) // Upload + process done.
 
-		fmt.Printf("    Entities found: %d\n", len(results))
+		// Step 2: Parse results.
+		videoBar.Describe("    Parsing results")
 		allResults = append(allResults, results...)
+		_ = videoBar.Add(1)
 
-		// Extract GPS from video metadata.
+		// Step 3: Extract GPS.
+		videoBar.Describe("    Extracting GPS")
 		gpsData, found, gpsErr := gps.ExtractGPS(video.Path)
 		if gpsErr != nil {
 			log.Printf("Phase 2: GPS extraction error for %s: %v", video.Filename, gpsErr)
@@ -129,12 +170,24 @@ func (p *Pipeline) Run() error {
 				lat:       gpsData.Latitude,
 				lng:       gpsData.Longitude,
 			})
-			fmt.Printf("    GPS: %.6f, %.6f\n", gpsData.Latitude, gpsData.Longitude)
 		}
+		_ = videoBar.Add(1)
+
+		// Per-video summary.
+		fmt.Printf("    Entities: %d", len(results))
+		if found {
+			fmt.Printf(" | GPS: %.4f, %.4f", gpsData.Latitude, gpsData.Longitude)
+		}
+		fmt.Println()
+
+		// Update overall progress.
+		_ = overallBar.Add(1)
 	}
 
 	cost := va.CostTracker().TotalCost()
-	fmt.Printf("\n  Analysis cost: %s\n", cost.String())
+	fmt.Printf("\n  Videos:    %d processed\n", cost.VideosProcessed)
+	fmt.Printf("  Entities:  %d found\n", len(allResults))
+	fmt.Printf("  Cost:      $%.4f\n", cost.EstimatedCostUSD)
 
 	if len(allResults) == 0 {
 		fmt.Println("\nNo entities detected in any video.")
@@ -448,4 +501,23 @@ func appendUnique(slice []string, items ...string) []string {
 		}
 	}
 	return slice
+}
+
+// formatFileSize returns a human-readable file size string.
+func formatFileSize(bytes int64) string {
+	const (
+		kb = 1024
+		mb = kb * 1024
+		gb = mb * 1024
+	)
+	switch {
+	case bytes >= gb:
+		return fmt.Sprintf("%.1f GB", float64(bytes)/float64(gb))
+	case bytes >= mb:
+		return fmt.Sprintf("%.1f MB", float64(bytes)/float64(mb))
+	case bytes >= kb:
+		return fmt.Sprintf("%.1f KB", float64(bytes)/float64(kb))
+	default:
+		return fmt.Sprintf("%d B", bytes)
+	}
 }

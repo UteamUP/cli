@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.3] — 2026-03-23
+
+### Added
+- Dual progress bars for image and video analysis: per-item steps (load/upload/analyze/save) + overall 0%-100% progress
+- File size display in video analysis per-video headers
+- Per-item entity count summary after each image/video is analyzed
+
 ## [0.6.2] — 2026-03-23
 
 ### Added
