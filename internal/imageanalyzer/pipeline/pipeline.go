@@ -140,21 +140,47 @@ func (p *Pipeline) Run() error {
 		}
 	}
 
-	bar := progressbar.NewOptions(len(imagesToAnalyze),
-		progressbar.OptionSetDescription("Analyzing"),
-		progressbar.OptionShowCount(),
+	totalImages := len(imagesToAnalyze)
+
+	// Overall progress bar (0% to 100% across all images).
+	overallBar := progressbar.NewOptions(totalImages,
+		progressbar.OptionSetDescription("  Overall progress"),
 		progressbar.OptionSetWidth(40),
-		progressbar.OptionClearOnFinish(),
+		progressbar.OptionShowCount(),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "█",
+			SaucerHead:    "█",
+			SaucerPadding: "░",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}),
+		progressbar.OptionOnCompletion(func() { fmt.Println() }),
 	)
 
 	ctx := context.Background()
-	for _, imageInfo := range imagesToAnalyze {
-		_ = bar.Add(1)
-
+	for i, imageInfo := range imagesToAnalyze {
 		// Skip already processed.
 		if cp.IsProcessed(imageInfo.SHA256Hash) {
+			_ = overallBar.Add(1)
 			continue
 		}
+
+		// Per-image header.
+		fmt.Printf("\n  ── Image %d/%d: %s ──\n", i+1, totalImages, imageInfo.Filename)
+
+		// Per-image progress: 3 steps (load → analyze → save).
+		imgBar := progressbar.NewOptions(3,
+			progressbar.OptionSetDescription("    Loading"),
+			progressbar.OptionSetWidth(30),
+			progressbar.OptionSetTheme(progressbar.Theme{
+				Saucer:        "▓",
+				SaucerHead:    "▓",
+				SaucerPadding: "░",
+				BarStart:      "[",
+				BarEnd:        "]",
+			}),
+			progressbar.OptionOnCompletion(func() { fmt.Println() }),
+		)
 
 		// Check budget.
 		if p.config.Processing.MaxCost != nil {
@@ -167,6 +193,8 @@ func (p *Pipeline) Run() error {
 			}
 		}
 
+		// Step 1: Load image.
+		imgBar.Describe("    Loading image")
 		imgBytes, err := imageutil.LoadImageBytes(
 			imageInfo.Path,
 			p.config.Scan.MaxImageDimension,
@@ -177,9 +205,14 @@ func (p *Pipeline) Run() error {
 			results = append(results, failResult)
 			raw, _ := json.Marshal(failResult)
 			_ = cp.AddResult(imageInfo.SHA256Hash, raw)
+			_ = imgBar.Add(3)
+			_ = overallBar.Add(1)
 			continue
 		}
+		_ = imgBar.Add(1)
 
+		// Step 2: Analyze with Gemini.
+		imgBar.Describe("    Analyzing")
 		imageResults, err := geminiAnalyzer.AnalyzeImage(ctx, imageInfo.Path, imgBytes)
 		if err != nil {
 			log.Printf("Failed to analyze image %s: %v", imageInfo.Path, err)
@@ -187,21 +220,26 @@ func (p *Pipeline) Run() error {
 			results = append(results, failResult)
 			raw, _ := json.Marshal(failResult)
 			_ = cp.AddResult(imageInfo.SHA256Hash, raw)
+			_ = imgBar.Add(2)
+			_ = overallBar.Add(1)
 			continue
 		}
+		_ = imgBar.Add(1)
 
-		for i := range imageResults {
+		// Step 3: Process results.
+		imgBar.Describe("    Saving results")
+		for j := range imageResults {
 			// Attach iPhone edit pair paths.
 			if pairs, ok := editPairs[imageInfo.Filename]; ok {
-				imageResults[i].PairedImages = pairs
+				imageResults[j].PairedImages = pairs
 			}
 
 			// Apply confidence threshold.
-			if imageResults[i].Classification.Confidence < p.config.Processing.ConfidenceThreshold {
-				imageResults[i].Classification.PrimaryType = models.EntityTypeUnclassified
-				imageResults[i].FlaggedForReview = true
-				imageResults[i].ReviewReason = fmt.Sprintf(
-					"Low confidence: %.2f", imageResults[i].Classification.Confidence,
+			if imageResults[j].Classification.Confidence < p.config.Processing.ConfidenceThreshold {
+				imageResults[j].Classification.PrimaryType = models.EntityTypeUnclassified
+				imageResults[j].FlaggedForReview = true
+				imageResults[j].ReviewReason = fmt.Sprintf(
+					"Low confidence: %.2f", imageResults[j].Classification.Confidence,
 				)
 			}
 		}
@@ -211,6 +249,13 @@ func (p *Pipeline) Run() error {
 		// Checkpoint all results for this image.
 		raw, _ := json.Marshal(imageResults)
 		_ = cp.AddResult(imageInfo.SHA256Hash, raw)
+		_ = imgBar.Add(1)
+
+		// Per-image summary.
+		fmt.Printf("    Entities: %d\n", len(imageResults))
+
+		// Update overall progress.
+		_ = overallBar.Add(1)
 	}
 
 	fmt.Printf("\n  Analysis complete: %d results\n\n", len(results))
