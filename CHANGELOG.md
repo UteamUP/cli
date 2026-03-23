@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] — 2026-03-23
+
+### Added
+- `ut tenant show` command (aliases: `list`, `ls`) — lists all tenants with name, GUID, plan, and status
+- `ut tenant select` command — interactive tenant picker that saves selection to config and updates active token
+- Tenant selection updates both config profile (`tenantGuid`) and cached token so `ut auth status` reflects the change immediately
+
 ## [0.6.1] — 2026-03-23
 
 ### Added
