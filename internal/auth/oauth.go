@@ -34,10 +34,70 @@ type LoginResponse struct {
 }
 
 // TenantInfo represents a tenant from the my-tenants endpoint.
+// Maps to TenantResponseModel in C# backend.
 type TenantInfo struct {
-	ID   int    `json:"id"`
-	Guid string `json:"guid"`
-	Name string `json:"name"`
+	ID       int    `json:"id"`
+	Guid     string `json:"guid"`
+	Name     string `json:"name"`
+	IsActive bool   `json:"isActive"`
+	PlanID   int    `json:"planId"`
+	PlanName string `json:"planName"`
+}
+
+// HasPlan returns true if the tenant has an active subscription plan.
+func (t *TenantInfo) HasPlan() bool {
+	return t.PlanID > 0 && t.PlanName != ""
+}
+
+// FetchTenantInfo calls the my-tenants endpoint and returns tenant info for the
+// given tenant GUID. If tenantGuid is empty, returns the default/first tenant.
+// Requires a valid access token and the backend base URL.
+func FetchTenantInfo(accessToken, baseURL, tenantGuid string) (*TenantInfo, error) {
+	req, err := http.NewRequest("GET", strings.TrimRight(baseURL, "/")+"/api/tenant/my-tenants", nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{
+		Timeout: 15 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // dev support
+		},
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fetching tenants: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("my-tenants returned %d: %s", resp.StatusCode, string(body))
+	}
+
+	var tenants []TenantInfo
+	if err := json.Unmarshal(body, &tenants); err != nil {
+		return nil, fmt.Errorf("parsing tenants: %w", err)
+	}
+
+	if len(tenants) == 0 {
+		return nil, fmt.Errorf("no tenants found for this user")
+	}
+
+	// If a specific tenant GUID is requested, find it.
+	if tenantGuid != "" {
+		for _, t := range tenants {
+			if strings.EqualFold(t.Guid, tenantGuid) {
+				return &t, nil
+			}
+		}
+		return nil, fmt.Errorf("tenant with GUID %q not found — you may not have access to this tenant", tenantGuid)
+	}
+
+	// Default: return first tenant.
+	return &tenants[0], nil
 }
 
 // AuthClient handles authentication flows.
