@@ -1,6 +1,6 @@
 # UteamUP CLI
 
-Command-line interface for the [UteamUP](https://uteamup.com) platform. Manage assets, work orders, users, and more from any terminal. Includes AI-powered image analysis for CMMS inventory onboarding.
+Command-line interface for the [UteamUP](https://uteamup.com) platform. Manage assets, work orders, users, and more from any terminal. Includes AI-powered image and video analysis for CMMS inventory onboarding.
 
 Both `uteamup` and `ut` (shortname) are installed — they are identical.
 
@@ -21,17 +21,17 @@ Download the `.pkg` file from [Releases](https://github.com/uteamup/cli/releases
 
 **Debian / Ubuntu (.deb)**:
 ```bash
-sudo dpkg -i uteamup_0.3.0_amd64.deb
+sudo dpkg -i uteamup_0.6.2_amd64.deb
 ```
 
 **Fedora / RHEL / CentOS (.rpm)**:
 ```bash
-sudo rpm -i uteamup-0.3.0.x86_64.rpm
+sudo rpm -i uteamup-0.6.2.x86_64.rpm
 ```
 
 **Manual (tar.gz)**:
 ```bash
-tar xzf uteamup_0.3.0_linux_amd64.tar.gz
+tar xzf uteamup_0.6.2_linux_amd64.tar.gz
 sudo mv uteamup /usr/local/bin/
 sudo ln -sf /usr/local/bin/uteamup /usr/local/bin/ut
 ```
@@ -86,6 +86,9 @@ ut config apikey YOUR_GEMINI_API_KEY
 # 2. Choose a model (optional — defaults to gemini-3.1-flash-lite-preview)
 ut config model list                         # See available models
 ut config model gemini-3.1-pro-preview       # Use pro for higher accuracy
+
+# 3. (Optional) Set Google Maps API key for GPS reverse geocoding
+ut config set googleMapsApiKey YOUR_GOOGLE_MAPS_KEY
 ```
 
 ### Usage
@@ -96,6 +99,9 @@ ut image analyze ./photos --dry-run          # Estimate cost first
 ut image analyze ./photos --output ./results # Custom output directory
 ut img analyze ./photos --model gemini-pro-latest --verbose
 ut img analyze ./photos --no-rename          # Keep original filenames
+ut img analyze ./photos --max-cost 5.00      # Budget cap
+ut img analyze ./photos --resume             # Resume interrupted analysis
+ut img analyze ./photos --maps-api-key AIza... # Enable GPS geocoding
 ```
 
 ### What It Does
@@ -106,9 +112,24 @@ ut img analyze ./photos --no-rename          # Keep original filenames
 4. **Extracts** CMMS fields: name, serial number, model, manufacturer, condition, etc.
 5. **Detects multiple entities** per image (e.g., a machine with visible parts)
 6. **Links relationships** — parts/tools/chemicals linked to parent assets via `related_to`
-7. **Groups** duplicate images of the same item across photos
-8. **Exports** per-entity-type CSVs (`assets.csv`, `tools.csv`, `parts.csv`, `chemicals.csv`)
-9. **Renames** images with descriptive filenames (e.g., `asset_air_compressor_001_20260322.HEIC`)
+7. **Extracts GPS** coordinates from EXIF data and reverse geocodes to addresses
+8. **Detects vendors** — extracts manufacturer/brand names, looks up company info online via Gemini
+9. **Creates locations** — from GPS data (with Google Maps reverse geocoding) and Gemini-suggested locations
+10. **Groups** duplicate images of the same item across photos
+11. **Exports** CSVs: `assets.csv`, `tools.csv`, `parts.csv`, `chemicals.csv`, `vendors.csv`, `locations.csv`
+12. **Renames** images with descriptive filenames (e.g., `asset_air_compressor_001_20260322.HEIC`)
+
+### CSV Output
+
+| File | Contents |
+|------|----------|
+| `assets.csv` | Equipment, machinery, vehicles with vendor/location links |
+| `tools.csv` | Handheld tools and instruments |
+| `parts.csv` | Spare parts and components |
+| `chemicals.csv` | Chemical products with GHS/safety data |
+| `vendors.csv` | Deduplicated manufacturers with website, email, phone (enriched via Gemini) |
+| `locations.csv` | GPS-derived and detected locations with address, coordinates, Google Maps URL |
+| `summary_report.md` | Analysis summary with counts and timing |
 
 ### Available Models
 
@@ -123,10 +144,98 @@ ut img analyze ./photos --no-rename          # Keep original filenames
 
 ### Requirements
 
-- [UteamUP Image Analyzer](https://github.com/UteamUP/ImageAnalyzer) Python tool installed
-- Python 3.10+ with virtual environment
 - Google Gemini API key ([Get one here](https://aistudio.google.com/apikey))
 - Must be logged in (`uteamup login`)
+- (Optional) Google Maps API key for GPS reverse geocoding
+
+---
+
+## Video Analysis
+
+AI-powered video analysis for CMMS inventory. Walk through a facility recording video, and the analyzer identifies equipment, tools, parts, and chemicals with timestamps.
+
+### Usage
+
+```bash
+ut video analyze ./videos                    # Analyze all videos in folder
+ut video analyze ./recording.mp4             # Analyze a single video
+ut video analyze ./videos --dry-run          # Estimate cost first
+ut vid analyze ./videos --model gemini-2.5-pro
+ut vid analyze ./videos --max-cost 5.00      # Budget cap
+```
+
+### Supported Formats
+
+| Format | MIME Type | Action |
+|--------|-----------|--------|
+| MP4 | video/mp4 | Analyzed by video pipeline |
+| MOV | video/quicktime | Analyzed by video pipeline |
+| GIF | image/gif | Routed to image analyzer |
+
+### What It Does
+
+1. **Validates** files via magic byte MIME detection (not extensions)
+2. **Uploads** video to Gemini File API with progress spinner
+3. **Analyzes** video frames for CMMS entities with timestamp detection (MM:SS)
+4. **Extracts GPS** from MP4/MOV container metadata (©xyz and ISO 6709 atoms)
+5. **Deduplicates** entities across frames (temporal, 30s window) and across videos (grouping)
+6. **Enriches vendors** with follow-up Gemini lookup (website, full name, business category)
+7. **Exports** same CSV format as image analyzer (`assets.csv`, `tools.csv`, `parts.csv`, `chemicals.csv`, `vendors.csv`, `locations.csv`)
+
+### Authentication & Tenant Required
+
+Video analysis requires UteamUP login and an active tenant subscription plan:
+
+```bash
+ut login                   # Authenticate first
+ut tenant select           # Select which tenant to use (if you have multiple)
+ut video analyze ./videos  # Tenant + plan validated automatically
+```
+
+### Video Analysis Flags
+
+| Flag | Short | Description | Default |
+|------|-------|-------------|---------|
+| `--output` | `-o` | Output folder for CSVs | `./Output` |
+| `--model` | | Gemini model override | From config |
+| `--api-key` | | Gemini API key override | From config |
+| `--dry-run` | | Estimate cost only | `false` |
+| `--config` | | Config YAML override | |
+| `--verbose` | `-V` | Enable verbose output | `false` |
+| `--max-cost` | | Maximum budget in USD | unlimited |
+| `--similarity-threshold` | | Grouping threshold (0.0-1.0) | `0.75` |
+| `--confidence-threshold` | | Min classification confidence | `0.5` |
+| `--maps-api-key` | | Google Maps API key for GPS geocoding | |
+
+---
+
+## Tenant Management
+
+Manage the tenants you have access to. Required for video analysis and other tenant-scoped features.
+
+```bash
+ut tenant show             # List all tenants (name, GUID, plan, status)
+ut tenant list             # Same as show (alias)
+ut tenant ls               # Same as show (alias)
+ut tenant select           # Interactive picker — saves to config + updates active token
+```
+
+When you have multiple tenants, `ut tenant select` presents a numbered list:
+
+```
+Select a tenant for demo@iteggs.com:
+
+  * 1. Acme Corp [Professional]
+    2. Test Org [Starter]
+
+Select tenant (1-2): 1
+
+Active tenant set to: Acme Corp (abc123-def456...)
+```
+
+The selected tenant is saved to your config profile (`tenantGuid`) and immediately reflected in `ut auth status`.
+
+You can also set a tenant directly: `ut config set tenantGuid <GUID>` or via `UTEAMUP_TENANT_GUID` env var.
 
 ---
 
@@ -148,8 +257,10 @@ Config is stored at `~/.uteamup/config.json`. Supports multiple profiles for dif
       "logLevel": "INFO",
       "requestTimeout": 30000,
       "maxRetries": 3,
+      "tenantGuid": "<optional tenant GUID override>",
       "geminiApiKey": "<Google Gemini API key>",
-      "geminiModel": "gemini-3.1-flash-lite-preview"
+      "geminiModel": "gemini-3.1-flash-lite-preview",
+      "googleMapsApiKey": "<Google Maps API key>"
     },
     "development": {
       "name": "Development",
@@ -159,8 +270,10 @@ Config is stored at `~/.uteamup/config.json`. Supports multiple profiles for dif
       "logLevel": "DEBUG",
       "requestTimeout": 30000,
       "maxRetries": 1,
+      "tenantGuid": "<optional tenant GUID override>",
       "geminiApiKey": "<Google Gemini API key>",
-      "geminiModel": "gemini-3.1-pro-preview"
+      "geminiModel": "gemini-3.1-pro-preview",
+      "googleMapsApiKey": "<Google Maps API key>"
     }
   }
 }
@@ -176,8 +289,10 @@ Environment variables override config file values (same names as the MCP server)
 | `UTEAMUP_SECRET` | API secret (64+ characters) |
 | `UTEAMUP_API_BASE_URL` | API endpoint URL |
 | `UTEAMUP_LOG_LEVEL` | Log level: TRACE, DEBUG, INFO, WARN, ERROR |
-| `GEMINI_API_KEY` | Google Gemini API key for image analysis |
+| `GEMINI_API_KEY` | Google Gemini API key for image/video analysis |
 | `GEMINI_MODEL` | Default Gemini model name |
+| `GOOGLE_MAPS_API_KEY` | Google Maps API key for GPS reverse geocoding |
+| `UTEAMUP_TENANT_GUID` | Override tenant GUID |
 
 ### Profile Management
 
@@ -281,8 +396,28 @@ Authentication Status
   User:        demo@iteggs.com
   Method:      login
   Profile:     production
+  Tenant:      Acme Corp
+  Tenant GUID: abc123-def456-789...
   Expires:     2026-03-29 13:00:00 UTC
   Status:      Valid (6d23h remaining)
+```
+
+### `uteamup tenant` (aliases: `tenants`)
+
+Manage tenants.
+
+| Subcommand | Description |
+|------------|-------------|
+| `tenant show` | List all tenants with name, GUID, plan, and status |
+| `tenant list` | Same as `show` |
+| `tenant ls` | Same as `show` |
+| `tenant select` | Interactive picker — saves selection to config and updates active token |
+
+**Examples:**
+```bash
+ut tenant show              # List all your tenants
+ut tenant select            # Pick a tenant interactively
+ut config set tenantGuid <GUID>  # Set tenant directly
 ```
 
 ### `uteamup config`
@@ -299,7 +434,7 @@ Manage CLI configuration.
 | `config model [name]` | Get or set the default Gemini model |
 | `config model list` | List available Gemini models |
 
-**Valid keys for `config set`:** `baseUrl`, `apiKey`, `secret`, `logLevel`, `requestTimeout`, `maxRetries`, `name`, `geminiApiKey`, `geminiModel`, `exportJson`, `exportDir`
+**Valid keys for `config set`:** `baseUrl`, `apiKey`, `secret`, `logLevel`, `requestTimeout`, `maxRetries`, `name`, `tenantGuid`, `geminiApiKey`, `geminiModel`, `googleMapsApiKey`, `exportJson`, `exportDir`
 
 **Examples:**
 ```bash
@@ -356,6 +491,11 @@ AI-powered image analysis for CMMS inventory.
 |--------|-------|-------------|
 | `analyze` | `ut image analyze <path> [flags]` | Analyze images in a folder |
 
+| Action | Usage | Description |
+|--------|-------|-------------|
+| `analyze` | `ut image analyze <path> [flags]` | Analyze images in a folder |
+| `status` | `ut image status` | Show checkpoint progress |
+
 **Flags for `analyze`:**
 
 | Flag | Short | Description | Default |
@@ -363,8 +503,13 @@ AI-powered image analysis for CMMS inventory.
 | `--output` | `-o` | Output folder for CSVs | `./Output` |
 | `--model` | | Gemini model override | From config |
 | `--api-key` | | Gemini API key override | From config |
+| `--maps-api-key` | | Google Maps API key for GPS geocoding | From config |
 | `--dry-run` | | Estimate cost only | `false` |
 | `--no-rename` | | Skip image renaming | `false` |
+| `--max-cost` | | Maximum budget in USD | unlimited |
+| `--resume` | | Resume from checkpoint | `false` |
+| `--similarity-threshold` | | Grouping similarity (0.0-1.0) | `0.75` |
+| `--confidence-threshold` | | Min confidence to classify (0.0-1.0) | `0.5` |
 | `--config` | | Config YAML override | |
 | `--verbose` | `-V` | Enable verbose output | `false` |
 
@@ -373,7 +518,42 @@ AI-powered image analysis for CMMS inventory.
 ut image analyze ./photos
 ut image analyze ./photos --dry-run
 ut img analyze ./photos --model gemini-3.1-pro-preview -o ./results
-ut img analyze ./photos --no-rename --verbose
+ut img analyze ./photos --max-cost 5.00 --maps-api-key AIza...
+ut img analyze ./photos --resume --verbose
+ut image status                              # Check analysis progress
+```
+
+---
+
+### Video Commands
+
+#### `uteamup video` (aliases: `vid`, `videos`)
+
+AI-powered video analysis for CMMS inventory.
+
+| Action | Usage | Description |
+|--------|-------|-------------|
+| `analyze` | `ut video analyze <path> [flags]` | Analyze videos in a folder or single file |
+
+Supports same flags as image analyze plus video-specific handling. MP4 and MOV supported; GIFs routed to image analyzer.
+
+---
+
+### Tenant Commands
+
+#### `uteamup tenant` (aliases: `tenants`)
+
+Manage tenant selection for multi-tenant environments.
+
+| Action | Usage | Description |
+|--------|-------|-------------|
+| `show` | `ut tenant show` | List all tenants with name, GUID, plan, status |
+| `select` | `ut tenant select` | Interactive tenant picker |
+
+**Examples:**
+```bash
+ut tenant show                               # List all tenants
+ut tenant select                             # Pick tenant interactively
 ```
 
 ---
@@ -617,14 +797,41 @@ make release      # Full GoReleaser release (tags + publishes)
 
 ### Project Structure
 
-```
 uteamup_cli/
 ├── main.go                 # Entry point
-├── cmd/                    # Cobra commands (root, login, logout, auth, config, version, completion)
+├── cmd/                    # Cobra commands (root, login, logout, auth, config, image, video, tenant, version)
 ├── internal/
 │   ├── auth/               # OAuth 2.0 + PKCE, login, token cache
 │   ├── client/             # HTTP client, retry, SSE parser
 │   ├── config/             # Config loading, profiles, validation
+│   ├── registry/           # Domain registry + command builder
+│   ├── output/             # Table / JSON / YAML formatters
+│   ├── logging/            # Structured logging with redaction
+│   ├── errors/             # Typed error hierarchy
+│   └── imageanalyzer/      # Native Go image/video analysis engine
+│       ├── models/         # Entity types, extracted data, CSV columns
+│       ├── config/         # YAML config, env vars, functional options
+│       ├── scanner/        # Folder walk, hashing, EXIF/GPS, duplicates
+│       ├── analyzer/       # Gemini AI client, prompts, multi-entity parser
+│       ├── grouper/        # Similarity scoring, clustering, dedup
+│       ├── exporter/       # CSV export, image renaming, summary report
+│       ├── pipeline/       # 4-phase orchestration
+│       ├── geocoder/       # Google Maps / Nominatim reverse geocoding
+│       ├── vendorlookup/   # Gemini-powered vendor info enrichment
+│       ├── imageutil/      # Image resize, HEIC convert, validation
+│       ├── checkpoint/     # JSON checkpoint, file locking, resume
+│       ├── ratelimiter/    # Token bucket rate limiter
+│       └── retry/          # Exponential backoff with jitter
+├── packaging/              # Installer configs (MSI, pkg, deb, rpm, Homebrew)
+└── docs/commands/          # Auto-generated command docs
+│   ├── videoanalyzer/      # AI video analysis (Gemini File API)
+│   │   ├── analyzer/       # Gemini File API upload + poll + analyze
+│   │   ├── config/         # Video-specific config
+│   │   ├── fileutil/       # MIME detection + file scanner
+│   │   ├── gps/            # GPS extraction from MP4/MOV metadata
+│   │   ├── pipeline/       # 4-phase orchestration + temporal dedup
+│   │   ├── spinner/        # Terminal braille spinner
+│   │   └── vendor/         # Vendor enrichment via Gemini
 │   ├── registry/           # Domain registry + command builder
 │   ├── output/             # Table / JSON / YAML formatters
 │   ├── logging/            # Structured logging with redaction
