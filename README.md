@@ -207,6 +207,144 @@ ut video analyze ./videos  # Tenant + plan validated automatically
 | `--confidence-threshold` | | Min classification confidence | `0.5` |
 | `--maps-api-key` | | Google Maps API key for GPS geocoding | |
 
+### Advanced Flags Explained
+
+#### `--max-cost` — Budget Cap
+
+Stops processing when estimated API cost reaches the limit. Useful for large batches where you want to control spending.
+
+```bash
+# Without --max-cost: processes all 500 images (~$0.19)
+ut image analyze ./warehouse-photos
+#   assets.csv: 380 rows
+#   tools.csv: 95 rows
+#   parts.csv: 25 rows
+#   Total cost: $0.19
+
+# With --max-cost 0.05: stops after ~130 images
+ut image analyze ./warehouse-photos --max-cost 0.05
+#   ⚠ Budget limit reached: $0.0498 spent of $0.05 limit
+#   assets.csv: 98 rows (partial)
+#   Checkpoint saved — use --resume to continue later
+```
+
+**Video example:**
+```bash
+# Videos use more tokens — a 5-minute walkthrough costs ~$0.15
+ut video analyze ./facility-tour.mp4 --max-cost 1.00
+```
+
+#### `--resume` — Continue from Checkpoint
+
+Resumes a previously interrupted analysis (from `--max-cost`, crash, or Ctrl+C). Skips already-processed images using the checkpoint at `~/.uteamup/image-checkpoint.json`.
+
+```bash
+# Day 1: Process first batch with budget
+ut image analyze ./photos --max-cost 0.05
+#   Processed: 130/500 images
+#   Checkpoint saved
+
+# Day 2: Resume where you left off
+ut image analyze ./photos --resume
+#   Loaded checkpoint: 130 already processed
+#   Processing remaining 370 images...
+#   assets.csv: 380 rows (complete)
+```
+
+#### `--maps-api-key` — GPS Reverse Geocoding
+
+When images contain GPS coordinates in EXIF data (common with phone photos), this flag enables reverse geocoding to convert coordinates into street addresses, city, country, and Google Maps URLs.
+
+```bash
+# Without --maps-api-key: GPS coordinates shown but not resolved
+ut image analyze ./site-photos
+#   locations.csv:
+#     name,latitude,longitude,formatted_address,source
+#     Outdoor Area,64.1354,-21.8954,,gps_exif          ← no address
+
+# With --maps-api-key: full address resolution
+ut image analyze ./site-photos --maps-api-key AIzaSyB1...
+#   locations.csv:
+#     name,latitude,longitude,street,city,country,formatted_address,google_maps_url,source
+#     Outdoor Area,64.1354,-21.8954,Laugavegur 15,Reykjavik,Iceland,"Laugavegur 15, 101 Reykjavik, Iceland",https://www.google.com/maps/place/?q=place_id:ChIJ...,gps_reverse_geocoded
+
+# Or set it once in config (no need for flag every time):
+ut config set googleMapsApiKey AIzaSyB1...
+```
+
+**Video example — GPS from MP4 metadata:**
+```bash
+# Phone videos embed GPS in container metadata (not EXIF)
+ut video analyze ./walkthrough.mov --maps-api-key AIzaSyB1...
+#   Extracted GPS: 64.1354, -21.8954 from MOV ©xyz atom
+#   Reverse geocoded: Kópavogur, Iceland
+#   All entities from this video linked to that location
+```
+
+#### `--similarity-threshold` — Grouping Sensitivity
+
+Controls how aggressively the deduplication groups similar entities. Lower values = more aggressive merging, higher values = more separate entries.
+
+```bash
+# Default (0.75): balanced — groups obvious duplicates
+ut image analyze ./photos
+#   3 photos of the same pump → 1 group
+#   2 similar-looking valves → 2 separate entries (not similar enough)
+#   assets.csv: 45 rows
+
+# Lower threshold (0.5): aggressive — groups loosely similar items
+ut image analyze ./photos --similarity-threshold 0.5
+#   3 photos of the same pump → 1 group
+#   2 similar-looking valves → 1 group (merged!)
+#   assets.csv: 38 rows (fewer, more merged)
+
+# Higher threshold (0.9): conservative — only exact matches
+ut image analyze ./photos --similarity-threshold 0.9
+#   3 photos of the same pump → maybe 2 groups (if names differ slightly)
+#   assets.csv: 52 rows (more, less merging)
+```
+
+**How similarity is calculated (6 weighted signals):**
+
+| Signal | Weight | Match Type |
+|--------|--------|------------|
+| Serial number | 0.40 | Exact match |
+| Model number | 0.20 | Exact match |
+| Name | 0.20 | Fuzzy (Levenshtein ratio) |
+| Description | 0.10 | Fuzzy (Levenshtein ratio) |
+| Perceptual hash | 0.05 | Visual similarity |
+| Brand | 0.05 | Exact (case-insensitive) |
+
+Two items with matching serial + model = 0.60 score → grouped at default 0.75? No. Add fuzzy name match (0.18) = 0.78 → grouped.
+
+#### `--confidence-threshold` — Classification Filtering
+
+Sets the minimum AI confidence score (0.0-1.0) required to classify an entity. Below this threshold, entities are marked as "unclassified" and exported to a separate review file.
+
+```bash
+# Default (0.5): accepts most classifications
+ut image analyze ./photos
+#   "Industrial Pump" (confidence: 0.95) → assets.csv ✓
+#   "Metal Object" (confidence: 0.45) → unclassifieds.csv (flagged for review)
+#   "Pipe Fitting" (confidence: 0.72) → parts.csv ✓
+#   assets.csv: 40 rows, unclassifieds.csv: 3 rows
+
+# Higher threshold (0.8): only high-confidence results
+ut image analyze ./photos --confidence-threshold 0.8
+#   "Industrial Pump" (confidence: 0.95) → assets.csv ✓
+#   "Metal Object" (confidence: 0.45) → unclassifieds.csv
+#   "Pipe Fitting" (confidence: 0.72) → unclassifieds.csv (now below threshold!)
+#   assets.csv: 30 rows, unclassifieds.csv: 13 rows
+
+# Lower threshold (0.3): accept everything the AI suggests
+ut image analyze ./photos --confidence-threshold 0.3
+#   Almost nothing goes to unclassified
+#   assets.csv: 43 rows, unclassifieds.csv: 0 rows
+#   ⚠ May include some misclassifications
+```
+
+**Recommendation:** Start with the default (0.5), review `unclassifieds.csv`, then adjust up if you're getting too many false positives or down if too many items are flagged.
+
 ---
 
 ## Tenant Management
