@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-03-27
+
+### Added
+- `report-analytics` domain (alias: `report-stats`) — view aggregated report analytics with cost trends, top assets by maintenance cost, and completion metrics
+- `asset-reports` domain — view paginated reports for a specific asset with summary statistics
+- Enriched `report` domain description with cost breakdown, checklists, meter readings, labour, and tool usage details
+
 ## [0.6.3] — 2026-03-23
 
 ### Added
