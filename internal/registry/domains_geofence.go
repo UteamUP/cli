@@ -32,7 +32,7 @@ func init() {
 					{Name: "name", Description: "Zone name", Required: true, Type: "string"},
 					{Name: "center-latitude", Description: "Center latitude coordinate", Required: true, Type: "float"},
 					{Name: "center-longitude", Description: "Center longitude coordinate", Required: true, Type: "float"},
-					{Name: "radius-meters", Description: "Zone radius in meters", Default: 200, Type: "float"},
+					{Name: "radius-meters", Description: "Zone radius in meters", Default: 200.0, Type: "float"},
 					{Name: "from-json", Description: "JSON file with zone data", Type: "string"},
 				},
 			},

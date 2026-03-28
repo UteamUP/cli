@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] — 2026-03-28
+
+### Fixed
+- Fixed panic when running geofence commands: `interface conversion: interface {} is int, not float64`
+- Made float flag default handling in domain registry defensive against int/float64 type mismatch
+
 ## [0.7.0] — 2026-03-27
 
 ### Added

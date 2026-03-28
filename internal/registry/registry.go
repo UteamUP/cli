@@ -156,7 +156,12 @@ func buildActionCommand(domain *Domain, action Action, apiClient *client.APIClie
 		case "float":
 			def := 0.0
 			if flag.Default != nil {
-				def = flag.Default.(float64)
+				switch v := flag.Default.(type) {
+				case float64:
+					def = v
+				case int:
+					def = float64(v)
+				}
 			}
 			cmd.Flags().Float64(flag.Name, def, flag.Description)
 		default: // string
