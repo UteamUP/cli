@@ -42,3 +42,6 @@ superpowers/
 # Checkpoint
 .checkpoint.json
 .checkpoint.json.lock
+
+# Firebase
+firebase-debug.log
