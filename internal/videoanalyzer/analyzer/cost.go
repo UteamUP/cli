@@ -31,12 +31,12 @@ const (
 
 // CostEstimate holds estimated or actual token usage and cost.
 type CostEstimate struct {
-	InputTokens       int
-	OutputTokens      int
-	TotalTokens       int
-	EstimatedCostUSD  float64
-	VideosProcessed   int
-	VendorLookups     int
+	InputTokens      int
+	OutputTokens     int
+	TotalTokens      int
+	EstimatedCostUSD float64
+	VideosProcessed  int
+	VendorLookups    int
 }
 
 // String returns a human-readable cost summary.
@@ -47,11 +47,11 @@ func (c CostEstimate) String() string {
 
 // CostTracker tracks running token usage and cost across multiple video analyses.
 type CostTracker struct {
-	mu            sync.Mutex
-	inputTokens   int
-	outputTokens  int
+	mu              sync.Mutex
+	inputTokens     int
+	outputTokens    int
 	videosProcessed int
-	vendorLookups int
+	vendorLookups   int
 }
 
 // NewCostTracker creates a new CostTracker.

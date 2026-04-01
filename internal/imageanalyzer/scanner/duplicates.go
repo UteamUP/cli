@@ -23,10 +23,10 @@ func DetectDuplicates(images []models.ImageInfo) (unique []models.ImageInfo, dup
 		if kept, exists := seen[img.SHA256Hash]; exists {
 			duplicatePairs = append(duplicatePairs, [2]string{kept.Path, img.Path})
 			hashPreview := img.SHA256Hash
-		if len(hashPreview) > 12 {
-			hashPreview = hashPreview[:12]
-		}
-		log.Printf("duplicate detected: %s is a duplicate of %s (hash %s)",
+			if len(hashPreview) > 12 {
+				hashPreview = hashPreview[:12]
+			}
+			log.Printf("duplicate detected: %s is a duplicate of %s (hash %s)",
 				img.Filename, kept.Filename, hashPreview)
 		} else {
 			seen[img.SHA256Hash] = img

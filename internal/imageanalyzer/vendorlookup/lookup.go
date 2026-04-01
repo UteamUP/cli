@@ -19,7 +19,7 @@ import (
 
 // VendorLookup enriches vendor records with online information via Gemini.
 type VendorLookup struct {
-	model *genai.GenerativeModel
+	model  *genai.GenerativeModel
 	client *genai.Client
 }
 

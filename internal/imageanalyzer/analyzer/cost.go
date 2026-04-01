@@ -2,11 +2,11 @@ package analyzer
 
 // Gemini 2.0 Flash pricing constants (per 1M tokens, as of 2025).
 const (
-	inputCostPer1MTokens         = 0.10  // USD
-	outputCostPer1MTokens        = 0.40  // USD
-	estimatedInputTokensPerImage = 258   // ~258 tokens for image encoding
-	estimatedPromptTokens        = 1500  // prompt template overhead
-	estimatedOutputTokens        = 500   // average JSON response
+	inputCostPer1MTokens         = 0.10 // USD
+	outputCostPer1MTokens        = 0.40 // USD
+	estimatedInputTokensPerImage = 258  // ~258 tokens for image encoding
+	estimatedPromptTokens        = 1500 // prompt template overhead
+	estimatedOutputTokens        = 500  // average JSON response
 )
 
 // CostEstimate holds token counts and estimated costs in USD.

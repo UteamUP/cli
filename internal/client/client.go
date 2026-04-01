@@ -46,12 +46,12 @@ type JSONRPCError struct {
 
 // APIClient communicates with the UteamUP backend.
 type APIClient struct {
-	baseURL    string
-	timeout    time.Duration
-	insecure   bool
-	retryOpts  RetryOptions
-	logger     *logging.Logger
-	requestID  int
+	baseURL   string
+	timeout   time.Duration
+	insecure  bool
+	retryOpts RetryOptions
+	logger    *logging.Logger
+	requestID int
 }
 
 // NewAPIClient creates a new APIClient.

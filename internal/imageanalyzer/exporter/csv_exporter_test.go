@@ -35,7 +35,7 @@ func makeAssetGroup(name string, confidence float64, flagged bool) models.ImageG
 			ReviewReason:     "",
 			RelatedTo:        "parent-asset",
 		},
-		Members:        nil,
+		Members:         nil,
 		GroupConfidence: confidence,
 	}
 }

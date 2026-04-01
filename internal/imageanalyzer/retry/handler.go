@@ -99,8 +99,8 @@ func (rh *RetryHandler) isTransient(err error) bool {
 
 // backoff sleeps with exponential backoff plus random jitter.
 func (rh *RetryHandler) backoff(attempt int, err error) {
-	baseDelay := math.Pow(2, float64(attempt))                // 1, 2, 4, 8, ...
-	jitter := rand.Float64() * baseDelay * 0.5                // 0 to baseDelay*0.5
+	baseDelay := math.Pow(2, float64(attempt)) // 1, 2, 4, 8, ...
+	jitter := rand.Float64() * baseDelay * 0.5 // 0 to baseDelay*0.5
 	delay := time.Duration((baseDelay + jitter) * float64(time.Second))
 	log.Printf("retry: attempt %d/%d, delay=%.2fs, error=%v", attempt+1, rh.maxRetries, delay.Seconds(), err)
 	time.Sleep(delay)

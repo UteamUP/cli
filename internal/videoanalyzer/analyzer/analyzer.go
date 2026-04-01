@@ -28,12 +28,12 @@ type Analyzer interface {
 
 // VideoAnalyzer implements Analyzer using Google Gemini Vision AI via the File API.
 type VideoAnalyzer struct {
-	client      *genai.Client
-	model       *genai.GenerativeModel
-	rateLimiter *ratelimiter.TokenBucketRateLimiter
+	client       *genai.Client
+	model        *genai.GenerativeModel
+	rateLimiter  *ratelimiter.TokenBucketRateLimiter
 	retryHandler *retry.RetryHandler
-	costTracker *CostTracker
-	spinner     *spinner.Spinner
+	costTracker  *CostTracker
+	spinner      *spinner.Spinner
 	pollInterval time.Duration
 	pollTimeout  time.Duration
 }

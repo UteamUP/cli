@@ -16,14 +16,14 @@ type videoResponse struct {
 
 // videoEntity represents a single entity detected in the video.
 type videoEntity struct {
-	Type            string           `json:"type"`
-	Timestamp       string           `json:"timestamp"`
-	Confidence      float64          `json:"confidence"`
-	Reasoning       string           `json:"reasoning"`
-	FlaggedForReview bool            `json:"flagged_for_review"`
-	ReviewReason    *string          `json:"review_reason"`
-	RelatedTo       *string          `json:"related_to"`
-	ExtractedData   *json.RawMessage `json:"extracted_data"`
+	Type             string           `json:"type"`
+	Timestamp        string           `json:"timestamp"`
+	Confidence       float64          `json:"confidence"`
+	Reasoning        string           `json:"reasoning"`
+	FlaggedForReview bool             `json:"flagged_for_review"`
+	ReviewReason     *string          `json:"review_reason"`
+	RelatedTo        *string          `json:"related_to"`
+	ExtractedData    *json.RawMessage `json:"extracted_data"`
 }
 
 // ParseVideoResponse parses the JSON response from Gemini into ImageAnalysisResult structs.

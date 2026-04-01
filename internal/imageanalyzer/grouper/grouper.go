@@ -35,8 +35,8 @@ func (g *ImageGrouper) GroupImages(results []models.ImageAnalysisResult) []model
 		etype := r.Classification.PrimaryType
 		if etype == models.EntityTypeUnclassified {
 			unclassified = append(unclassified, models.ImageGroup{
-				Primary:        r,
-				Members:        nil,
+				Primary:         r,
+				Members:         nil,
 				GroupConfidence: r.Classification.Confidence,
 			})
 		} else {
@@ -85,8 +85,8 @@ func (g *ImageGrouper) clusterPartition(items []models.ImageAnalysisResult) []mo
 		}
 		mergeExtractedData(&rep, members)
 		final = append(final, models.ImageGroup{
-			Primary:        rep,
-			Members:        members,
+			Primary:         rep,
+			Members:         members,
 			GroupConfidence: rep.Classification.Confidence,
 		})
 	}

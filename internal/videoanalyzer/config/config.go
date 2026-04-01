@@ -24,17 +24,17 @@ type GeminiConfig struct {
 
 // VideoScanConfig holds video-specific scan settings.
 type VideoScanConfig struct {
-	VideoFolder  string `yaml:"video_folder"`
-	OutputFolder string `yaml:"output_folder"`
-	Recursive    bool   `yaml:"recursive"`
-	MaxFileSizeMB int   `yaml:"max_file_size_mb"`
+	VideoFolder   string `yaml:"video_folder"`
+	OutputFolder  string `yaml:"output_folder"`
+	Recursive     bool   `yaml:"recursive"`
+	MaxFileSizeMB int    `yaml:"max_file_size_mb"`
 }
 
 // ProcessingConfig holds settings for video processing behavior.
 type ProcessingConfig struct {
 	DryRun                      bool     `yaml:"dry_run"`
 	MaxCost                     *float64 `yaml:"max_cost,omitempty"`
-	GroupingSimilarityThreshold  float64  `yaml:"grouping_similarity_threshold"`
+	GroupingSimilarityThreshold float64  `yaml:"grouping_similarity_threshold"`
 	ConfidenceThreshold         float64  `yaml:"confidence_threshold"`
 	ProcessingTimeoutSec        int      `yaml:"processing_timeout_seconds"`
 	PollIntervalSec             int      `yaml:"poll_interval_seconds"`
@@ -69,10 +69,10 @@ func DefaultConfig() *AppConfig {
 		},
 		Processing: ProcessingConfig{
 			GroupingSimilarityThreshold: 0.75,
-			ConfidenceThreshold:        0.5,
-			ProcessingTimeoutSec:       600,
-			PollIntervalSec:            5,
-			TemporalDedupWindowSec:     30,
+			ConfidenceThreshold:         0.5,
+			ProcessingTimeoutSec:        600,
+			PollIntervalSec:             5,
+			TemporalDedupWindowSec:      30,
 		},
 	}
 }

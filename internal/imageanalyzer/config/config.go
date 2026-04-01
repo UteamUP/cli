@@ -36,13 +36,13 @@ type ScanConfig struct {
 
 // ProcessingConfig holds settings for image processing behavior.
 type ProcessingConfig struct {
-	DryRun                       bool     `yaml:"dry_run"`
-	RenameImages                 bool     `yaml:"rename_images"`
-	RenamePattern                string   `yaml:"rename_pattern"`
-	GroupingSimilarityThreshold   float64  `yaml:"grouping_similarity_threshold"`
-	ConfidenceThreshold          float64  `yaml:"confidence_threshold"`
-	CheckpointFile               string   `yaml:"checkpoint_file"`
-	MaxCost                      *float64 `yaml:"max_cost,omitempty"`
+	DryRun                      bool     `yaml:"dry_run"`
+	RenameImages                bool     `yaml:"rename_images"`
+	RenamePattern               string   `yaml:"rename_pattern"`
+	GroupingSimilarityThreshold float64  `yaml:"grouping_similarity_threshold"`
+	ConfidenceThreshold         float64  `yaml:"confidence_threshold"`
+	CheckpointFile              string   `yaml:"checkpoint_file"`
+	MaxCost                     *float64 `yaml:"max_cost,omitempty"`
 }
 
 // AppConfig is the top-level configuration for the image analyzer.
@@ -84,11 +84,11 @@ func DefaultConfig() *AppConfig {
 			MaxFileSizeMB:       20,
 		},
 		Processing: ProcessingConfig{
-			RenameImages:                 true,
-			RenamePattern:                "{entity_type}_{name}_{seq}_{date}.{ext}",
-			GroupingSimilarityThreshold:   0.75,
-			ConfidenceThreshold:          0.5,
-			CheckpointFile:               defaultCheckpointPath(),
+			RenameImages:                true,
+			RenamePattern:               "{entity_type}_{name}_{seq}_{date}.{ext}",
+			GroupingSimilarityThreshold: 0.75,
+			ConfidenceThreshold:         0.5,
+			CheckpointFile:              defaultCheckpointPath(),
 		},
 	}
 }

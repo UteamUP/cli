@@ -264,7 +264,7 @@ func (p *Pipeline) Run() error {
 	exp := exporter.NewExporter(
 		p.config.Scan.OutputFolder,
 		p.config.Scan.OutputFolder, // No separate renamed folder for videos.
-		false,                       // No renaming for videos.
+		false,                      // No renaming for videos.
 		"",
 	)
 

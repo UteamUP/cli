@@ -33,10 +33,10 @@ type Checkpoint struct {
 
 // checkpointFile is the JSON structure persisted to disk.
 type checkpointFile struct {
-	StartedAt      string                        `json:"started_at"`
-	LastUpdated    string                        `json:"last_updated"`
-	ProcessedCount int                           `json:"processed_count"`
-	Processed      map[string]json.RawMessage    `json:"processed"`
+	StartedAt      string                     `json:"started_at"`
+	LastUpdated    string                     `json:"last_updated"`
+	ProcessedCount int                        `json:"processed_count"`
+	Processed      map[string]json.RawMessage `json:"processed"`
 }
 
 // lockFile is the JSON structure for the lock file.

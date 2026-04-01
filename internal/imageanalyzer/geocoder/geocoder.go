@@ -27,11 +27,11 @@ type ReverseGeocodeResult struct {
 
 // Geocoder reverse-geocodes GPS coordinates to human-readable addresses.
 type Geocoder struct {
-	apiKey     string
-	client     *http.Client
-	mu         sync.Mutex
-	lastCall   time.Time
-	rateLimit  time.Duration
+	apiKey    string
+	client    *http.Client
+	mu        sync.Mutex
+	lastCall  time.Time
+	rateLimit time.Duration
 }
 
 // NewGeocoder creates a new Geocoder. If apiKey is non-empty, Google Maps
@@ -242,7 +242,7 @@ func (g *Geocoder) reverseGeocodeNominatim(lat, lng float64) (*ReverseGeocodeRes
 // --- Google API types ---
 
 type googleGeocodeResponse struct {
-	Status  string               `json:"status"`
+	Status  string                `json:"status"`
 	Results []googleGeocodeResult `json:"results"`
 }
 
@@ -267,14 +267,14 @@ type nominatimResponse struct {
 }
 
 type nominatimAddress struct {
-	Building string `json:"building"`
-	Amenity  string `json:"amenity"`
-	Road     string `json:"road"`
+	Building    string `json:"building"`
+	Amenity     string `json:"amenity"`
+	Road        string `json:"road"`
 	HouseNumber string `json:"house_number"`
-	City     string `json:"city"`
-	Town     string `json:"town"`
-	Village  string `json:"village"`
-	State    string `json:"state"`
-	Postcode string `json:"postcode"`
-	Country  string `json:"country"`
+	City        string `json:"city"`
+	Town        string `json:"town"`
+	Village     string `json:"village"`
+	State       string `json:"state"`
+	Postcode    string `json:"postcode"`
+	Country     string `json:"country"`
 }

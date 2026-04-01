@@ -48,8 +48,8 @@ func (e *CSVExporter) ExportCSVs(groups []models.ImageGroup, unclassified []mode
 	// Wrap each unclassified result as a pseudo-group.
 	for _, r := range unclassified {
 		byType[models.EntityTypeUnclassified] = append(byType[models.EntityTypeUnclassified], models.ImageGroup{
-			Primary:        r,
-			Members:        nil,
+			Primary:         r,
+			Members:         nil,
 			GroupConfidence: r.Classification.Confidence,
 		})
 	}

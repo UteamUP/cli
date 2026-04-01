@@ -28,8 +28,8 @@ var (
 // objects in the input slice.
 func DetectIPhonePairs(images []models.ImageInfo) map[string][]string {
 	// Build lookups: number -> ImageInfo index for originals and edits.
-	originals := make(map[string]int)    // number -> index in images
-	edits := make(map[string][]int)      // number -> indices in images
+	originals := make(map[string]int) // number -> index in images
+	edits := make(map[string][]int)   // number -> indices in images
 
 	for i := range images {
 		stem := strings.TrimSuffix(images[i].Filename, filepath.Ext(images[i].Filename))
