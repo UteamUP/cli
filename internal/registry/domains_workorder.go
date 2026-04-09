@@ -66,6 +66,12 @@ func init() {
 					{Name: "page-size", Short: "s", Description: "Items per page", Default: 25, Type: "int"},
 				},
 			},
+			{
+				Name:        "by-code",
+				Description: "List work orders by coding system code branch prefix",
+				ToolName:    "UteamupCodingsystemWorkorders",
+				Args:        []ArgDef{{Name: "prefix", Description: "Code branch prefix (e.g., '1-HLA')", Required: true, Type: "string"}},
+			},
 		},
 	})
 }
