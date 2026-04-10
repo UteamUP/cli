@@ -31,7 +31,11 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "name", Description: "Asset name", Required: true, Type: "string"},
 					{Name: "serial", Description: "Serial number", Type: "string"},
-					{Name: "asset-type-id", Description: "Asset type ID", Type: "int"},
+					// Deprecated single-type flag — still accepted and mapped onto the primary type server-side.
+					{Name: "asset-type-id", Description: "Asset type ID (deprecated, use --asset-type-ids + --primary-asset-type-id)", Type: "int"},
+					// Many-to-many: comma-separated list of type ids plus an explicit primary.
+					{Name: "asset-type-ids", Description: "Comma-separated list of asset type ids (many-to-many)", Type: "string"},
+					{Name: "primary-asset-type-id", Description: "Primary asset type id (must be one of --asset-type-ids)", Type: "int"},
 					{Name: "location-id", Description: "Location ID", Type: "int"},
 					{Name: "from-json", Description: "JSON file with asset data", Type: "string"},
 				},
@@ -44,8 +48,16 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "name", Description: "New asset name", Type: "string"},
 					{Name: "serial", Description: "New serial number", Type: "string"},
+					{Name: "asset-type-ids", Description: "Comma-separated list of asset type ids (replaces current many-to-many set)", Type: "string"},
+					{Name: "primary-asset-type-id", Description: "Primary asset type id (must be one of --asset-type-ids)", Type: "int"},
 					{Name: "from-json", Description: "JSON file with update data", Type: "string"},
 				},
+			},
+			{
+				Name:        "get-specs",
+				Description: "Get the effective attribute definitions (operating specs) for an asset, grouped per asset type",
+				ToolName:    "UteamupAssetGetEffectiveAttributeDefinitions",
+				Args:        []ArgDef{{Name: "id", Description: "Asset ID", Required: true, Type: "int"}},
 			},
 			{
 				Name:        "delete",
