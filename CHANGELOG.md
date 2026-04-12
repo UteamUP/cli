@@ -8,7 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- `ut project my-projects` (also `uteamup project my-projects`) — new subcommand mirroring the backend `GET /api/project/my-projects` endpoint. Lists projects that contain workorders assigned to the current user (primary or secondary). Registered in `internal/registry/domains_project.go` with ToolName `UteamupProjectMyProjects`; requires the corresponding MediatR handler on the backend to resolve.
+- `ut project my-projects` (also `uteamup project my-projects`) — new subcommand mirroring the backend `GET /api/project/my-projects` endpoint. Lists projects that contain workorders assigned to the current user (primary or secondary). Registered in `internal/registry/domains_project.go` with ToolName `UteamupProjectMyProjects`; the backend MediatR handler was added in the same PR (MCP `UteamupProjectMyProjects` tool).
+- `internal/registry/domains_project_test.go` — unit tests covering the project domain registration, `projects` alias, `search` / `my-projects` action/ToolName mapping, and a regression guard asserting `my-projects` takes zero args and zero flags (user identity must come from the API key). Follows the existing `domains_journal_test.go` pattern.
+
+### Tests
+- Verified `go fmt`, `go vet`, `go test ./... -race`, and `make build` all pass. Note: `make lint` (golangci-lint) continues to fail on pre-existing issues in `internal/imageanalyzer/analyzer/json_fix.go` and `internal/videoanalyzer/gps/mp4meta.go` (commits `0d539bd` / `26b6eed`, March 2026) — unrelated to this change.
 
 ## [0.7.1] — 2026-03-28
 
