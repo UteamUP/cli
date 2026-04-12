@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `ut project my-projects` (also `uteamup project my-projects`) — new subcommand mirroring the backend `GET /api/project/my-projects` endpoint. Lists projects that contain workorders assigned to the current user (primary or secondary). Registered in `internal/registry/domains_project.go` with ToolName `UteamupProjectMyProjects`; requires the corresponding MediatR handler on the backend to resolve.
+
 ## [0.7.1] — 2026-03-28
 
 ### Fixed
