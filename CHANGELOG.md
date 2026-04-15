@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Four new domain registries mirroring the new image/document import MCP tools: `domains_document_import.go` (`document-import get`), `domains_logbook_import.go` (`logbook-import get`), `domains_document_review.go` (`document-review queue`, `document-review acknowledge`), `domains_ai_usage.go` (`ai-usage summary`). Read-only + acknowledge surface only; multipart upload and batch commit stay HTTP-only by design.
 - `ut project my-projects` (also `uteamup project my-projects`) — new subcommand mirroring the backend `GET /api/project/my-projects` endpoint. Lists projects that contain workorders assigned to the current user (primary or secondary). Registered in `internal/registry/domains_project.go` with ToolName `UteamupProjectMyProjects`; the backend MediatR handler was added in the same PR (MCP `UteamupProjectMyProjects` tool).
 - `internal/registry/domains_project_test.go` — unit tests covering the project domain registration, `projects` alias, `search` / `my-projects` action/ToolName mapping, and a regression guard asserting `my-projects` takes zero args and zero flags (user identity must come from the API key). Follows the existing `domains_journal_test.go` pattern.
 
