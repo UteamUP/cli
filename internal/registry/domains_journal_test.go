@@ -34,8 +34,12 @@ func TestJournalDomainActions(t *testing.T) {
 	}
 
 	expected := map[string]string{
-		"by-code":  "UteamupJournalByCode",
-		"by-asset": "UteamupJournalByAsset",
+		"by-code":           "UteamupJournalByCode",
+		"by-asset":          "UteamupJournalByAsset",
+		"import":            "UteamupJournalImport",
+		"create-from-image": "UteamupJournalCreateFromImage",
+		"search-assets":     "UteamupAssetMentionSearch",
+		"search-workorders": "UteamupWorkorderMentionSearch",
 	}
 
 	actionMap := make(map[string]string)
@@ -49,6 +53,51 @@ func TestJournalDomainActions(t *testing.T) {
 		} else if actual != tool {
 			t.Errorf("action %q: expected tool %q, got %q", name, tool, actual)
 		}
+	}
+}
+
+// Guards the required positional args on the new import action so that
+// accidentally dropping file-name or file-content-base64 becomes a test
+// failure rather than a silent CLI regression.
+func TestJournalImportArgs(t *testing.T) {
+	d := findDomain("journal")
+	if d == nil {
+		t.Fatal("expected journal domain to be registered")
+	}
+	action := findAction(d, "import")
+	if action == nil {
+		t.Fatal("expected import action on journal domain")
+	}
+	if len(action.Args) < 2 {
+		t.Fatalf("import action should have 2 positional args, got %d", len(action.Args))
+	}
+	if action.Args[0].Name != "file-name" || !action.Args[0].Required {
+		t.Errorf("first arg should be required file-name, got %+v", action.Args[0])
+	}
+	if action.Args[1].Name != "file-content-base64" || !action.Args[1].Required {
+		t.Errorf("second arg should be required file-content-base64, got %+v", action.Args[1])
+	}
+}
+
+func TestJournalSearchAssetsAction(t *testing.T) {
+	d := findDomain("journal")
+	if d == nil {
+		t.Fatal("expected journal domain to be registered")
+	}
+	action := findAction(d, "search-assets")
+	if action == nil {
+		t.Fatal("expected search-assets action on journal domain")
+	}
+	if len(action.Args) == 0 || action.Args[0].Name != "query" || !action.Args[0].Required {
+		t.Errorf("search-assets should take a required query arg, got %+v", action.Args)
+	}
+	flagMap := flagsToMap(action.Flags)
+	limitFlag, ok := flagMap["limit"]
+	if !ok {
+		t.Fatal("search-assets missing limit flag")
+	}
+	if limitFlag.Default != 8 {
+		t.Errorf("limit default should be 8, got %v", limitFlag.Default)
 	}
 }
 
