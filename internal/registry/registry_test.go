@@ -61,7 +61,7 @@ func TestAssetDomainActions(t *testing.T) {
 		t.Fatal("asset domain not found")
 	}
 
-	expectedActions := []string{"list", "get", "create", "update", "delete", "search"}
+	expectedActions := []string{"list", "get", "get-by-guid", "create", "update", "delete", "search"}
 	actionNames := make(map[string]bool)
 	for _, a := range assetDomain.Actions {
 		actionNames[a.Name] = true

@@ -25,6 +25,12 @@ func init() {
 				Args:        []ArgDef{{Name: "id", Description: "Asset ID", Required: true, Type: "int"}},
 			},
 			{
+				Name:        "get-by-guid",
+				Description: "Get asset details by stable ExternalGuid (URL-safe, survives migrations)",
+				ToolName:    "UteamupAssetGetByGuid",
+				Args:        []ArgDef{{Name: "guid", Description: "Asset ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
+			},
+			{
 				Name:        "create",
 				Description: "Create a new asset",
 				ToolName:    "UteamupAssetCreate",
