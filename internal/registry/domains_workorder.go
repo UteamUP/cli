@@ -14,7 +14,7 @@ func init() {
 					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
 					{Name: "page-size", Short: "s", Description: "Items per page", Default: 25, Type: "int"},
 					{Name: "status", Description: "Filter by status", Type: "string"},
-					{Name: "priority", Description: "Filter by priority", Type: "string"},
+					{Name: "priority", Description: "Filter by priority (1=Low, 2=Medium, 3=High, 4=Urgent, 5=Critical)", Type: "string"},
 					{Name: "sort-by", Description: "Sort field", Default: "CreatedAt", Type: "string"},
 					{Name: "sort-order", Description: "Sort direction (asc or desc)", Default: "desc", Type: "string"},
 				},
@@ -32,7 +32,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "title", Description: "Work order title", Required: true, Type: "string"},
 					{Name: "description", Description: "Work order description", Type: "string"},
-					{Name: "priority", Description: "Priority (Low, Medium, High, Critical)", Default: "Medium", Type: "string"},
+					{Name: "priority", Description: "Priority (1=Low, 2=Medium, 3=High, 4=Urgent, 5=Critical)", Default: "Medium", Type: "string"},
 					{Name: "asset-id", Description: "Associated asset ID", Type: "int"},
 					{Name: "assigned-to", Description: "Assigned user ID", Type: "int"},
 					{Name: "from-json", Description: "JSON file with work order data", Type: "string"},
@@ -46,7 +46,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "title", Description: "New title", Type: "string"},
 					{Name: "status", Description: "New status", Type: "string"},
-					{Name: "priority", Description: "New priority", Type: "string"},
+					{Name: "priority", Description: "New priority (1=Low, 2=Medium, 3=High, 4=Urgent, 5=Critical)", Type: "string"},
 					{Name: "from-json", Description: "JSON file with update data", Type: "string"},
 				},
 			},
