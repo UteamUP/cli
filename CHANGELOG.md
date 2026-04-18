@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`bugsandfeatures` domain.** New `internal/registry/domains_bugsandfeatures.go` registers four actions that mirror the new MCP tools: `list` (global-admin; filters by type/status/severity/tenant/submitter, pagination, default hides Rejected/Confirmed), `get <externalGuid>` (global-admin), `create` (any authenticated user; requires `--title`, `--description`, `--idempotency-key`), and `update-status <externalGuid> <toStatus>` (global-admin; `--note` required on reject/reopen, `--resolution-reference` required on Fixed — enforced server-side). Aliases: `bugs`, `features`, `baf`.
+
+### Changed
+- `ut workorder list` / `create` / `update` priority flag descriptions now enumerate the canonical tiers `1=Low, 2=Medium, 3=High, 4=Urgent, 5=Critical` to match the backend `WorkorderPriority` enum and the new Critical dropdown option in the frontend. Registry metadata only — no behavioral change; `go vet` clean.
+
+### Added
 - `ut asset get-by-guid <guid>` (also `uteamup asset get-by-guid ...`) — new subcommand mirroring the backend `uteamup_asset_get_by_guid` MCP tool / `GET /api/asset/by-guid/{guid}`. Fetches an asset using its stable `ExternalGuid` (survives migrations and reseeds) rather than the integer id, making CLI invocations safe to copy between environments. Registered in `internal/registry/domains_asset.go` with ToolName `UteamupAssetGetByGuid`, and `domains_asset` test expects the new `get-by-guid` action (alongside `list`, `get`, `create`, `update`, `delete`, `search`).
 - Four new domain registries mirroring the new image/document import MCP tools: `domains_document_import.go` (`document-import get`), `domains_logbook_import.go` (`logbook-import get`), `domains_document_review.go` (`document-review queue`, `document-review acknowledge`), `domains_ai_usage.go` (`ai-usage summary`). Read-only + acknowledge surface only; multipart upload and batch commit stay HTTP-only by design.
 - `ut project my-projects` (also `uteamup project my-projects`) — new subcommand mirroring the backend `GET /api/project/my-projects` endpoint. Lists projects that contain workorders assigned to the current user (primary or secondary). Registered in `internal/registry/domains_project.go` with ToolName `UteamupProjectMyProjects`; the backend MediatR handler was added in the same PR (MCP `UteamupProjectMyProjects` tool).
