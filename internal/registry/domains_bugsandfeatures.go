@@ -53,6 +53,12 @@ func init() {
 					{Name: "resolution-reference", Description: "Required on Fixed transitions (URL or commit)", Type: "string"},
 				},
 			},
+			{
+				Name:        "delete",
+				Description: "Permanently delete a submission (global-admin only; for junk entries — use Reject/Archive for normal lifecycle)",
+				ToolName:    "UteamupBugsAndFeaturesDelete",
+				Args:        []ArgDef{{Name: "externalGuid", Description: "ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
+			},
 		},
 	})
 }
