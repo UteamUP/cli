@@ -206,6 +206,13 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 		}
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+		// CSRF guard on mutating endpoints requires a non-simple-header marker —
+		// the backend rejects any POST/PUT/PATCH/DELETE without
+		// "X-Requested-With: XMLHttpRequest" with HTTP 400. The frontend
+		// apiCall() sets it unconditionally; mirror that here so the CLI's
+		// REST path (used by domains like bugsandfeatures update-status) isn't
+		// silently blocked.
+		req.Header.Set("X-Requested-With", "XMLHttpRequest")
 
 		// Send tenant context headers (same as frontend apiCall)
 		if token.TenantID > 0 {

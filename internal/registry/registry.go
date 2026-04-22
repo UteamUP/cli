@@ -43,12 +43,13 @@ type FlagDef struct {
 
 // HTTPMethod maps action names to HTTP methods for REST calls.
 var HTTPMethod = map[string]string{
-	"list":   "GET",
-	"get":    "GET",
-	"create": "POST",
-	"update": "PUT",
-	"delete": "DELETE",
-	"search": "GET",
+	"list":          "GET",
+	"get":           "GET",
+	"create":        "POST",
+	"update":        "PUT",
+	"update-status": "PATCH",
+	"delete":        "DELETE",
+	"search":        "GET",
 }
 
 // Action represents a single CLI action (list, get, create, etc.).
@@ -297,10 +298,28 @@ func buildRESTPath(domain *Domain, action Action, args map[string]any) string {
 		basePath = "/api/" + strings.ReplaceAll(domain.Name, "-", "")
 	}
 
+	// Resolve the positional identifier to use in the URL path. Most legacy
+	// domains pass an integer `id`; GUID-first domains (bugsandfeatures, etc.)
+	// declare their required arg as `externalGuid` per the GUID-first rule.
+	// Accept both so every domain routes correctly without needing RESTPath
+	// overrides or API-key handlers that special-case each verb.
+	idValue, hasId := args["id"]
+	if !hasId {
+		idValue, hasId = args["externalGuid"]
+	}
+
 	switch action.Name {
 	case "get", "update", "delete":
-		if id, ok := args["id"]; ok {
-			return fmt.Sprintf("%s/%v", basePath, id)
+		if hasId {
+			return fmt.Sprintf("%s/%v", basePath, idValue)
+		}
+	case "update-status":
+		// PATCH /api/<domain>/{id}/status is the convention established by
+		// BugsAndFeaturesController.UpdateStatus — status-only transitions
+		// get their own sub-route so they can't be conflated with a full
+		// update (PUT /<id>). Domains that reuse this verb must match.
+		if hasId {
+			return fmt.Sprintf("%s/%v/status", basePath, idValue)
 		}
 	case "search":
 		if action.RESTPath != "" {
