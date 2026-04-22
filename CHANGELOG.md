@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-04-22
+
+### Fixed
+- **`cmd/root.go` + `cmd/login.go` — honor `UTEAMUP_API_BASE_URL` when no `~/.uteamup/config.json` exists.** Both entry points previously applied the env var override only *inside* `config.Load()` (which returns an error when there is no config file), then silently fell back to the hardcoded production URL `https://api.uteamup.com`. The uteamup-debug Claude skill, CI, and anyone else following the README's "set `UTEAMUP_API_BASE_URL`" instructions were unknowingly hitting prod. `runLogin` and `registerDomainCommands` now consult the env var before the hardcoded fallback. An active profile's `BaseURL` still wins when a config file is present, so existing workflows are unchanged.
+- **`internal/client/client.go::CallREST` — unconditionally set `X-Requested-With: XMLHttpRequest`.** Mutating endpoints (POST/PUT/PATCH/DELETE) on routes like `/api/bugsandfeatures` reject requests without the marker with HTTP 400 `"Missing required X-Requested-With header."`. The frontend `apiCall()` has always sent it; the CLI did not, which made `uteamup bugs update-status … Fixed` fail on its PATCH step.
+- **`internal/registry/registry.go::buildRESTPath` — route `update-status` and GUID-keyed actions correctly.** The `HTTPMethod` map gained `"update-status": "PATCH"`, and `buildRESTPath` now accepts `args["externalGuid"]` as the positional identifier in addition to `args["id"]`, so GUID-first domains get `PATCH /api/<domain>/{guid}/status` and `GET /api/<domain>/{guid}` instead of the list endpoint as a fallback. Unblocks `uteamup bugs update-status <externalGuid> Fixed --resolution-reference <sha>`.
+
+### Docs
+- **`CLIGuidelines.md`** — added three subsections under "Architecture Quick Reference" documenting the above changes: (1) REST routing table (action → HTTP method → URL pattern), (2) CSRF header requirement on mutating calls, and (3) the `LocalOrAzureAdPolicy` pattern that new CLI-facing backend controllers should prefer over the legacy stacked `[Authorize(Policy="AzureAdPolicy"), Authorize(Policy="LocalPolicy")]` (a third scheme like Google listed in a policy triggers a Google JWT Bearer challenge that short-circuits to 401 even when Local validates).
+
 ### Added
 - **`tenant` domain.** New `internal/registry/domains_tenant.go` registers two actions mirroring the new backend MCP tools: `invite-defaults-get <tenantGuid>` and `invite-defaults-set <tenantGuid>` with flags `--auto-license`, `--license-type 0|1` (0=Regular, 1=Helpdesk), `--auto-role`, `--role-id <guid>`. These let operators configure a tenant so every new invite automatically assigns a license + role. `go vet` clean, registry tests pass under `-race`, `make build` produces `bin/uteamup` and `bin/ut`.
 
