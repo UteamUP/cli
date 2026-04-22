@@ -126,8 +126,16 @@ func registerDomainCommands() {
 	}
 
 	if apiClient == nil {
-		// Fallback client for help/completions (won't be used for actual requests)
-		apiClient = client.NewAPIClient("https://api.uteamup.com", 30*time.Second, false, client.DefaultRetryOptions(), logger)
+		// No config file (or unusable) — still respect UTEAMUP_API_BASE_URL so a
+		// user / tooling can point the CLI at a non-production backend via env
+		// alone (common for CI, local dev, and the uteamup-debug skill). The
+		// fallback to the hardcoded prod URL only kicks in when the env var
+		// is also empty.
+		fallbackBaseURL := os.Getenv("UTEAMUP_API_BASE_URL")
+		if fallbackBaseURL == "" {
+			fallbackBaseURL = "https://api.uteamup.com"
+		}
+		apiClient = client.NewAPIClient(fallbackBaseURL, 30*time.Second, false, client.DefaultRetryOptions(), logger)
 	}
 
 	// Build export config from active profile

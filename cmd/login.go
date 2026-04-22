@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -44,11 +45,18 @@ func runLogin(cmd *cobra.Command, args []string) error {
 		logger.SetLevel(logging.LevelDebug)
 	}
 
-	// Determine base URL from config (if available)
-	baseURL := "https://api.uteamup.com"
+	// Determine base URL. Prefer an explicit UTEAMUP_API_BASE_URL env var
+	// (so the uteamup-debug skill and CI can point the CLI at a non-prod
+	// backend without needing `uteamup config init` first), then an active
+	// config profile's BaseURL, and only fall back to the hardcoded prod URL
+	// when neither is set.
+	baseURL := os.Getenv("UTEAMUP_API_BASE_URL")
+	if baseURL == "" {
+		baseURL = "https://api.uteamup.com"
+	}
 	cfg, err := config.Load()
 	if err == nil {
-		if profile, profErr := cfg.ActiveProfileConfig(); profErr == nil {
+		if profile, profErr := cfg.ActiveProfileConfig(); profErr == nil && profile.BaseURL != "" {
 			baseURL = profile.BaseURL
 		}
 	}
