@@ -457,6 +457,46 @@ cmd/<name>.go
 ```
 Register in `cmd/root.go` `init()` function.
 
+### REST routing for domain actions
+
+Although domain actions declare an MCP `ToolName`, the runtime path in
+`internal/registry/registry.go::runCommand` calls `apiClient.CallREST(...)` —
+so the HTTP method and URL are built from the action's `Name`, the domain's
+`APIPath` (or auto-derived from `Name`), and the positional args via
+`buildRESTPath` + the `HTTPMethod` map.
+
+| Action name     | HTTP method | URL pattern                                       |
+|-----------------|-------------|---------------------------------------------------|
+| `list`          | `GET`       | `{basePath}[?query...]` (or `{basePath}/{RESTPath}`) |
+| `get`           | `GET`       | `{basePath}/{id|externalGuid}`                   |
+| `create`        | `POST`      | `{basePath}` (body = args)                        |
+| `update`        | `PUT`       | `{basePath}/{id|externalGuid}`                   |
+| `update-status` | `PATCH`     | `{basePath}/{id|externalGuid}/status`            |
+| `delete`        | `DELETE`    | `{basePath}/{id|externalGuid}`                   |
+| `search`        | `GET`       | `{basePath}/search` (or `{basePath}/{RESTPath}`)  |
+
+GUID-first domains (every new domain, per `Guidelines/ApiHowToGuidelinesReadme.md`)
+should declare their positional arg as `externalGuid`; legacy integer-id domains
+can keep `id`. `buildRESTPath` accepts either.
+
+### CSRF header on mutating calls
+
+`CallREST` sets `X-Requested-With: XMLHttpRequest` on every outgoing request.
+Backend `[Authorize(Policy = "BugsAndFeaturesCreate")]`-style policies (and the
+bug-create CSRF guard) reject POST/PUT/PATCH/DELETE without it. Do NOT strip
+the header in a new adapter or middleware.
+
+### Backend auth policy for debug-user access
+
+The email/password login on `POST /api/auth/login` issues a JWT validated only
+by the `"Local"` auth scheme. Controllers that historically stacked
+`[Authorize(Policy="AzureAdPolicy"), Authorize(Policy="LocalPolicy")]` work
+fine for admin-UI Entra users but fail for the debug service account when a
+third scheme (e.g. Google) is listed on the same policy — Google's JWT Bearer
+challenge short-circuits the chain with 401. If you add a new CLI-facing
+controller, prefer `[Authorize(Policy = "LocalOrAzureAdPolicy")]` (single
+policy, both schemes declared on it) over stacked attributes.
+
 ### Auth Exemption
 
 Commands that don't require login are listed in `cmd/root.go`:
