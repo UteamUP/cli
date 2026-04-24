@@ -5,6 +5,100 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0](https://github.com/UteamUP/cli/compare/1.0.0...1.1.0) (2026-04-24)
+
+
+### Features
+
+* Add all MCP domains, install to /usr/local/bin, .zshrc PATH setup ([1f4958c](https://github.com/UteamUP/cli/commit/1f4958ca81f5f930703a4b03fc5bedb72ca9fdcc))
+* add asset-type-meter domain with actions for managing meter definitions ([6d832c5](https://github.com/UteamUP/cli/commit/6d832c5297627e4de76fbd6918b20b78edf7b008))
+* add auth, plan validation, and tenant override to video analyzer ([52e58d4](https://github.com/UteamUP/cli/commit/52e58d499df0acc51b0d6eeaa6fbc88c737d4460))
+* add domain for managing subscription plans with list and get actions ([43c7e52](https://github.com/UteamUP/cli/commit/43c7e521eeace57d0d8a820ab5d85999eb116de2))
+* add dual progress bars to image and video analyzers ([6788145](https://github.com/UteamUP/cli/commit/678814576e5cee335fa0f27b7d7c4de9671c613b))
+* Add JSON export config option for CLI responses ([1e59cf0](https://github.com/UteamUP/cli/commit/1e59cf04ac656600884ca4950d3d5ab9ed8faeff))
+* add multi-tenant selector, plan validation, and auth status tenant info ([736f562](https://github.com/UteamUP/cli/commit/736f562c3488388b199d1b6a79b0fc2d4aaf8d74))
+* add new domains for condition, criticality, geofence, improvement, meter schedule, and sales booking management ([3277fa0](https://github.com/UteamUP/cli/commit/3277fa0ac873f4a03d4acd5808b5aa160a8865c4))
+* add report-analytics and asset-reports domains ([1adb97f](https://github.com/UteamUP/cli/commit/1adb97f6cbf637d6c0a07beb7345e54edd859dd7))
+* Add REST API support for email/password login auth ([1203c37](https://github.com/UteamUP/cli/commit/1203c3768ae94dcd3f7063e134ff2a4edac765df))
+* add tenant show and tenant select commands ([876ef8f](https://github.com/UteamUP/cli/commit/876ef8f0831e4006d18d3c5f94e7b60ff6c9d82f))
+* add video analyzer command for CMMS inventory extraction from MP4/MOV videos ([26b6eed](https://github.com/UteamUP/cli/commit/26b6eedf523a0ad3a7fed885c538eb4047f0dea0))
+* **ai:** Add BYOK AI provider CLI domain registry ([d15e90c](https://github.com/UteamUP/cli/commit/d15e90cacea79730aec5177d151a5c52c63c0351))
+* **asset:** add `ut asset get-by-guid <guid>` subcommand ([6a8426d](https://github.com/UteamUP/cli/commit/6a8426d40b2b13c1fd00cca2b4e7fedec00e4035))
+* **asset:** Multi-type flags and get-specs subcommand for ut asset ([544cc79](https://github.com/UteamUP/cli/commit/544cc79fb422d86a897f36969325eb790d1a4967))
+* **bank-transfer:** add CLI domain registry for bank transfer billing ([f669649](https://github.com/UteamUP/cli/commit/f66964928e44b67aaf52c5e4c8d325630a0fdcce))
+* **bugs-and-features:** add delete action for global-admin to permanently remove submissions ([2333f73](https://github.com/UteamUP/cli/commit/2333f73a00d82350e50fbbf85a50f64256627b34))
+* **bugsandfeatures:** add bugsandfeatures CLI domain ([fd4727a](https://github.com/UteamUP/cli/commit/fd4727ad29165fe62b7d53bc03e412c7d08b98cf))
+* **cli:** add codecatalog update-by-guid / deactivate-by-guid / remove-asset-assignment ([b3d18ed](https://github.com/UteamUP/cli/commit/b3d18ed19bd041d5cda2bfecd61c4474bbee608d))
+* **cli:** add config apikey and config model shortcut commands ([6fc6cb2](https://github.com/UteamUP/cli/commit/6fc6cb27c78a12481a9e589a79a8ce595cce85dc))
+* **cli:** add document-import, logbook-import, document-review, ai-usage domains ([b5aa10d](https://github.com/UteamUP/cli/commit/b5aa10d129d616ba343b02dfd58f6a48498b2218))
+* **cli:** add image analyze command with Gemini config integration ([3337106](https://github.com/UteamUP/cli/commit/33371066014fe9a881b1b1d06fbe3ec64cf915d1))
+* **cli:** add user-ui-state domain registry ([74119d2](https://github.com/UteamUP/cli/commit/74119d23cd8afa430db69e49c71e6c11d699a8c6))
+* **dedicated-instance:** Add dedicated instance integration with domain registry and client URL resolution ([b6fb5ef](https://github.com/UteamUP/cli/commit/b6fb5ef03c8b6c73ba46e596de87b6e182b78910))
+* **document:** Add version and archive actions to document domain ([a6f7237](https://github.com/UteamUP/cli/commit/a6f7237b60c4ef7a82d71f1e0e6306b9c5fff07f))
+* Initial UteamUP CLI project — Go CLI mirroring MCP server ([8f280cb](https://github.com/UteamUP/cli/commit/8f280cbdf560ad3fa37be6d6ce9533cd8da4fb53))
+* **journal-code-linking:** Add journal and codecatalog CLI domains ([79e607b](https://github.com/UteamUP/cli/commit/79e607bf81cb8c3ed38e8d4c8531dfa88b46fa33))
+* **journal:** add import, create-from-image, and mention search domains ([4e39d05](https://github.com/UteamUP/cli/commit/4e39d057d4bae556469053288946ff3f7a1e955f))
+* **meter-reading:** add CLI domain for GUID-based meter-reading commands ([c0ac999](https://github.com/UteamUP/cli/commit/c0ac999453794bbfdc87f9cecc08a29260624a60))
+* native Go image analyzer — remove Python dependency entirely ([0d539bd](https://github.com/UteamUP/cli/commit/0d539bdcfc2c80c98120f7f6e3b4100e82029d2a))
+* **output:** enhance `bugs get` command to display full status history in a dedicated block ([981c52f](https://github.com/UteamUP/cli/commit/981c52fb0f6e7b925e6ecddb8508066ab2d8b6af))
+* **project:** add my-projects subcommand ([ed79e47](https://github.com/UteamUP/cli/commit/ed79e47d176c019470f8709d6edb33b0080d9a02))
+* **registry:** add support for update-status action and GUID-based identifier handling ([fb83a56](https://github.com/UteamUP/cli/commit/fb83a560b2517d9a321a4c95b99376523250bd6f))
+* **registry:** implement admin-billing-gateway commands for tenant billing management ([1a60625](https://github.com/UteamUP/cli/commit/1a606252f5f3f4c270a2713df478b7c7e87ad207))
+* **tenant:** add invite-defaults get/set commands ([2d1d0e8](https://github.com/UteamUP/cli/commit/2d1d0e829ab76542e96b5b1ace5971f7fbf2032c))
+* **ux-simplification:** Add quick-report CLI domain ([69a5407](https://github.com/UteamUP/cli/commit/69a5407f35fb5b380f10a6d2baf4d1ab2f99bfc3))
+* v0.3.0 — add CLIGuidelines.md and update changelog ([0decf59](https://github.com/UteamUP/cli/commit/0decf591f35e54bbf94545be7d3448c34d78502f))
+* vendor/location enrichment with GPS geocoding and online lookup ([0714680](https://github.com/UteamUP/cli/commit/0714680b5668e03e0e16af871d0c4d1c128981e3))
+* **workorder:** add `ut workorder quick-close` action with required and optional flags ([3ca51ab](https://github.com/UteamUP/cli/commit/3ca51abdeb85d9477623b3e40ee616a922a09a67))
+* **workorder:** add quick-close action with required and optional flags ([490633e](https://github.com/UteamUP/cli/commit/490633ee815d92c6b893547a0af716cafe301e35))
+
+
+### Bug Fixes
+
+* Add tenant headers (X-Tenant-ID, X-Tenant-Guid) to all API requests ([3256adc](https://github.com/UteamUP/cli/commit/3256adc0799cd4f145571931eb8f119132f48b95))
+* **ci:** correct release-please-action SHA to v4.4.0 ([520ff24](https://github.com/UteamUP/cli/commit/520ff24a684607706e746f803b2a1c83c1fed0d0))
+* **cli:** honor UTEAMUP_API_BASE_URL when no config file exists ([86a9f3e](https://github.com/UteamUP/cli/commit/86a9f3ec47b6486bfd84342ad97c6a82d9830f14))
+* **cli:** print image analyzer status banner to stdout for clean display ([d7b332b](https://github.com/UteamUP/cli/commit/d7b332b502a9e46a9b4d8ab3399e89b0d1b68fe1))
+* **cli:** show errors instead of silent exit, expand analyzer search paths ([67ef32d](https://github.com/UteamUP/cli/commit/67ef32dd74f0feb2a669adf1b1b59aa4eae577e2))
+* correct Gemini MIME type — ImageData() prepends 'image/' automatically ([fd24466](https://github.com/UteamUP/cli/commit/fd244664845d4e9764917c18c2e19b4d35a2d6a3))
+* move checkpoint to ~/.uteamup/, add superpowers to .gitignore ([c52f4b9](https://github.com/UteamUP/cli/commit/c52f4b90511062a7291d2c04278f4065eca880dc))
+* resolve panic on float flag with int default in domain registry ([10405e1](https://github.com/UteamUP/cli/commit/10405e1bbb80933c1ba7dc1221bc7ea1d2bac92d))
+
+
+### Miscellaneous
+
+* add firebase-debug.log to gitignore ([71d78fd](https://github.com/UteamUP/cli/commit/71d78fd9a2f0ad3eb02ea8ed5d5462e3efe969c1))
+* Add MIT LICENSE file ([1f52848](https://github.com/UteamUP/cli/commit/1f5284866163c26098fc178a87add4becdcc0615))
+* update go.mod/go.sum, ignore Images/ directory ([5f92665](https://github.com/UteamUP/cli/commit/5f9266547f33d68ea002de9286be98a490386453))
+* Update GoReleaser GitHub owner to UteamUP ([cc9f490](https://github.com/UteamUP/cli/commit/cc9f4907ddd24dd8c1cebcb45f831a36aabea14d))
+
+
+### Documentation
+
+* add detailed flag documentation with before/after examples ([6bda188](https://github.com/UteamUP/cli/commit/6bda1886de865efff662e50645e370ff50cbb6d6))
+* Add version management section (upgrade, downgrade, pin) ([204fb08](https://github.com/UteamUP/cli/commit/204fb083912cd6aac40de627f954920b4bfbc8dd))
+* comprehensive release process documentation in CLIGuidelines.md ([f23c0f7](https://github.com/UteamUP/cli/commit/f23c0f78aa498973585bf21f4ef8aaad42ef00f4))
+* **guidelines:** document REST-routing and CSRF/auth rules for domain commands ([8902781](https://github.com/UteamUP/cli/commit/8902781304c3e19c78d0302b0160c4eaf207860d))
+* update changelog for v0.10.0 ([2d2d251](https://github.com/UteamUP/cli/commit/2d2d251e47cdeb7fd30d0cfa9e8786d35cebb61f))
+* update changelog version to v0.6.0 ([808438a](https://github.com/UteamUP/cli/commit/808438a162140c89637df65b5d95a743c707c557))
+* update changelog with image analyzer CLI features ([0a33c31](https://github.com/UteamUP/cli/commit/0a33c3160d888a75e015dadacdf882e35c930795))
+* update README with image analysis, Gemini config, and v0.3.0 references ([bc2adc6](https://github.com/UteamUP/cli/commit/bc2adc6a7428d1b3c4e7761db437f17543b8e264))
+* update README with video analysis, tenant management, vendor/location enrichment ([bb19e8f](https://github.com/UteamUP/cli/commit/bb19e8f724e66eab045c5e670436276061a3aad6))
+* **workorder:** document canonical priority tiers on CLI flags ([8479de5](https://github.com/UteamUP/cli/commit/8479de535c8bb861e5ff092ba1e429c2de754a8e))
+
+
+### Tests
+
+* **project:** add domains_project_test.go and verify CLI pipeline ([2b1695c](https://github.com/UteamUP/cli/commit/2b1695c584bd1812097569779674a672cdb03cfa))
+
+
+### CI/CD
+
+* add CI ([db51ec9](https://github.com/UteamUP/cli/commit/db51ec95244359ab714641f1fc8e075195acfc75))
+* add CODEOWNERS ([76d395d](https://github.com/UteamUP/cli/commit/76d395d73f5e268dad50befedf73cb7b51eb7ac7))
+* add Dependabot ([0c8dbaa](https://github.com/UteamUP/cli/commit/0c8dbaaa5b20e9f932e4fe6a5a8d4a1b59b5f88c))
+* add release ([90772f2](https://github.com/UteamUP/cli/commit/90772f277673fdbff4b6994b60bb43f5c9370de8))
+* add Release Please automated versioning ([06f7362](https://github.com/UteamUP/cli/commit/06f736281a7103163b6ecd8c6be04d88eefe30ac))
+
 ## [Unreleased]
 
 ### Changed
