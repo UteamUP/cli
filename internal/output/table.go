@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 )
@@ -91,10 +92,92 @@ func printObjectTable(obj map[string]any) error {
 
 	keys := collectColumns(obj)
 	for _, key := range keys {
+		// statusHistory is rendered as a dedicated History: block after the key/value
+		// table so long [auto-reopen]; ... notes don't get truncated to 57 chars inline.
+		if key == "statusHistory" {
+			continue
+		}
 		fmt.Fprintf(w, "%s:\t%s\n", key, formatValue(obj[key]))
 	}
 
-	return w.Flush()
+	if err := w.Flush(); err != nil {
+		return err
+	}
+
+	if hist, ok := obj["statusHistory"]; ok {
+		printStatusHistoryBlock(hist)
+	}
+
+	return nil
+}
+
+// printStatusHistoryBlock renders the `statusHistory` array as a chronological
+// block of one line per transition. Used by `bugs get` so a human (or the
+// uteamup-debug skill) can see the full audit trail without following up with
+// `-o json` and jq. Only intended for the single-object path; list output
+// intentionally skips this to stay scannable.
+func printStatusHistoryBlock(v any) {
+	entries, ok := v.([]any)
+	if !ok || len(entries) == 0 {
+		fmt.Println()
+		fmt.Println("History: (none)")
+		return
+	}
+
+	rows := make([]map[string]any, 0, len(entries))
+	for _, e := range entries {
+		if m, ok := e.(map[string]any); ok {
+			rows = append(rows, m)
+		}
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		return stringVal(rows[i]["changedAtUtc"]) < stringVal(rows[j]["changedAtUtc"])
+	})
+
+	// Reserve ~60 chars for ts + status arrow + author + separators.
+	noteBudget := terminalWidth() - 60
+	if noteBudget < 20 {
+		noteBudget = 20
+	}
+
+	fmt.Println()
+	fmt.Println("History:")
+	for _, r := range rows {
+		ts := stringVal(r["changedAtUtc"])
+		from := stringVal(r["fromStatus"])
+		to := stringVal(r["toStatus"])
+		author := stringVal(r["changedByUserEmail"])
+		if author == "" {
+			author = stringVal(r["changedByUserId"])
+		}
+		note := stringVal(r["note"])
+		if len(note) > noteBudget {
+			note = note[:noteBudget-3] + "..."
+		}
+		fmt.Printf("  %s  %s -> %s  %s  %s\n", ts, from, to, author, note)
+	}
+}
+
+func stringVal(v any) string {
+	if v == nil {
+		return ""
+	}
+	if s, ok := v.(string); ok {
+		return s
+	}
+	return fmt.Sprintf("%v", v)
+}
+
+// terminalWidth returns the caller's terminal width in columns, preferring
+// the COLUMNS env var and falling back to 160 so long notes don't wrap on
+// desktop-sized terminals that don't export COLUMNS.
+func terminalWidth() int {
+	if col := os.Getenv("COLUMNS"); col != "" {
+		if w, err := strconv.Atoi(col); err == nil && w > 40 {
+			return w
+		}
+	}
+	return 160
 }
 
 func collectColumns(obj map[string]any) []string {
