@@ -63,6 +63,18 @@ func init() {
 				},
 			},
 			{
+				Name:        "update-type",
+				Description: "Convert a submission between Bug and Feature (global-admin only). Records the change in the audit history.",
+				ToolName:    "UteamupBugsAndFeaturesUpdateType",
+				Args: []ArgDef{
+					{Name: "externalGuid", Description: "ExternalGuid", Required: true, Type: "string"},
+					{Name: "type", Description: "Target type (Bug or Feature)", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "note", Description: "Optional reason recorded on the audit-trail entry. Max 1 KB.", Type: "string"},
+				},
+			},
+			{
 				Name:        "delete",
 				Description: "Permanently delete a submission (global-admin only; for junk entries — use Reject/Archive for normal lifecycle)",
 				ToolName:    "UteamupBugsAndFeaturesDelete",
