@@ -54,6 +54,15 @@ func init() {
 				},
 			},
 			{
+				Name:        "update-notes",
+				Description: "Set or clear freeform admin notes on a submission (global-admin only). Empty string clears.",
+				ToolName:    "UteamupBugsAndFeaturesUpdateNotes",
+				Args:        []ArgDef{{Name: "externalGuid", Description: "ExternalGuid", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "additional-notes", Description: "Notes body (pass empty string to clear). Max 8 KB.", Type: "string"},
+				},
+			},
+			{
 				Name:        "delete",
 				Description: "Permanently delete a submission (global-admin only; for junk entries — use Reject/Archive for normal lifecycle)",
 				ToolName:    "UteamupBugsAndFeaturesDelete",

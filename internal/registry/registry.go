@@ -42,12 +42,18 @@ type FlagDef struct {
 }
 
 // HTTPMethod maps action names to HTTP methods for REST calls.
+//
+// Convention: any verb prefixed with `update-` (e.g. update-status, update-notes,
+// update-priority) is treated as a sub-route PATCH targeting `{basePath}/{id}/{suffix}`.
+// The lookup in runCommand falls back to that rule when the action name isn't
+// explicitly listed below; buildRESTPath does the matching path construction.
 var HTTPMethod = map[string]string{
 	"list":          "GET",
 	"get":           "GET",
 	"create":        "POST",
 	"update":        "PUT",
 	"update-status": "PATCH",
+	"update-notes":  "PATCH",
 	"delete":        "DELETE",
 	"search":        "GET",
 }
@@ -230,7 +236,14 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 	restPath := buildRESTPath(domain, action, toolArgs)
 	httpMethod := HTTPMethod[action.Name]
 	if httpMethod == "" {
-		httpMethod = "GET"
+		// Generic `update-<sub>` rule: any unmapped verb starting with `update-`
+		// is treated as a PATCH against `{basePath}/{id}/{sub}`. Keeps the registry
+		// extensible without forcing a registry.go edit per new endpoint.
+		if strings.HasPrefix(action.Name, "update-") {
+			httpMethod = "PATCH"
+		} else {
+			httpMethod = "GET"
+		}
 	}
 
 	logger.Debug("calling %s %s (tool: %s) with args %v", httpMethod, restPath, action.ToolName, toolArgs)
@@ -320,6 +333,17 @@ func buildRESTPath(domain *Domain, action Action, args map[string]any) string {
 		// update (PUT /<id>). Domains that reuse this verb must match.
 		if hasId {
 			return fmt.Sprintf("%s/%v/status", basePath, idValue)
+		}
+	default:
+		// Generic `update-<sub>` sub-route: e.g. `update-notes` →
+		// PATCH `{basePath}/{id}/notes`. Mirrors the `update-status` pattern
+		// so new sub-route PATCH endpoints route correctly without per-verb
+		// case statements here.
+		if hasId && strings.HasPrefix(action.Name, "update-") {
+			suffix := strings.TrimPrefix(action.Name, "update-")
+			if suffix != "" {
+				return fmt.Sprintf("%s/%v/%s", basePath, idValue, suffix)
+			}
 		}
 	case "search":
 		if action.RESTPath != "" {

@@ -4,6 +4,40 @@ import (
 	"testing"
 )
 
+// TestBuildRESTPathUpdateSubRoutes locks in the update-<sub> sub-route convention:
+// `update-status` → /{id}/status (explicit case), `update-notes` → /{id}/notes
+// (generic fallback). Without these, PATCH endpoints route to the basePath and
+// produce 405/404 from the backend.
+func TestBuildRESTPathUpdateSubRoutes(t *testing.T) {
+	domain := &Domain{Name: "bugsandfeatures", APIPath: "/api/bugsandfeatures"}
+	cases := []struct {
+		actionName string
+		argKey     string
+		argValue   any
+		want       string
+	}{
+		{"update-status", "externalGuid", "abc-123", "/api/bugsandfeatures/abc-123/status"},
+		{"update-notes", "externalGuid", "abc-123", "/api/bugsandfeatures/abc-123/notes"},
+		{"update-status", "id", 42, "/api/bugsandfeatures/42/status"},
+		{"update-priority", "externalGuid", "g1", "/api/bugsandfeatures/g1/priority"},
+		{"get", "externalGuid", "g1", "/api/bugsandfeatures/g1"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.actionName, func(t *testing.T) {
+			got := buildRESTPath(domain, Action{Name: tc.actionName}, map[string]any{tc.argKey: tc.argValue})
+			if got != tc.want {
+				t.Errorf("buildRESTPath(%s) = %q, want %q", tc.actionName, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestHTTPMethodForUpdateNotes(t *testing.T) {
+	if HTTPMethod["update-notes"] != "PATCH" {
+		t.Errorf("update-notes HTTPMethod = %q, want PATCH", HTTPMethod["update-notes"])
+	}
+}
+
 func TestToCamelCase(t *testing.T) {
 	tests := []struct {
 		input    string
