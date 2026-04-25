@@ -8,19 +8,15 @@ func paginationFlags() []FlagDef {
 	}
 }
 
-// searchFlags returns pagination + query flags for search actions.
-func searchFlags() []FlagDef {
-	return append(paginationFlags(), FlagDef{Name: "filter", Short: "f", Description: "Filter/search term", Type: "string"})
-}
-
 // idArg returns a standard required integer ID positional argument.
+//
+// Legacy. New GUID-first domains should declare an `externalGuid` positional
+// arg inline — per CLIGuidelines.md ("GUID-first domains should declare their
+// positional arg as externalGuid"). Existing callers below remain on int ID
+// for now because the corresponding backend routes still accept {id:int};
+// migration is tracked separately.
 func idArg() []ArgDef {
 	return []ArgDef{{Name: "id", Description: "Record ID", Required: true, Type: "int"}}
-}
-
-// stringIDArg returns a standard required string ID positional argument (for GUIDs).
-func stringIDArg() []ArgDef {
-	return []ArgDef{{Name: "id", Description: "Record ID", Required: true, Type: "string"}}
 }
 
 // queryArg returns a required search query positional argument.
@@ -33,12 +29,10 @@ func jsonFlag() FlagDef {
 	return FlagDef{Name: "from-json", Description: "JSON file with request data", Type: "string"}
 }
 
-// nameFlag returns a required --name flag.
-func nameFlag() FlagDef {
-	return FlagDef{Name: "name", Description: "Name", Required: true, Type: "string"}
-}
-
-// crudActions returns standard CRUD actions for a domain.
+// crudActions returns standard CRUD actions for a domain using the legacy
+// integer `id` positional arg. New GUID-first domains should declare their
+// own actions with an `externalGuid` positional arg so the CLI surface
+// advertises `externalGuid` per CLIGuidelines.md.
 func crudActions(entityPrefix string) []Action {
 	return []Action{
 		{Name: "list", Description: "List records", ToolName: "Uteamup" + entityPrefix + "List", Flags: paginationFlags()},
@@ -50,6 +44,8 @@ func crudActions(entityPrefix string) []Action {
 }
 
 // listGetActions returns list + get actions for read-only or simple domains.
+// Uses the legacy integer `id` positional arg; new GUID-first domains should
+// declare their own actions with an `externalGuid` positional arg per CLIGuidelines.md.
 func listGetActions(entityPrefix string) []Action {
 	return []Action{
 		{Name: "list", Description: "List records", ToolName: "Uteamup" + entityPrefix + "List", Flags: paginationFlags()},
