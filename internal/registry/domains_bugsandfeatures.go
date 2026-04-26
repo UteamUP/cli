@@ -19,6 +19,7 @@ func init() {
 					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
 					{Name: "page-size", Short: "s", Description: "Items per page (max 200)", Default: 50, Type: "int"},
 					{Name: "hide-rejected-and-confirmed", Description: "Hide Rejected and Confirmed rows by default", Default: true, Type: "bool"},
+					{Name: "search", Short: "q", Description: "Free-text search across title, description, tenant, submitter, location, interaction, user activity, component chain, additional notes, and audit trail (case-insensitive substring; max 200 chars)", Type: "string"},
 				},
 			},
 			{
