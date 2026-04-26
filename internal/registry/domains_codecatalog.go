@@ -48,6 +48,15 @@ func init() {
 					{Name: "asset-guid", Description: "Asset ExternalGuid", Required: true, Type: "string"},
 				},
 			},
+			{
+				Name:        "assign-asset",
+				Description: "Assign a code-catalog entry to an asset by their ExternalGuids — GUID-first; preserves audit log. Folded in from prod bug 81e76313.",
+				ToolName:    "UteamupCodingsystemAssignAsset",
+				Args: []ArgDef{
+					{Name: "asset-guid", Description: "Asset ExternalGuid", Required: true, Type: "string"},
+					{Name: "code-catalog-entry-guid", Description: "Target code-catalog entry ExternalGuid", Required: true, Type: "string"},
+				},
+			},
 		},
 	})
 }
