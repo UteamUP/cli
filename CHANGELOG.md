@@ -101,6 +101,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Performance Auto-Monitoring (CLI).** Added `performance-auto` to the validated `--source` flag values for the `uteamup bugs list` command in `domains_bugs.go`. Added corresponding test coverage.
+
 ### Changed
 - **`uteamup bugs get <externalGuid>` default human output now surfaces the full `statusHistory[]` as a `History:` block.** `-o json` and `-o yaml` were already pass-through and already carried the array; the gap was the default table renderer, which flattened the nested array into a 60-char-truncated JSON blob. `internal/output/table.go::printObjectTable` now skips the `statusHistory` key from the key/value section and, after the main object, prints a chronological `History:` block — one line per entry with ISO-8601 timestamp, `from -> to` transition, author (`changedByUserEmail` falling back to `changedByUserId` so the `system:auto-ingest` sentinel remains visible), and the note truncated to fit the terminal width (`$COLUMNS` with a 160-col fallback). `bugs list` output is intentionally unchanged — per-row history would turn a one-screen list into screens of noise. Six new tests in `internal/output/table_test.go` cover: multi-entry chronological ordering, `system:auto-ingest` author visibility, long `[auto-reopen]` note truncation with `...`, empty history renders `History: (none)` rather than crashing, list output does NOT expand history per row, `fromStatus -> toStatus` arrow marker. `go vet ./... && go test ./... -race && make build` all clean.
 
