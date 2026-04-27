@@ -195,79 +195,66 @@ Video analysis uses more tokens than image analysis. Use `--dry-run` to estimate
 
 ## Release Process
 
-> **IMPORTANT**: Every release MUST follow these steps. Skipping any step will result in users not getting updates via `brew upgrade`, missing binaries, or stale Homebrew formulas.
+> **IMPORTANT**: Releases are **fully automated** via Release-Please + GoReleaser GitHub Actions. The human action is **merging the Release-Please PR**, nothing more. Do NOT run `make release`, `goreleaser release`, or hand-create tags from your laptop. Doing so will collide with the automated tagger and produce duplicate releases.
 
-### Prerequisites (One-Time Setup)
+### How a release happens
 
-1. **GITHUB_TOKEN** — Required for GoReleaser to create releases and push to Homebrew tap.
+1. **Land conventional commits on `main`.** Prefixes drive the version bump:
+   - `feat:` → minor bump
+   - `fix:`, `chore:`, `refactor:`, `docs:`, `test:`, `perf:`, `ci:`, `build:`, `style:`, `remove:` → patch bump
+   - `feat!:` / `fix!:` / `BREAKING CHANGE:` in body → major bump
+2. **Release-Please opens (or updates) a "Release PR".** It bumps the version in `.release-please-manifest.json`, rewrites `CHANGELOG.md`, and titles the PR `chore(main): release X.Y.Z`.
+3. **Merge the Release PR.** This is the only manual step.
+4. **On merge, `.github/workflows/release-please.yml` does the rest:**
+   - Creates the version tag (e.g. `1.2.0` — **no `v` prefix**, because `release-please-config.json` sets `"include-v-in-tag": false`).
+   - Runs the `goreleaser` job: builds darwin/linux/windows × amd64/arm64, generates `checksums.txt`, creates `.deb` + `.rpm`, publishes the GitHub Release at `https://github.com/UteamUP/cli/releases/tag/<version>`.
+   - Fires a `repository-dispatch` `update-formula` event at `UteamUP/homebrew-tap` with the new tag. The tap regenerates `Formula/uteamup.rb` with the new version + SHA256s.
+5. **Verify the local Homebrew install (REQUIRED).** Always run this after a release:
    ```bash
-   # Create a GitHub Personal Access Token with `repo` scope at:
-   # https://github.com/settings/tokens
-   # Then export it:
-   export GITHUB_TOKEN=ghp_your_token_here
-
-   # Optionally add to shell profile for persistence:
-   echo 'export GITHUB_TOKEN=ghp_your_token_here' >> ~/.zshrc
+   brew update
+   brew upgrade uteamup
+   uteamup version           # must show the new X.Y.Z, NOT --version (that flag does not exist)
    ```
+   If `uteamup version` still reports the old version, the tap may not have refreshed yet — run `brew update` once more, then `brew upgrade uteamup`. If the formula at `https://github.com/UteamUP/homebrew-tap/blob/main/Formula/uteamup.rb` already shows the new version but `brew upgrade` won't pick it up, run `brew untap uteamup/tap && brew tap uteamup/tap` to force a fresh fetch.
 
-2. **HOMEBREW_TAP_GITHUB_TOKEN** — Used by GoReleaser to push the formula to the tap.
-   This can be the same as `GITHUB_TOKEN` if it has `repo` scope on `UteamUP/homebrew-tap`.
-   ```bash
-   export HOMEBREW_TAP_GITHUB_TOKEN=$GITHUB_TOKEN
-   ```
+### What you do NOT do
 
-3. **GoReleaser** — Must be installed:
-   ```bash
-   brew install goreleaser   # macOS
-   ```
+- ❌ `make release` — owned by the GitHub Action, never run locally.
+- ❌ `git tag -a vX.Y.Z` / `git push origin vX.Y.Z` — Release-Please creates the tag.
+- ❌ `git push github main` — there is no `github` remote. `origin` is already `github.com:UteamUP/cli.git`.
+- ❌ Hand-edit `Formula/uteamup.rb` in the tap — GoReleaser overwrites it.
+- ❌ Add a `v` prefix when referencing post-1.0 tags (`1.2.0` not `v1.2.0`). Older `v0.x` tags kept the prefix; new tags do not.
 
-### Step-by-Step Release Checklist
-
-**Every time a new version is released, ALL of these steps must be completed:**
+### Snapshot Build (testing GoReleaser locally without publishing)
 
 ```bash
-# === Step 1: Update CHANGELOG.md ===
-# Move [Unreleased] items to a new version section
-# Example: ## [0.4.0] — 2026-04-01
+make snapshot
+```
+Builds all platform artifacts into `dist/` without touching GitHub or the tap. Use to test `.goreleaser.yml` changes before merging.
 
-# === Step 2: Commit the changelog and any final changes ===
-git add CHANGELOG.md
-git commit -m "docs: update changelog for vX.Y.Z"
+### Manual Formula Update (only if automation is broken)
 
-# === Step 3: Push code to BOTH remotes ===
-git push origin main
-git push github main
+If the `repository-dispatch` to `UteamUP/homebrew-tap` fails and the tap is stuck on an old version, fall back to hand-editing the formula. Get user permission first.
 
-# === Step 4: Create and push the version tag ===
-git tag -a vX.Y.Z -m "Release vX.Y.Z — brief description"
-git push origin vX.Y.Z
-git push github vX.Y.Z
-
-# === Step 5: Run GoReleaser (requires GITHUB_TOKEN) ===
-export GITHUB_TOKEN=ghp_your_token_here
-export HOMEBREW_TAP_GITHUB_TOKEN=$GITHUB_TOKEN
-make release
-# OR: goreleaser release --clean
-
-# === Step 6 (Optional): Build MSI for Windows ===
-# Requires WiX Toolset v4+ on Windows/CI
-wix build packaging/msi/uteamup.wxs -o dist/uteamup.msi -arch x64
-# Then upload MSI to the GitHub release manually:
-gh release upload vX.Y.Z dist/uteamup.msi --repo UteamUP/cli
+```bash
+git clone git@github.com:UteamUP/homebrew-tap.git
+cd homebrew-tap
+# Pull the new SHA256s from the release
+curl -sL https://github.com/UteamUP/cli/releases/download/X.Y.Z/checksums.txt
+# Edit Formula/uteamup.rb — bump version, swap URLs, swap sha256 lines for darwin amd64/arm64 + linux amd64/arm64
+git add Formula/uteamup.rb
+git commit -m "Update uteamup to X.Y.Z"
+git push
 ```
 
-### What GoReleaser Does Automatically (Step 5)
+### Optional: MSI for Windows
 
-When you run `make release`, GoReleaser:
+The standard release does not produce an MSI. If a user explicitly needs one, build it on a Windows runner with WiX Toolset v4+ and upload manually:
 
-1. **Builds** all 6 platform binaries (darwin/linux/windows × amd64/arm64)
-2. **Creates archives** (tar.gz for Unix, zip for Windows)
-3. **Generates** SHA256 checksums (`checksums.txt`)
-4. **Creates** GitHub release at https://github.com/UteamUP/cli/releases with all artifacts
-5. **Updates Homebrew formula** at https://github.com/UteamUP/homebrew-tap/blob/main/Formula/uteamup.rb
-   - Auto-fills version, download URLs, and SHA256 hashes
-   - Users get the update via `brew update && brew upgrade uteamup`
-6. **Generates** .deb and .rpm Linux packages
+```bash
+wix build packaging/msi/uteamup.wxs -o dist/uteamup.msi -arch x64
+gh release upload X.Y.Z dist/uteamup.msi --repo UteamUP/cli
+```
 
 ### Homebrew Tap Details
 
@@ -275,43 +262,17 @@ When you run `make release`, GoReleaser:
 - **Formula**: `Formula/uteamup.rb`
 - **GoReleaser config**: `.goreleaser.yml` → `brews` section
 - **Template**: `packaging/homebrew/uteamup.rb.tmpl` (reference only — GoReleaser generates the actual formula)
-
-**How `brew upgrade` works:**
-1. GoReleaser pushes updated `uteamup.rb` to `UteamUP/homebrew-tap` with new version + SHA256s
-2. User runs `brew update` → pulls latest formula from the tap
-3. User runs `brew upgrade uteamup` → downloads new binary from GitHub release
-
-**If Homebrew auto-update fails**, manually update the formula:
-```bash
-git clone git@github.com:UteamUP/homebrew-tap.git
-cd homebrew-tap
-# Edit Formula/uteamup.rb — update version, URLs, and SHA256s
-# Get SHA256s from the release checksums.txt:
-curl -sL https://github.com/UteamUP/cli/releases/download/vX.Y.Z/checksums.txt
-git add Formula/uteamup.rb
-git commit -m "Update uteamup to vX.Y.Z"
-git push
-```
-
-### Snapshot Build (Testing)
-
-To test the release pipeline without publishing:
-
-```bash
-make snapshot
-```
-
-This creates all binaries in `dist/` without pushing to GitHub or Homebrew.
+- **Update mechanism**: `release-please.yml` fires a `repository-dispatch` `update-formula` event after every release. The tap reacts by regenerating `Formula/uteamup.rb`.
 
 ### Troubleshooting Releases
 
-| Problem | Cause | Fix |
-|---------|-------|-----|
-| `missing GITHUB_TOKEN` | Token not exported | `export GITHUB_TOKEN=ghp_...` |
-| Homebrew formula not updated | `HOMEBREW_TAP_GITHUB_TOKEN` missing or no repo scope | Set token with `repo` scope on `UteamUP/homebrew-tap` |
-| `brew upgrade` shows "already up-to-date" | Formula not pushed or `brew update` not run | Run `brew update` first; check tap formula version |
-| Tag already exists | Trying to re-release | Delete tag: `git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z` |
-| GoReleaser fails on build | Code doesn't compile | Run `make check` before releasing |
+| Problem | Likely cause | Fix |
+|---------|--------------|-----|
+| Release-Please PR didn't open | Latest commits don't use a recognized conventional prefix | Reword the commit (`git commit --amend` or land a new `chore:` commit) |
+| `goreleaser` job failed in Actions | Build error / dirty tree on the runner | Re-run the workflow from the Actions tab; if persistent, run `make snapshot` locally to reproduce |
+| Tap not updated after release | `repository-dispatch` failed (see workflow logs) | Re-fire by re-running the `goreleaser` job, or fall back to "Manual Formula Update" above |
+| `brew upgrade` says "already up-to-date" but `uteamup version` is stale | Tap cache not refreshed | `brew update`, then `brew upgrade uteamup`. If still stale: `brew untap uteamup/tap && brew tap uteamup/tap && brew install uteamup` |
+| Tag already exists | Tried to re-release the same version | Land a new commit so Release-Please proposes the next version. Do NOT delete an existing public tag |
 
 ---
 
@@ -525,11 +486,11 @@ make build              # Build succeeds
 
 | Remote | URL | Purpose |
 |--------|-----|---------|
-| `origin` | `ssh.dev.azure.com:v3/UteamUP/UteamUP_CLI/UteamUP_CLI` | Primary (Azure DevOps) |
-| `github` | `github.com:UteamUP/cli.git` | Public releases, Homebrew tap |
+| `origin` | `https://github.com/UteamUP/cli.git` | Sole remote — public releases, Homebrew tap, CI |
 
-Always push to both:
+There is **no separate `github` remote** anymore. Push normally:
 ```bash
-git push origin main --tags
-git push github main --tags
+git push origin main
 ```
+
+Tags are created by the Release-Please GitHub Action — do not push tags from your laptop.
