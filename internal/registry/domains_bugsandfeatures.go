@@ -14,6 +14,7 @@ func init() {
 					{Name: "type", Description: "Filter by type (Bug or Feature)", Type: "string"},
 					{Name: "status", Description: "Filter by status (New, Validated, Fixed, Confirmed, Rejected)", Type: "string"},
 					{Name: "severity", Description: "Filter by severity (Low, Medium, High, Critical)", Type: "string"},
+					{Name: "source", Description: "Filter by source (Manual, FrontendAuto, PerformanceAuto)", Type: "string"},
 					{Name: "tenant-guid", Description: "Filter by tenant ExternalGuid", Type: "string"},
 					{Name: "submitter-user-id", Description: "Filter by submitter user id", Type: "string"},
 					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
