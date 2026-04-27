@@ -5,6 +5,24 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0](https://github.com/UteamUP/cli/compare/1.1.0...1.2.0) (2026-04-27)
+
+
+### Features
+
+* **bugs:** add performance auto-monitoring to validated --source flag values ([57d6b9b](https://github.com/UteamUP/cli/commit/57d6b9b18d493e461e60f4e095dfe3babc80ea25))
+* **industry-coding:** CLI domain for hotspot CRUD (Task 7.2) ([3d9959d](https://github.com/UteamUP/cli/commit/3d9959d01f88a8fcb3b887efdaa71e2f888e6e49))
+* **registry:** add assign-asset command for code-catalog entry assignment with audit log preservation ([198e8fb](https://github.com/UteamUP/cli/commit/198e8fb75359e3c6c5a70ea476257500129aeedb))
+* **registry:** add search parameter for free-text search in bugs and features ([e2a8a4f](https://github.com/UteamUP/cli/commit/e2a8a4fd53897ac5d51c19ee15249948f69108b0))
+* **registry:** add source filter for bug and feature queries ([862e9b3](https://github.com/UteamUP/cli/commit/862e9b335e87c484c888d0111b02b8966fa97164))
+* **registry:** add update-notes command for admin notes management and enhance REST path handling for update sub-routes ([6f61c0c](https://github.com/UteamUP/cli/commit/6f61c0c16e9ff3fcf76bc5c6d8d3a7c566fb1700))
+* **registry:** add update-type command for converting submissions between Bug and Feature with audit history ([274050f](https://github.com/UteamUP/cli/commit/274050fe47dd6a4ecf3a7c854659e37667e7c0f5))
+
+
+### Code Refactoring
+
+* **registry:** remove unused helper functions ([f75a71b](https://github.com/UteamUP/cli/commit/f75a71b0241e20ba2132846fb4ee682d6784433a))
+
 ## [1.1.0](https://github.com/UteamUP/cli/compare/1.0.0...1.1.0) (2026-04-24)
 
 
