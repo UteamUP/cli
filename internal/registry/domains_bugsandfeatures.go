@@ -107,6 +107,46 @@ func init() {
 					{Name: "mention", Description: "Global-admin user GUID to @-mention. Repeatable; max 10 per comment. Server rejects non-admin GUIDs with 400.", Type: "stringSlice"},
 				},
 			},
+			{
+				Name:        "attachments-list",
+				Description: "List image attachments on a bug (global-admin only). Output is oldest-first.",
+				ToolName:    "UteamupBugsAndFeaturesAttachmentsList",
+				Args: []ArgDef{
+					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "attachments-upload",
+				Description: "Upload an image (PNG/JPEG/GIF/WEBP, max 2 MB) to a bug as a global admin. Multipart over REST.",
+				ToolName:    "UteamupBugsAndFeaturesAttachmentsUpload",
+				Args: []ArgDef{
+					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "file", Short: "f", Description: "Local path to the image file (PNG/JPEG/GIF/WEBP). Required.", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "attachments-download",
+				Description: "Download a single attachment via the SAS URL endpoint. Writes to ./<attachmentGuid>.<ext> by default; --out overrides.",
+				ToolName:    "UteamupBugsAndFeaturesAttachmentsDownload",
+				Args: []ArgDef{
+					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
+					{Name: "attachmentExternalGuid", Description: "Attachment ExternalGuid", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "out", Short: "o", Description: "Output file path. If omitted, writes to ./<attachmentGuid>.<ext> in the current directory.", Type: "string"},
+				},
+			},
+			{
+				Name:        "attachments-delete",
+				Description: "Hard-delete a single attachment row + best-effort delete its blob (global-admin only). Audit-logged server-side.",
+				ToolName:    "UteamupBugsAndFeaturesAttachmentsDelete",
+				Args: []ArgDef{
+					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
+					{Name: "attachmentExternalGuid", Description: "Attachment ExternalGuid", Required: true, Type: "string"},
+				},
+			},
 		},
 	})
 }
