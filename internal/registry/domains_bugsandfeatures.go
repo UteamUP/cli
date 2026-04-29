@@ -82,6 +82,31 @@ func init() {
 				ToolName:    "UteamupBugsAndFeaturesDelete",
 				Args:        []ArgDef{{Name: "externalGuid", Description: "ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
 			},
+			{
+				Name:        "comments-list",
+				Description: "List the comment thread on a bug (global-admin only). Top-level comments oldest-first; replies eagerly included.",
+				ToolName:    "UteamupBugsAndFeaturesCommentsList",
+				Args: []ArgDef{
+					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "page", Short: "p", Description: "Page number (top-level comments)", Default: 1, Type: "int"},
+					{Name: "page-size", Short: "s", Description: "Top-level comments per page (max 100)", Default: 50, Type: "int"},
+				},
+			},
+			{
+				Name:        "comments-add",
+				Description: "Post a new comment (or a reply via --parent) on a bug. Optional --mention flags @-mention global admins (repeatable; max 10).",
+				ToolName:    "UteamupBugsAndFeaturesCommentsAdd",
+				Args: []ArgDef{
+					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "text", Short: "t", Description: "Comment body (HTML accepted; plain text is wrapped). Max 8000 chars after sanitization.", Required: true, Type: "string"},
+					{Name: "parent", Description: "ExternalGuid of the parent comment to reply to. Replies of replies are rejected (single-level threading).", Type: "string"},
+					{Name: "mention", Description: "Global-admin user GUID to @-mention. Repeatable; max 10 per comment. Server rejects non-admin GUIDs with 400.", Type: "stringSlice"},
+				},
+			},
 		},
 	})
 }
