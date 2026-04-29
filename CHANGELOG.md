@@ -5,6 +5,19 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0](https://github.com/UteamUP/cli/compare/1.2.0...1.3.0) (2026-04-29)
+
+
+### Features
+
+* **attachments:** add commands for managing bug attachments (list, upload, download, delete) ([8a518fe](https://github.com/UteamUP/cli/commit/8a518fed9d3b6b68692ae7f9e28358468a75a1d8))
+* **comments:** add commands for listing and adding comments on bugs ([ff7878b](https://github.com/UteamUP/cli/commit/ff7878bc00de9e2dcce6650ca3bb1cd6f6d4bda3))
+
+
+### Documentation
+
+* update release process guidelines for automation and remove manual steps ([cefd11a](https://github.com/UteamUP/cli/commit/cefd11a3d2ac57ef5da8818d959fddc8e3e98ef4))
+
 ## [1.2.0](https://github.com/UteamUP/cli/compare/1.1.0...1.2.0) (2026-04-27)
 
 
