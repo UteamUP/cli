@@ -84,7 +84,7 @@ func init() {
 			},
 			{
 				Name:        "comments-list",
-				Description: "List the comment thread on a bug (global-admin only). Top-level comments oldest-first; replies eagerly included.",
+				Description: "List the comment thread on a bug (global-admin only). Top-level comments newest-first (latest at the top); replies under each comment stay oldest-first and are eagerly included.",
 				ToolName:    "UteamupBugsAndFeaturesCommentsList",
 				HTTPMethod:  "GET",
 				RESTPath:    "{bugExternalGuid}/comments",
