@@ -37,8 +37,13 @@ type FlagDef struct {
 	Short       string
 	Description string
 	Default     any
-	Type        string // "string", "int", "bool", "float"
+	Type        string // "string", "int", "bool", "float", "stringSlice"
 	Required    bool
+	// BodyName overrides the JSON body field name when the flag value is sent
+	// in a POST/PUT/PATCH body. Default is camelCase(Name). Use this when the
+	// CLI flag name and the backend DTO field name diverge — e.g. CLI flag
+	// `--text` mapping to backend field `bodyHtml` on a comment-create request.
+	BodyName string
 }
 
 // HTTPMethod maps action names to HTTP methods for REST calls.
@@ -63,9 +68,22 @@ type Action struct {
 	Name        string
 	Description string
 	ToolName    string // MCP tool name, e.g. "UteamupAssetList"
-	RESTPath    string // Optional REST override, e.g. "all" or "search"
-	Args        []ArgDef
-	Flags       []FlagDef
+	// RESTPath is the path suffix appended to the domain's basePath. It supports
+	// `{argName}` placeholders that are substituted from the action's positional
+	// args. Examples:
+	//   "all"                                  → static suffix (legacy use, e.g. list/search)
+	//   "{bugExternalGuid}/comments"           → sub-resource list / create
+	//   "{bugExternalGuid}/comments/{commentExternalGuid}" → sub-sub-resource get/edit/delete
+	// Args consumed by placeholder substitution are removed from the JSON body
+	// before the request is sent.
+	RESTPath string
+	// HTTPMethod overrides the action-name-based HTTP method default. Use this
+	// for sub-resource verbs whose name doesn't fit the list/get/create/update/
+	// delete convention — e.g. `comments-add` (POST), `attachments-delete`
+	// (DELETE). Empty = derived from Action.Name via the HTTPMethod map.
+	HTTPMethod string
+	Args       []ArgDef
+	Flags      []FlagDef
 }
 
 // Domain represents an entity domain with its available actions.
@@ -171,6 +189,18 @@ func buildActionCommand(domain *Domain, action Action, apiClient *client.APIClie
 				}
 			}
 			cmd.Flags().Float64(flag.Name, def, flag.Description)
+		case "stringSlice":
+			var def []string
+			if flag.Default != nil {
+				if v, ok := flag.Default.([]string); ok {
+					def = v
+				}
+			}
+			if flag.Short != "" {
+				cmd.Flags().StringSliceP(flag.Name, flag.Short, def, flag.Description)
+			} else {
+				cmd.Flags().StringSlice(flag.Name, def, flag.Description)
+			}
 		default: // string
 			def := ""
 			if flag.Default != nil {
@@ -207,38 +237,53 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 
 	// Flags
 	for _, flag := range action.Flags {
+		fieldName := flag.BodyName
+		if fieldName == "" {
+			fieldName = toCamelCase(flag.Name)
+		}
 		if !cmd.Flags().Changed(flag.Name) {
 			if flag.Default != nil {
-				toolArgs[toCamelCase(flag.Name)] = flag.Default
+				toolArgs[fieldName] = flag.Default
 			}
 			continue
 		}
 		switch flag.Type {
 		case "int":
 			v, _ := cmd.Flags().GetInt(flag.Name)
-			toolArgs[toCamelCase(flag.Name)] = v
+			toolArgs[fieldName] = v
 		case "bool":
 			v, _ := cmd.Flags().GetBool(flag.Name)
-			toolArgs[toCamelCase(flag.Name)] = v
+			toolArgs[fieldName] = v
 		case "float":
 			v, _ := cmd.Flags().GetFloat64(flag.Name)
-			toolArgs[toCamelCase(flag.Name)] = v
+			toolArgs[fieldName] = v
+		case "stringSlice":
+			v, _ := cmd.Flags().GetStringSlice(flag.Name)
+			toolArgs[fieldName] = v
 		default:
 			v, _ := cmd.Flags().GetString(flag.Name)
-			toolArgs[toCamelCase(flag.Name)] = v
+			toolArgs[fieldName] = v
 		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	// Build REST endpoint path from domain and action
-	restPath := buildRESTPath(domain, action, toolArgs)
-	httpMethod := HTTPMethod[action.Name]
+	// Build REST endpoint path from domain and action. Path-template placeholders
+	// consumed during substitution are stripped from the body so they don't double-
+	// leak as JSON fields on POST/PUT/PATCH.
+	restPath, consumed := buildRESTPath(domain, action, toolArgs)
+	for _, name := range consumed {
+		delete(toolArgs, name)
+	}
+
+	// Action.HTTPMethod wins over the action-name-based default. The static map
+	// covers the standard CRUD verbs; the `update-<sub>` rule is the fallback.
+	httpMethod := action.HTTPMethod
 	if httpMethod == "" {
-		// Generic `update-<sub>` rule: any unmapped verb starting with `update-`
-		// is treated as a PATCH against `{basePath}/{id}/{sub}`. Keeps the registry
-		// extensible without forcing a registry.go edit per new endpoint.
+		httpMethod = HTTPMethod[action.Name]
+	}
+	if httpMethod == "" {
 		if strings.HasPrefix(action.Name, "update-") {
 			httpMethod = "PATCH"
 		} else {
@@ -304,11 +349,22 @@ func exportJSON(export *ExportConfig, domainName, actionName string, data json.R
 }
 
 // buildRESTPath constructs the REST API path from domain + action.
-func buildRESTPath(domain *Domain, action Action, args map[string]any) string {
+// Returns the path and the list of arg names consumed by path-template
+// substitution (those must be removed from the JSON body before the request
+// is sent so the same arg doesn't appear in both URL and body).
+func buildRESTPath(domain *Domain, action Action, args map[string]any) (string, []string) {
 	basePath := domain.APIPath
 	if basePath == "" {
 		// Derive from domain name: "vendor" → "/api/vendor", "asset-type" → "/api/assettype"
 		basePath = "/api/" + strings.ReplaceAll(domain.Name, "-", "")
+	}
+
+	// If the action declares an explicit RESTPath, expand `{argName}` placeholders
+	// against the args map. A path with no placeholders is treated as a literal
+	// suffix (preserves the legacy `RESTPath: "all"` / `"search"` usage).
+	if action.RESTPath != "" {
+		expanded, consumed := expandPathTemplate(action.RESTPath, args)
+		return basePath + "/" + expanded, consumed
 	}
 
 	// Resolve the positional identifier to use in the URL path. Most legacy
@@ -317,14 +373,16 @@ func buildRESTPath(domain *Domain, action Action, args map[string]any) string {
 	// Accept both so every domain routes correctly without needing RESTPath
 	// overrides or API-key handlers that special-case each verb.
 	idValue, hasId := args["id"]
+	idArgName := "id"
 	if !hasId {
 		idValue, hasId = args["externalGuid"]
+		idArgName = "externalGuid"
 	}
 
 	switch action.Name {
 	case "get", "update", "delete":
 		if hasId {
-			return fmt.Sprintf("%s/%v", basePath, idValue)
+			return fmt.Sprintf("%s/%v", basePath, idValue), []string{idArgName}
 		}
 	case "update-status":
 		// PATCH /api/<domain>/{id}/status is the convention established by
@@ -332,8 +390,12 @@ func buildRESTPath(domain *Domain, action Action, args map[string]any) string {
 		// get their own sub-route so they can't be conflated with a full
 		// update (PUT /<id>). Domains that reuse this verb must match.
 		if hasId {
-			return fmt.Sprintf("%s/%v/status", basePath, idValue)
+			return fmt.Sprintf("%s/%v/status", basePath, idValue), []string{idArgName}
 		}
+	case "search":
+		return basePath + "/search", nil
+	case "list":
+		return basePath, nil
 	default:
 		// Generic `update-<sub>` sub-route: e.g. `update-notes` →
 		// PATCH `{basePath}/{id}/notes`. Mirrors the `update-status` pattern
@@ -342,21 +404,42 @@ func buildRESTPath(domain *Domain, action Action, args map[string]any) string {
 		if hasId && strings.HasPrefix(action.Name, "update-") {
 			suffix := strings.TrimPrefix(action.Name, "update-")
 			if suffix != "" {
-				return fmt.Sprintf("%s/%v/%s", basePath, idValue, suffix)
+				return fmt.Sprintf("%s/%v/%s", basePath, idValue, suffix), []string{idArgName}
 			}
-		}
-	case "search":
-		if action.RESTPath != "" {
-			return basePath + "/" + action.RESTPath
-		}
-		return basePath + "/search"
-	case "list":
-		if action.RESTPath != "" {
-			return basePath + "/" + action.RESTPath
 		}
 	}
 
-	return basePath
+	return basePath, nil
+}
+
+// expandPathTemplate replaces every `{argName}` token in tmpl with the matching
+// value from args. Returns the expanded path and the list of arg names that
+// were consumed. Unknown placeholders are left intact so callers can spot a
+// malformed template at request time rather than via a silently-wrong URL.
+func expandPathTemplate(tmpl string, args map[string]any) (string, []string) {
+	var consumed []string
+	out := tmpl
+	for {
+		start := strings.Index(out, "{")
+		if start < 0 {
+			break
+		}
+		end := strings.Index(out[start:], "}")
+		if end < 0 {
+			break
+		}
+		end += start
+		name := out[start+1 : end]
+		value, ok := args[name]
+		if !ok {
+			// Stop expanding at the first unknown placeholder so the caller
+			// sees the raw token and can diagnose the registry typo.
+			break
+		}
+		out = out[:start] + fmt.Sprintf("%v", value) + out[end+1:]
+		consumed = append(consumed, name)
+	}
+	return out, consumed
 }
 
 func convertArg(value, argType string) any {

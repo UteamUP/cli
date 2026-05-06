@@ -1,6 +1,8 @@
 package registry
 
 import (
+	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -24,7 +26,7 @@ func TestBuildRESTPathUpdateSubRoutes(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.actionName, func(t *testing.T) {
-			got := buildRESTPath(domain, Action{Name: tc.actionName}, map[string]any{tc.argKey: tc.argValue})
+			got, _ := buildRESTPath(domain, Action{Name: tc.actionName}, map[string]any{tc.argKey: tc.argValue})
 			if got != tc.want {
 				t.Errorf("buildRESTPath(%s) = %q, want %q", tc.actionName, got, tc.want)
 			}
@@ -35,6 +37,130 @@ func TestBuildRESTPathUpdateSubRoutes(t *testing.T) {
 func TestHTTPMethodForUpdateNotes(t *testing.T) {
 	if HTTPMethod["update-notes"] != "PATCH" {
 		t.Errorf("update-notes HTTPMethod = %q, want PATCH", HTTPMethod["update-notes"])
+	}
+}
+
+// TestBuildRESTPathTemplate locks in the sub-resource path-template routing
+// for verbs that don't fit the standard CRUD pattern. Without it, the CLI's
+// `comments-list` / `comments-add` / `attachments-list` / `attachments-delete`
+// verbs fall through to the basePath and produce wrong-shape requests (the
+// `comments-add` regression that surfaced when posting to bug
+// c6ec7720-… on prod sent the body in the query string of a GET).
+func TestBuildRESTPathTemplate(t *testing.T) {
+	domain := &Domain{Name: "bugsandfeatures", APIPath: "/api/bugsandfeatures"}
+	cases := []struct {
+		name         string
+		action       Action
+		args         map[string]any
+		wantPath     string
+		wantConsumed []string
+	}{
+		{
+			name:         "comments-list expands {bugExternalGuid}",
+			action:       Action{Name: "comments-list", RESTPath: "{bugExternalGuid}/comments"},
+			args:         map[string]any{"bugExternalGuid": "g1"},
+			wantPath:     "/api/bugsandfeatures/g1/comments",
+			wantConsumed: []string{"bugExternalGuid"},
+		},
+		{
+			name:         "comments-add expands {bugExternalGuid}",
+			action:       Action{Name: "comments-add", RESTPath: "{bugExternalGuid}/comments"},
+			args:         map[string]any{"bugExternalGuid": "g1", "bodyHtml": "hi"},
+			wantPath:     "/api/bugsandfeatures/g1/comments",
+			wantConsumed: []string{"bugExternalGuid"},
+		},
+		{
+			name:         "attachments-delete expands two placeholders",
+			action:       Action{Name: "attachments-delete", RESTPath: "{bugExternalGuid}/attachments/{attachmentExternalGuid}"},
+			args:         map[string]any{"bugExternalGuid": "g1", "attachmentExternalGuid": "a1"},
+			wantPath:     "/api/bugsandfeatures/g1/attachments/a1",
+			wantConsumed: []string{"bugExternalGuid", "attachmentExternalGuid"},
+		},
+		{
+			name:     "literal RESTPath without placeholders is preserved (legacy)",
+			action:   Action{Name: "list", RESTPath: "all"},
+			args:     map[string]any{},
+			wantPath: "/api/bugsandfeatures/all",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			gotPath, gotConsumed := buildRESTPath(domain, tc.action, tc.args)
+			if gotPath != tc.wantPath {
+				t.Errorf("path = %q, want %q", gotPath, tc.wantPath)
+			}
+			if tc.wantConsumed != nil {
+				sort.Strings(gotConsumed)
+				sort.Strings(tc.wantConsumed)
+				if !reflect.DeepEqual(gotConsumed, tc.wantConsumed) {
+					t.Errorf("consumed = %v, want %v", gotConsumed, tc.wantConsumed)
+				}
+			}
+		})
+	}
+}
+
+// TestExpandPathTemplateUnknownPlaceholder verifies that an unknown placeholder
+// stops expansion at that point so callers see the raw token rather than a
+// silently-wrong URL.
+func TestExpandPathTemplateUnknownPlaceholder(t *testing.T) {
+	got, consumed := expandPathTemplate("{a}/x/{b}", map[string]any{"a": "1"})
+	want := "1/x/{b}"
+	if got != want {
+		t.Errorf("expandPathTemplate = %q, want %q", got, want)
+	}
+	if !reflect.DeepEqual(consumed, []string{"a"}) {
+		t.Errorf("consumed = %v, want [a]", consumed)
+	}
+}
+
+// TestBugsAndFeaturesCommentsAddDeclaration locks in the registry declaration
+// for `comments-add` so a future refactor can't silently regress the
+// HTTPMethod / RESTPath / BodyName fields. This is the verb the user hit on
+// the c6ec7720 prod bug — we need it to stay POST + path-templated + body-
+// renamed forever.
+func TestBugsAndFeaturesCommentsAddDeclaration(t *testing.T) {
+	var domain *Domain
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name == "bugsandfeatures" {
+			domain = d
+			break
+		}
+	}
+	if domain == nil {
+		t.Fatal("bugsandfeatures domain not registered")
+	}
+	var addAction *Action
+	for i := range domain.Actions {
+		if domain.Actions[i].Name == "comments-add" {
+			addAction = &domain.Actions[i]
+			break
+		}
+	}
+	if addAction == nil {
+		t.Fatal("comments-add action not registered")
+	}
+	if addAction.HTTPMethod != "POST" {
+		t.Errorf("HTTPMethod = %q, want POST", addAction.HTTPMethod)
+	}
+	if addAction.RESTPath != "{bugExternalGuid}/comments" {
+		t.Errorf("RESTPath = %q, want {bugExternalGuid}/comments", addAction.RESTPath)
+	}
+	wantBodyNames := map[string]string{
+		"text":    "bodyHtml",
+		"parent":  "parentCommentExternalGuid",
+		"mention": "mentionedGlobalAdminGuids",
+	}
+	for _, f := range addAction.Flags {
+		if want, ok := wantBodyNames[f.Name]; ok {
+			if f.BodyName != want {
+				t.Errorf("flag %q BodyName = %q, want %q", f.Name, f.BodyName, want)
+			}
+			delete(wantBodyNames, f.Name)
+		}
+	}
+	for missing := range wantBodyNames {
+		t.Errorf("flag %q not declared on comments-add", missing)
 	}
 }
 

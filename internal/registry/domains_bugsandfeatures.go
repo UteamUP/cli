@@ -86,6 +86,8 @@ func init() {
 				Name:        "comments-list",
 				Description: "List the comment thread on a bug (global-admin only). Top-level comments oldest-first; replies eagerly included.",
 				ToolName:    "UteamupBugsAndFeaturesCommentsList",
+				HTTPMethod:  "GET",
+				RESTPath:    "{bugExternalGuid}/comments",
 				Args: []ArgDef{
 					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
 				},
@@ -98,19 +100,27 @@ func init() {
 				Name:        "comments-add",
 				Description: "Post a new comment (or a reply via --parent) on a bug. Optional --mention flags @-mention global admins (repeatable; max 10).",
 				ToolName:    "UteamupBugsAndFeaturesCommentsAdd",
+				HTTPMethod:  "POST",
+				RESTPath:    "{bugExternalGuid}/comments",
 				Args: []ArgDef{
 					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
-					{Name: "text", Short: "t", Description: "Comment body (HTML accepted; plain text is wrapped). Max 8000 chars after sanitization.", Required: true, Type: "string"},
-					{Name: "parent", Description: "ExternalGuid of the parent comment to reply to. Replies of replies are rejected (single-level threading).", Type: "string"},
-					{Name: "mention", Description: "Global-admin user GUID to @-mention. Repeatable; max 10 per comment. Server rejects non-admin GUIDs with 400.", Type: "stringSlice"},
+					// CLI flag names stay short; BodyName aligns each one with the
+					// backend BugCommentCreateRequest DTO (see UteamUP_API/Models/
+					// BugCommentModels.cs). Without these mappings the body would
+					// carry `text` / `parent` / `mention` and the backend would 400.
+					{Name: "text", Short: "t", BodyName: "bodyHtml", Description: "Comment body (HTML accepted; plain text is wrapped). Max 8000 chars after sanitization.", Required: true, Type: "string"},
+					{Name: "parent", BodyName: "parentCommentExternalGuid", Description: "ExternalGuid of the parent comment to reply to. Replies of replies are rejected (single-level threading).", Type: "string"},
+					{Name: "mention", BodyName: "mentionedGlobalAdminGuids", Description: "Global-admin user GUID to @-mention. Repeatable; max 10 per comment. Server rejects non-admin GUIDs with 400.", Type: "stringSlice"},
 				},
 			},
 			{
 				Name:        "attachments-list",
 				Description: "List image attachments on a bug (global-admin only). Output is oldest-first.",
 				ToolName:    "UteamupBugsAndFeaturesAttachmentsList",
+				HTTPMethod:  "GET",
+				RESTPath:    "{bugExternalGuid}/attachments",
 				Args: []ArgDef{
 					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
 				},
@@ -142,6 +152,8 @@ func init() {
 				Name:        "attachments-delete",
 				Description: "Hard-delete a single attachment row + best-effort delete its blob (global-admin only). Audit-logged server-side.",
 				ToolName:    "UteamupBugsAndFeaturesAttachmentsDelete",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "{bugExternalGuid}/attachments/{attachmentExternalGuid}",
 				Args: []ArgDef{
 					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
 					{Name: "attachmentExternalGuid", Description: "Attachment ExternalGuid", Required: true, Type: "string"},
