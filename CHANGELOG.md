@@ -5,6 +5,23 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1](https://github.com/UteamUP/cli/compare/1.3.0...1.3.1) (2026-05-09)
+
+
+### Bug Fixes
+
+* **cli:** keep GUIDs at the boundary on bug create + login output ([53fc231](https://github.com/UteamUP/cli/commit/53fc231f6abf365c68283242c068a29f7613ce76))
+
+
+### Miscellaneous
+
+* **deps:** bump 3 direct go module minors ([476c378](https://github.com/UteamUP/cli/commit/476c378251a045eae7adeb07895f29db7c3f176e))
+
+
+### Documentation
+
+* **cli:** comments-list now returns top-level comments newest-first ([ea9f7ec](https://github.com/UteamUP/cli/commit/ea9f7ec611c5595379795684d2ee92f8a4ea1f64))
+
 ## [1.3.0](https://github.com/UteamUP/cli/compare/1.2.0...1.3.0) (2026-05-06)
 
 
