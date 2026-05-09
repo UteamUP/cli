@@ -79,9 +79,10 @@ You will be prompted for:
 		exportAnswer, _ := reader.ReadString('\n')
 		exportAnswer = strings.TrimSpace(strings.ToLower(exportAnswer))
 		exportJSON := isDev // default based on profile type
-		if exportAnswer == "y" || exportAnswer == "yes" {
+		switch exportAnswer {
+		case "y", "yes":
 			exportJSON = true
-		} else if exportAnswer == "n" || exportAnswer == "no" {
+		case "n", "no":
 			exportJSON = false
 		}
 
