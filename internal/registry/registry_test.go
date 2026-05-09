@@ -164,6 +164,50 @@ func TestBugsAndFeaturesCommentsAddDeclaration(t *testing.T) {
 	}
 }
 
+// TestBugsAndFeaturesCreateIdempotencyKeyHeader locks in that the
+// idempotency-key flag on `bugs create` is routed via HeaderName, not BodyName.
+// The backend reads `[FromHeader(Name = "Idempotency-Key")]` and rejects bodies
+// that try to carry it as `idempotencyKey`. Regression guard for CLI-1
+// (bug 14074b1d-abbc-4ecf-9d10-444de997255b).
+func TestBugsAndFeaturesCreateIdempotencyKeyHeader(t *testing.T) {
+	var domain *Domain
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name == "bugsandfeatures" {
+			domain = d
+			break
+		}
+	}
+	if domain == nil {
+		t.Fatal("bugsandfeatures domain not registered")
+	}
+	var createAction *Action
+	for i := range domain.Actions {
+		if domain.Actions[i].Name == "create" {
+			createAction = &domain.Actions[i]
+			break
+		}
+	}
+	if createAction == nil {
+		t.Fatal("create action not registered")
+	}
+	var idem *FlagDef
+	for i := range createAction.Flags {
+		if createAction.Flags[i].Name == "idempotency-key" {
+			idem = &createAction.Flags[i]
+			break
+		}
+	}
+	if idem == nil {
+		t.Fatal("idempotency-key flag not declared on bugs create")
+	}
+	if idem.HeaderName != "Idempotency-Key" {
+		t.Errorf("idempotency-key HeaderName = %q, want %q", idem.HeaderName, "Idempotency-Key")
+	}
+	if idem.BodyName != "" {
+		t.Errorf("idempotency-key BodyName = %q, want empty (header-only flag)", idem.BodyName)
+	}
+}
+
 func TestToCamelCase(t *testing.T) {
 	tests := []struct {
 		input    string

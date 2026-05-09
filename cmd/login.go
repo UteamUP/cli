@@ -119,7 +119,13 @@ func runLogin(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Logged in as: %s\n", token.Email)
 	}
 	if token.TenantName != "" {
-		fmt.Printf("Tenant: %s (ID: %d)\n", token.TenantName, token.TenantID)
+		// Print the GUID, not the int Id — internal database keys must not leak to
+		// user-facing CLI output per the GUIDs-at-boundary rule.
+		if token.TenantGuid != "" {
+			fmt.Printf("Tenant: %s (%s)\n", token.TenantName, token.TenantGuid)
+		} else {
+			fmt.Printf("Tenant: %s\n", token.TenantName)
+		}
 	}
 	fmt.Printf("Token expires: %s\n", token.ExpiresAt.Format("2006-01-02 15:04:05 UTC"))
 

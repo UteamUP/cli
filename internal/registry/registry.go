@@ -44,6 +44,12 @@ type FlagDef struct {
 	// CLI flag name and the backend DTO field name diverge — e.g. CLI flag
 	// `--text` mapping to backend field `bodyHtml` on a comment-create request.
 	BodyName string
+	// HeaderName routes the flag value to an HTTP request header instead of
+	// the JSON body or query string. Used for cross-cutting headers such as
+	// `Idempotency-Key` that the backend reads via `[FromHeader]`. When set,
+	// the flag is excluded from the body and applied as a header on the
+	// outgoing request.
+	HeaderName string
 }
 
 // HTTPMethod maps action names to HTTP methods for REST calls.
@@ -235,8 +241,25 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		toolArgs[argDef.Name] = convertArg(args[i], argDef.Type)
 	}
 
-	// Flags
+	// Flags. HeaderName routes a flag to an HTTP header instead of the body /
+	// query — kept separate so it never leaks back into toolArgs (which would
+	// re-introduce the `Idempotency-Key`-as-body-field bug fixed by adding
+	// HeaderName in the first place).
+	headers := make(map[string]string)
 	for _, flag := range action.Flags {
+		if flag.HeaderName != "" {
+			if cmd.Flags().Changed(flag.Name) {
+				v, _ := cmd.Flags().GetString(flag.Name)
+				if v != "" {
+					headers[flag.HeaderName] = v
+				}
+			} else if flag.Default != nil {
+				if dv, ok := flag.Default.(string); ok && dv != "" {
+					headers[flag.HeaderName] = dv
+				}
+			}
+			continue
+		}
 		fieldName := flag.BodyName
 		if fieldName == "" {
 			fieldName = toCamelCase(flag.Name)
@@ -291,9 +314,9 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		}
 	}
 
-	logger.Debug("calling %s %s (tool: %s) with args %v", httpMethod, restPath, action.ToolName, toolArgs)
+	logger.Debug("calling %s %s (tool: %s) with args %v headers %v", httpMethod, restPath, action.ToolName, toolArgs, headers)
 
-	result, err := apiClient.CallREST(ctx, httpMethod, restPath, toolArgs, action.Name)
+	result, err := apiClient.CallREST(ctx, httpMethod, restPath, toolArgs, headers, action.Name)
 	if err != nil {
 		return err
 	}

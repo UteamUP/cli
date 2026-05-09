@@ -38,7 +38,10 @@ func init() {
 					{Name: "severity", Description: "Low | Medium | High | Critical", Default: "Medium", Type: "string"},
 					{Name: "title", Description: "Short title (max 200)", Required: true, Type: "string"},
 					{Name: "description", Description: "Description (max 4000)", Required: true, Type: "string"},
-					{Name: "idempotency-key", Description: "Client-generated idempotency key (GUID)", Required: true, Type: "string"},
+					// Routed via HeaderName because BugsAndFeaturesController.Create reads
+					// it from `[FromHeader(Name = "Idempotency-Key")]`. Sending it in the
+					// JSON body returns `400 "Missing or invalid Idempotency-Key header."`.
+					{Name: "idempotency-key", HeaderName: "Idempotency-Key", Description: "Client-generated idempotency key (GUID), sent as the Idempotency-Key HTTP header", Required: true, Type: "string"},
 					{Name: "route-path", Description: "Route path the user was on when reporting", Type: "string"},
 				},
 			},

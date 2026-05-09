@@ -216,7 +216,7 @@ func (a *AuthClient) LoginWithCredentials(email, password string) (*TokenData, e
 		token.TenantID = selected.ID
 		token.TenantGuid = selected.Guid
 		token.TenantName = selected.Name
-		a.logger.Info("selected tenant: %s (ID: %d)", selected.Name, selected.ID)
+		a.logger.Info("selected tenant: %s (%s)", selected.Name, selected.Guid)
 	}
 
 	a.logger.Info("login successful for %s", email)

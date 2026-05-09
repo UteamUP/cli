@@ -162,7 +162,12 @@ func (c *APIClient) CallTool(ctx context.Context, toolName string, args map[stri
 
 // CallREST sends a direct REST API request (used with email/password login auth).
 // This mirrors how the frontend's apiCall() works.
-func (c *APIClient) CallREST(ctx context.Context, method, path string, params map[string]any, actionName string) (json.RawMessage, error) {
+//
+// extraHeaders are applied AFTER the standard auth/tenant/CSRF headers so a
+// caller can attach things like `Idempotency-Key` that the backend reads via
+// `[FromHeader]`. Values must already be valid HTTP header strings; callers
+// are responsible for any encoding.
+func (c *APIClient) CallREST(ctx context.Context, method, path string, params map[string]any, extraHeaders map[string]string, actionName string) (json.RawMessage, error) {
 	token, err := auth.LoadToken()
 	if err != nil {
 		return nil, clierrors.NewAuthError("loading token", err)
@@ -220,6 +225,13 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 		}
 		if token.TenantGuid != "" {
 			req.Header.Set("X-Tenant-Guid", token.TenantGuid)
+		}
+
+		// Caller-supplied headers (e.g. `Idempotency-Key` from a `HeaderName`
+		// flag) win over the defaults; standard auth/tenant headers above
+		// remain in place because callers don't set them.
+		for k, v := range extraHeaders {
+			req.Header.Set(k, v)
 		}
 
 		c.logger.Debug("%s %s tenant=%d", method, fullURL, token.TenantID)
