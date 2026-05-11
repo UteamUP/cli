@@ -7,8 +7,9 @@ package registry
 // take NO userId / tenantId args.
 //
 // Paired MCP tools:
-//   UteamupUserPreferencesGet / Set
-//   UteamupUserStateGetLastPage / SetLastPage / ClearLastPage
+//
+//	UteamupUserPreferencesGet / Set
+//	UteamupUserStateGetLastPage / SetLastPage / ClearLastPage
 func init() {
 	Register(&Domain{
 		Name:        "user-ui-state",
