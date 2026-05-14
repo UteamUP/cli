@@ -5,6 +5,23 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0](https://github.com/UteamUP/cli/compare/1.3.2...1.4.0) (2026-05-14)
+
+
+### Features
+
+* **document:** add get-metadata and get-timeline actions to document domain ([8bc8dc7](https://github.com/UteamUP/cli/commit/8bc8dc708e435e77e5c5f87f8a2361a2e7f7e210))
+
+
+### Bug Fixes
+
+* **auth:** enforce minimum TLS version 1.2 in HTTP clients ([579ba21](https://github.com/UteamUP/cli/commit/579ba2140fa1a9f372e0b9f5d9879b1be6efa387))
+
+
+### Miscellaneous
+
+* **deps:** bump google.golang.org/api v0.278.0 -&gt; v0.279.0 ([96ece81](https://github.com/UteamUP/cli/commit/96ece8161182415f9f2c5ed4f1be1c2012eb8adf))
+
 ## [1.3.2](https://github.com/UteamUP/cli/compare/1.3.1...1.3.2) (2026-05-10)
 
 
