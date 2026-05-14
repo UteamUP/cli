@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1](https://github.com/UteamUP/cli/compare/1.4.0...1.4.1) (2026-05-14)
+
+
+### CI/CD
+
+* **release:** pass HOMEBREW_TAP_GITHUB_TOKEN through to GoReleaser ([a13a6ac](https://github.com/UteamUP/cli/commit/a13a6ac572b2eba73a18c7df62f028213041244a))
+
 ## [1.4.0](https://github.com/UteamUP/cli/compare/1.3.2...1.4.0) (2026-05-14)
 
 
