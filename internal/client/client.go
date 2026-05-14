@@ -68,7 +68,7 @@ func NewAPIClient(baseURL string, timeout time.Duration, insecure bool, retryOpt
 func (c *APIClient) httpClient() *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	if c.insecure {
-		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec // user-requested
+		transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true} //nolint:gosec // user-requested
 	}
 	return &http.Client{Transport: transport, Timeout: c.timeout}
 }

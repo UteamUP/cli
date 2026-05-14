@@ -63,7 +63,7 @@ func FetchTenantInfo(accessToken, baseURL, tenantGuid string) (*TenantInfo, erro
 	client := &http.Client{
 		Timeout: 15 * time.Second,
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // dev support
+			TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true}, //nolint:gosec // dev support
 		},
 	}
 	resp, err := client.Do(req)
@@ -113,7 +113,7 @@ func FetchAllTenants(accessToken, baseURL string) ([]TenantInfo, error) {
 	client := &http.Client{
 		Timeout: 15 * time.Second,
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // dev support
+			TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true}, //nolint:gosec // dev support
 		},
 	}
 	resp, err := client.Do(req)
@@ -150,7 +150,7 @@ func NewAuthClient(baseURL string, insecure bool, logger *logging.Logger) *AuthC
 func (a *AuthClient) httpClient() *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	if a.insecure {
-		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec // user-requested for dev
+		transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true} //nolint:gosec // user-requested for dev
 	}
 	return &http.Client{Transport: transport, Timeout: 30 * time.Second}
 }
