@@ -21,6 +21,14 @@ func init() {
 			Action{Name: "archive", Description: "Archive (soft-delete) a document", ToolName: "UteamupDocumentArchive", RESTPath: "archive", Args: []ArgDef{{Name: "id", Description: "Document ID", Required: true}}},
 			Action{Name: "unarchive", Description: "Restore a document from archive", ToolName: "UteamupDocumentUnarchive", RESTPath: "unarchive", Args: []ArgDef{{Name: "id", Description: "Document ID", Required: true}}},
 			Action{Name: "list-archived", Description: "List archived documents", ToolName: "UteamupDocumentListArchived", RESTPath: "archived"},
+			Action{Name: "get-metadata", Description: "Get extracted metadata (EXIF / PDF DocInfo / OOXML core / camera / GPS) for a document by GUID", ToolName: "UteamupDocumentGetMetadata", Args: []ArgDef{{Name: "guid", Description: "Document public GUID", Required: true}}},
+			Action{Name: "get-timeline", Description: "Get the document timeline strip (ordered by CapturedAt ASC) for a date range", ToolName: "UteamupDocumentGetTimeline", Flags: []FlagDef{
+				{Name: "from", Description: "Range start (ISO 8601). Default: now - 90 days.", Default: ""},
+				{Name: "to", Description: "Range end (ISO 8601). Default: now.", Default: ""},
+				{Name: "types", Description: "Comma-separated content-type filter", Default: ""},
+				{Name: "q", Description: "Case-insensitive text match over FileName + Title", Default: ""},
+				{Name: "limit", Description: "Max rows (1-10000)", Default: 5000, Type: "int"},
+			}},
 		),
 	})
 	// journal domain moved to domains_journal.go (includes CRUD + by-code/by-asset actions)
