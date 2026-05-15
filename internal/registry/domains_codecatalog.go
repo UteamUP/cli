@@ -57,6 +57,23 @@ func init() {
 					{Name: "code-catalog-entry-guid", Description: "Target code-catalog entry ExternalGuid", Required: true, Type: "string"},
 				},
 			},
+			{
+				Name:        "history",
+				Description: "Fetch the full chronological history timeline for one industry code — images, documents, work orders, asset edits, journals, and inventory additions. Cursor-paginated.",
+				ToolName:    "UteamupCodecatalogHistory",
+				Args: []ArgDef{
+					{Name: "code-guid", Description: "External Guid of the code whose timeline to fetch", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "types", Description: "Comma-separated EntityType filter (Image,Document,Workorder,Asset,Journal,AssetPart,AssetTool,AssetChemical)", Type: "string"},
+					{Name: "actor-guid", Description: "Optional actor external Guid filter", Type: "string"},
+					{Name: "from-utc", Description: "Inclusive lower bound on event timestamp (ISO-8601 UTC)", Type: "string"},
+					{Name: "to-utc", Description: "Inclusive upper bound on event timestamp (ISO-8601 UTC)", Type: "string"},
+					{Name: "q", Description: "Free-text fragment matched against actor name + entity name + journal preview", Type: "string"},
+					{Name: "cursor", Description: "Opaque cursor from a prior response's nextCursor; omit for the first page", Type: "string"},
+					{Name: "page-size", Description: "Page size (clamped 1..100 server-side)", Default: 25, Type: "int"},
+				},
+			},
 		},
 	})
 }
