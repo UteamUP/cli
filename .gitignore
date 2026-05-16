@@ -45,3 +45,5 @@ superpowers/
 
 # Firebase
 firebase-debug.log
+
+*.lscache
