@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0](https://github.com/UteamUP/cli/compare/1.4.1...1.5.0) (2026-05-19)
+
+
+### Features
+
+* **workorder-template:** add create-workorder action ([90ecc68](https://github.com/UteamUP/cli/commit/90ecc6809a1dd63f2b1345498e41b92a14a3619d))
+
+
+### Miscellaneous
+
+* commit pending changes ([9508b79](https://github.com/UteamUP/cli/commit/9508b796dabab20c7e8cb7f4318b89defcdaa10c))
+
 ## [1.4.1](https://github.com/UteamUP/cli/compare/1.4.0...1.4.1) (2026-05-14)
 
 
