@@ -265,16 +265,26 @@ func TestAssetDomainActions(t *testing.T) {
 		t.Fatal("asset domain not found")
 	}
 
-	expectedActions := []string{"list", "get", "get-by-guid", "create", "update", "delete", "search"}
+	expectedActions := []string{"list", "get", "get-by-guid", "get-assigned-stock", "create", "update", "delete", "search"}
 	actionNames := make(map[string]bool)
+	actionByName := make(map[string]Action)
 	for _, a := range assetDomain.Actions {
 		actionNames[a.Name] = true
+		actionByName[a.Name] = a
 	}
 
 	for _, name := range expectedActions {
 		if !actionNames[name] {
 			t.Errorf("expected action %q in asset domain", name)
 		}
+	}
+
+	// New endpoint must mirror the backend MCP tool name + accept assetGuid.
+	if got := actionByName["get-assigned-stock"]; got.ToolName != "UteamupAssetGetAssignedStock" {
+		t.Errorf("get-assigned-stock ToolName = %q, want UteamupAssetGetAssignedStock", got.ToolName)
+	}
+	if got := actionByName["get-assigned-stock"]; len(got.Args) != 1 || got.Args[0].Name != "assetGuid" {
+		t.Errorf("get-assigned-stock should take a single required assetGuid arg, got %+v", got.Args)
 	}
 }
 

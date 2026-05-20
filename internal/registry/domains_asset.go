@@ -31,6 +31,12 @@ func init() {
 				Args:        []ArgDef{{Name: "guid", Description: "Asset ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
 			},
 			{
+				Name:        "get-assigned-stock",
+				Description: "Get parts/tools/chemicals assigned to an asset, with the stock locations each item sits in (quantity + low-stock state)",
+				ToolName:    "UteamupAssetGetAssignedStock",
+				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
+			},
+			{
 				Name:        "create",
 				Description: "Create a new asset",
 				ToolName:    "UteamupAssetCreate",
