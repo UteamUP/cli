@@ -80,6 +80,20 @@ func init() {
 				},
 			},
 			{
+				Name:        "increment-hit",
+				Description: "Manually record a hit (occurrence) for an existing submission (global-admin only). Atomically increments OccurrenceCount and updates LastSeenAtUtc; appends a [manual-hit] audit row carrying the optional route/environment/evidence/note metadata. Returns before/after counters so uteamup-validate reports can prove the hit was recorded without spoofing frontend auto-capture.",
+				ToolName:    "UteamupBugsAndFeaturesIncrementHit",
+				HTTPMethod:  "POST",
+				RESTPath:    "{externalGuid}/increment-hit",
+				Args:        []ArgDef{{Name: "externalGuid", Description: "ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "route-path", BodyName: "routePath", Description: "Route the validator was on when re-observing the issue. Max 512 chars.", Type: "string"},
+					{Name: "environment", BodyName: "environment", Description: "Environment the hit was observed on (localhost / dev / staging / prod). Max 64 chars.", Type: "string"},
+					{Name: "evidence", BodyName: "evidence", Description: "Free-text validation evidence (URL, trace id, brief description). Max 2 KB.", Type: "string"},
+					{Name: "note", BodyName: "note", Description: "Optional human-readable note recorded on the audit row. Max 1 KB.", Type: "string"},
+				},
+			},
+			{
 				Name:        "delete",
 				Description: "Permanently delete a submission (global-admin only; for junk entries — use Reject/Archive for normal lifecycle)",
 				ToolName:    "UteamupBugsAndFeaturesDelete",
