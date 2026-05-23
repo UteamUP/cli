@@ -24,6 +24,12 @@ func queryArg() []ArgDef {
 	return []ArgDef{{Name: "query", Description: "Search term", Required: true, Type: "string"}}
 }
 
+// externalGuidArg returns a required Guid positional argument named `externalGuid`.
+// GUID-first domains (per CLIGuidelines.md) use this in place of idArg().
+func externalGuidArg() []ArgDef {
+	return []ArgDef{{Name: "externalGuid", Description: "Record GUID", Required: true, Type: "string"}}
+}
+
 // jsonFlag returns the --from-json flag for JSON file input.
 func jsonFlag() FlagDef {
 	return FlagDef{Name: "from-json", Description: "JSON file with request data", Type: "string"}
