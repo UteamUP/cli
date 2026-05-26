@@ -74,6 +74,23 @@ func init() {
 					{Name: "page-size", Description: "Page size (clamped 1..100 server-side)", Default: 25, Type: "int"},
 				},
 			},
+			{
+				Name:        "designation",
+				Description: "Assemble the IEC 81346-2 / RDS-PP full designation (e.g. =MAA10+UNIT01-CT001:5) for a code catalog entry by walking its parent chain. Returns the assembled string plus a per-segment breakdown showing each ancestor's aspect (Function / Location / Product / Terminal) and prefix character.",
+				ToolName:    "UteamupCodecatalogDesignation",
+				HTTPMethod:  "GET",
+				RESTPath:    "entries/by-guid/{guid}/designation",
+				Args: []ArgDef{
+					{Name: "guid", Description: "Code catalog entry ExternalGuid", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "identification-letters",
+				Description: "List the canonical IEC 81346-2 single-character identification letters (A B C E F G K P Q R S T U V W X) with their English labels. Pure constant lookup — used by the frontend useIec81346Letters composable for parity validation.",
+				ToolName:    "UteamupCodecatalogIdentificationLetters",
+				HTTPMethod:  "GET",
+				RESTPath:    "identification-letters",
+			},
 		},
 	})
 }
