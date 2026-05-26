@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0](https://github.com/UteamUP/cli/compare/1.7.1...1.8.0) (2026-05-26)
+
+
+### Features
+
+* **admin-users:** add global-admin user management domain ([8b9930e](https://github.com/UteamUP/cli/commit/8b9930ef5b2329203257f7809e01313c963775ba))
+
 ## [1.7.1](https://github.com/UteamUP/cli/compare/1.7.0...1.7.1) (2026-05-23)
 
 
