@@ -30,6 +30,7 @@ func init() {
 					{Name: "component-type-code", Description: "New component type code", Type: "string"},
 					{Name: "component-type-description", Description: "New component type description", Type: "string"},
 					{Name: "drawing-reference", Description: "New drawing reference", Type: "string"},
+					{Name: "aspect", Description: "IEC 81346-2 aspect override — one of None (clears the override), Function, Location, Product, Terminal. Omit to leave the existing override unchanged.", Type: "string"},
 				},
 			},
 			{
@@ -55,6 +56,9 @@ func init() {
 				Args: []ArgDef{
 					{Name: "asset-guid", Description: "Asset ExternalGuid", Required: true, Type: "string"},
 					{Name: "code-catalog-entry-guid", Description: "Target code-catalog entry ExternalGuid", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "aspect", Description: "Per-assignment IEC 81346-2 aspect override — one of Function, Location, Product, Terminal. Omit to inherit from the catalog entry (which itself may inherit from the level).", Type: "string"},
 				},
 			},
 			{
