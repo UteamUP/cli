@@ -5,6 +5,15 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0](https://github.com/UteamUP/cli/compare/1.8.0...1.9.0) (2026-05-27)
+
+
+### Features
+
+* **cli:** migrate meter-schedule domain to Guid-first ([65c6e16](https://github.com/UteamUP/cli/commit/65c6e16b354504002eab140864d5d045e70b5cca))
+* **codecatalog:** add designation and identification-letters actions ([3803da8](https://github.com/UteamUP/cli/commit/3803da8e950e064f4b1348310635a301b150fe64))
+* **workorder-template:** add run-schedule-now verb to wot domain ([74dfb78](https://github.com/UteamUP/cli/commit/74dfb7835787830ac1168aa5a70a4a2f3f665452))
+
 ## [1.8.0](https://github.com/UteamUP/cli/compare/1.7.1...1.8.0) (2026-05-26)
 
 
