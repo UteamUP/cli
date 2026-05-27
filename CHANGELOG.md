@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0](https://github.com/UteamUP/cli/compare/1.9.0...1.10.0) (2026-05-27)
+
+
+### Features
+
+* **codecatalog:** add --aspect flag to update-by-guid and assign-asset ([a387b5f](https://github.com/UteamUP/cli/commit/a387b5fd6f2afd72ae2932571543cfec887b75d1))
+
 ## [1.9.0](https://github.com/UteamUP/cli/compare/1.8.0...1.9.0) (2026-05-27)
 
 
