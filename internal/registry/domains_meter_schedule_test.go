@@ -58,6 +58,7 @@ func TestMeterScheduleActionsAreGuidKeyed(t *testing.T) {
 		{"delete", "guid"},
 		{"compliance-asset", "asset-guid"},
 		{"initialize", "asset-guid"},
+		{"create-workorder", "guid"},
 	}
 
 	for _, c := range cases {
@@ -133,6 +134,41 @@ func TestMeterScheduleCreateUsesGuidFlags(t *testing.T) {
 	}
 	if _, present := got["attribute-definition-id"]; present {
 		t.Error("create must not expose legacy int flag `attribute-definition-id` — Guid-first only")
+	}
+}
+
+// Verifies the create-workorder action POSTs to {guid}/create-workorder, mirrors
+// the MCP UteamupMeterscheduleCreateWorkorder tool, and exposes the template flags.
+func TestMeterScheduleCreateWorkorderAction(t *testing.T) {
+	d := findMeterScheduleDomain(t)
+	var action *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "create-workorder" {
+			action = &d.Actions[i]
+			break
+		}
+	}
+	if action == nil {
+		t.Fatal("expected `create-workorder` action on meter-schedule domain")
+	}
+	if action.ToolName != "UteamupMeterscheduleCreateWorkorder" {
+		t.Errorf("create-workorder ToolName = %q, want %q", action.ToolName, "UteamupMeterscheduleCreateWorkorder")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("create-workorder HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "{guid}/create-workorder" {
+		t.Errorf("create-workorder RESTPath = %q, want %q", action.RESTPath, "{guid}/create-workorder")
+	}
+	flags := make(map[string]string)
+	for _, f := range action.Flags {
+		flags[f.Name] = f.Type
+	}
+	if flags["workorder-template-guid"] != "string" {
+		t.Error("create-workorder must expose a string `workorder-template-guid` flag")
+	}
+	if flags["use-schedule-template"] != "bool" {
+		t.Error("create-workorder must expose a bool `use-schedule-template` flag")
 	}
 }
 

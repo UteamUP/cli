@@ -119,6 +119,20 @@ func init() {
 					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
 				},
 			},
+			{
+				Name:        "create-workorder",
+				Description: "Force-create a workorder for a schedule now (independent of auto-create), optionally from a workorder template",
+				ToolName:    "UteamupMeterscheduleCreateWorkorder",
+				HTTPMethod:  "POST",
+				RESTPath:    "{guid}/create-workorder",
+				Args: []ArgDef{
+					{Name: "guid", Description: "Schedule external Guid", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "use-schedule-template", Description: "Seed from a template (override below, else the schedule's saved template). Set false for a generic MET workorder.", Default: true, Type: "bool"},
+					{Name: "workorder-template-guid", Description: "Optional workorder template external Guid to seed from (overrides the schedule's saved template)", Type: "string"},
+				},
+			},
 		},
 	})
 }
