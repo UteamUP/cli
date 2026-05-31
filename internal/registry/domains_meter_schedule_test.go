@@ -193,3 +193,59 @@ func TestMeterScheduleComplianceAssetUsesGuidPath(t *testing.T) {
 		t.Errorf("compliance-asset HTTPMethod = %q, want %q", action.HTTPMethod, "GET")
 	}
 }
+
+func findMeterScheduleAction(t *testing.T, name string) *Action {
+	t.Helper()
+	d := findMeterScheduleDomain(t)
+	for i := range d.Actions {
+		if d.Actions[i].Name == name {
+			return &d.Actions[i]
+		}
+	}
+	t.Fatalf("expected %q action on meter-schedule domain", name)
+	return nil
+}
+
+// Both create and update must expose the calendar-recurrence flags with the right
+// types so a weekly/monthly/yearly schedule can be configured from the CLI.
+func TestMeterScheduleRecurrenceFlags(t *testing.T) {
+	expected := map[string]string{
+		"recurrence-type":   "string",
+		"days-of-week":      "stringSlice",
+		"day-of-month-mode": "string",
+		"day-of-month":      "int",
+		"month-of-year":     "int",
+	}
+
+	for _, actionName := range []string{"create", "update"} {
+		action := findMeterScheduleAction(t, actionName)
+		got := make(map[string]FlagDef)
+		for _, f := range action.Flags {
+			got[f.Name] = f
+		}
+		for name, ty := range expected {
+			flag, ok := got[name]
+			if !ok {
+				t.Errorf("%s: recurrence flag %q missing", actionName, name)
+				continue
+			}
+			if flag.Type != ty {
+				t.Errorf("%s: flag %q type = %q, want %q", actionName, name, flag.Type, ty)
+			}
+		}
+		// daysOfWeek must serialize to the camelCase body field the backend DTO expects.
+		if got["days-of-week"].BodyName != "daysOfWeek" {
+			t.Errorf("%s: days-of-week BodyName = %q, want %q", actionName, got["days-of-week"].BodyName, "daysOfWeek")
+		}
+	}
+}
+
+// interval-seconds must NOT be Required anymore — calendar schedules don't carry one.
+func TestMeterScheduleCreateIntervalOptional(t *testing.T) {
+	create := findMeterScheduleAction(t, "create")
+	for _, f := range create.Flags {
+		if f.Name == "interval-seconds" && f.Required {
+			t.Error("create flag `interval-seconds` must not be Required (calendar recurrence omits it)")
+		}
+	}
+}
