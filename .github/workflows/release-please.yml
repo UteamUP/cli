@@ -49,14 +49,8 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GoReleaser's `brews:` block pushes Formula/uteamup.rb straight to
+          # UteamUP/homebrew-tap using this PAT — that is the sole tap-update
+          # mechanism (commits authored by goreleaserbot). No repository_dispatch
+          # follow-up step is needed; the tap has no workflow listening for one.
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
-
-      - name: Update Homebrew tap
-        env:
-          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: UteamUP/homebrew-tap
-          event-type: update-formula
-          client-payload: '{"tag": "${{ env.TAG_NAME }}"}'

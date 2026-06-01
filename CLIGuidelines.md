@@ -208,7 +208,7 @@ Video analysis uses more tokens than image analysis. Use `--dry-run` to estimate
 4. **On merge, `.github/workflows/release-please.yml` does the rest:**
    - Creates the version tag (e.g. `1.2.0` — **no `v` prefix**, because `release-please-config.json` sets `"include-v-in-tag": false`).
    - Runs the `goreleaser` job: builds darwin/linux/windows × amd64/arm64, generates `checksums.txt`, creates `.deb` + `.rpm`, publishes the GitHub Release at `https://github.com/UteamUP/cli/releases/tag/<version>`.
-   - Fires a `repository-dispatch` `update-formula` event at `UteamUP/homebrew-tap` with the new tag. The tap regenerates `Formula/uteamup.rb` with the new version + SHA256s.
+   - As part of that same `goreleaser` run, GoReleaser's `brews:` block pushes the regenerated `Formula/uteamup.rb` (new version + SHA256s) straight to `UteamUP/homebrew-tap` using `HOMEBREW_TAP_GITHUB_TOKEN` (commits land as `goreleaserbot`). This is the **sole** tap-update mechanism — there is no `repository_dispatch` follow-up and the tap repo has no workflow listening for one.
 5. **Verify the local Homebrew install (REQUIRED).** Always run this after a release:
    ```bash
    brew update
@@ -234,7 +234,7 @@ Builds all platform artifacts into `dist/` without touching GitHub or the tap. U
 
 ### Manual Formula Update (only if automation is broken)
 
-If the `repository-dispatch` to `UteamUP/homebrew-tap` fails and the tap is stuck on an old version, fall back to hand-editing the formula. Get user permission first.
+If GoReleaser's `brews:` push to `UteamUP/homebrew-tap` fails (e.g. `HOMEBREW_TAP_GITHUB_TOKEN` expired) and the tap is stuck on an old version, fall back to hand-editing the formula. Get user permission first.
 
 ```bash
 git clone git@github.com:UteamUP/homebrew-tap.git
@@ -262,7 +262,7 @@ gh release upload X.Y.Z dist/uteamup.msi --repo UteamUP/cli
 - **Formula**: `Formula/uteamup.rb`
 - **GoReleaser config**: `.goreleaser.yml` → `brews` section
 - **Template**: `packaging/homebrew/uteamup.rb.tmpl` (reference only — GoReleaser generates the actual formula)
-- **Update mechanism**: `release-please.yml` fires a `repository-dispatch` `update-formula` event after every release. The tap reacts by regenerating `Formula/uteamup.rb`.
+- **Update mechanism**: the `goreleaser` job in `release-please.yml` runs `goreleaser release`, whose `brews:` block pushes the regenerated `Formula/uteamup.rb` directly to the tap (authenticated with `HOMEBREW_TAP_GITHUB_TOKEN`, committed by `goreleaserbot`). There is no `repository_dispatch` step and the tap has no workflow listening for one.
 
 ### Troubleshooting Releases
 
@@ -270,7 +270,7 @@ gh release upload X.Y.Z dist/uteamup.msi --repo UteamUP/cli
 |---------|--------------|-----|
 | Release-Please PR didn't open | Latest commits don't use a recognized conventional prefix | Reword the commit (`git commit --amend` or land a new `chore:` commit) |
 | `goreleaser` job failed in Actions | Build error / dirty tree on the runner | Re-run the workflow from the Actions tab; if persistent, run `make snapshot` locally to reproduce |
-| Tap not updated after release | `repository-dispatch` failed (see workflow logs) | Re-fire by re-running the `goreleaser` job, or fall back to "Manual Formula Update" above |
+| Tap not updated after release | GoReleaser `brews:` push failed — usually an expired/invalid `HOMEBREW_TAP_GITHUB_TOKEN` (see the `goreleaser` job logs) | Re-run the `goreleaser` job after refreshing the token secret, or fall back to "Manual Formula Update" above |
 | `brew upgrade` says "already up-to-date" but `uteamup version` is stale | Tap cache not refreshed | `brew update`, then `brew upgrade uteamup`. If still stale: `brew untap uteamup/tap && brew tap uteamup/tap && brew install uteamup` |
 | Tag already exists | Tried to re-release the same version | Land a new commit so Release-Please proposes the next version. Do NOT delete an existing public tag |
 
