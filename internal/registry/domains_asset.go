@@ -37,6 +37,12 @@ func init() {
 				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
 			},
 			{
+				Name:        "get-documents-aggregated",
+				Description: "Get ALL documents for an asset grouped by source — the asset's own documents plus its assigned parts', tools', chemicals', and industry code's documents (each tagged with sourceType/sourceGuid/sourceName)",
+				ToolName:    "UteamupAssetGetAggregatedDocuments",
+				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
+			},
+			{
 				Name:        "create",
 				Description: "Create a new asset",
 				ToolName:    "UteamupAssetCreate",

@@ -265,7 +265,7 @@ func TestAssetDomainActions(t *testing.T) {
 		t.Fatal("asset domain not found")
 	}
 
-	expectedActions := []string{"list", "get", "get-by-guid", "get-assigned-stock", "create", "update", "delete", "search"}
+	expectedActions := []string{"list", "get", "get-by-guid", "get-assigned-stock", "get-documents-aggregated", "create", "update", "delete", "search"}
 	actionNames := make(map[string]bool)
 	actionByName := make(map[string]Action)
 	for _, a := range assetDomain.Actions {
@@ -285,6 +285,14 @@ func TestAssetDomainActions(t *testing.T) {
 	}
 	if got := actionByName["get-assigned-stock"]; len(got.Args) != 1 || got.Args[0].Name != "assetGuid" {
 		t.Errorf("get-assigned-stock should take a single required assetGuid arg, got %+v", got.Args)
+	}
+
+	// Aggregated-documents endpoint must mirror the backend MCP tool name + accept assetGuid.
+	if got := actionByName["get-documents-aggregated"]; got.ToolName != "UteamupAssetGetAggregatedDocuments" {
+		t.Errorf("get-documents-aggregated ToolName = %q, want UteamupAssetGetAggregatedDocuments", got.ToolName)
+	}
+	if got := actionByName["get-documents-aggregated"]; len(got.Args) != 1 || got.Args[0].Name != "assetGuid" {
+		t.Errorf("get-documents-aggregated should take a single required assetGuid arg, got %+v", got.Args)
 	}
 }
 
