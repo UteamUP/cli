@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0](https://github.com/UteamUP/cli/compare/1.11.0...1.12.0) (2026-05-31)
+
+
+### Features
+
+* **meter-schedule:** add calendar-recurrence flags to create and update ([7e1a68c](https://github.com/UteamUP/cli/commit/7e1a68cec64333d507d2c2649005514ed4875bfa))
+
 ## [1.11.0](https://github.com/UteamUP/cli/compare/1.10.0...1.11.0) (2026-05-29)
 
 
