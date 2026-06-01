@@ -93,6 +93,17 @@ func init() {
 					{Name: "page-size", Short: "s", Description: "Items per page", Default: 25, Type: "int"},
 				},
 			},
+			{
+				Name:        "set-responsible-owners",
+				Description: "Set the responsible owners of an asset (replace-set; pass all owner user ids).",
+				ToolName:    "UteamupAssetSetResponsibleOwners",
+				HTTPMethod:  "PUT",
+				RESTPath:    "by-guid/{assetGuid}/responsible-owners",
+				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "user-ids", Description: "Responsible owner user ids — repeatable or comma-separated (replaces the current set)", Type: "stringSlice", BodyName: "userIds"},
+				},
+			},
 		},
 	})
 }

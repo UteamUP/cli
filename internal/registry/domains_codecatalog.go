@@ -89,6 +89,19 @@ func init() {
 				},
 			},
 			{
+				Name:        "set-responsible-owners",
+				Description: "Set the responsible owners of a code catalog entry (replace-set; pass all owner user ids).",
+				ToolName:    "UteamupCodecatalogSetResponsibleOwners",
+				HTTPMethod:  "PUT",
+				RESTPath:    "entries/by-guid/{codeCatalogEntryGuid}/responsible-owners",
+				Args: []ArgDef{
+					{Name: "codeCatalogEntryGuid", Description: "Code catalog entry ExternalGuid", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "user-ids", Description: "Responsible owner user ids — repeatable or comma-separated (replaces the current set)", Type: "stringSlice", BodyName: "userIds"},
+				},
+			},
+			{
 				Name:        "identification-letters",
 				Description: "List the canonical IEC 81346-2 single-character identification letters (A B C E F G K P Q R S T U V W X) with their English labels. Pure constant lookup — used by the frontend useIec81346Letters composable for parity validation.",
 				ToolName:    "UteamupCodecatalogIdentificationLetters",

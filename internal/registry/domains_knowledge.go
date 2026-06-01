@@ -14,10 +14,20 @@ func init() {
 		Name:        "document",
 		Aliases:     []string{"documents", "doc"},
 		Description: "Manage documents with versioning and archiving",
-		Actions: append(crudActions("Document"),
-			Action{Name: "list-versions", Description: "List version history for a document", ToolName: "UteamupDocumentListVersions", Args: []ArgDef{{Name: "documentId", Description: "Document ID", Required: true}}},
-			Action{Name: "upload-version", Description: "Upload a new version of a document", ToolName: "UteamupDocumentUploadVersion", Args: []ArgDef{{Name: "documentId", Description: "Document ID", Required: true}}, Flags: []FlagDef{{Name: "file", Description: "Path to file", Default: ""}, {Name: "notes", Description: "Change notes", Default: ""}}},
-			Action{Name: "restore-version", Description: "Restore a previous version as current", ToolName: "UteamupDocumentRestoreVersion", Args: []ArgDef{{Name: "documentId", Description: "Document ID", Required: true}, {Name: "versionNumber", Description: "Version number to restore", Required: true}}},
+		// list/get/create stay as-is (get keeps the legacy {id:int} route per the
+		// document GUID-first contract). The lifecycle verbs below are GUID-keyed
+		// against the new /api/document/{externalGuid}/... routes; the int routes
+		// remain as [Obsolete] shims on the backend.
+		Actions: append([]Action{
+			{Name: "list", Description: "List records", ToolName: "UteamupDocumentList", Flags: paginationFlags()},
+			{Name: "get", Description: "Get by ID", ToolName: "UteamupDocumentGet", Args: idArg()},
+			{Name: "create", Description: "Create a record", ToolName: "UteamupDocumentCreate", Flags: []FlagDef{jsonFlag()}},
+			{Name: "update", Description: "Update a record by GUID", ToolName: "UteamupDocumentUpdate", Args: externalGuidArg(), Flags: []FlagDef{jsonFlag()}},
+			{Name: "delete", Description: "Delete a record by GUID", ToolName: "UteamupDocumentDelete", Args: externalGuidArg()},
+			{Name: "list-versions", Description: "List version history for a document by GUID", ToolName: "UteamupDocumentListVersions", HTTPMethod: "GET", RESTPath: "{externalGuid}/versions", Args: externalGuidArg()},
+			{Name: "upload-version", Description: "Upload a new version of a document by GUID", ToolName: "UteamupDocumentUploadVersion", HTTPMethod: "POST", RESTPath: "{externalGuid}/versions", Args: externalGuidArg(), Flags: []FlagDef{{Name: "file", Description: "Path to file", Default: ""}, {Name: "notes", Description: "Change notes", Default: ""}}},
+			{Name: "restore-version", Description: "Restore a previous version as current by GUID", ToolName: "UteamupDocumentRestoreVersion", HTTPMethod: "POST", RESTPath: "{externalGuid}/versions/{versionNumber}/restore", Args: []ArgDef{{Name: "externalGuid", Description: "Document GUID", Required: true, Type: "string"}, {Name: "versionNumber", Description: "Version number to restore", Required: true, Type: "int"}}},
+		},
 			Action{Name: "archive", Description: "Archive (soft-delete) a document", ToolName: "UteamupDocumentArchive", RESTPath: "archive", Args: []ArgDef{{Name: "id", Description: "Document ID", Required: true}}},
 			Action{Name: "unarchive", Description: "Restore a document from archive", ToolName: "UteamupDocumentUnarchive", RESTPath: "unarchive", Args: []ArgDef{{Name: "id", Description: "Document ID", Required: true}}},
 			Action{Name: "list-archived", Description: "List archived documents", ToolName: "UteamupDocumentListArchived", RESTPath: "archived"},

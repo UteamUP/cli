@@ -8,13 +8,14 @@ package registry
 // declared APIPath, so action Name + (optional) RESTPath build the URL.
 //
 // REST surface (preferred, Guid-keyed):
-//   GET    /api/meter-reading-schedules/{guid}                            — fetch one
-//   POST   /api/meter-reading-schedules                                   — create (body carries assetGuid)
-//   PUT    /api/meter-reading-schedules/{guid}                            — update
-//   DELETE /api/meter-reading-schedules/{guid}                            — deactivate
-//   POST   /api/meter-reading-schedules/initialize/asset/{assetGuid}      — auto-create from asset type
-//   GET    /api/meter-reading-schedules/compliance/asset/{assetGuid}      — per-asset compliance
-//   GET    /api/meter-reading-schedules/compliance/summary                — tenant-wide compliance (paginated)
+//
+//	GET    /api/meter-reading-schedules/{guid}                            — fetch one
+//	POST   /api/meter-reading-schedules                                   — create (body carries assetGuid)
+//	PUT    /api/meter-reading-schedules/{guid}                            — update
+//	DELETE /api/meter-reading-schedules/{guid}                            — deactivate
+//	POST   /api/meter-reading-schedules/initialize/asset/{assetGuid}      — auto-create from asset type
+//	GET    /api/meter-reading-schedules/compliance/asset/{assetGuid}      — per-asset compliance
+//	GET    /api/meter-reading-schedules/compliance/summary                — tenant-wide compliance (paginated)
 //
 // Legacy int-keyed routes are still callable as `[Obsolete]` deprecation
 // shims on the backend; the CLI surface intentionally omits them so new
@@ -141,6 +142,17 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "use-schedule-template", Description: "Seed from a template (override below, else the schedule's saved template). Set false for a generic MET workorder.", Default: true, Type: "bool"},
 					{Name: "workorder-template-guid", Description: "Optional workorder template external Guid to seed from (overrides the schedule's saved template)", Type: "string"},
+				},
+			},
+			{
+				Name:        "record-workorder",
+				Description: "Record a meter reading against a workorder; closes the workorder once all its required readings are complete",
+				ToolName:    "UteamupMeterscheduleRecordWorkorder",
+				Flags: []FlagDef{
+					{Name: "workorder-guid", Description: "Workorder external Guid to record the reading against", Required: true, Type: "string"},
+					{Name: "attribute-definition-id", Description: "Attribute definition ID for the meter being read", Required: true, Type: "int"},
+					{Name: "reading-value", Description: "The meter reading value", Required: true, Type: "float"},
+					{Name: "notes", Description: "Optional notes about the reading", Type: "string"},
 				},
 			},
 		},

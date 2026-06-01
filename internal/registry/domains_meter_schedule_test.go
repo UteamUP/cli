@@ -249,3 +249,29 @@ func TestMeterScheduleCreateIntervalOptional(t *testing.T) {
 		}
 	}
 }
+
+// Verifies the record-workorder action mirrors the GUID-migrated MCP tool
+// UteamupMeterscheduleRecordWorkorder and is keyed by the workorder Guid, never an int.
+func TestMeterScheduleRecordWorkorderAction(t *testing.T) {
+	action := findMeterScheduleAction(t, "record-workorder")
+	if action.ToolName != "UteamupMeterscheduleRecordWorkorder" {
+		t.Errorf("record-workorder ToolName = %q, want %q", action.ToolName, "UteamupMeterscheduleRecordWorkorder")
+	}
+	flags := make(map[string]FlagDef)
+	for _, f := range action.Flags {
+		flags[f.Name] = f
+	}
+	if wg, ok := flags["workorder-guid"]; !ok || wg.Type != "string" || !wg.Required {
+		t.Error("record-workorder must expose a required string `workorder-guid` flag (Guid-first)")
+	}
+	if ad, ok := flags["attribute-definition-id"]; !ok || ad.Type != "int" {
+		t.Error("record-workorder must expose an int `attribute-definition-id` flag")
+	}
+	if rv, ok := flags["reading-value"]; !ok || rv.Type != "float" {
+		t.Error("record-workorder must expose a float `reading-value` flag")
+	}
+	// Regression guard: must NOT carry a legacy int workorder identifier.
+	if _, present := flags["workorder-id"]; present {
+		t.Error("record-workorder must not expose a legacy int `workorder-id` flag — Guid-first only")
+	}
+}
