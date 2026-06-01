@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0](https://github.com/UteamUP/cli/compare/1.12.0...1.13.0) (2026-06-01)
+
+
+### Features
+
+* **asset:** add get-documents-aggregated CLI action ([64d55d9](https://github.com/UteamUP/cli/commit/64d55d9def4ac6f1374b98736f0d18658754f9ca))
+
+
+### CI/CD
+
+* remove dead Homebrew tap repository_dispatch step from release workflow ([5bfbbcb](https://github.com/UteamUP/cli/commit/5bfbbcb8c946135b8c5f745c6c8730b22696da6b))
+
 ## [1.12.0](https://github.com/UteamUP/cli/compare/1.11.0...1.12.0) (2026-05-31)
 
 
