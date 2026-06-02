@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.1](https://github.com/UteamUP/cli/compare/1.14.0...1.14.1) (2026-06-02)
+
+
+### Bug Fixes
+
+* **codingsystem:** list RDS-PP and RDS-PS in coding-system description ([99f8eb1](https://github.com/UteamUP/cli/commit/99f8eb15d15e50475f8e153ecb4116bf4ee09164))
+
 ## [1.14.0](https://github.com/UteamUP/cli/compare/1.13.0...1.14.0) (2026-06-02)
 
 
