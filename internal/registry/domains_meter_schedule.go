@@ -16,6 +16,7 @@ package registry
 //	POST   /api/meter-reading-schedules/initialize/asset/{assetGuid}      — auto-create from asset type
 //	GET    /api/meter-reading-schedules/compliance/asset/{assetGuid}      — per-asset compliance
 //	GET    /api/meter-reading-schedules/compliance/summary                — tenant-wide compliance (paginated)
+//	GET    /api/meter-reading-schedules/asset/{assetGuid}/open-workorders  — all open meter-reading workorders
 //
 // Legacy int-keyed routes are still callable as `[Obsolete]` deprecation
 // shims on the backend; the CLI surface intentionally omits them so new
@@ -116,6 +117,16 @@ func init() {
 				ToolName:    "UteamupMeterscheduleComplianceForAssetByGuid",
 				HTTPMethod:  "GET",
 				RESTPath:    "compliance/asset/{assetGuid}",
+				Args: []ArgDef{
+					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "open-workorders",
+				Description: "List every open meter-reading workorder for an asset by external Guid (all closeable targets, not just the latest)",
+				ToolName:    "UteamupMeterscheduleGetOpenWorkorders",
+				HTTPMethod:  "GET",
+				RESTPath:    "asset/{assetGuid}/open-workorders",
 				Args: []ArgDef{
 					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
 				},

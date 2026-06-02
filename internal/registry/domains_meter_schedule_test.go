@@ -57,6 +57,7 @@ func TestMeterScheduleActionsAreGuidKeyed(t *testing.T) {
 		{"update", "guid"},
 		{"delete", "guid"},
 		{"compliance-asset", "asset-guid"},
+		{"open-workorders", "asset-guid"},
 		{"initialize", "asset-guid"},
 		{"create-workorder", "guid"},
 	}
@@ -191,6 +192,32 @@ func TestMeterScheduleComplianceAssetUsesGuidPath(t *testing.T) {
 	}
 	if action.HTTPMethod != "GET" {
 		t.Errorf("compliance-asset HTTPMethod = %q, want %q", action.HTTPMethod, "GET")
+	}
+}
+
+// Verifies the open-workorders action drives the GUID-keyed
+// /asset/{assetGuid}/open-workorders path and mirrors the MCP tool that lists
+// every open meter-reading workorder for an asset.
+func TestMeterScheduleOpenWorkordersAction(t *testing.T) {
+	d := findMeterScheduleDomain(t)
+	var action *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "open-workorders" {
+			action = &d.Actions[i]
+			break
+		}
+	}
+	if action == nil {
+		t.Fatal("expected `open-workorders` action on meter-schedule domain")
+	}
+	if action.ToolName != "UteamupMeterscheduleGetOpenWorkorders" {
+		t.Errorf("open-workorders ToolName = %q, want %q", action.ToolName, "UteamupMeterscheduleGetOpenWorkorders")
+	}
+	if action.HTTPMethod != "GET" {
+		t.Errorf("open-workorders HTTPMethod = %q, want GET", action.HTTPMethod)
+	}
+	if action.RESTPath != "asset/{assetGuid}/open-workorders" {
+		t.Errorf("open-workorders RESTPath = %q, want %q", action.RESTPath, "asset/{assetGuid}/open-workorders")
 	}
 }
 
