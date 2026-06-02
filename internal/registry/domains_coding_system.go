@@ -4,7 +4,7 @@ func init() {
 	Register(&Domain{
 		Name:        "codingsystem",
 		Aliases:     []string{"cs", "coding"},
-		Description: "Manage industrial coding systems (KKS, RDS, ISO 14224)",
+		Description: "Manage industrial coding systems (KKS, RDS, RDS-PP, RDS-PS, ISO 14224)",
 		Actions: []Action{
 			{
 				Name:        "list",
