@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0](https://github.com/UteamUP/cli/compare/1.13.0...1.14.0) (2026-06-02)
+
+
+### Features
+
+* **meter-schedule:** add open-workorders action listing all open meter-reading workorders by asset GUID ([8eef372](https://github.com/UteamUP/cli/commit/8eef37263b0ce1fde5a9373d84c3a5a8aca86e45))
+* **registry:** add GUID-first responsible-owners, meter record-workorder, and document lifecycle CLI actions ([d118907](https://github.com/UteamUP/cli/commit/d11890729121c4009b68282807243b38ab42fea2))
+
 ## [1.13.0](https://github.com/UteamUP/cli/compare/1.12.0...1.13.0) (2026-06-01)
 
 
