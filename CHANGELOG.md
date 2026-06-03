@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0](https://github.com/UteamUP/cli/compare/1.15.0...1.16.0) (2026-06-03)
+
+
+### Features
+
+* **bugsandfeatures:** add `mine` action listing the caller's own reports ([69dc88b](https://github.com/UteamUP/cli/commit/69dc88bd4af5aa4b626aeee8817f2b559189b300))
+
 ## [1.15.0](https://github.com/UteamUP/cli/compare/1.14.1...1.15.0) (2026-06-03)
 
 
