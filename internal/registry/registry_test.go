@@ -164,6 +164,62 @@ func TestBugsAndFeaturesCommentsAddDeclaration(t *testing.T) {
 	}
 }
 
+// TestBugsAndFeaturesReporterConversation locks in the reporter-conversation registry surface:
+// the `--share-with-reporter` flag on comments-add (BodyName isVisibleToReporter, bool) and the
+// GET `conversation` read action. Keeps the CLI in lockstep with the backend reporter endpoints.
+func TestBugsAndFeaturesReporterConversation(t *testing.T) {
+	var domain *Domain
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name == "bugsandfeatures" {
+			domain = d
+			break
+		}
+	}
+	if domain == nil {
+		t.Fatal("bugsandfeatures domain not registered")
+	}
+
+	var addAction, convAction *Action
+	for i := range domain.Actions {
+		switch domain.Actions[i].Name {
+		case "comments-add":
+			addAction = &domain.Actions[i]
+		case "conversation":
+			convAction = &domain.Actions[i]
+		}
+	}
+
+	if addAction == nil {
+		t.Fatal("comments-add action not registered")
+	}
+	var share *FlagDef
+	for i := range addAction.Flags {
+		if addAction.Flags[i].Name == "share-with-reporter" {
+			share = &addAction.Flags[i]
+			break
+		}
+	}
+	if share == nil {
+		t.Fatal("share-with-reporter flag not declared on comments-add")
+	}
+	if share.BodyName != "isVisibleToReporter" {
+		t.Errorf("share-with-reporter BodyName = %q, want isVisibleToReporter", share.BodyName)
+	}
+	if share.Type != "bool" {
+		t.Errorf("share-with-reporter Type = %q, want bool", share.Type)
+	}
+
+	if convAction == nil {
+		t.Fatal("conversation action not registered")
+	}
+	if convAction.HTTPMethod != "GET" {
+		t.Errorf("conversation HTTPMethod = %q, want GET", convAction.HTTPMethod)
+	}
+	if convAction.RESTPath != "{bugExternalGuid}/conversation" {
+		t.Errorf("conversation RESTPath = %q, want {bugExternalGuid}/conversation", convAction.RESTPath)
+	}
+}
+
 // TestBugsAndFeaturesCreateIdempotencyKeyHeader locks in that the
 // idempotency-key flag on `bugs create` is routed via HeaderName, not BodyName.
 // The backend reads `[FromHeader(Name = "Idempotency-Key")]` and rejects bodies

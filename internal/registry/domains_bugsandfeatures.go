@@ -130,6 +130,17 @@ func init() {
 					{Name: "text", Short: "t", BodyName: "bodyHtml", Description: "Comment body (HTML accepted; plain text is wrapped). Max 8000 chars after sanitization.", Required: true, Type: "string"},
 					{Name: "parent", BodyName: "parentCommentExternalGuid", Description: "ExternalGuid of the parent comment to reply to. Replies of replies are rejected (single-level threading).", Type: "string"},
 					{Name: "mention", BodyName: "mentionedGlobalAdminGuids", Description: "Global-admin user GUID to @-mention. Repeatable; max 10 per comment. Server rejects non-admin GUIDs with 400.", Type: "stringSlice"},
+					{Name: "share-with-reporter", BodyName: "isVisibleToReporter", Description: "Share this comment with the bug's original reporter (they see it in their notification center and can reply). Defaults to internal.", Type: "bool"},
+				},
+			},
+			{
+				Name:        "conversation",
+				Description: "Read the reporter-facing conversation on a bug: the original report (title, description, status), the reporter-facing status timeline, and the comments shared with the reporter. Authorized to the report's submitter or any global admin.",
+				ToolName:    "UteamupBugsAndFeaturesConversation",
+				HTTPMethod:  "GET",
+				RESTPath:    "{bugExternalGuid}/conversation",
+				Args: []ArgDef{
+					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
 				},
 			},
 			{
