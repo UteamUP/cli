@@ -220,6 +220,46 @@ func TestBugsAndFeaturesReporterConversation(t *testing.T) {
 	}
 }
 
+// TestBugsAndFeaturesMine locks in the `mine` read action that powers the
+// reporter "My reports" page: GET against the static `mine` suffix, tool
+// UteamupBugsAndFeaturesMine, no positional args. Keeps the CLI in lockstep
+// with the backend BugsAndFeaturesController `[HttpGet("mine")]` endpoint.
+func TestBugsAndFeaturesMine(t *testing.T) {
+	var domain *Domain
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name == "bugsandfeatures" {
+			domain = d
+			break
+		}
+	}
+	if domain == nil {
+		t.Fatal("bugsandfeatures domain not registered")
+	}
+
+	var mineAction *Action
+	for i := range domain.Actions {
+		if domain.Actions[i].Name == "mine" {
+			mineAction = &domain.Actions[i]
+			break
+		}
+	}
+	if mineAction == nil {
+		t.Fatal("mine action not registered")
+	}
+	if mineAction.ToolName != "UteamupBugsAndFeaturesMine" {
+		t.Errorf("mine ToolName = %q, want UteamupBugsAndFeaturesMine", mineAction.ToolName)
+	}
+	if mineAction.HTTPMethod != "GET" {
+		t.Errorf("mine HTTPMethod = %q, want GET", mineAction.HTTPMethod)
+	}
+	if mineAction.RESTPath != "mine" {
+		t.Errorf("mine RESTPath = %q, want mine", mineAction.RESTPath)
+	}
+	if len(mineAction.Args) != 0 {
+		t.Errorf("mine should take no positional args, got %d", len(mineAction.Args))
+	}
+}
+
 // TestBugsAndFeaturesCreateIdempotencyKeyHeader locks in that the
 // idempotency-key flag on `bugs create` is routed via HeaderName, not BodyName.
 // The backend reads `[FromHeader(Name = "Idempotency-Key")]` and rejects bodies

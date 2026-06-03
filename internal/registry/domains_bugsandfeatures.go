@@ -144,6 +144,14 @@ func init() {
 				},
 			},
 			{
+				Name:        "mine",
+				Description: "List the bugs/features submitted by the current user (the caller's own reports), newest activity first. Slim reporter-safe projection — powers the 'My reports' page.",
+				ToolName:    "UteamupBugsAndFeaturesMine",
+				HTTPMethod:  "GET",
+				RESTPath:    "mine",
+				Args:        []ArgDef{},
+			},
+			{
 				Name:        "attachments-list",
 				Description: "List image attachments on a bug (global-admin only). Output is oldest-first.",
 				ToolName:    "UteamupBugsAndFeaturesAttachmentsList",
