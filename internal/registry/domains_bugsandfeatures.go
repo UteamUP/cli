@@ -12,7 +12,7 @@ func init() {
 				ToolName:    "UteamupBugsAndFeaturesList",
 				Flags: []FlagDef{
 					{Name: "type", Description: "Filter by type (Bug or Feature)", Type: "string"},
-					{Name: "status", Description: "Filter by status (New, Validated, Fixed, Confirmed, Rejected)", Type: "string"},
+					{Name: "status", Description: "Filter by status (New, Validated, Fixed, Confirmed, Rejected, WaitList)", Type: "string"},
 					{Name: "severity", Description: "Filter by severity (Low, Medium, High, Critical)", Type: "string"},
 					{Name: "source", Description: "Filter by source (Manual, FrontendAuto, PerformanceAuto)", Type: "string"},
 					{Name: "tenant-guid", Description: "Filter by tenant ExternalGuid", Type: "string"},
@@ -51,7 +51,7 @@ func init() {
 				ToolName:    "UteamupBugsAndFeaturesUpdateStatus",
 				Args: []ArgDef{
 					{Name: "externalGuid", Description: "ExternalGuid", Required: true, Type: "string"},
-					{Name: "toStatus", Description: "Target status (Validated, Fixed, Confirmed, Rejected, New)", Required: true, Type: "string"},
+					{Name: "toStatus", Description: "Target status (Validated, Fixed, Confirmed, Rejected, New, WaitList)", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
 					{Name: "note", Description: "Required on Rejected and reopen transitions", Type: "string"},
