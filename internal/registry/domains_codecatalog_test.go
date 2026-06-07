@@ -155,3 +155,57 @@ func TestCodecatalogSetResponsibleOwnersActionWired(t *testing.T) {
 		t.Errorf("user-ids BodyName = %q, want %q (matches MCP tool arg)", userIDs.BodyName, "userIds")
 	}
 }
+
+func TestCodecatalogMoveActionWired(t *testing.T) {
+	var d *Domain
+	for _, dom := range DefaultRegistry.Domains() {
+		if dom.Name == "codecatalog" {
+			d = dom
+			break
+		}
+	}
+	if d == nil {
+		t.Fatal("expected codecatalog domain to be registered")
+	}
+
+	var action *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "move" {
+			action = &d.Actions[i]
+			break
+		}
+	}
+	if action == nil {
+		t.Fatal("expected `move` action on codecatalog domain")
+	}
+
+	if action.ToolName != "UteamupCodingsystemMoveEntryByGuid" {
+		t.Errorf("move ToolName = %q, want %q", action.ToolName, "UteamupCodingsystemMoveEntryByGuid")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("move HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "entries/by-guid/{guid}/move" {
+		t.Errorf("move RESTPath = %q, want %q", action.RESTPath, "entries/by-guid/{guid}/move")
+	}
+
+	// Two Guid (string) positional args: the entry to move (consumed by the {guid}
+	// path placeholder) and the new parent (camelCase name → `newParentGuid` body field).
+	if len(action.Args) != 2 {
+		t.Fatalf("move expected 2 positional args, got %d (%+v)", len(action.Args), action.Args)
+	}
+	if action.Args[0].Name != "guid" {
+		t.Errorf("move arg[0] = %q, want %q (matches {guid} path placeholder)", action.Args[0].Name, "guid")
+	}
+	if action.Args[1].Name != "newParentGuid" {
+		t.Errorf("move arg[1] = %q, want %q (camelCase → body field newParentGuid)", action.Args[1].Name, "newParentGuid")
+	}
+	for i, arg := range action.Args {
+		if arg.Type != "string" {
+			t.Errorf("move arg[%d] type = %q, want string (Guids are strings)", i, arg.Type)
+		}
+		if !arg.Required {
+			t.Errorf("move arg[%d] (%s) must be Required", i, arg.Name)
+		}
+	}
+}

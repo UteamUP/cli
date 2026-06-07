@@ -42,6 +42,17 @@ func init() {
 				},
 			},
 			{
+				Name:        "move",
+				Description: "Reparent a code catalog entry under a new parent by their ExternalGuids — recomputes the entry's and its descendants' DisplayCode. Same coding system only; parent tier must be shallower-or-equal; cannot move under itself or one of its descendants.",
+				ToolName:    "UteamupCodingsystemMoveEntryByGuid",
+				HTTPMethod:  "POST",
+				RESTPath:    "entries/by-guid/{guid}/move",
+				Args: []ArgDef{
+					{Name: "guid", Description: "ExternalGuid of the entry to move", Required: true, Type: "string"},
+					{Name: "newParentGuid", Description: "ExternalGuid of the entry that becomes the new parent", Required: true, Type: "string"},
+				},
+			},
+			{
 				Name:        "remove-asset-assignment",
 				Description: "Remove the code assignment from an asset by its ExternalGuid — preserves audit log",
 				ToolName:    "UteamupCodingsystemRemoveAssetAssignment",
