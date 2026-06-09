@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0](https://github.com/UteamUP/cli/compare/1.17.0...1.18.0) (2026-06-09)
+
+
+### Features
+
+* **asset:** add duplicate action to deep-copy a coded asset by GUID ([c471596](https://github.com/UteamUP/cli/commit/c471596f827af8aeb498d9167fa44c67325d51a2))
+
 ## [1.17.0](https://github.com/UteamUP/cli/compare/1.16.1...1.17.0) (2026-06-07)
 
 
