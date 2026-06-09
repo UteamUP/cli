@@ -31,6 +31,14 @@ func init() {
 				Args:        []ArgDef{{Name: "guid", Description: "Asset ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
 			},
 			{
+				Name:        "duplicate",
+				Description: "Duplicate a coded asset — deep-copies it and assigns the next code instance (e.g. GE0101 → GE0102). Requires Asset.Create permission.",
+				ToolName:    "UteamupAssetDuplicate",
+				HTTPMethod:  "POST",
+				RESTPath:    "by-guid/{assetGuid}/duplicate",
+				Args:        []ArgDef{{Name: "assetGuid", Description: "ExternalGuid of the source asset to duplicate (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
+			},
+			{
 				Name:        "get-assigned-stock",
 				Description: "Get parts/tools/chemicals assigned to an asset, with the stock locations each item sits in (quantity + low-stock state)",
 				ToolName:    "UteamupAssetGetAssignedStock",
