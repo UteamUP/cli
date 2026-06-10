@@ -95,3 +95,61 @@ func TestAssetSetResponsibleOwnersAction(t *testing.T) {
 		t.Errorf("user-ids BodyName = %q, want %q (matches MCP tool arg)", userIDs.BodyName, "userIds")
 	}
 }
+
+func TestAssetEditCodeAssignmentAction(t *testing.T) {
+	action := findAssetAction(t, "edit-code-assignment")
+
+	if action.ToolName != "UteamupAssetEditCodeAssignment" {
+		t.Errorf("edit-code-assignment ToolName = %q, want %q", action.ToolName, "UteamupAssetEditCodeAssignment")
+	}
+	if action.HTTPMethod != "PATCH" {
+		t.Errorf("edit-code-assignment HTTPMethod = %q, want PATCH", action.HTTPMethod)
+	}
+	if action.RESTPath != "by-guid/{assetGuid}/codeassignment" {
+		t.Errorf("edit-code-assignment RESTPath = %q, want %q", action.RESTPath, "by-guid/{assetGuid}/codeassignment")
+	}
+
+	// Asset identity is a Guid (string) positional arg matching the path placeholder.
+	if len(action.Args) != 1 || action.Args[0].Name != "assetGuid" {
+		t.Fatalf("edit-code-assignment expected single positional arg 'assetGuid', got %+v", action.Args)
+	}
+	if action.Args[0].Type != "string" {
+		t.Errorf("assetGuid arg type = %q, want string (Guids are strings)", action.Args[0].Type)
+	}
+	if !action.Args[0].Required {
+		t.Error("assetGuid arg must be Required")
+	}
+
+	// The rename flags drive the new editable Name + Code surface. Each is
+	// optional; BodyName defaults to camelCase(Name) → `name`, `desiredCode`,
+	// matching the UteamupAssetEditCodeAssignment MCP tool args.
+	flagByName := func(name string) *FlagDef {
+		for i := range action.Flags {
+			if action.Flags[i].Name == name {
+				return &action.Flags[i]
+			}
+		}
+		return nil
+	}
+	for _, want := range []struct {
+		name string
+		typ  string
+	}{
+		{"name", "string"},
+		{"desired-code", "string"},
+		{"code-catalog-entry-guid", "string"},
+		{"parent-asset-guid", "string"},
+		{"demote-to-root", "bool"},
+	} {
+		f := flagByName(want.name)
+		if f == nil {
+			t.Fatalf("edit-code-assignment must expose a %q flag", want.name)
+		}
+		if f.Type != want.typ {
+			t.Errorf("%s flag type = %q, want %q", want.name, f.Type, want.typ)
+		}
+		if f.Required {
+			t.Errorf("%s flag must be optional (leave-unchanged semantics)", want.name)
+		}
+	}
+}

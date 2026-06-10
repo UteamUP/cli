@@ -112,6 +112,21 @@ func init() {
 					{Name: "user-ids", Description: "Responsible owner user ids — repeatable or comma-separated (replaces the current set)", Type: "stringSlice", BodyName: "userIds"},
 				},
 			},
+			{
+				Name:        "edit-code-assignment",
+				Description: "Edit a coded asset's code assignment by ExternalGuid — rename the asset (--name), rename its code (--desired-code), reassign it to a different catalog entry, or move it under a different parent. Requires Asset.UpdateCodeAssignment permission.",
+				ToolName:    "UteamupAssetEditCodeAssignment",
+				HTTPMethod:  "PATCH",
+				RESTPath:    "by-guid/{assetGuid}/codeassignment",
+				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "name", Description: "New asset name (unique per tenant, case-insensitive)", Type: "string"},
+					{Name: "desired-code", Description: "Rename the asset's code to this exact segment (e.g. A01 → A001, 1LBA1 → 01LBA1)", Type: "string"},
+					{Name: "code-catalog-entry-guid", Description: "Reassign the asset to a different catalog entry by its ExternalGuid", Type: "string"},
+					{Name: "parent-asset-guid", Description: "Move the asset under a different parent asset by its ExternalGuid", Type: "string"},
+					{Name: "demote-to-root", Description: "Promote the asset to root scope (clear its parent)", Default: false, Type: "bool"},
+				},
+			},
 		},
 	})
 }
