@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.0](https://github.com/UteamUP/cli/compare/1.18.0...1.19.0) (2026-06-10)
+
+
+### Features
+
+* **asset:** add edit-code-assignment action to edit a coded asset by GUID ([d4a28fb](https://github.com/UteamUP/cli/commit/d4a28fb25f12b1e9113caffc91a0d9557275ce0f))
+
 ## [1.18.0](https://github.com/UteamUP/cli/compare/1.17.0...1.18.0) (2026-06-09)
 
 
