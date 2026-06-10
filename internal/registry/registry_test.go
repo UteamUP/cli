@@ -77,6 +77,13 @@ func TestBuildRESTPathTemplate(t *testing.T) {
 			wantConsumed: []string{"bugExternalGuid", "attachmentExternalGuid"},
 		},
 		{
+			name:         "ping-reporter expands {bugExternalGuid}",
+			action:       Action{Name: "ping-reporter", RESTPath: "{bugExternalGuid}/ping-reporter"},
+			args:         map[string]any{"bugExternalGuid": "g1"},
+			wantPath:     "/api/bugsandfeatures/g1/ping-reporter",
+			wantConsumed: []string{"bugExternalGuid"},
+		},
+		{
 			name:     "literal RESTPath without placeholders is preserved (legacy)",
 			action:   Action{Name: "list", RESTPath: "all"},
 			args:     map[string]any{},

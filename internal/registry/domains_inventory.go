@@ -98,6 +98,91 @@ func init() {
 					{Name: "auto-deduct", Description: "Auto-deduct stock on workorder completion", Default: false, Type: "bool", BodyName: "autoDeductOnWorkorderCompletionEnabled"},
 				},
 			},
+			Action{
+				Name:        "transfer",
+				Description: "Transfer stock from its current location to a destination location atomically",
+				ToolName:    "TransferInventory",
+				HTTPMethod:  "POST",
+				RESTPath:    "transfers",
+				Flags: []FlagDef{
+					{Name: "stock-item-guid", Description: "Stock item GUID to transfer", Required: true, Type: "string"},
+					{Name: "destination-stock-guid", Description: "Destination stock location GUID", Required: true, Type: "string"},
+					{Name: "quantity", Description: "Quantity to transfer (must be available at source)", Required: true, Type: "int"},
+					{Name: "destination-bin-guid", Description: "Destination bin GUID (optional)", Type: "string"},
+					{Name: "reason", Description: "Reason for the transfer", Type: "string"},
+					{Name: "reference", Description: "External reference (e.g. ticket number)", Type: "string"},
+				},
+			},
+			Action{
+				Name:        "transfers",
+				Description: "List transfer history grouped by transfer (paged, optional location filter)",
+				ToolName:    "UteamupStockListTransfers",
+				RESTPath:    "transfers",
+				Flags: append([]FlagDef{
+					{Name: "stock-guid", Description: "Stock location GUID filter", Type: "string"},
+				}, paginationFlags()...),
+			},
+			Action{
+				Name:        "po-receive",
+				Description: "Receive goods against an Approved purchase order (lines come from a JSON file)",
+				ToolName:    "UteamupStockReceivePurchaseOrder",
+				HTTPMethod:  "POST",
+				RESTPath:    "purchase-orders/{guid}/receive",
+				Args:        []ArgDef{{Name: "guid", Description: "Purchase order GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "file", Short: "f", Description: "Path to a JSON file with the received lines: [{\"purchaseOrderItemGuid\":\"…\",\"receivedQuantity\":N}]", Required: true, Type: "string", JSONFile: true, BodyName: "receivedItems"},
+				},
+			},
+			Action{
+				Name:        "bulk-adjust",
+				Description: "Apply a batch of stock adjustments atomically, all-or-nothing (operations come from a JSON file, max 500)",
+				ToolName:    "UteamupStockBulkAdjust",
+				HTTPMethod:  "POST",
+				RESTPath:    "transactions/bulk",
+				Flags: []FlagDef{
+					{Name: "file", Short: "f", Description: "Path to a JSON file with the operations: [{\"stockItemGuid\":\"…\",\"action\":\"Add|Remove\",\"quantity\":N,\"reason\":\"…\"}]", Required: true, Type: "string", JSONFile: true, BodyName: "operations"},
+				},
+			},
+			Action{
+				Name:        "export",
+				Description: "Export all stock items as CSV (round-trippable with import)",
+				ToolName:    "UteamupStockExportItems",
+				RESTPath:    "items/export",
+			},
+			Action{
+				Name:        "import",
+				Description: "Import stock items from a CSV file (upsert keyed by Sku, fallback InternalNumber)",
+				ToolName:    "UteamupStockImportItems",
+				HTTPMethod:  "POST",
+				RESTPath:    "items/import",
+				Flags: []FlagDef{
+					{Name: "file", Short: "f", Description: "Path to the CSV file to import", Required: true, Type: "string", UploadFile: true},
+					{Name: "dry-run", Description: "Run the full import pipeline without persisting", Default: false, Type: "bool", BodyName: "dryrun"},
+				},
+			},
+			Action{
+				Name:        "bins",
+				Description: "List the bin hierarchy of a stock location",
+				ToolName:    "UteamupStockListBins",
+				RESTPath:    "locations/{stockGuid}/bins",
+				Flags: []FlagDef{
+					{Name: "stock-guid", Description: "Stock location GUID", Type: "string", Required: true},
+				},
+			},
+			Action{
+				Name:        "bins-create",
+				Description: "Create a bin (Zone, Aisle, Rack, Shelf, or Bin) inside a stock location",
+				ToolName:    "UteamupStockUpsertBin",
+				HTTPMethod:  "POST",
+				RESTPath:    "bins",
+				Flags: []FlagDef{
+					{Name: "stock-guid", Description: "Stock location GUID", Required: true, Type: "string"},
+					{Name: "code", Description: "Bin code, unique within the stock location", Required: true, Type: "string"},
+					{Name: "name", Description: "Display name (optional)", Type: "string"},
+					{Name: "bin-type", Description: "Bin type: Zone, Aisle, Rack, Shelf, or Bin", Default: "Bin", Type: "string"},
+					{Name: "parent-bin-guid", Description: "Parent bin GUID for nesting (optional)", Type: "string"},
+				},
+			},
 		),
 	})
 

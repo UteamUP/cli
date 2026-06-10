@@ -7,7 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -235,6 +238,89 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 		}
 
 		c.logger.Debug("%s %s tenant=%d", method, fullURL, token.TenantID)
+
+		resp, err := c.httpClient().Do(req)
+		if err != nil {
+			return fmt.Errorf("request failed: %w", err)
+		}
+		defer resp.Body.Close()
+
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("reading response: %w", err)
+		}
+
+		if resp.StatusCode >= 400 {
+			return clierrors.NewAPIError(resp.StatusCode, resp.Status, string(respBody))
+		}
+
+		result = json.RawMessage(respBody)
+		return nil
+	})
+
+	return result, err
+}
+
+// CallRESTUpload sends a multipart/form-data request with one local file as
+// the body part named fileField, plus params on the query string (the body is
+// owned by the multipart payload). It is the REST counterpart for endpoints
+// that bind IFormFile — e.g. the stock CSV import. Auth, tenant, and CSRF
+// headers mirror CallREST.
+func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField, filePath string, params map[string]any, extraHeaders map[string]string, actionName string) (json.RawMessage, error) {
+	token, err := auth.LoadToken()
+	if err != nil {
+		return nil, clierrors.NewAuthError("loading token", err)
+	}
+	if token == nil || !token.IsValid() {
+		return nil, &clierrors.NotAuthenticatedError{}
+	}
+
+	fileData, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("reading %s: %w", filePath, err)
+	}
+
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+	part, err := writer.CreateFormFile(fileField, filepath.Base(filePath))
+	if err != nil {
+		return nil, fmt.Errorf("building multipart body: %w", err)
+	}
+	if _, err := part.Write(fileData); err != nil {
+		return nil, fmt.Errorf("building multipart body: %w", err)
+	}
+	if err := writer.Close(); err != nil {
+		return nil, fmt.Errorf("building multipart body: %w", err)
+	}
+
+	fullURL := c.baseURL + path
+	if query := buildQueryString(params, actionName); query != "" {
+		fullURL += "?" + query
+	}
+
+	var result json.RawMessage
+
+	err = RetryWithBackoff(ctx, c.logger, fmt.Sprintf("REST %s %s", method, path), c.retryOpts, func() error {
+		req, err := http.NewRequestWithContext(ctx, method, fullURL, bytes.NewReader(buf.Bytes()))
+		if err != nil {
+			return fmt.Errorf("creating request: %w", err)
+		}
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+		req.Header.Set("X-Requested-With", "XMLHttpRequest")
+
+		if token.TenantID > 0 {
+			req.Header.Set("X-Tenant-ID", fmt.Sprintf("%d", token.TenantID))
+		}
+		if token.TenantGuid != "" {
+			req.Header.Set("X-Tenant-Guid", token.TenantGuid)
+		}
+
+		for k, v := range extraHeaders {
+			req.Header.Set(k, v)
+		}
+
+		c.logger.Debug("%s %s multipart file=%s tenant=%d", method, fullURL, filepath.Base(filePath), token.TenantID)
 
 		resp, err := c.httpClient().Do(req)
 		if err != nil {

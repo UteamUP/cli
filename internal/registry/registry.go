@@ -50,6 +50,18 @@ type FlagDef struct {
 	// the flag is excluded from the body and applied as a header on the
 	// outgoing request.
 	HeaderName string
+	// JSONFile marks a string flag whose value is a local path to a JSON file.
+	// The file is read and parsed at execution time and the parsed value is
+	// sent under BodyName (default camelCase(Name)) in the request body — the
+	// only way to express array/object payloads that flat flags cannot carry
+	// (e.g. bulk stock operations, purchase-order receive lines).
+	JSONFile bool
+	// UploadFile marks a string flag whose value is a local path to a file
+	// sent as a multipart/form-data part named by BodyName (default
+	// camelCase(Name)). Remaining flags travel on the query string because the
+	// multipart payload owns the body. Used by endpoints binding IFormFile
+	// (e.g. stock CSV import).
+	UploadFile bool
 }
 
 // HTTPMethod maps action names to HTTP methods for REST calls.
@@ -246,6 +258,7 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 	// re-introduce the `Idempotency-Key`-as-body-field bug fixed by adding
 	// HeaderName in the first place).
 	headers := make(map[string]string)
+	var uploadField, uploadPath string
 	for _, flag := range action.Flags {
 		if flag.HeaderName != "" {
 			if cmd.Flags().Changed(flag.Name) {
@@ -263,6 +276,24 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		fieldName := flag.BodyName
 		if fieldName == "" {
 			fieldName = toCamelCase(flag.Name)
+		}
+		if flag.JSONFile {
+			if cmd.Flags().Changed(flag.Name) {
+				v, _ := cmd.Flags().GetString(flag.Name)
+				parsed, err := readJSONFileFlag(v)
+				if err != nil {
+					return fmt.Errorf("reading --%s: %w", flag.Name, err)
+				}
+				toolArgs[fieldName] = parsed
+			}
+			continue
+		}
+		if flag.UploadFile {
+			if cmd.Flags().Changed(flag.Name) {
+				uploadField = fieldName
+				uploadPath, _ = cmd.Flags().GetString(flag.Name)
+			}
+			continue
 		}
 		if !cmd.Flags().Changed(flag.Name) {
 			if flag.Default != nil {
@@ -316,7 +347,13 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 
 	logger.Debug("calling %s %s (tool: %s) with args %v headers %v", httpMethod, restPath, action.ToolName, toolArgs, headers)
 
-	result, err := apiClient.CallREST(ctx, httpMethod, restPath, toolArgs, headers, action.Name)
+	var result json.RawMessage
+	var err error
+	if uploadPath != "" {
+		result, err = apiClient.CallRESTUpload(ctx, httpMethod, restPath, uploadField, uploadPath, toolArgs, headers, action.Name)
+	} else {
+		result, err = apiClient.CallREST(ctx, httpMethod, restPath, toolArgs, headers, action.Name)
+	}
 	if err != nil {
 		return err
 	}
@@ -330,6 +367,20 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 
 	format := output.ParseFormat(*outputFormat)
 	return output.Print(format, result)
+}
+
+// readJSONFileFlag loads a JSONFile-marked flag: the file at path is read and
+// parsed as JSON; the parsed value (array or object) becomes the body field.
+func readJSONFileFlag(path string) (any, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var parsed any
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		return nil, fmt.Errorf("parsing %s as JSON: %w", filepath.Base(path), err)
+	}
+	return parsed, nil
 }
 
 // exportJSON writes the raw JSON response to a file in the export directory.

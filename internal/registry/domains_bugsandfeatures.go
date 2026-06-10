@@ -134,6 +134,16 @@ func init() {
 				},
 			},
 			{
+				Name:        "ping-reporter",
+				Description: "Manually re-notify the bug's reporter that an admin is waiting for their reply (global-admin only). Sends the standard reporter notification + email. 409 when the report has no reporter account.",
+				ToolName:    "UteamupBugsAndFeaturesPingReporter",
+				HTTPMethod:  "POST",
+				RESTPath:    "{bugExternalGuid}/ping-reporter",
+				Args: []ArgDef{
+					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
+				},
+			},
+			{
 				Name:        "conversation",
 				Description: "Read the reporter-facing conversation on a bug: the original report (title, description, status), the reporter-facing status timeline, and the comments shared with the reporter. Authorized to the report's submitter or any global admin.",
 				ToolName:    "UteamupBugsAndFeaturesConversation",

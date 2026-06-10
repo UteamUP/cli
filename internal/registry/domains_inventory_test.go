@@ -1,6 +1,8 @@
 package registry
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -241,5 +243,242 @@ func TestStockReorderPolicyActionsWired(t *testing.T) {
 	}
 	if cron := gotFlags["cron-schedule"]; cron != nil && cron.Default != "0 3 * * *" {
 		t.Errorf("cron-schedule Default = %v, want \"0 3 * * *\" (matches backend default)", cron.Default)
+	}
+}
+
+func stockActionFlag(t *testing.T, actionName, flagName string) *FlagDef {
+	t.Helper()
+	action := findStockAction(t, actionName)
+	for i := range action.Flags {
+		if action.Flags[i].Name == flagName {
+			return &action.Flags[i]
+		}
+	}
+	t.Fatalf("%s action must expose a `%s` flag", actionName, flagName)
+	return nil
+}
+
+func TestStockTransferActionWired(t *testing.T) {
+	action := findStockAction(t, "transfer")
+
+	if action.ToolName != "TransferInventory" {
+		t.Errorf("transfer ToolName = %q, want %q", action.ToolName, "TransferInventory")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("transfer HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "transfers" {
+		t.Errorf("transfer RESTPath = %q, want %q", action.RESTPath, "transfers")
+	}
+
+	// GUIDs only at the boundary: every identifier flag is a string Guid.
+	for _, name := range []string{"stock-item-guid", "destination-stock-guid"} {
+		f := stockActionFlag(t, "transfer", name)
+		if !f.Required || f.Type != "string" {
+			t.Errorf("transfer flag %q must be a Required string Guid, got %+v", name, f)
+		}
+	}
+	if qty := stockActionFlag(t, "transfer", "quantity"); !qty.Required || qty.Type != "int" {
+		t.Errorf("transfer quantity must be a Required int flag, got %+v", qty)
+	}
+	for _, name := range []string{"destination-bin-guid", "reason", "reference"} {
+		if f := stockActionFlag(t, "transfer", name); f.Required {
+			t.Errorf("transfer flag %q must be optional", name)
+		}
+	}
+}
+
+func TestStockTransfersListActionWired(t *testing.T) {
+	action := findStockAction(t, "transfers")
+
+	if action.ToolName != "UteamupStockListTransfers" {
+		t.Errorf("transfers ToolName = %q, want %q", action.ToolName, "UteamupStockListTransfers")
+	}
+	if action.HTTPMethod != "" {
+		t.Errorf("transfers HTTPMethod = %q, want \"\" (defaults to GET)", action.HTTPMethod)
+	}
+	if action.RESTPath != "transfers" {
+		t.Errorf("transfers RESTPath = %q, want %q", action.RESTPath, "transfers")
+	}
+
+	gotFlags := make(map[string]string)
+	for _, f := range action.Flags {
+		gotFlags[f.Name] = f.Type
+	}
+	for name, ty := range map[string]string{"stock-guid": "string", "page": "int", "page-size": "int"} {
+		got, ok := gotFlags[name]
+		if !ok {
+			t.Errorf("transfers missing expected flag %q", name)
+			continue
+		}
+		if got != ty {
+			t.Errorf("transfers flag %q type = %q, want %q", name, got, ty)
+		}
+	}
+}
+
+func TestStockPoReceiveActionWired(t *testing.T) {
+	action := findStockAction(t, "po-receive")
+
+	if action.ToolName != "UteamupStockReceivePurchaseOrder" {
+		t.Errorf("po-receive ToolName = %q, want %q", action.ToolName, "UteamupStockReceivePurchaseOrder")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("po-receive HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "purchase-orders/{guid}/receive" {
+		t.Errorf("po-receive RESTPath = %q, want %q", action.RESTPath, "purchase-orders/{guid}/receive")
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "guid" || !action.Args[0].Required || action.Args[0].Type != "string" {
+		t.Fatalf("po-receive expected single required string positional arg 'guid', got %+v", action.Args)
+	}
+
+	file := stockActionFlag(t, "po-receive", "file")
+	if !file.Required || !file.JSONFile || file.Short != "f" {
+		t.Errorf("po-receive file flag must be Required JSONFile with -f short, got %+v", file)
+	}
+	if file.BodyName != "receivedItems" {
+		t.Errorf("po-receive file BodyName = %q, want receivedItems (backend binds ReceivePurchaseOrderRequestModel.ReceivedItems)", file.BodyName)
+	}
+}
+
+func TestStockBulkAdjustActionWired(t *testing.T) {
+	action := findStockAction(t, "bulk-adjust")
+
+	if action.ToolName != "UteamupStockBulkAdjust" {
+		t.Errorf("bulk-adjust ToolName = %q, want %q", action.ToolName, "UteamupStockBulkAdjust")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("bulk-adjust HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "transactions/bulk" {
+		t.Errorf("bulk-adjust RESTPath = %q, want %q", action.RESTPath, "transactions/bulk")
+	}
+
+	file := stockActionFlag(t, "bulk-adjust", "file")
+	if !file.Required || !file.JSONFile || file.Short != "f" {
+		t.Errorf("bulk-adjust file flag must be Required JSONFile with -f short, got %+v", file)
+	}
+	if file.BodyName != "operations" {
+		t.Errorf("bulk-adjust file BodyName = %q, want operations (backend binds BulkStockTransactionsRequestModel.Operations)", file.BodyName)
+	}
+}
+
+func TestStockExportImportActionsWired(t *testing.T) {
+	export := findStockAction(t, "export")
+	if export.ToolName != "UteamupStockExportItems" {
+		t.Errorf("export ToolName = %q, want %q", export.ToolName, "UteamupStockExportItems")
+	}
+	if export.HTTPMethod != "" {
+		t.Errorf("export HTTPMethod = %q, want \"\" (defaults to GET)", export.HTTPMethod)
+	}
+	if export.RESTPath != "items/export" {
+		t.Errorf("export RESTPath = %q, want %q", export.RESTPath, "items/export")
+	}
+
+	imp := findStockAction(t, "import")
+	if imp.ToolName != "UteamupStockImportItems" {
+		t.Errorf("import ToolName = %q, want %q", imp.ToolName, "UteamupStockImportItems")
+	}
+	if imp.HTTPMethod != "POST" {
+		t.Errorf("import HTTPMethod = %q, want POST", imp.HTTPMethod)
+	}
+	if imp.RESTPath != "items/import" {
+		t.Errorf("import RESTPath = %q, want %q", imp.RESTPath, "items/import")
+	}
+
+	file := stockActionFlag(t, "import", "file")
+	if !file.Required || !file.UploadFile || file.Short != "f" {
+		t.Errorf("import file flag must be Required UploadFile with -f short, got %+v", file)
+	}
+
+	dryRun := stockActionFlag(t, "import", "dry-run")
+	if dryRun.Type != "bool" || dryRun.Default != false {
+		t.Errorf("import dry-run must be a bool flag defaulting to false, got %+v", dryRun)
+	}
+	// The backend binds [FromQuery] bool dryrun (lowercase) — BodyName carries
+	// the divergent name onto the query string of the multipart POST.
+	if dryRun.BodyName != "dryrun" {
+		t.Errorf("import dry-run BodyName = %q, want dryrun", dryRun.BodyName)
+	}
+}
+
+func TestStockBinsActionsWired(t *testing.T) {
+	bins := findStockAction(t, "bins")
+	if bins.ToolName != "UteamupStockListBins" {
+		t.Errorf("bins ToolName = %q, want %q", bins.ToolName, "UteamupStockListBins")
+	}
+	if bins.RESTPath != "locations/{stockGuid}/bins" {
+		t.Errorf("bins RESTPath = %q, want %q", bins.RESTPath, "locations/{stockGuid}/bins")
+	}
+	if sg := stockActionFlag(t, "bins", "stock-guid"); !sg.Required || sg.Type != "string" {
+		t.Errorf("bins stock-guid flag must be a Required string Guid (fills the path placeholder), got %+v", sg)
+	}
+
+	create := findStockAction(t, "bins-create")
+	if create.ToolName != "UteamupStockUpsertBin" {
+		t.Errorf("bins-create ToolName = %q, want %q", create.ToolName, "UteamupStockUpsertBin")
+	}
+	if create.HTTPMethod != "POST" {
+		t.Errorf("bins-create HTTPMethod = %q, want POST", create.HTTPMethod)
+	}
+	if create.RESTPath != "bins" {
+		t.Errorf("bins-create RESTPath = %q, want %q", create.RESTPath, "bins")
+	}
+	for _, name := range []string{"stock-guid", "code"} {
+		if f := stockActionFlag(t, "bins-create", name); !f.Required || f.Type != "string" {
+			t.Errorf("bins-create flag %q must be a Required string, got %+v", name, f)
+		}
+	}
+	if bt := stockActionFlag(t, "bins-create", "bin-type"); bt.Default != "Bin" {
+		t.Errorf("bins-create bin-type Default = %v, want \"Bin\" (matches backend default)", bt.Default)
+	}
+	for _, name := range []string{"name", "parent-bin-guid"} {
+		if f := stockActionFlag(t, "bins-create", name); f.Required {
+			t.Errorf("bins-create flag %q must be optional", name)
+		}
+	}
+}
+
+func TestReadJSONFileFlagParsesArray(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "ops.json")
+	if err := os.WriteFile(path, []byte(`[{"stockItemGuid":"11111111-1111-1111-1111-111111111111","action":"Add","quantity":3}]`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	parsed, err := readJSONFileFlag(path)
+	if err != nil {
+		t.Fatalf("readJSONFileFlag returned error: %v", err)
+	}
+	arr, ok := parsed.([]any)
+	if !ok {
+		t.Fatalf("parsed value type = %T, want []any", parsed)
+	}
+	if len(arr) != 1 {
+		t.Fatalf("parsed array length = %d, want 1", len(arr))
+	}
+	op, ok := arr[0].(map[string]any)
+	if !ok {
+		t.Fatalf("element type = %T, want map[string]any", arr[0])
+	}
+	if op["action"] != "Add" || op["quantity"] != float64(3) {
+		t.Errorf("parsed element = %+v, want action=Add quantity=3", op)
+	}
+}
+
+func TestReadJSONFileFlagRejectsInvalidJSON(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "broken.json")
+	if err := os.WriteFile(path, []byte(`{not json`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := readJSONFileFlag(path); err == nil {
+		t.Error("expected error for invalid JSON content, got nil")
+	}
+}
+
+func TestReadJSONFileFlagMissingFile(t *testing.T) {
+	if _, err := readJSONFileFlag(filepath.Join(t.TempDir(), "absent.json")); err == nil {
+		t.Error("expected error for missing file, got nil")
 	}
 }
