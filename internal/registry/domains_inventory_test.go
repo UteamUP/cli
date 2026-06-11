@@ -645,3 +645,247 @@ func TestStockReservationsListActionWired(t *testing.T) {
 		}
 	}
 }
+
+func TestStockQuarantineReleaseActionWired(t *testing.T) {
+	action := findStockAction(t, "quarantine-release")
+
+	if action.ToolName != "UteamupStockReleaseQuarantine" {
+		t.Errorf("quarantine-release ToolName = %q, want %q", action.ToolName, "UteamupStockReleaseQuarantine")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("quarantine-release HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "items/{itemGuid}/quarantine/release" {
+		t.Errorf("quarantine-release RESTPath = %q, want %q", action.RESTPath, "items/{itemGuid}/quarantine/release")
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "itemGuid" || !action.Args[0].Required || action.Args[0].Type != "string" {
+		t.Fatalf("quarantine-release expected single required string positional arg 'itemGuid', got %+v", action.Args)
+	}
+
+	if q := stockActionFlag(t, "quarantine-release", "quantity"); !q.Required || q.Type != "int" {
+		t.Errorf("quarantine-release quantity must be a Required int flag, got %+v", q)
+	}
+	if rg := stockActionFlag(t, "quarantine-release", "reason-guid"); rg.Required || rg.Type != "string" {
+		t.Errorf("quarantine-release reason-guid must be an optional string flag, got %+v", rg)
+	}
+	if n := stockActionFlag(t, "quarantine-release", "notes"); n.Required || n.Type != "string" {
+		t.Errorf("quarantine-release notes must be an optional string flag, got %+v", n)
+	}
+	if ug := stockActionFlag(t, "quarantine-release", "unit-guids"); ug.Required || ug.Type != "stringSlice" {
+		t.Errorf("quarantine-release unit-guids must be an optional stringSlice flag, got %+v", ug)
+	}
+}
+
+func TestStockQuarantineRejectActionWired(t *testing.T) {
+	action := findStockAction(t, "quarantine-reject")
+
+	if action.ToolName != "UteamupStockRejectQuarantine" {
+		t.Errorf("quarantine-reject ToolName = %q, want %q", action.ToolName, "UteamupStockRejectQuarantine")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("quarantine-reject HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "items/{itemGuid}/quarantine/reject" {
+		t.Errorf("quarantine-reject RESTPath = %q, want %q", action.RESTPath, "items/{itemGuid}/quarantine/reject")
+	}
+
+	if rg := stockActionFlag(t, "quarantine-reject", "reason-guid"); !rg.Required || rg.Type != "string" {
+		t.Errorf("quarantine-reject reason-guid must be a Required string flag, got %+v", rg)
+	}
+	if q := stockActionFlag(t, "quarantine-reject", "quantity"); !q.Required || q.Type != "int" {
+		t.Errorf("quarantine-reject quantity must be a Required int flag, got %+v", q)
+	}
+}
+
+func TestStockAdjustmentReasonsActionWired(t *testing.T) {
+	action := findStockAction(t, "reasons")
+
+	if action.ToolName != "UteamupStockListAdjustmentReasons" {
+		t.Errorf("reasons ToolName = %q, want %q", action.ToolName, "UteamupStockListAdjustmentReasons")
+	}
+	if action.HTTPMethod != "" {
+		t.Errorf("reasons HTTPMethod = %q, want empty (GET default)", action.HTTPMethod)
+	}
+	if action.RESTPath != "adjustment-reasons" {
+		t.Errorf("reasons RESTPath = %q, want %q", action.RESTPath, "adjustment-reasons")
+	}
+}
+
+func TestStockApprovalsListActionWired(t *testing.T) {
+	action := findStockAction(t, "approvals")
+
+	if action.ToolName != "UteamupStockListApprovals" {
+		t.Errorf("approvals ToolName = %q, want %q", action.ToolName, "UteamupStockListApprovals")
+	}
+	if action.RESTPath != "approvals" {
+		t.Errorf("approvals RESTPath = %q, want %q", action.RESTPath, "approvals")
+	}
+	for _, name := range []string{"page", "page-size"} {
+		if f := stockActionFlag(t, "approvals", name); f.Type != "int" {
+			t.Errorf("approvals flag %q must be an int pagination flag, got %+v", name, f)
+		}
+	}
+}
+
+func TestStockApproveTransactionActionWired(t *testing.T) {
+	action := findStockAction(t, "approve")
+
+	if action.ToolName != "UteamupStockApproveTransaction" {
+		t.Errorf("approve ToolName = %q, want %q", action.ToolName, "UteamupStockApproveTransaction")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("approve HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "approvals/{transactionGuid}/approve" {
+		t.Errorf("approve RESTPath = %q, want %q", action.RESTPath, "approvals/{transactionGuid}/approve")
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "transactionGuid" || !action.Args[0].Required {
+		t.Fatalf("approve expected single required positional arg 'transactionGuid', got %+v", action.Args)
+	}
+}
+
+func TestStockRejectApprovalActionWired(t *testing.T) {
+	action := findStockAction(t, "reject-approval")
+
+	if action.ToolName != "UteamupStockRejectTransaction" {
+		t.Errorf("reject-approval ToolName = %q, want %q", action.ToolName, "UteamupStockRejectTransaction")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("reject-approval HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "approvals/{transactionGuid}/reject" {
+		t.Errorf("reject-approval RESTPath = %q, want %q", action.RESTPath, "approvals/{transactionGuid}/reject")
+	}
+	// Default "" keeps the JSON body present so [FromBody] binding succeeds.
+	if n := stockActionFlag(t, "reject-approval", "notes"); n.Default != "" || n.Type != "string" {
+		t.Errorf("reject-approval notes must be a string flag with empty-string default, got %+v", n)
+	}
+}
+
+func TestStockSettingsActionsWired(t *testing.T) {
+	get := findStockAction(t, "settings")
+	if get.ToolName != "UteamupStockGetSettings" || get.RESTPath != "settings" || get.HTTPMethod != "" {
+		t.Errorf("settings action miswired: %+v", get)
+	}
+
+	update := findStockAction(t, "settings-update")
+	if update.ToolName != "UteamupStockUpdateSettings" {
+		t.Errorf("settings-update ToolName = %q, want %q", update.ToolName, "UteamupStockUpdateSettings")
+	}
+	if update.HTTPMethod != "PUT" || update.RESTPath != "settings" {
+		t.Errorf("settings-update must be PUT settings, got %s %s", update.HTTPMethod, update.RESTPath)
+	}
+
+	if vm := stockActionFlag(t, "settings-update", "valuation-method"); vm.Default != "WeightedAverage" {
+		t.Errorf("settings-update valuation-method default = %v, want WeightedAverage", vm.Default)
+	}
+	abc := map[string]struct {
+		bodyName string
+		def      int
+	}{
+		"abc-class-a-days": {"abcClassACountDays", 30},
+		"abc-class-b-days": {"abcClassBCountDays", 90},
+		"abc-class-c-days": {"abcClassCCountDays", 180},
+	}
+	for name, want := range abc {
+		f := stockActionFlag(t, "settings-update", name)
+		if f.BodyName != want.bodyName || f.Default != want.def || f.Type != "int" {
+			t.Errorf("settings-update flag %q = %+v, want BodyName=%q Default=%d int", name, f, want.bodyName, want.def)
+		}
+	}
+	if at := stockActionFlag(t, "settings-update", "approval-threshold"); at.BodyName != "approvalThresholdQuantity" || at.Default != nil {
+		t.Errorf("settings-update approval-threshold must map to approvalThresholdQuantity with no default, got %+v", at)
+	}
+}
+
+func TestStockGrantActionsWired(t *testing.T) {
+	list := findStockAction(t, "grants")
+	if list.ToolName != "UteamupStockListGrants" || list.RESTPath != "grants" || list.HTTPMethod != "" {
+		t.Errorf("grants action miswired: %+v", list)
+	}
+
+	upsert := findStockAction(t, "grant-upsert")
+	if upsert.ToolName != "UteamupStockUpsertGrant" || upsert.HTTPMethod != "POST" || upsert.RESTPath != "grants" {
+		t.Errorf("grant-upsert miswired: %+v", upsert)
+	}
+	if f := stockActionFlag(t, "grant-upsert", "user-id"); !f.Required || f.Type != "string" {
+		t.Errorf("grant-upsert user-id must be a Required string flag, got %+v", f)
+	}
+	if f := stockActionFlag(t, "grant-upsert", "stock-guid"); !f.Required || f.Type != "string" {
+		t.Errorf("grant-upsert stock-guid must be a Required string flag, got %+v", f)
+	}
+	if f := stockActionFlag(t, "grant-upsert", "can-view"); f.Type != "bool" || f.Default != true {
+		t.Errorf("grant-upsert can-view must be a bool flag defaulting to true, got %+v", f)
+	}
+	if f := stockActionFlag(t, "grant-upsert", "can-mutate"); f.Type != "bool" || f.Default != false {
+		t.Errorf("grant-upsert can-mutate must be a bool flag defaulting to false, got %+v", f)
+	}
+
+	del := findStockAction(t, "grant-delete")
+	if del.ToolName != "UteamupStockDeleteGrant" || del.HTTPMethod != "DELETE" || del.RESTPath != "grants/{grantGuid}" {
+		t.Errorf("grant-delete miswired: %+v", del)
+	}
+	if len(del.Args) != 1 || del.Args[0].Name != "grantGuid" || !del.Args[0].Required {
+		t.Fatalf("grant-delete expected single required positional arg 'grantGuid', got %+v", del.Args)
+	}
+}
+
+func TestStockDueCountsActionWired(t *testing.T) {
+	action := findStockAction(t, "due-counts")
+
+	if action.ToolName != "UteamupStockDueCounts" {
+		t.Errorf("due-counts ToolName = %q, want %q", action.ToolName, "UteamupStockDueCounts")
+	}
+	if action.RESTPath != "counts/due" || action.HTTPMethod != "" {
+		t.Errorf("due-counts must be GET counts/due, got %s %s", action.HTTPMethod, action.RESTPath)
+	}
+	for _, name := range []string{"page", "page-size"} {
+		if f := stockActionFlag(t, "due-counts", name); f.Type != "int" {
+			t.Errorf("due-counts flag %q must be an int pagination flag, got %+v", name, f)
+		}
+	}
+}
+
+func TestStockTakeVarianceActionWired(t *testing.T) {
+	action := findStockAction(t, "variance")
+
+	if action.ToolName != "UteamupStockTakeVariance" {
+		t.Errorf("variance ToolName = %q, want %q", action.ToolName, "UteamupStockTakeVariance")
+	}
+	if action.RESTPath != "takes/{takeGuid}/variance" || action.HTTPMethod != "" {
+		t.Errorf("variance must be GET takes/{takeGuid}/variance, got %s %s", action.HTTPMethod, action.RESTPath)
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "takeGuid" || !action.Args[0].Required {
+		t.Fatalf("variance expected single required positional arg 'takeGuid', got %+v", action.Args)
+	}
+}
+
+func TestStockReportActionsWired(t *testing.T) {
+	aging := findStockAction(t, "report-aging")
+	if aging.ToolName != "UteamupStockReportAging" || aging.RESTPath != "reports/aging" || aging.HTTPMethod != "" {
+		t.Errorf("report-aging miswired: %+v", aging)
+	}
+
+	turnover := findStockAction(t, "report-turnover")
+	if turnover.ToolName != "UteamupStockReportTurnover" || turnover.RESTPath != "reports/turnover" {
+		t.Errorf("report-turnover miswired: %+v", turnover)
+	}
+	if f := stockActionFlag(t, "report-turnover", "period-days"); f.Type != "int" || f.Default != 365 {
+		t.Errorf("report-turnover period-days must be an int flag defaulting to 365, got %+v", f)
+	}
+
+	dead := findStockAction(t, "report-dead-stock")
+	if dead.ToolName != "UteamupStockReportDeadStock" || dead.RESTPath != "reports/dead-stock" {
+		t.Errorf("report-dead-stock miswired: %+v", dead)
+	}
+	if f := stockActionFlag(t, "report-dead-stock", "since-days"); f.Type != "int" || f.Default != 180 {
+		t.Errorf("report-dead-stock since-days must be an int flag defaulting to 180, got %+v", f)
+	}
+	for _, actionName := range []string{"report-aging", "report-turnover", "report-dead-stock"} {
+		for _, name := range []string{"page", "page-size"} {
+			if f := stockActionFlag(t, actionName, name); f.Type != "int" {
+				t.Errorf("%s flag %q must be an int pagination flag, got %+v", actionName, name, f)
+			}
+		}
+	}
+}
