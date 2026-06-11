@@ -452,7 +452,224 @@ func init() {
 					{Name: "currency-guid", Description: "Currency GUID for the order (optional)", Type: "string"},
 				},
 			},
+			// --- Marketplace bridge (stock_plan §8/§9/§23) ---
+			Action{
+				Name:        "list-on-marketplace",
+				Description: "Publish a stock item to the internal marketplace as a Sale, Rental, or Exchange listing",
+				ToolName:    "UteamupStockListOnMarketplace",
+				HTTPMethod:  "POST",
+				RESTPath:    "items/{itemGuid}/marketplace/list",
+				Args:        []ArgDef{{Name: "itemGuid", Description: "Stock item GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "listing-type", BodyName: "listingType", Description: "Listing type: Sale (default), Rental, or Exchange", Default: "Sale", Type: "string"},
+					{Name: "price", BodyName: "price", Description: "Listing price (required)", Required: true, Type: "float"},
+					{Name: "currency", BodyName: "currency", Description: "ISO 4217 currency code", Default: "USD", Type: "string"},
+					{Name: "quantity", BodyName: "quantity", Description: "Quantity to list (quantity-tracked items)", Type: "int"},
+					{Name: "unit-guids", BodyName: "unitGuids", Description: "Serialized units to hold under the listing — repeatable or comma-separated", Type: "stringSlice"},
+					{Name: "title", BodyName: "title", Description: "Listing title (optional)", Type: "string"},
+					{Name: "description", BodyName: "description", Description: "Listing description (optional)", Type: "string"},
+				},
+			},
+			Action{
+				Name:        "delist",
+				Description: "Delist (cancel) a stock item's marketplace listing and release its held units",
+				ToolName:    "UteamupStockDelistFromMarketplace",
+				HTTPMethod:  "POST",
+				RESTPath:    "items/{itemGuid}/marketplace/delist/{marketplaceItemGuid}",
+				Args: []ArgDef{
+					{Name: "itemGuid", Description: "Stock item GUID the listing belongs to", Required: true, Type: "string"},
+					{Name: "marketplaceItemGuid", Description: "Marketplace listing GUID to cancel", Required: true, Type: "string"},
+				},
+			},
+			Action{
+				Name:        "receive-marketplace-purchase",
+				Description: "Receive a completed marketplace purchase into the buying tenant's own stock",
+				ToolName:    "UteamupStockReceiveMarketplacePurchase",
+				HTTPMethod:  "POST",
+				RESTPath:    "purchase-orders/marketplace-receive",
+				Flags: []FlagDef{
+					{Name: "transaction-guid", BodyName: "marketplaceTransactionGuid", Description: "Completed marketplace transaction GUID", Required: true, Type: "string"},
+					{Name: "stock-guid", BodyName: "stockGuid", Description: "Receiving stock location GUID", Required: true, Type: "string"},
+					{Name: "create-new-item", BodyName: "createNewStockItem", Description: "Create a new stock item when no matching item exists in the target location", Type: "bool"},
+				},
+			},
+			// --- Warranty claims (stock_plan §9) ---
+			Action{
+				Name:        "warranty-claims",
+				Description: "List warranty claims, newest first (paged, optional status filter: Open|Submitted|Approved|Denied|Resolved)",
+				ToolName:    "UteamupStockListWarrantyClaims",
+				RESTPath:    "warranty-claims",
+				Flags: append([]FlagDef{
+					{Name: "status", Description: "Status filter: Open, Submitted, Approved, Denied, Resolved", Type: "string"},
+				}, paginationFlags()...),
+			},
+			Action{
+				Name:        "warranty-claim-create",
+				Description: "File a warranty claim against a serialized unit (vendor defaults to the unit's PO-line vendor)",
+				ToolName:    "UteamupStockCreateWarrantyClaim",
+				HTTPMethod:  "POST",
+				RESTPath:    "warranty-claims",
+				Flags: []FlagDef{
+					{Name: "unit-guid", BodyName: "stockItemUnitGuid", Description: "Serialized stock unit GUID the claim is for", Required: true, Type: "string"},
+					{Name: "vendor-guid", BodyName: "vendorGuid", Description: "Vendor GUID to file against (optional)", Type: "string"},
+					{Name: "notes", BodyName: "notes", Description: "Claim notes (optional)", Type: "string"},
+				},
+			},
+			Action{
+				Name:        "warranty-claim-transition",
+				Description: "Transition a warranty claim: Open → Submitted → Approved | Denied → Resolved",
+				ToolName:    "UteamupStockTransitionWarrantyClaim",
+				HTTPMethod:  "POST",
+				RESTPath:    "warranty-claims/{guid}/transition",
+				Args:        []ArgDef{{Name: "guid", Description: "Warranty claim GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "status", BodyName: "status", Description: "Target status: Submitted, Approved, Denied, Resolved", Required: true, Type: "string"},
+					{Name: "resolution", BodyName: "resolution", Description: "Resolution note (optional)", Type: "string"},
+				},
+			},
+			// --- Rental loop (stock_plan §8) ---
+			Action{
+				Name:        "rental-checkout",
+				Description: "Check a serialized unit out on rental (creates a rental agreement with a due date)",
+				ToolName:    "UteamupStockRentalCheckout",
+				HTTPMethod:  "POST",
+				RESTPath:    "units/{guid}/rental/checkout",
+				Args:        []ArgDef{{Name: "guid", Description: "Serialized stock unit GUID to rent out", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "due-at", BodyName: "dueAt", Description: "Return due date/time (ISO 8601, required)", Required: true, Type: "string"},
+					{Name: "renter-contact-guid", BodyName: "renterContactGuid", Description: "Renter contact GUID (optional)", Type: "string"},
+					{Name: "renter-name", BodyName: "renterName", Description: "Free-text renter name (fallback when no contact GUID)", Type: "string"},
+					{Name: "daily-rate", BodyName: "dailyRate", Description: "Daily rental rate (optional)", Type: "float"},
+					{Name: "deposit", BodyName: "deposit", Description: "Deposit held (optional)", Type: "float"},
+					{Name: "notes", BodyName: "notes", Description: "Checkout notes (optional)", Type: "string"},
+				},
+			},
+			Action{
+				Name:        "rental-return",
+				Description: "Return a rented unit, closing its rental agreement and returning the unit to stock",
+				ToolName:    "UteamupStockRentalReturn",
+				HTTPMethod:  "POST",
+				RESTPath:    "rentals/{guid}/return",
+				Args:        []ArgDef{{Name: "guid", Description: "Rental agreement GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "notes", BodyName: "notes", Description: "Return notes (optional)", Type: "string"},
+				},
+			},
+			Action{
+				Name:        "rentals",
+				Description: "List rental agreements, newest first (paged, optional status filter: Active|Returned|Overdue)",
+				ToolName:    "UteamupStockListRentals",
+				RESTPath:    "rentals",
+				Flags: append([]FlagDef{
+					{Name: "status", Description: "Status filter: Active, Returned, Overdue", Type: "string"},
+				}, paginationFlags()...),
+			},
+			// --- Vendor intelligence, TCO, part effectiveness (stock_plan §10.1/§11/§12) ---
+			Action{
+				Name:        "vendor-score",
+				Description: "Get one vendor's weighted composite score (delivery/quality/cost/failure/warranty)",
+				ToolName:    "UteamupStockVendorScore",
+				RESTPath:    "vendors/{guid}/score",
+				Args:        []ArgDef{{Name: "guid", Description: "Vendor GUID", Required: true, Type: "string"}},
+			},
+			Action{
+				Name:        "vendor-ranking",
+				Description: "Rank the tenant's vendors by weighted composite score, best first (paged)",
+				ToolName:    "UteamupStockVendorRanking",
+				RESTPath:    "reports/vendor-ranking",
+				Flags:       paginationFlags(),
+			},
+			Action{
+				Name:        "tco",
+				Description: "Get one part's total cost of ownership and reliability (TCO, MTBF, lifespan, failure/install counts)",
+				ToolName:    "UteamupStockItemTco",
+				RESTPath:    "items/{guid}/tco",
+				Args:        []ArgDef{{Name: "guid", Description: "Stock item GUID", Required: true, Type: "string"}},
+			},
+			Action{
+				Name:        "part-effectiveness",
+				Description: "Compare equivalent parts by name on value/reliability/cost (paged; verdicts: best-value, best-reliability, lowest-cost)",
+				ToolName:    "UteamupStockPartEffectiveness",
+				RESTPath:    "reports/part-effectiveness",
+				Flags: append([]FlagDef{
+					{Name: "name", Description: "Part name to compare equivalents for", Required: true, Type: "string"},
+				}, paginationFlags()...),
+			},
+			// --- Lifecycle automation rules (stock_plan §6) ---
+			Action{
+				Name:        "lifecycle-rules",
+				Description: "List the tenant's stock lifecycle automation rules (trigger → action). A visual drag-and-drop designer is a documented follow-up over this surface.",
+				ToolName:    "UteamupStockListLifecycleRules",
+				RESTPath:    "lifecycle-rules",
+			},
+			Action{
+				Name:        "lifecycle-rule-create",
+				Description: "Create a stock lifecycle automation rule (trigger condition → action)",
+				ToolName:    "UteamupStockCreateLifecycleRule",
+				HTTPMethod:  "POST",
+				RESTPath:    "lifecycle-rules",
+				Flags: []FlagDef{
+					{Name: "name", BodyName: "name", Description: "Rule name", Required: true, Type: "string"},
+					{Name: "trigger", BodyName: "trigger", Description: "Trigger: BelowMinimum, ExpiringSoon, WarrantyExpiring, RentalOverdue, Received, UnitTransition", Required: true, Type: "string"},
+					{Name: "action-type", BodyName: "action", Description: "Action: Notify, CreateAlert, DraftPO, Webhook", Required: true, Type: "string"},
+					{Name: "condition-json", BodyName: "conditionJson", Description: "Condition as JSON (optional)", Type: "string"},
+					{Name: "action-config-json", BodyName: "actionConfigJson", Description: "Action config as JSON (optional)", Type: "string"},
+					{Name: "enabled", BodyName: "enabled", Description: "Whether the rule is armed", Default: true, Type: "bool"},
+				},
+			},
+			Action{
+				Name:        "lifecycle-rule-update",
+				Description: "Update an existing stock lifecycle automation rule",
+				ToolName:    "UteamupStockUpdateLifecycleRule",
+				HTTPMethod:  "PUT",
+				RESTPath:    "lifecycle-rules/{guid}",
+				Args:        []ArgDef{{Name: "guid", Description: "Lifecycle rule GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "name", BodyName: "name", Description: "Rule name", Required: true, Type: "string"},
+					{Name: "trigger", BodyName: "trigger", Description: "Trigger: BelowMinimum, ExpiringSoon, WarrantyExpiring, RentalOverdue, Received, UnitTransition", Required: true, Type: "string"},
+					{Name: "action-type", BodyName: "action", Description: "Action: Notify, CreateAlert, DraftPO, Webhook", Required: true, Type: "string"},
+					{Name: "condition-json", BodyName: "conditionJson", Description: "Condition as JSON (optional)", Type: "string"},
+					{Name: "action-config-json", BodyName: "actionConfigJson", Description: "Action config as JSON (optional)", Type: "string"},
+					{Name: "enabled", BodyName: "enabled", Description: "Whether the rule is armed", Default: true, Type: "bool"},
+				},
+			},
+			Action{
+				Name:        "lifecycle-rule-delete",
+				Description: "Delete a stock lifecycle automation rule",
+				ToolName:    "UteamupStockDeleteLifecycleRule",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "lifecycle-rules/{guid}",
+				Args:        []ArgDef{{Name: "guid", Description: "Lifecycle rule GUID", Required: true, Type: "string"}},
+			},
+			// --- Unified search (stock_plan §18.1) ---
+			Action{
+				Name:        "unified-search",
+				Description: "Single-query unified search across items, units, bins, vendors, and marketplace listings",
+				ToolName:    "UteamupStockUnifiedSearch",
+				RESTPath:    "search/unified",
+				Flags: []FlagDef{
+					{Name: "q", Description: "Free-text search query", Required: true, Type: "string"},
+				},
+			},
 		),
+	})
+
+	// Warranty coverage lives off the asset route (~/api/asset/{guid}/warranty-coverage),
+	// so it is registered as a tiny asset-scoped domain rather than under /api/stock.
+	Register(&Domain{
+		Name:        "warranty-coverage",
+		Aliases:     []string{"warranty"},
+		Description: "Inspect an asset's installed units still under warranty (claim before buying)",
+		APIPath:     "/api/asset",
+		Actions: []Action{
+			{
+				Name:        "get",
+				Description: "List an asset's installed units still under warranty, with days remaining",
+				ToolName:    "UteamupStockAssetWarrantyCoverage",
+				RESTPath:    "{guid}/warranty-coverage",
+				Args:        []ArgDef{{Name: "guid", Description: "Asset GUID", Required: true, Type: "string"}},
+			},
+		},
 	})
 
 	Register(&Domain{

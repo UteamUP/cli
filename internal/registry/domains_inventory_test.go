@@ -1066,3 +1066,215 @@ func TestDevicetokenDeleteActionWired(t *testing.T) {
 		t.Fatalf("delete expected single required string positional arg 'token', got %+v", action.Args)
 	}
 }
+
+// --- Batch 7: marketplace bridge, warranty, rental, vendor/TCO, lifecycle, unified search ---
+
+func stockFlagByName(action *Action, name string) *FlagDef {
+	for i := range action.Flags {
+		if action.Flags[i].Name == name {
+			return &action.Flags[i]
+		}
+	}
+	return nil
+}
+
+func assertStockActionRoute(t *testing.T, name, tool, method, restPath string) *Action {
+	t.Helper()
+	action := findStockAction(t, name)
+	if action.ToolName != tool {
+		t.Errorf("%s ToolName = %q, want %q", name, action.ToolName, tool)
+	}
+	if action.HTTPMethod != method {
+		t.Errorf("%s HTTPMethod = %q, want %q", name, action.HTTPMethod, method)
+	}
+	if action.RESTPath != restPath {
+		t.Errorf("%s RESTPath = %q, want %q", name, action.RESTPath, restPath)
+	}
+	return action
+}
+
+func TestStockListOnMarketplaceActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "list-on-marketplace", "UteamupStockListOnMarketplace", "POST", "items/{itemGuid}/marketplace/list")
+	if len(action.Args) != 1 || action.Args[0].Name != "itemGuid" || !action.Args[0].Required {
+		t.Fatalf("list-on-marketplace expected required itemGuid arg, got %+v", action.Args)
+	}
+	price := stockFlagByName(action, "price")
+	if price == nil || !price.Required || price.Type != "float" || price.BodyName != "price" {
+		t.Errorf("price flag must be a required float bound to body `price`, got %+v", price)
+	}
+	if lt := stockFlagByName(action, "listing-type"); lt == nil || lt.BodyName != "listingType" || lt.Default != "Sale" {
+		t.Errorf("listing-type flag must default Sale and bind body `listingType`, got %+v", lt)
+	}
+	if ug := stockFlagByName(action, "unit-guids"); ug == nil || ug.Type != "stringSlice" || ug.BodyName != "unitGuids" {
+		t.Errorf("unit-guids flag must be a stringSlice bound to body `unitGuids`, got %+v", ug)
+	}
+}
+
+func TestStockDelistActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "delist", "UteamupStockDelistFromMarketplace", "POST", "items/{itemGuid}/marketplace/delist/{marketplaceItemGuid}")
+	if len(action.Args) != 2 || action.Args[0].Name != "itemGuid" || action.Args[1].Name != "marketplaceItemGuid" {
+		t.Fatalf("delist expected itemGuid + marketplaceItemGuid args, got %+v", action.Args)
+	}
+}
+
+func TestStockReceiveMarketplacePurchaseActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "receive-marketplace-purchase", "UteamupStockReceiveMarketplacePurchase", "POST", "purchase-orders/marketplace-receive")
+	if tx := stockFlagByName(action, "transaction-guid"); tx == nil || !tx.Required || tx.BodyName != "marketplaceTransactionGuid" {
+		t.Errorf("transaction-guid must be required and bind body `marketplaceTransactionGuid`, got %+v", tx)
+	}
+	if sg := stockFlagByName(action, "stock-guid"); sg == nil || !sg.Required || sg.BodyName != "stockGuid" {
+		t.Errorf("stock-guid must be required and bind body `stockGuid`, got %+v", sg)
+	}
+	if cn := stockFlagByName(action, "create-new-item"); cn == nil || cn.Type != "bool" || cn.BodyName != "createNewStockItem" {
+		t.Errorf("create-new-item must be a bool bound to body `createNewStockItem`, got %+v", cn)
+	}
+}
+
+func TestStockWarrantyClaimsActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "warranty-claims", "UteamupStockListWarrantyClaims", "", "warranty-claims")
+	if stockFlagByName(action, "status") == nil {
+		t.Error("warranty-claims expected a status filter flag")
+	}
+	if stockFlagByName(action, "page") == nil || stockFlagByName(action, "page-size") == nil {
+		t.Error("warranty-claims expected pagination flags")
+	}
+}
+
+func TestStockWarrantyClaimCreateActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "warranty-claim-create", "UteamupStockCreateWarrantyClaim", "POST", "warranty-claims")
+	if uf := stockFlagByName(action, "unit-guid"); uf == nil || !uf.Required || uf.BodyName != "stockItemUnitGuid" {
+		t.Errorf("unit-guid must be required and bind body `stockItemUnitGuid`, got %+v", uf)
+	}
+}
+
+func TestStockWarrantyClaimTransitionActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "warranty-claim-transition", "UteamupStockTransitionWarrantyClaim", "POST", "warranty-claims/{guid}/transition")
+	if len(action.Args) != 1 || action.Args[0].Name != "guid" {
+		t.Fatalf("warranty-claim-transition expected guid arg, got %+v", action.Args)
+	}
+	if s := stockFlagByName(action, "status"); s == nil || !s.Required || s.BodyName != "status" {
+		t.Errorf("status must be required and bind body `status`, got %+v", s)
+	}
+}
+
+func TestStockWarrantyCoverageDomainWired(t *testing.T) {
+	var dom *Domain
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name == "warranty-coverage" {
+			dom = d
+			break
+		}
+	}
+	if dom == nil {
+		t.Fatal("expected warranty-coverage domain to be registered")
+	}
+	if dom.APIPath != "/api/asset" {
+		t.Errorf("warranty-coverage APIPath = %q, want /api/asset (route is ~/api/asset/{guid}/warranty-coverage)", dom.APIPath)
+	}
+	if len(dom.Aliases) != 1 || dom.Aliases[0] != "warranty" {
+		t.Errorf("warranty-coverage aliases = %+v, want [warranty]", dom.Aliases)
+	}
+	if len(dom.Actions) != 1 {
+		t.Fatalf("warranty-coverage expected exactly 1 action, got %d", len(dom.Actions))
+	}
+	a := dom.Actions[0]
+	if a.ToolName != "UteamupStockAssetWarrantyCoverage" || a.RESTPath != "{guid}/warranty-coverage" {
+		t.Errorf("warranty-coverage action wired wrong: tool=%q path=%q", a.ToolName, a.RESTPath)
+	}
+}
+
+func TestStockRentalCheckoutActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "rental-checkout", "UteamupStockRentalCheckout", "POST", "units/{guid}/rental/checkout")
+	if len(action.Args) != 1 || action.Args[0].Name != "guid" {
+		t.Fatalf("rental-checkout expected guid arg, got %+v", action.Args)
+	}
+	if d := stockFlagByName(action, "due-at"); d == nil || !d.Required || d.BodyName != "dueAt" {
+		t.Errorf("due-at must be required and bind body `dueAt`, got %+v", d)
+	}
+	if dr := stockFlagByName(action, "daily-rate"); dr == nil || dr.Type != "float" || dr.BodyName != "dailyRate" {
+		t.Errorf("daily-rate must be a float bound to body `dailyRate`, got %+v", dr)
+	}
+}
+
+func TestStockRentalReturnActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "rental-return", "UteamupStockRentalReturn", "POST", "rentals/{guid}/return")
+	if len(action.Args) != 1 || action.Args[0].Name != "guid" {
+		t.Fatalf("rental-return expected guid arg, got %+v", action.Args)
+	}
+}
+
+func TestStockRentalsActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "rentals", "UteamupStockListRentals", "", "rentals")
+	if stockFlagByName(action, "status") == nil || stockFlagByName(action, "page") == nil {
+		t.Error("rentals expected status filter + pagination flags")
+	}
+}
+
+func TestStockVendorScoreActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "vendor-score", "UteamupStockVendorScore", "", "vendors/{guid}/score")
+	if len(action.Args) != 1 || action.Args[0].Name != "guid" {
+		t.Fatalf("vendor-score expected guid arg, got %+v", action.Args)
+	}
+}
+
+func TestStockVendorRankingActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "vendor-ranking", "UteamupStockVendorRanking", "", "reports/vendor-ranking")
+	if stockFlagByName(action, "page") == nil {
+		t.Error("vendor-ranking expected pagination flags")
+	}
+}
+
+func TestStockTcoActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "tco", "UteamupStockItemTco", "", "items/{guid}/tco")
+	if len(action.Args) != 1 || action.Args[0].Name != "guid" {
+		t.Fatalf("tco expected guid arg, got %+v", action.Args)
+	}
+}
+
+func TestStockPartEffectivenessActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "part-effectiveness", "UteamupStockPartEffectiveness", "", "reports/part-effectiveness")
+	if n := stockFlagByName(action, "name"); n == nil || !n.Required {
+		t.Errorf("part-effectiveness expected a required name flag, got %+v", n)
+	}
+	if stockFlagByName(action, "page") == nil {
+		t.Error("part-effectiveness expected pagination flags")
+	}
+}
+
+func TestStockLifecycleRulesActionWired(t *testing.T) {
+	assertStockActionRoute(t, "lifecycle-rules", "UteamupStockListLifecycleRules", "", "lifecycle-rules")
+}
+
+func TestStockLifecycleRuleCreateActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "lifecycle-rule-create", "UteamupStockCreateLifecycleRule", "POST", "lifecycle-rules")
+	for _, name := range []string{"name", "trigger", "action-type"} {
+		f := stockFlagByName(action, name)
+		if f == nil || !f.Required {
+			t.Errorf("lifecycle-rule-create flag %q must be required, got %+v", name, f)
+		}
+	}
+	if at := stockFlagByName(action, "action-type"); at == nil || at.BodyName != "action" {
+		t.Errorf("action-type must bind body field `action`, got %+v", at)
+	}
+}
+
+func TestStockLifecycleRuleUpdateActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "lifecycle-rule-update", "UteamupStockUpdateLifecycleRule", "PUT", "lifecycle-rules/{guid}")
+	if len(action.Args) != 1 || action.Args[0].Name != "guid" {
+		t.Fatalf("lifecycle-rule-update expected guid arg, got %+v", action.Args)
+	}
+}
+
+func TestStockLifecycleRuleDeleteActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "lifecycle-rule-delete", "UteamupStockDeleteLifecycleRule", "DELETE", "lifecycle-rules/{guid}")
+	if len(action.Args) != 1 || action.Args[0].Name != "guid" {
+		t.Fatalf("lifecycle-rule-delete expected guid arg, got %+v", action.Args)
+	}
+}
+
+func TestStockUnifiedSearchActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "unified-search", "UteamupStockUnifiedSearch", "", "search/unified")
+	if q := stockFlagByName(action, "q"); q == nil || !q.Required {
+		t.Errorf("unified-search expected a required q flag, got %+v", q)
+	}
+}
