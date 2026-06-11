@@ -5,6 +5,17 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.21.0](https://github.com/UteamUP/cli/compare/1.20.0...1.21.0) (2026-06-11)
+
+
+### Features
+
+* **stock:** forecast actions and a project-copilot domain (batch 5) ([4874813](https://github.com/UteamUP/cli/commit/4874813b3641cffdd1855142f06ee9fe581cfb41))
+* **stock:** marketplace, warranty, rental and intelligence actions (batch 7) ([13cc37e](https://github.com/UteamUP/cli/commit/13cc37e1e9149a92623bb7d16236f41e0b8ee644))
+* **stock:** quality, approvals, reports and settings actions (batch 4) ([6f4fa0a](https://github.com/UteamUP/cli/commit/6f4fa0a0b13c03cec0b8ef78d86fd7db269bf8a1))
+* **stock:** scan resolve, offline ops batch and device-token actions (batch 6) ([c3825f1](https://github.com/UteamUP/cli/commit/c3825f151806ab587d52f328a5f99c2bc0192476))
+* **stock:** units, reservations and ATP actions (phase 3) ([6e8530d](https://github.com/UteamUP/cli/commit/6e8530d8970807efdbe209b5090b671f54910647))
+
 ## [1.20.0](https://github.com/UteamUP/cli/compare/1.19.0...1.20.0) (2026-06-10)
 
 
