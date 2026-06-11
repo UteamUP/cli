@@ -889,3 +889,65 @@ func TestStockReportActionsWired(t *testing.T) {
 		}
 	}
 }
+
+func TestStockForecastActionsWired(t *testing.T) {
+	forecast := findStockAction(t, "forecast")
+	if forecast.ToolName != "UteamupStockGetForecast" || forecast.RESTPath != "items/{itemGuid}/forecast" || forecast.HTTPMethod != "" {
+		t.Errorf("forecast must be GET items/{itemGuid}/forecast, got %+v", forecast)
+	}
+	if len(forecast.Args) != 1 || forecast.Args[0].Name != "itemGuid" || !forecast.Args[0].Required || forecast.Args[0].Type != "string" {
+		t.Fatalf("forecast expected single required string positional arg 'itemGuid', got %+v", forecast.Args)
+	}
+
+	report := findStockAction(t, "forecast-report")
+	if report.ToolName != "UteamupStockReportForecast" || report.RESTPath != "reports/forecast" || report.HTTPMethod != "" {
+		t.Errorf("forecast-report must be GET reports/forecast, got %+v", report)
+	}
+	for _, name := range []string{"page", "page-size"} {
+		if f := stockActionFlag(t, "forecast-report", name); f.Type != "int" {
+			t.Errorf("forecast-report flag %q must be an int pagination flag, got %+v", name, f)
+		}
+	}
+
+	apply := findStockAction(t, "forecast-apply")
+	if apply.ToolName != "UteamupStockApplyForecast" || apply.HTTPMethod != "POST" || apply.RESTPath != "items/{itemGuid}/forecast/apply" {
+		t.Errorf("forecast-apply must be POST items/{itemGuid}/forecast/apply, got %+v", apply)
+	}
+	if len(apply.Args) != 1 || apply.Args[0].Name != "itemGuid" || !apply.Args[0].Required {
+		t.Fatalf("forecast-apply expected single required positional arg 'itemGuid', got %+v", apply.Args)
+	}
+	if f := stockActionFlag(t, "forecast-apply", "fields"); !f.Required || f.Type != "stringSlice" {
+		t.Errorf("forecast-apply fields flag must be a required stringSlice (backend binds ApplyForecastSuggestionRequestModel.Fields), got %+v", f)
+	}
+}
+
+func TestStockPoFromReceiptActionWired(t *testing.T) {
+	action := findStockAction(t, "po-from-receipt")
+
+	if action.ToolName != "UteamupStockCreatePoFromReceipt" {
+		t.Errorf("po-from-receipt ToolName = %q, want %q", action.ToolName, "UteamupStockCreatePoFromReceipt")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("po-from-receipt HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "purchase-orders/from-receipt" {
+		t.Errorf("po-from-receipt RESTPath = %q, want %q", action.RESTPath, "purchase-orders/from-receipt")
+	}
+	if len(action.Args) != 0 {
+		t.Errorf("po-from-receipt should take no positional args, got %+v", action.Args)
+	}
+
+	file := stockActionFlag(t, "po-from-receipt", "file")
+	if !file.Required || !file.JSONFile || file.Short != "f" {
+		t.Errorf("po-from-receipt file flag must be Required JSONFile with -f short, got %+v", file)
+	}
+	if file.BodyName != "lines" {
+		t.Errorf("po-from-receipt file BodyName = %q, want lines (backend binds CreatePurchaseOrderFromReceiptRequestModel.Lines)", file.BodyName)
+	}
+
+	for _, name := range []string{"vendor-guid", "currency-guid"} {
+		if f := stockActionFlag(t, "po-from-receipt", name); f.Required || f.Type != "string" {
+			t.Errorf("po-from-receipt flag %q must be an optional string, got %+v", name, f)
+		}
+	}
+}

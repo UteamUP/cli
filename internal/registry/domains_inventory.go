@@ -405,6 +405,43 @@ func init() {
 					{Name: "since-days", Description: "Days without consumption to qualify as dead stock", Default: 180, Type: "int"},
 				}, paginationFlags()...),
 			},
+			Action{
+				Name:        "forecast",
+				Description: "Consumption forecast for one stock item (daily rate, projected stockout date, suggested reorder levels)",
+				ToolName:    "UteamupStockGetForecast",
+				RESTPath:    "items/{itemGuid}/forecast",
+				Args:        []ArgDef{{Name: "itemGuid", Description: "Stock item GUID", Required: true, Type: "string"}},
+			},
+			Action{
+				Name:        "forecast-report",
+				Description: "Tenant-wide stock forecast report, at-risk-first: soonest projected stockout first (paged)",
+				ToolName:    "UteamupStockReportForecast",
+				RESTPath:    "reports/forecast",
+				Flags:       paginationFlags(),
+			},
+			Action{
+				Name:        "forecast-apply",
+				Description: "Apply the current server-side forecast suggestion for the named fields (the server recomputes — client numbers are never accepted)",
+				ToolName:    "UteamupStockApplyForecast",
+				HTTPMethod:  "POST",
+				RESTPath:    "items/{itemGuid}/forecast/apply",
+				Args:        []ArgDef{{Name: "itemGuid", Description: "Stock item GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "fields", Description: "Suggestion fields to apply: reorderPoint, minimumAmount, maximumAmount", Required: true, Type: "stringSlice"},
+				},
+			},
+			Action{
+				Name:        "po-from-receipt",
+				Description: "Create a Draft purchase order from reviewed receipt lines (lines come from a JSON file; the AI parse step is web-app only)",
+				ToolName:    "UteamupStockCreatePoFromReceipt",
+				HTTPMethod:  "POST",
+				RESTPath:    "purchase-orders/from-receipt",
+				Flags: []FlagDef{
+					{Name: "file", Short: "f", Description: "Path to a JSON file with the lines: [{\"description\":\"…\",\"quantity\":N,\"unitPrice\":N,\"stockItemGuid\":\"…\"}]", Required: true, Type: "string", JSONFile: true, BodyName: "lines"},
+					{Name: "vendor-guid", Description: "Vendor GUID to attach (optional)", Type: "string"},
+					{Name: "currency-guid", Description: "Currency GUID for the order (optional)", Type: "string"},
+				},
+			},
 		),
 	})
 
