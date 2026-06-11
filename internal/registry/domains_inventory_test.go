@@ -440,6 +440,143 @@ func TestStockBinsActionsWired(t *testing.T) {
 	}
 }
 
+func TestStockUnitsActionWired(t *testing.T) {
+	action := findStockAction(t, "units")
+
+	if action.ToolName != "UteamupStockListUnits" {
+		t.Errorf("units ToolName = %q, want %q", action.ToolName, "UteamupStockListUnits")
+	}
+	if action.HTTPMethod != "" {
+		t.Errorf("units HTTPMethod = %q, want \"\" (defaults to GET)", action.HTTPMethod)
+	}
+	if action.RESTPath != "items/{itemGuid}/units" {
+		t.Errorf("units RESTPath = %q, want %q", action.RESTPath, "items/{itemGuid}/units")
+	}
+
+	// itemGuid fills the path placeholder via the required camelCased flag.
+	if ig := stockActionFlag(t, "units", "item-guid"); !ig.Required || ig.Type != "string" {
+		t.Errorf("units item-guid flag must be a Required string Guid, got %+v", ig)
+	}
+
+	gotFlags := make(map[string]string)
+	for _, f := range action.Flags {
+		gotFlags[f.Name] = f.Type
+	}
+	for name, ty := range map[string]string{"status": "string", "serial": "string", "page": "int", "page-size": "int"} {
+		got, ok := gotFlags[name]
+		if !ok {
+			t.Errorf("units missing expected flag %q", name)
+			continue
+		}
+		if got != ty {
+			t.Errorf("units flag %q type = %q, want %q", name, got, ty)
+		}
+	}
+}
+
+func TestStockUnitsLookupActionWired(t *testing.T) {
+	action := findStockAction(t, "units-lookup")
+
+	if action.ToolName != "UteamupStockLookupUnit" {
+		t.Errorf("units-lookup ToolName = %q, want %q", action.ToolName, "UteamupStockLookupUnit")
+	}
+	if action.HTTPMethod != "" {
+		t.Errorf("units-lookup HTTPMethod = %q, want \"\" (defaults to GET)", action.HTTPMethod)
+	}
+	if action.RESTPath != "units/lookup/{serial}" {
+		t.Errorf("units-lookup RESTPath = %q, want %q", action.RESTPath, "units/lookup/{serial}")
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "serial" || !action.Args[0].Required || action.Args[0].Type != "string" {
+		t.Errorf("units-lookup expected single required string positional arg 'serial', got %+v", action.Args)
+	}
+}
+
+func TestStockUnitTransitionActionWired(t *testing.T) {
+	action := findStockAction(t, "unit-transition")
+
+	if action.ToolName != "UteamupStockTransitionUnit" {
+		t.Errorf("unit-transition ToolName = %q, want %q", action.ToolName, "UteamupStockTransitionUnit")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("unit-transition HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "units/{unitGuid}/transition" {
+		t.Errorf("unit-transition RESTPath = %q, want %q", action.RESTPath, "units/{unitGuid}/transition")
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "unitGuid" || !action.Args[0].Required || action.Args[0].Type != "string" {
+		t.Fatalf("unit-transition expected single required string positional arg 'unitGuid', got %+v", action.Args)
+	}
+
+	if ts := stockActionFlag(t, "unit-transition", "target-status"); !ts.Required || ts.Type != "string" {
+		t.Errorf("unit-transition target-status must be a Required string flag, got %+v", ts)
+	}
+	for _, name := range []string{"asset-guid", "workorder-guid", "reason"} {
+		if f := stockActionFlag(t, "unit-transition", name); f.Required || f.Type != "string" {
+			t.Errorf("unit-transition flag %q must be an optional string, got %+v", name, f)
+		}
+	}
+}
+
+func TestStockReserveActionWired(t *testing.T) {
+	action := findStockAction(t, "reserve")
+
+	if action.ToolName != "UteamupStockCreateReservation" {
+		t.Errorf("reserve ToolName = %q, want %q", action.ToolName, "UteamupStockCreateReservation")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("reserve HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "reservations" {
+		t.Errorf("reserve RESTPath = %q, want %q", action.RESTPath, "reservations")
+	}
+
+	if sig := stockActionFlag(t, "reserve", "stock-item-guid"); !sig.Required || sig.Type != "string" {
+		t.Errorf("reserve stock-item-guid must be a Required string Guid, got %+v", sig)
+	}
+	if qty := stockActionFlag(t, "reserve", "quantity"); !qty.Required || qty.Type != "int" {
+		t.Errorf("reserve quantity must be a Required int flag, got %+v", qty)
+	}
+	for _, name := range []string{"workorder-guid", "project-guid", "unit-guid", "reserved-until"} {
+		if f := stockActionFlag(t, "reserve", name); f.Required || f.Type != "string" {
+			t.Errorf("reserve flag %q must be an optional string, got %+v", name, f)
+		}
+	}
+}
+
+func TestStockReleaseActionWired(t *testing.T) {
+	action := findStockAction(t, "release")
+
+	if action.ToolName != "UteamupStockReleaseReservation" {
+		t.Errorf("release ToolName = %q, want %q", action.ToolName, "UteamupStockReleaseReservation")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("release HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "reservations/{reservationGuid}/release" {
+		t.Errorf("release RESTPath = %q, want %q", action.RESTPath, "reservations/{reservationGuid}/release")
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "reservationGuid" || !action.Args[0].Required || action.Args[0].Type != "string" {
+		t.Errorf("release expected single required string positional arg 'reservationGuid', got %+v", action.Args)
+	}
+}
+
+func TestStockAtpActionWired(t *testing.T) {
+	action := findStockAction(t, "atp")
+
+	if action.ToolName != "UteamupStockGetAtp" {
+		t.Errorf("atp ToolName = %q, want %q", action.ToolName, "UteamupStockGetAtp")
+	}
+	if action.HTTPMethod != "" {
+		t.Errorf("atp HTTPMethod = %q, want \"\" (defaults to GET)", action.HTTPMethod)
+	}
+	if action.RESTPath != "items/{itemGuid}/atp" {
+		t.Errorf("atp RESTPath = %q, want %q", action.RESTPath, "items/{itemGuid}/atp")
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "itemGuid" || !action.Args[0].Required || action.Args[0].Type != "string" {
+		t.Errorf("atp expected single required string positional arg 'itemGuid', got %+v", action.Args)
+	}
+}
+
 func TestReadJSONFileFlagParsesArray(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "ops.json")
 	if err := os.WriteFile(path, []byte(`[{"stockItemGuid":"11111111-1111-1111-1111-111111111111","action":"Add","quantity":3}]`), 0o600); err != nil {
@@ -480,5 +617,31 @@ func TestReadJSONFileFlagRejectsInvalidJSON(t *testing.T) {
 func TestReadJSONFileFlagMissingFile(t *testing.T) {
 	if _, err := readJSONFileFlag(filepath.Join(t.TempDir(), "absent.json")); err == nil {
 		t.Error("expected error for missing file, got nil")
+	}
+}
+
+func TestStockReservationsListActionWired(t *testing.T) {
+	action := findStockAction(t, "reservations")
+
+	if action.ToolName != "UteamupStockListReservations" {
+		t.Errorf("reservations ToolName = %q, want %q", action.ToolName, "UteamupStockListReservations")
+	}
+	if action.RESTPath != "reservations" {
+		t.Errorf("reservations RESTPath = %q, want %q", action.RESTPath, "reservations")
+	}
+
+	want := map[string]bool{"item-guid": false, "workorder-guid": false, "project-guid": false}
+	for _, f := range action.Flags {
+		if _, ok := want[f.Name]; ok {
+			want[f.Name] = true
+			if f.Required {
+				t.Errorf("reservations flag %q should be optional", f.Name)
+			}
+		}
+	}
+	for name, seen := range want {
+		if !seen {
+			t.Errorf("reservations missing flag %q", name)
+		}
 	}
 }
