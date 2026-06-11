@@ -431,6 +431,16 @@ func init() {
 				},
 			},
 			Action{
+				Name:        "ops-batch",
+				Description: "Ingest a batch of offline stock operations (take/return/count) with per-op idempotency — results are per-op, the batch never throws as a whole (operations come from a JSON file, max 200)",
+				ToolName:    "UteamupStockOpsBatch",
+				HTTPMethod:  "POST",
+				RESTPath:    "ops/batch",
+				Flags: []FlagDef{
+					{Name: "file", Short: "f", Description: "Path to a JSON file with the operations: [{\"operationId\":\"…\",\"type\":\"take|return|count\",\"stockItemGuid\":\"…\",\"quantity\":N}]", Required: true, Type: "string", JSONFile: true, BodyName: "operations"},
+				},
+			},
+			Action{
 				Name:        "po-from-receipt",
 				Description: "Create a Draft purchase order from reviewed receipt lines (lines come from a JSON file; the AI parse step is web-app only)",
 				ToolName:    "UteamupStockCreatePoFromReceipt",
@@ -452,6 +462,34 @@ func init() {
 		Actions: append(crudActions("Part"),
 			Action{Name: "search", Description: "Search parts", ToolName: "UteamupPartSearch", Args: queryArg(), Flags: paginationFlags()},
 		),
+	})
+
+	Register(&Domain{
+		Name:        "devicetoken",
+		Aliases:     []string{"devicetokens"},
+		Description: "Manage push device tokens (FCM registration / logout wipe)",
+		// DeviceTokensController routes at api/devicetokens (plural).
+		APIPath: "/api/devicetokens",
+		Actions: []Action{
+			{
+				Name:        "register",
+				Description: "Register (or refresh) the calling user's push device token — upsert by token value; the response never echoes the token back",
+				ToolName:    "UteamupDevicetokenRegister",
+				HTTPMethod:  "POST",
+				RESTPath:    "register",
+				Flags: []FlagDef{
+					{Name: "token", Description: "FCM registration token (16-512 characters)", Required: true, Type: "string"},
+					{Name: "platform", Description: "Device platform: ios, android, or web", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "delete",
+				Description: "Remove a push device token (logout wipe) — owner-only, push stops for that device immediately",
+				ToolName:    "UteamupDevicetokenDelete",
+				RESTPath:    "{token}",
+				Args:        []ArgDef{{Name: "token", Description: "FCM registration token to remove", Required: true, Type: "string"}},
+			},
+		},
 	})
 
 	Register(&Domain{Name: "chemical", Aliases: []string{"chemicals"}, Description: "Manage chemicals", Actions: crudActions("Chemical")})

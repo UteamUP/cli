@@ -951,3 +951,118 @@ func TestStockPoFromReceiptActionWired(t *testing.T) {
 		}
 	}
 }
+
+func TestStockOpsBatchActionWired(t *testing.T) {
+	action := findStockAction(t, "ops-batch")
+
+	if action.ToolName != "UteamupStockOpsBatch" {
+		t.Errorf("ops-batch ToolName = %q, want %q", action.ToolName, "UteamupStockOpsBatch")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("ops-batch HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "ops/batch" {
+		t.Errorf("ops-batch RESTPath = %q, want %q (the backend route is POST api/stock/ops/batch)", action.RESTPath, "ops/batch")
+	}
+	if len(action.Args) != 0 {
+		t.Errorf("ops-batch should take no positional args, got %+v", action.Args)
+	}
+
+	file := stockActionFlag(t, "ops-batch", "file")
+	if !file.Required || !file.JSONFile || file.Short != "f" {
+		t.Errorf("ops-batch file flag must be Required JSONFile with -f short, got %+v", file)
+	}
+	if file.BodyName != "operations" {
+		t.Errorf("ops-batch file BodyName = %q, want operations (backend binds StockOpsBatchRequestModel.Operations)", file.BodyName)
+	}
+}
+
+func findDevicetokenDomain(t *testing.T) *Domain {
+	t.Helper()
+	for _, dom := range DefaultRegistry.Domains() {
+		if dom.Name == "devicetoken" {
+			return dom
+		}
+	}
+	t.Fatal("expected devicetoken domain to be registered")
+	return nil
+}
+
+func TestDevicetokenDomainRegistered(t *testing.T) {
+	d := findDevicetokenDomain(t)
+	if len(d.Aliases) != 1 || d.Aliases[0] != "devicetokens" {
+		t.Errorf("devicetoken domain aliases = %+v, want [devicetokens]", d.Aliases)
+	}
+	// DeviceTokensController routes at api/devicetokens (plural) — the
+	// auto-derived "/api/devicetoken" base would 404.
+	if d.APIPath != "/api/devicetokens" {
+		t.Errorf("devicetoken APIPath = %q, want %q", d.APIPath, "/api/devicetokens")
+	}
+}
+
+func TestDevicetokenRegisterActionWired(t *testing.T) {
+	d := findDevicetokenDomain(t)
+	var action *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "register" {
+			action = &d.Actions[i]
+			break
+		}
+	}
+	if action == nil {
+		t.Fatal("expected `register` action on devicetoken domain")
+	}
+
+	if action.ToolName != "UteamupDevicetokenRegister" {
+		t.Errorf("register ToolName = %q, want %q", action.ToolName, "UteamupDevicetokenRegister")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("register HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "register" {
+		t.Errorf("register RESTPath = %q, want %q", action.RESTPath, "register")
+	}
+
+	gotFlags := make(map[string]*FlagDef)
+	for i := range action.Flags {
+		gotFlags[action.Flags[i].Name] = &action.Flags[i]
+	}
+	for _, name := range []string{"token", "platform"} {
+		f, ok := gotFlags[name]
+		if !ok {
+			t.Errorf("register missing expected flag %q", name)
+			continue
+		}
+		if !f.Required || f.Type != "string" {
+			t.Errorf("register flag %q must be a Required string, got %+v", name, f)
+		}
+	}
+}
+
+func TestDevicetokenDeleteActionWired(t *testing.T) {
+	d := findDevicetokenDomain(t)
+	var action *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "delete" {
+			action = &d.Actions[i]
+			break
+		}
+	}
+	if action == nil {
+		t.Fatal("expected `delete` action on devicetoken domain")
+	}
+
+	if action.ToolName != "UteamupDevicetokenDelete" {
+		t.Errorf("delete ToolName = %q, want %q", action.ToolName, "UteamupDevicetokenDelete")
+	}
+	// The action-name HTTPMethod map already routes `delete` as DELETE.
+	if action.HTTPMethod != "" {
+		t.Errorf("delete HTTPMethod = %q, want \"\" (action name maps to DELETE)", action.HTTPMethod)
+	}
+	if action.RESTPath != "{token}" {
+		t.Errorf("delete RESTPath = %q, want %q (DELETE api/devicetokens/{token})", action.RESTPath, "{token}")
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "token" || !action.Args[0].Required || action.Args[0].Type != "string" {
+		t.Fatalf("delete expected single required string positional arg 'token', got %+v", action.Args)
+	}
+}
