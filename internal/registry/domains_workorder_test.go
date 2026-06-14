@@ -26,6 +26,43 @@ func TestWorkorderDomainHasQuickCloseAction(t *testing.T) {
 	}
 }
 
+// The list action must expose the asset-guid filter (kebab → camelCase assetGuid)
+// so `ut workorder list --asset-guid <guid>` scopes to one asset's work orders —
+// the watch NFC → asset → its workorders flow.
+func TestWorkorderListHasAssetGuidFlag(t *testing.T) {
+	d := findDomain("workorder")
+	if d == nil {
+		t.Fatal("expected workorder domain to be registered")
+	}
+	var list *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "list" {
+			list = &d.Actions[i]
+			break
+		}
+	}
+	if list == nil {
+		t.Fatal("expected list action on the workorder domain")
+	}
+
+	var f *FlagDef
+	for i := range list.Flags {
+		if list.Flags[i].Name == "asset-guid" {
+			f = &list.Flags[i]
+			break
+		}
+	}
+	if f == nil {
+		t.Fatal("expected list action to carry the asset-guid flag")
+	}
+	if f.Type != "string" {
+		t.Errorf("asset-guid: expected type string, got %q", f.Type)
+	}
+	if f.Required {
+		t.Error("asset-guid must be optional (filter), not required")
+	}
+}
+
 // Quick Close must carry ONE tenant-scoped target (template + asset) plus the
 // resolution note. Losing any of these three required flags would ship a
 // command that always errors server-side — test the contract.

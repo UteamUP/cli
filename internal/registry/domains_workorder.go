@@ -17,6 +17,7 @@ func init() {
 					{Name: "priority", Description: "Filter by priority (1=Low, 2=Medium, 3=High, 4=Urgent, 5=Critical)", Type: "string"},
 					{Name: "sort-by", Description: "Sort field", Default: "CreatedAt", Type: "string"},
 					{Name: "sort-order", Description: "Sort direction (asc or desc)", Default: "desc", Type: "string"},
+					{Name: "asset-guid", Description: "Filter by asset GUID — list only the work orders linked to that asset", Type: "string"},
 				},
 			},
 			{

@@ -344,6 +344,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`uteamup workorder list --asset-guid <guid>` filter.** Added an optional `asset-guid` string flag to the `workorder list` action in `domains_workorder.go` (kebab → camelCase `assetGuid`) so the list can be scoped to a single asset's work orders — the watch NFC → asset → its workorders flow. New contract test `TestWorkorderListHasAssetGuidFlag` in `domains_workorder_test.go` asserts the flag is present, typed `string`, and optional.
 - **Performance Auto-Monitoring (CLI).** Added `performance-auto` to the validated `--source` flag values for the `uteamup bugs list` command in `domains_bugs.go`. Added corresponding test coverage.
 
 ### Changed
