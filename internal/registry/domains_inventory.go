@@ -452,6 +452,18 @@ func init() {
 					{Name: "currency-guid", Description: "Currency GUID for the order (optional)", Type: "string"},
 				},
 			},
+			Action{
+				Name:        "count-from-photo",
+				Description: "AI-count the units of a stock item visible in a shelf/bin photo (transient suggestion — nothing persisted; quota charged per photo)",
+				ToolName:    "UteamupStockCountFromPhoto",
+				HTTPMethod:  "POST",
+				RESTPath:    "count-from-photo",
+				Flags: []FlagDef{
+					{Name: "file", Short: "f", Description: "Path to the photo to count (PNG/JPEG/WEBP/PDF, max 10 MB)", Required: true, Type: "string", UploadFile: true},
+					{Name: "stock-item-guid", Description: "Stock item GUID this count is for (optional — omit for an ad-hoc count)", Type: "string"},
+					{Name: "context", Description: "Free-text hint to steer the count (e.g. 'count only the blue boxes on the top shelf')", Type: "string"},
+				},
+			},
 			// --- Marketplace bridge (stock_plan §8/§9/§23) ---
 			Action{
 				Name:        "list-on-marketplace",

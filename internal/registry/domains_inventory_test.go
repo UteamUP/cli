@@ -952,6 +952,37 @@ func TestStockPoFromReceiptActionWired(t *testing.T) {
 	}
 }
 
+func TestStockCountFromPhotoActionWired(t *testing.T) {
+	action := findStockAction(t, "count-from-photo")
+
+	if action.ToolName != "UteamupStockCountFromPhoto" {
+		t.Errorf("count-from-photo ToolName = %q, want %q", action.ToolName, "UteamupStockCountFromPhoto")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("count-from-photo HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "count-from-photo" {
+		t.Errorf("count-from-photo RESTPath = %q, want %q (the backend route is POST api/stock/count-from-photo)", action.RESTPath, "count-from-photo")
+	}
+	if len(action.Args) != 0 {
+		t.Errorf("count-from-photo should take no positional args, got %+v", action.Args)
+	}
+
+	// The photo is sent as a multipart IFormFile (matches the backend's [FromForm] IFormFile file).
+	file := stockActionFlag(t, "count-from-photo", "file")
+	if !file.Required || !file.UploadFile || file.Short != "f" {
+		t.Errorf("count-from-photo file flag must be Required UploadFile with -f short, got %+v", file)
+	}
+
+	// GUIDs at the boundary: the optional stock item is a string Guid, never an int id.
+	if sig := stockActionFlag(t, "count-from-photo", "stock-item-guid"); sig.Required || sig.Type != "string" {
+		t.Errorf("count-from-photo stock-item-guid must be an optional string Guid, got %+v", sig)
+	}
+	if c := stockActionFlag(t, "count-from-photo", "context"); c.Required || c.Type != "string" {
+		t.Errorf("count-from-photo context must be an optional string flag, got %+v", c)
+	}
+}
+
 func TestStockOpsBatchActionWired(t *testing.T) {
 	action := findStockAction(t, "ops-batch")
 
