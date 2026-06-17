@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.23.0](https://github.com/UteamUP/cli/compare/1.22.0...1.23.0) (2026-06-17)
+
+
+### Features
+
+* **stock:** add count-from-photo action to inventory CLI domain ([2a9f7c2](https://github.com/UteamUP/cli/commit/2a9f7c2ed4d4db823efecfd736536884e86d20fd))
+
 ## [1.22.0](https://github.com/UteamUP/cli/compare/1.21.0...1.22.0) (2026-06-14)
 
 
