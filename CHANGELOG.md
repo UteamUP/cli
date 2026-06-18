@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.25.0](https://github.com/UteamUP/cli/compare/1.24.0...1.25.0) (2026-06-18)
+
+
+### Features
+
+* **reseller:** CLI program-defaults command mirrors the new MCP tool ([a1c4f13](https://github.com/UteamUP/cli/commit/a1c4f13ae3f37a828466b491951d53969e04cdc4))
+
 ## [1.24.0](https://github.com/UteamUP/cli/compare/1.23.0...1.24.0) (2026-06-17)
 
 
