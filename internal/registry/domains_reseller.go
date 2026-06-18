@@ -42,6 +42,11 @@ func init() {
 					{Name: "reseller-guid", Short: "r", Description: "Reseller GUID", Required: true, Type: "string"},
 				},
 			},
+			{
+				Name:        "program-defaults",
+				Description: "Get the global reseller-program defaults new resellers inherit",
+				ToolName:    "UteamupResellerProgramDefaultsGet",
+			},
 		},
 	})
 }

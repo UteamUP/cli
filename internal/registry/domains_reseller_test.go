@@ -30,11 +30,12 @@ func TestResellerActionsWired(t *testing.T) {
 		t.Fatal("expected reseller domain to be registered")
 	}
 	expected := map[string]string{
-		"list":         "UteamupResellerList",
-		"get":          "UteamupResellerGet",
-		"applications": "UteamupResellerApplicationsList",
-		"tenants":      "UteamupResellerTenantsList",
-		"earnings":     "UteamupResellerEarningsList",
+		"list":             "UteamupResellerList",
+		"get":              "UteamupResellerGet",
+		"applications":     "UteamupResellerApplicationsList",
+		"tenants":          "UteamupResellerTenantsList",
+		"earnings":         "UteamupResellerEarningsList",
+		"program-defaults": "UteamupResellerProgramDefaultsGet",
 	}
 	got := map[string]string{}
 	for _, a := range d.Actions {
