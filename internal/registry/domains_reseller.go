@@ -62,6 +62,14 @@ func init() {
 				},
 			},
 			{
+				Name:        "meetings",
+				Description: "List the meetings (Teams + calendar invite) scheduled on a reseller application",
+				ToolName:    "UteamupResellerApplicationMeetingsGet",
+				Flags: []FlagDef{
+					{Name: "application-guid", Short: "a", Description: "Application GUID", Required: true, Type: "string"},
+				},
+			},
+			{
 				Name:        "referral-codes",
 				Description: "List your reseller referral codes (self-serve portal)",
 				ToolName:    "UteamupResellerMyReferralCodesGet",

@@ -39,6 +39,7 @@ func TestResellerActionsWired(t *testing.T) {
 		// New actions — 2026-06 reseller program overhaul
 		"application-get": "UteamupResellerMyApplicationGet",
 		"checklist":        "UteamupResellerApplicationChecksGet",
+		"meetings":         "UteamupResellerApplicationMeetingsGet",
 		"referral-codes":   "UteamupResellerMyReferralCodesGet",
 		"tenant-manager":   "UteamupResellerMyTenantManagerGet",
 	}
@@ -102,4 +103,28 @@ func TestResellerChecklistFlagPresent(t *testing.T) {
 		return
 	}
 	t.Error("checklist action not found in reseller domain")
+}
+
+func TestResellerMeetingsFlagPresent(t *testing.T) {
+	d := findResellerDomain()
+	if d == nil {
+		t.Fatal("expected reseller domain to be registered")
+	}
+	for _, a := range d.Actions {
+		if a.Name != "meetings" {
+			continue
+		}
+		found := false
+		for _, f := range a.Flags {
+			if f.Name == "application-guid" && f.Required {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("meetings action must have a required application-guid flag")
+		}
+		return
+	}
+	t.Error("meetings action not found in reseller domain")
 }
