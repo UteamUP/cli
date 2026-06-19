@@ -47,6 +47,30 @@ func init() {
 				Description: "Get the global reseller-program defaults new resellers inherit",
 				ToolName:    "UteamupResellerProgramDefaultsGet",
 			},
+			// New actions — 2026-06 reseller program overhaul
+			{
+				Name:        "application-get",
+				Description: "Get your own reseller application thread (applicant self-serve)",
+				ToolName:    "UteamupResellerMyApplicationGet",
+			},
+			{
+				Name:        "checklist",
+				Description: "Get the reviewer validation checklist for a reseller application",
+				ToolName:    "UteamupResellerApplicationChecksGet",
+				Flags: []FlagDef{
+					{Name: "application-guid", Short: "a", Description: "Application GUID", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "referral-codes",
+				Description: "List your reseller referral codes (self-serve portal)",
+				ToolName:    "UteamupResellerMyReferralCodesGet",
+			},
+			{
+				Name:        "tenant-manager",
+				Description: "Get the reseller managing your current tenant (visible to any tenant member)",
+				ToolName:    "UteamupResellerMyTenantManagerGet",
+			},
 		},
 	})
 }
