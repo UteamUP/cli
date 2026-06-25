@@ -5,6 +5,20 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.27.0](https://github.com/UteamUP/cli/compare/1.26.0...1.27.0) (2026-06-25)
+
+
+### Features
+
+* **apikey:** add `ut apikey` domain to mint + manage tenant API keys from the terminal ([d2712f1](https://github.com/UteamUP/cli/commit/d2712f12554c496cb087e05207b2c9cfd1135f1a))
+* **cli:** add notification-preference domain (get/set) ([37c4fe8](https://github.com/UteamUP/cli/commit/37c4fe897076abafe3f1dc7c89ccd1c956bbe421))
+* **reseller:** add the application meetings CLI action ([4c75ffc](https://github.com/UteamUP/cli/commit/4c75ffc664b058776966ce4587f79827d1386886))
+
+
+### Bug Fixes
+
+* **bugs:** wire up attachments-upload to POST multipart to {bugExternalGuid}/attachments ([13d0463](https://github.com/UteamUP/cli/commit/13d0463c412cc2f70e4c61c8f2557105b1d6a954))
+
 ## [1.26.0](https://github.com/UteamUP/cli/compare/1.25.0...1.26.0) (2026-06-19)
 
 
