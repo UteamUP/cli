@@ -175,11 +175,13 @@ func init() {
 				Name:        "attachments-upload",
 				Description: "Upload an image (PNG/JPEG/GIF/WEBP, max 2 MB) to a bug as a global admin. Multipart over REST.",
 				ToolName:    "UteamupBugsAndFeaturesAttachmentsUpload",
+				HTTPMethod:  "POST",
+				RESTPath:    "{bugExternalGuid}/attachments",
 				Args: []ArgDef{
 					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
-					{Name: "file", Short: "f", Description: "Local path to the image file (PNG/JPEG/GIF/WEBP). Required.", Required: true, Type: "string"},
+					{Name: "file", Short: "f", Description: "Local path to the image file (PNG/JPEG/GIF/WEBP). Required.", Required: true, Type: "string", UploadFile: true},
 				},
 			},
 			{

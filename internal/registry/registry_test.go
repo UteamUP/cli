@@ -171,6 +171,55 @@ func TestBugsAndFeaturesCommentsAddDeclaration(t *testing.T) {
 	}
 }
 
+// TestBugsAndFeaturesAttachmentsUploadDeclaration locks in the registry
+// declaration for `attachments-upload`: POST to the {bugExternalGuid}/attachments
+// sub-route with the `file` flag marked UploadFile so the CLI sends a real
+// multipart upload. Without HTTPMethod/RESTPath the verb falls through to the
+// basePath, and without UploadFile the file path is sent as a plain string —
+// both silently break the upload. Regression guard against a refactor dropping
+// any of the three fields.
+func TestBugsAndFeaturesAttachmentsUploadDeclaration(t *testing.T) {
+	var domain *Domain
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name == "bugsandfeatures" {
+			domain = d
+			break
+		}
+	}
+	if domain == nil {
+		t.Fatal("bugsandfeatures domain not registered")
+	}
+	var uploadAction *Action
+	for i := range domain.Actions {
+		if domain.Actions[i].Name == "attachments-upload" {
+			uploadAction = &domain.Actions[i]
+			break
+		}
+	}
+	if uploadAction == nil {
+		t.Fatal("attachments-upload action not registered")
+	}
+	if uploadAction.HTTPMethod != "POST" {
+		t.Errorf("HTTPMethod = %q, want POST", uploadAction.HTTPMethod)
+	}
+	if uploadAction.RESTPath != "{bugExternalGuid}/attachments" {
+		t.Errorf("RESTPath = %q, want {bugExternalGuid}/attachments", uploadAction.RESTPath)
+	}
+	var file *FlagDef
+	for i := range uploadAction.Flags {
+		if uploadAction.Flags[i].Name == "file" {
+			file = &uploadAction.Flags[i]
+			break
+		}
+	}
+	if file == nil {
+		t.Fatal("file flag not declared on attachments-upload")
+	}
+	if !file.UploadFile {
+		t.Error("file flag UploadFile = false, want true (multipart upload)")
+	}
+}
+
 // TestBugsAndFeaturesReporterConversation locks in the reporter-conversation registry surface:
 // the `--share-with-reporter` flag on comments-add (BodyName isVisibleToReporter, bool) and the
 // GET `conversation` read action. Keeps the CLI in lockstep with the backend reporter endpoints.
