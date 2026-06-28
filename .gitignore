@@ -47,3 +47,7 @@ superpowers/
 firebase-debug.log
 
 *.lscache
+
+# Temporary files (any name containing "tmp"), but keep .tmpl templates
+*tmp*
+!*.tmpl
