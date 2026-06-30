@@ -5,6 +5,19 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.28.0](https://github.com/UteamUP/cli/compare/1.27.0...1.28.0) (2026-06-30)
+
+
+### Features
+
+* **cli:** add 'cleanup' command to detect unused code via the Usage Verifier ([0f5fb19](https://github.com/UteamUP/cli/commit/0f5fb19d569fe9a0b1f1a8a0787d4d2272c98e7e))
+* **workorder-template:** add AI analyze actions and language translate domain ([fa12731](https://github.com/UteamUP/cli/commit/fa12731983e2d4b05f42c40a77ece21ba6ec5bed))
+
+
+### Miscellaneous
+
+* **gitignore:** add rules to ignore temporary files while keeping .tmpl templates ([996f4d8](https://github.com/UteamUP/cli/commit/996f4d8946c5ecabafc63f07a5db34f146bbb3c1))
+
 ## [1.27.0](https://github.com/UteamUP/cli/compare/1.26.0...1.27.0) (2026-06-25)
 
 
