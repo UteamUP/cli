@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.30.0](https://github.com/UteamUP/cli/compare/1.29.0...1.30.0) (2026-06-30)
+
+
+### Features
+
+* **cli:** add knowledgespace and knowledgeai (UPMate) domains ([e4ad6fa](https://github.com/UteamUP/cli/commit/e4ad6fa543e2fa18bb468f8d7163c1b75faec02c))
+
 ## [1.29.0](https://github.com/UteamUP/cli/compare/1.28.0...1.29.0) (2026-06-30)
 
 
