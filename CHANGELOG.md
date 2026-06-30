@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.29.0](https://github.com/UteamUP/cli/compare/1.28.0...1.29.0) (2026-06-30)
+
+
+### Features
+
+* **cli:** add promotion domain, project-copilot image-report, GUID-keyed plan get ([15bb3f7](https://github.com/UteamUP/cli/commit/15bb3f77d670944c650a4092bd9e8741282a39f6))
+
 ## [1.28.0](https://github.com/UteamUP/cli/compare/1.27.0...1.28.0) (2026-06-30)
 
 
