@@ -17,9 +17,10 @@ func init() {
 			},
 			{
 				Name:        "get",
-				Description: "Get plan details by ID",
+				Description: "Get plan details by its stable GUID",
 				ToolName:    "UteamupPlanGet",
-				Args:        []ArgDef{{Name: "id", Description: "Plan ID", Required: true, Type: "int"}},
+				RESTPath:    "by-guid/{guid}",
+				Args:        []ArgDef{{Name: "guid", Description: "Plan GUID (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
 			},
 		},
 	})

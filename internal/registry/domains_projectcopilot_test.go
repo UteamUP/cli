@@ -120,3 +120,13 @@ func TestProjectCopilotBomApplyActionWired(t *testing.T) {
 		t.Errorf("bom-apply file BodyName = %q, want lines (backend binds ApplyProjectBomRequestModel.Lines)", file.BodyName)
 	}
 }
+
+func TestProjectCopilotImageReportActionWired(t *testing.T) {
+	action := findProjectCopilotAction(t, "image-report")
+	if action.ToolName != "UteamupProjectGenerateImageReport" || action.HTTPMethod != "POST" || action.RESTPath != "{projectGuid}/image-report" {
+		t.Errorf("image-report must be POST {projectGuid}/image-report, got %+v", action)
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "projectGuid" || !action.Args[0].Required || action.Args[0].Type != "string" {
+		t.Fatalf("image-report expected single required positional arg 'projectGuid', got %+v", action.Args)
+	}
+}

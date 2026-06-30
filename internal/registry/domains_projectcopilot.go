@@ -7,7 +7,7 @@ func init() {
 	Register(&Domain{
 		Name:        "project-copilot",
 		Aliases:     []string{"projectcopilot", "copilot"},
-		Description: "Project copilot: health snapshots, AI summary, AI BOM suggestions",
+		Description: "Project copilot: health snapshots, AI summary, AI BOM suggestions, AI image report",
 		APIPath:     "/api/projects",
 		Actions: []Action{
 			{
@@ -56,6 +56,14 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "file", Short: "f", Description: "Path to a JSON file with the lines: [{\"itemType\":\"Part|Tool|Chemical|StockItem\",\"itemGuid\":\"…\",\"quantity\":N}]", Required: true, Type: "string", JSONFile: true, BodyName: "lines"},
 				},
+			},
+			{
+				Name:        "image-report",
+				Description: "AI close-out report synthesized from a project's analyzed photos (one synthesis call; per-image analysis charged separately)",
+				ToolName:    "UteamupProjectGenerateImageReport",
+				HTTPMethod:  "POST",
+				RESTPath:    "{projectGuid}/image-report",
+				Args:        []ArgDef{{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"}},
 			},
 		},
 	})
