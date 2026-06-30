@@ -22,9 +22,37 @@ func init() {
 				{Name: "scheduleGuid", Description: "External GUID of the workorder-template schedule (required)", Required: true, Type: "string"},
 			},
 		},
+		Action{
+			Name:        "analysis-preview",
+			Description: "Preview how many completed workorders are linked to a template and the AI-credit cost to analyze them (5 credits each). Does NOT charge credits.",
+			ToolName:    "UteamupWorkorderTemplateAnalyzePreview",
+			Flags: []FlagDef{
+				{Name: "template", BodyName: "templateGuid", Description: "Public GUID of the workorder template (required)", Required: true, Type: "string"},
+			},
+		},
+		Action{
+			Name:        "analyze",
+			Description: "Analyze a template's completed workorders with AI and return suggested enhancements (description, checklist/task lists, tools/chemicals, estimated duration/cost). Charges 5 AI credits per analyzed workorder; preview first with analysis-preview.",
+			ToolName:    "UteamupWorkorderTemplateAnalyze",
+			Flags: []FlagDef{
+				{Name: "template", BodyName: "templateGuid", Description: "Public GUID of the workorder template (required)", Required: true, Type: "string"},
+			},
+		},
 	)})
 	Register(&Domain{Name: "workorder-signature", Description: "Manage work order signatures", Actions: crudActions("WorkorderSignature")})
 	Register(&Domain{Name: "workorder-watchlist", Description: "Manage work order watchlists", Actions: crudActions("WorkorderWatchlist")})
 	Register(&Domain{Name: "tasklist", Aliases: []string{"tasks"}, Description: "Manage task lists", Actions: crudActions("TaskList")})
 	Register(&Domain{Name: "checklist", Aliases: []string{"checklists"}, Description: "Manage checklists", Actions: crudActions("CheckList")})
+	Register(&Domain{Name: "language", Aliases: []string{"lang"}, Description: "Language utilities (AI translation)", Actions: []Action{
+		{
+			Name:        "translate",
+			Description: "Translate authored content into other languages using AI. Charges 2 AI credits per target language (supported: en, is, pl, de, es).",
+			ToolName:    "UteamupLanguageTranslate",
+			Flags: []FlagDef{
+				{Name: "source-text", BodyName: "sourceText", Description: "The text to translate (required)", Required: true, Type: "string"},
+				{Name: "source-lang", BodyName: "sourceLanguage", Description: "Source language code: en|is|pl|de|es (required)", Required: true, Type: "string"},
+				{Name: "target-langs", BodyName: "targetLanguages", Description: "Target language codes — repeatable or comma-separated (subset of en|is|pl|de|es)", Required: true, Type: "stringSlice"},
+			},
+		},
+	}})
 }
