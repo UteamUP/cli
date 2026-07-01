@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.31.0](https://github.com/UteamUP/cli/compare/1.30.0...1.31.0) (2026-07-01)
+
+
+### Features
+
+* **cli:** add aicreditgrant domain (issue/mine/claim/revoke, GUID-first) ([2b62bb6](https://github.com/UteamUP/cli/commit/2b62bb637e0f2b2643c181451e0334758fe581b9))
+
 ## [1.30.0](https://github.com/UteamUP/cli/compare/1.29.0...1.30.0) (2026-06-30)
 
 
