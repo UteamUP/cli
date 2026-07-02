@@ -1,12 +1,40 @@
 package registry
 
+// knowledgeEntityTypes lists the entity types accepted by the knowledge
+// entity-link endpoints (KnowledgeArticleController /linked routes).
+const knowledgeEntityTypes = "asset, part, tool, chemical, location, workorder, workordertemplate, industrycode"
+
 func init() {
 	Register(&Domain{
 		Name:        "knowledge",
 		Aliases:     []string{"kb", "knowledge-article"},
 		Description: "Manage knowledge articles",
+		// Backend controller is KnowledgeArticleController → api/knowledgearticle.
+		// Without this override the auto-derived base path would be /api/knowledge,
+		// which matches no backend route.
+		APIPath: "/api/knowledgearticle",
 		Actions: append(crudActions("KnowledgeArticle"),
 			Action{Name: "search", Description: "Search articles", ToolName: "UteamupKnowledgeArticleSearch", Args: queryArg(), Flags: paginationFlags()},
+			Action{Name: "linked", Description: "List articles linked to an entity (valid entityTypes: " + knowledgeEntityTypes + ")",
+				ToolName: "UteamupKnowledgeArticleGetLinked", HTTPMethod: "GET", RESTPath: "linked/{entityType}/{entityGuid}",
+				Args: []ArgDef{
+					{Name: "entityType", Description: "Entity type: " + knowledgeEntityTypes, Required: true, Type: "string"},
+					{Name: "entityGuid", Description: "Entity GUID", Required: true, Type: "string"},
+				}},
+			Action{Name: "link", Description: "Link an article to an entity (valid entityTypes: " + knowledgeEntityTypes + ")",
+				ToolName: "UteamupKnowledgeArticleLinkEntity", HTTPMethod: "POST", RESTPath: "linked/{entityType}/{entityGuid}/{articleGuid}",
+				Args: []ArgDef{
+					{Name: "entityType", Description: "Entity type: " + knowledgeEntityTypes, Required: true, Type: "string"},
+					{Name: "entityGuid", Description: "Entity GUID", Required: true, Type: "string"},
+					{Name: "articleGuid", Description: "Knowledge article GUID", Required: true, Type: "string"},
+				}},
+			Action{Name: "unlink", Description: "Unlink an article from an entity (valid entityTypes: " + knowledgeEntityTypes + ")",
+				ToolName: "UteamupKnowledgeArticleUnlinkEntity", HTTPMethod: "DELETE", RESTPath: "linked/{entityType}/{entityGuid}/{articleGuid}",
+				Args: []ArgDef{
+					{Name: "entityType", Description: "Entity type: " + knowledgeEntityTypes, Required: true, Type: "string"},
+					{Name: "entityGuid", Description: "Entity GUID", Required: true, Type: "string"},
+					{Name: "articleGuid", Description: "Knowledge article GUID", Required: true, Type: "string"},
+				}},
 		),
 	})
 
