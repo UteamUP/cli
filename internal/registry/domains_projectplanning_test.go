@@ -278,3 +278,241 @@ func TestProjectBudgetGetActionWired(t *testing.T) {
 		t.Errorf("budget get should take no flags, got %d", len(a.Flags))
 	}
 }
+
+// --- project-risk ---
+
+func TestProjectRiskDomainRegistered(t *testing.T) {
+	d := findDomain("project-risk")
+	if d == nil {
+		t.Fatal("expected project-risk domain to be registered")
+	}
+	// ProjectRiskController routes under /api/projects/{projectGuid}/risks —
+	// plural base, so the domain needs the explicit APIPath.
+	if d.APIPath != "/api/projects" {
+		t.Errorf("project-risk APIPath = %q, want /api/projects", d.APIPath)
+	}
+	expected := map[string]bool{"project-risks": true, "risks": true}
+	for _, alias := range d.Aliases {
+		delete(expected, alias)
+	}
+	if len(expected) > 0 {
+		t.Errorf("missing aliases: %v", expected)
+	}
+}
+
+func TestProjectRiskActionRouteTemplates(t *testing.T) {
+	cases := []struct {
+		action   string
+		tool     string
+		method   string
+		restPath string
+		subGuid  string
+	}{
+		{"list", "UteamupProjectRiskList", "", "{projectGuid}/risks", ""},
+		{"get", "UteamupProjectRiskGet", "", "{projectGuid}/risks/{riskGuid}", "riskGuid"},
+		{"create", "UteamupProjectRiskCreate", "", "{projectGuid}/risks", ""},
+		{"update", "UteamupProjectRiskUpdate", "", "{projectGuid}/risks/{riskGuid}", "riskGuid"},
+		{"delete", "UteamupProjectRiskDelete", "", "{projectGuid}/risks/{riskGuid}", "riskGuid"},
+		{"set-status", "UteamupProjectRiskSetStatus", "PUT", "{projectGuid}/risks/{riskGuid}/status", "riskGuid"},
+	}
+	for _, c := range cases {
+		a := findDomainAction(t, "project-risk", c.action)
+		if a.ToolName != c.tool || a.HTTPMethod != c.method || a.RESTPath != c.restPath {
+			t.Errorf("project-risk %s: want tool=%s method=%q path=%s, got tool=%s method=%q path=%s",
+				c.action, c.tool, c.method, c.restPath, a.ToolName, a.HTTPMethod, a.RESTPath)
+		}
+		assertProjectGuidArgs(t, a, c.subGuid)
+	}
+}
+
+func TestProjectRiskListStatusFilterOptional(t *testing.T) {
+	a := findDomainAction(t, "project-risk", "list")
+	f := findFlag(a, "status")
+	// GET flags ride the query string; the backend binds a nullable
+	// ProjectRiskStatus, so the filter must stay optional with no default.
+	if f == nil || f.Required || f.Type != "string" || f.Default != nil {
+		t.Errorf("list `status` must be an optional string flag with no default, got %+v", f)
+	}
+}
+
+func TestProjectRiskCreateFlags(t *testing.T) {
+	a := findDomainAction(t, "project-risk", "create")
+	title := findFlag(a, "title")
+	if title == nil || !title.Required || title.Type != "string" {
+		t.Errorf("create must have a required string `title` flag, got %+v", title)
+	}
+	for _, required := range []string{"probability", "impact"} {
+		f := findFlag(a, required)
+		if f == nil || !f.Required || f.Type != "int" {
+			t.Errorf("create `%s` must be a required int flag, got %+v", required, f)
+		}
+	}
+	for _, optional := range []string{"description", "category", "mitigation-plan", "owner-guid", "review-date"} {
+		f := findFlag(a, optional)
+		if f == nil || f.Required || f.Type != "string" {
+			t.Errorf("create `%s` must be an optional string flag, got %+v", optional, f)
+		}
+	}
+	if status := findFlag(a, "status"); status != nil {
+		t.Errorf("create must not expose a `status` flag (ProjectRiskCreateModel has no Status), got %+v", status)
+	}
+}
+
+func TestProjectRiskUpdateFlags(t *testing.T) {
+	a := findDomainAction(t, "project-risk", "update")
+	// PUT binds ProjectRiskUpdateModel : ProjectRiskCreateModel — title,
+	// probability, impact, status and category are required so a full update
+	// never silently resets a field (omitted category re-defaults to "Other").
+	for _, required := range []string{"title", "category", "probability", "impact", "status"} {
+		f := findFlag(a, required)
+		if f == nil || !f.Required {
+			t.Errorf("update `%s` flag must be required, got %+v", required, f)
+		}
+	}
+}
+
+func TestProjectRiskSetStatusFlag(t *testing.T) {
+	a := findDomainAction(t, "project-risk", "set-status")
+	f := findFlag(a, "status")
+	if f == nil || !f.Required || f.Type != "string" {
+		t.Errorf("set-status must have a required string `status` flag, got %+v", f)
+	}
+}
+
+// --- project-insights ---
+
+func TestProjectInsightsDomainRegistered(t *testing.T) {
+	d := findDomain("project-insights")
+	if d == nil {
+		t.Fatal("expected project-insights domain to be registered")
+	}
+	// ProjectInsightsController routes under /api/projects (plural).
+	if d.APIPath != "/api/projects" {
+		t.Errorf("project-insights APIPath = %q, want /api/projects", d.APIPath)
+	}
+	expected := map[string]bool{"insights": true}
+	for _, alias := range d.Aliases {
+		delete(expected, alias)
+	}
+	if len(expected) > 0 {
+		t.Errorf("missing aliases: %v", expected)
+	}
+}
+
+func TestProjectInsightsConflictsActionWired(t *testing.T) {
+	a := findDomainAction(t, "project-insights", "conflicts")
+	// Method "" — `conflicts` is not in the HTTPMethod map and has no
+	// update- prefix, so the runtime falls back to GET.
+	if a.ToolName != "UteamupProjectGetConflicts" || a.HTTPMethod != "" || a.RESTPath != "{projectGuid}/conflicts" {
+		t.Errorf("conflicts must be GET {projectGuid}/conflicts, got %+v", a)
+	}
+	assertProjectGuidArgs(t, a, "")
+	if len(a.Flags) != 0 {
+		t.Errorf("conflicts should take no flags, got %d", len(a.Flags))
+	}
+}
+
+func TestProjectInsightsPortfolioActionWired(t *testing.T) {
+	a := findDomainAction(t, "project-insights", "portfolio")
+	if a.ToolName != "UteamupProjectGetPortfolio" || a.HTTPMethod != "" || a.RESTPath != "portfolio" {
+		t.Errorf("portfolio must be GET portfolio, got %+v", a)
+	}
+	if len(a.Args) != 0 {
+		t.Errorf("portfolio is tenant-scoped and takes no positional args, got %+v", a.Args)
+	}
+	// camelCase(page-size) = pageSize matches the backend [FromQuery] binding.
+	for _, name := range []string{"page", "page-size"} {
+		f := findFlag(a, name)
+		if f == nil || f.Type != "int" {
+			t.Errorf("portfolio must have an int `%s` pagination flag, got %+v", name, f)
+		}
+	}
+	status := findFlag(a, "status")
+	// Optional int with no default — omitted must stay off the query string so
+	// the backend's nullable status filter stays null.
+	if status == nil || status.Required || status.Type != "int" || status.Default != nil {
+		t.Errorf("portfolio `status` must be an optional int flag with no default, got %+v", status)
+	}
+}
+
+// --- cost-budget-threshold ---
+
+func TestCostBudgetThresholdDomainRegistered(t *testing.T) {
+	d := findDomain("cost-budget-threshold")
+	if d == nil {
+		t.Fatal("expected cost-budget-threshold domain to be registered")
+	}
+	// CostBudgetThresholdController is tenant-scoped under its own base path.
+	if d.APIPath != "/api/costbudgetthresholds" {
+		t.Errorf("cost-budget-threshold APIPath = %q, want /api/costbudgetthresholds", d.APIPath)
+	}
+	expected := map[string]bool{"cost-budget-thresholds": true, "budget-thresholds": true}
+	for _, alias := range d.Aliases {
+		delete(expected, alias)
+	}
+	if len(expected) > 0 {
+		t.Errorf("missing aliases: %v", expected)
+	}
+}
+
+func TestCostBudgetThresholdActionRouteTemplates(t *testing.T) {
+	cases := []struct {
+		action   string
+		tool     string
+		restPath string
+		hasGuid  bool
+	}{
+		{"list", "UteamupCostBudgetThresholdList", "", false},
+		{"create", "UteamupCostBudgetThresholdCreate", "", false},
+		{"update", "UteamupCostBudgetThresholdUpdate", "{thresholdGuid}", true},
+		{"delete", "UteamupCostBudgetThresholdDelete", "{thresholdGuid}", true},
+	}
+	for _, c := range cases {
+		a := findDomainAction(t, "cost-budget-threshold", c.action)
+		// Method derived from the action name (list/create/update/delete).
+		if a.ToolName != c.tool || a.HTTPMethod != "" || a.RESTPath != c.restPath {
+			t.Errorf("cost-budget-threshold %s: want tool=%s method=%q path=%q, got tool=%s method=%q path=%q",
+				c.action, c.tool, "", c.restPath, a.ToolName, a.HTTPMethod, a.RESTPath)
+		}
+		if !c.hasGuid {
+			if len(a.Args) != 0 {
+				t.Errorf("%s should take no positional args, got %+v", c.action, a.Args)
+			}
+			continue
+		}
+		if len(a.Args) != 1 || a.Args[0].Name != "thresholdGuid" || !a.Args[0].Required || a.Args[0].Type != "string" {
+			t.Errorf("%s expected single required string positional arg 'thresholdGuid', got %+v", c.action, a.Args)
+		}
+	}
+}
+
+func TestCostBudgetThresholdCreateUpdateFlags(t *testing.T) {
+	for _, action := range []string{"create", "update"} {
+		a := findDomainAction(t, "cost-budget-threshold", action)
+		name := findFlag(a, "name")
+		if name == nil || !name.Required || name.Type != "string" {
+			t.Errorf("%s must have a required string `name` flag, got %+v", action, name)
+		}
+		pct := findFlag(a, "threshold-percentage")
+		if pct == nil || !pct.Required || pct.Type != "float" {
+			t.Errorf("%s must have a required float `threshold-percentage` flag, got %+v", action, pct)
+		}
+		// Defaults mirror the backend DTO initializers so the body stays
+		// deterministic; string/bool defaults must be typed literals.
+		entityType := findFlag(a, "entity-type")
+		if entityType == nil || entityType.Type != "string" || entityType.Default != "Project" {
+			t.Errorf("%s `entity-type` must default to \"Project\", got %+v", action, entityType)
+		}
+		severity := findFlag(a, "severity")
+		if severity == nil || severity.Type != "string" || severity.Default != "Warning" {
+			t.Errorf("%s `severity` must default to \"Warning\", got %+v", action, severity)
+		}
+		active := findFlag(a, "is-active")
+		if active == nil || active.Type != "bool" {
+			t.Fatalf("%s must have a bool `is-active` flag, got %+v", action, active)
+		}
+		if v, ok := active.Default.(bool); !ok || !v {
+			t.Errorf("%s `is-active` Default must be the bool literal true, got %T (%v)", action, active.Default, active.Default)
+		}
+	}
+}

@@ -130,3 +130,63 @@ func TestProjectCopilotImageReportActionWired(t *testing.T) {
 		t.Fatalf("image-report expected single required positional arg 'projectGuid', got %+v", action.Args)
 	}
 }
+
+// --- AI Planning Suite (phase B4) ---
+
+func TestProjectCopilotAiPlanningActionsWired(t *testing.T) {
+	// Every AI planning action is a POST with a single required string
+	// positional arg 'projectGuid' — the name must literally match the
+	// RESTPath placeholder or expandPathTemplate leaves the raw token.
+	cases := []struct {
+		action   string
+		tool     string
+		restPath string
+		// bodyName is the JSONFile flag's body field for apply actions
+		// (mirrors the backend Apply*Request list property); "" = no flags.
+		bodyName string
+	}{
+		{"wbs-suggest", "UteamupProjectSuggestWbs", "{projectGuid}/wbs/suggest", ""},
+		{"wbs-apply", "UteamupProjectApplyWbs", "{projectGuid}/wbs/apply", "stages"},
+		{"prioritize-suggest", "UteamupProjectSuggestPrioritization", "{projectGuid}/prioritize/suggest", ""},
+		{"prioritize-apply", "UteamupProjectApplyPrioritization", "{projectGuid}/prioritize/apply", "items"},
+		{"risks-suggest", "UteamupProjectSuggestRisks", "{projectGuid}/risks/suggest", ""},
+		{"risks-apply", "UteamupProjectApplyRisks", "{projectGuid}/risks/apply", "risks"},
+		{"lessons-learned", "UteamupProjectGenerateLessonsLearned", "{projectGuid}/lessons-learned", ""},
+	}
+	for _, c := range cases {
+		action := findProjectCopilotAction(t, c.action)
+		if action.ToolName != c.tool || action.HTTPMethod != "POST" || action.RESTPath != c.restPath {
+			t.Errorf("%s: want tool=%s POST %s, got tool=%s method=%q path=%s",
+				c.action, c.tool, c.restPath, action.ToolName, action.HTTPMethod, action.RESTPath)
+		}
+		if len(action.Args) != 1 || action.Args[0].Name != "projectGuid" || !action.Args[0].Required || action.Args[0].Type != "string" {
+			t.Errorf("%s expected single required string positional arg 'projectGuid', got %+v", c.action, action.Args)
+		}
+
+		if c.bodyName == "" {
+			// Suggest + lessons-learned endpoints bind no request body — a flag
+			// here would leak an unexpected JSON field into the POST.
+			if len(action.Flags) != 0 {
+				t.Errorf("%s should take no flags, got %+v", c.action, action.Flags)
+			}
+			continue
+		}
+
+		var file *FlagDef
+		for i := range action.Flags {
+			if action.Flags[i].Name == "file" {
+				file = &action.Flags[i]
+			}
+		}
+		if file == nil {
+			t.Errorf("%s must expose a `file` flag", c.action)
+			continue
+		}
+		if !file.Required || !file.JSONFile || file.Short != "f" || file.Type != "string" {
+			t.Errorf("%s file flag must be a Required string JSONFile with -f short, got %+v", c.action, file)
+		}
+		if file.BodyName != c.bodyName {
+			t.Errorf("%s file BodyName = %q, want %q (backend Apply*Request property)", c.action, file.BodyName, c.bodyName)
+		}
+	}
+}
