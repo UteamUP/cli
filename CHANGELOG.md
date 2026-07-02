@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.35.0](https://github.com/UteamUP/cli/compare/1.34.0...1.35.0) (2026-07-02)
+
+
+### Features
+
+* **cli:** add plan-audit domain for plan change-history and export ([013ee1f](https://github.com/UteamUP/cli/commit/013ee1f534e0454aa2d0febdbf1dcd67c4799f5b))
+
 ## [1.34.0](https://github.com/UteamUP/cli/compare/1.33.0...1.34.0) (2026-07-02)
 
 
