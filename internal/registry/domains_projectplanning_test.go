@@ -486,6 +486,102 @@ func TestCostBudgetThresholdActionRouteTemplates(t *testing.T) {
 	}
 }
 
+// --- project-bom ---
+
+func TestProjectBomDomainRegistered(t *testing.T) {
+	d := findDomain("project-bom")
+	if d == nil {
+		t.Fatal("expected project-bom domain to be registered")
+	}
+	// ProjectBomController routes under /api/projects/{projectGuid}/bom —
+	// plural base, so the domain needs the explicit APIPath.
+	if d.APIPath != "/api/projects" {
+		t.Errorf("project-bom APIPath = %q, want /api/projects", d.APIPath)
+	}
+	expected := map[string]bool{"project-boms": true, "bom": true}
+	for _, alias := range d.Aliases {
+		delete(expected, alias)
+	}
+	if len(expected) > 0 {
+		t.Errorf("missing aliases: %v", expected)
+	}
+}
+
+func TestProjectBomActionRouteTemplates(t *testing.T) {
+	cases := []struct {
+		action   string
+		tool     string
+		method   string
+		restPath string
+		subGuid  string
+	}{
+		{"list", "UteamupProjectBomList", "", "{projectGuid}/bom", ""},
+		{"get", "UteamupProjectBomGet", "", "{projectGuid}/bom/{itemGuid}", "itemGuid"},
+		{"create", "UteamupProjectBomCreate", "", "{projectGuid}/bom", ""},
+		{"update", "UteamupProjectBomUpdate", "", "{projectGuid}/bom/{itemGuid}", "itemGuid"},
+		{"delete", "UteamupProjectBomDelete", "", "{projectGuid}/bom/{itemGuid}", "itemGuid"},
+	}
+	for _, c := range cases {
+		a := findDomainAction(t, "project-bom", c.action)
+		if a.ToolName != c.tool || a.HTTPMethod != c.method || a.RESTPath != c.restPath {
+			t.Errorf("project-bom %s: want tool=%s method=%q path=%s, got tool=%s method=%q path=%s",
+				c.action, c.tool, c.method, c.restPath, a.ToolName, a.HTTPMethod, a.RESTPath)
+		}
+		assertProjectGuidArgs(t, a, c.subGuid)
+	}
+}
+
+func TestProjectBomCreateFlags(t *testing.T) {
+	a := findDomainAction(t, "project-bom", "create")
+	itemType := findFlag(a, "item-type")
+	if itemType == nil || !itemType.Required || itemType.Type != "string" {
+		t.Errorf("create must have a required string `item-type` flag, got %+v", itemType)
+	}
+	itemGuid := findFlag(a, "item-guid")
+	if itemGuid == nil || !itemGuid.Required || itemGuid.Type != "string" {
+		t.Errorf("create must have a required string `item-guid` flag, got %+v", itemGuid)
+	}
+	qty := findFlag(a, "quantity-required")
+	if qty == nil || !qty.Required || qty.Type != "float" {
+		t.Errorf("create must have a required float `quantity-required` flag, got %+v", qty)
+	}
+	// Create binds ProjectBomItemCreateModel — no quantityActual/isConsumed.
+	if extra := findFlag(a, "quantity-actual"); extra != nil {
+		t.Errorf("create must not expose a `quantity-actual` flag, got %+v", extra)
+	}
+	if extra := findFlag(a, "is-consumed"); extra != nil {
+		t.Errorf("create must not expose an `is-consumed` flag, got %+v", extra)
+	}
+}
+
+func TestProjectBomUpdateFlagDefaults(t *testing.T) {
+	a := findDomainAction(t, "project-bom", "update")
+	// PUT binds ProjectBomItemUpdateModel : ProjectBomItemCreateModel — the
+	// create-base fields stay required on a full update so nothing silently resets.
+	for _, required := range []string{"item-type", "item-guid", "quantity-required"} {
+		f := findFlag(a, required)
+		if f == nil || !f.Required {
+			t.Errorf("update `%s` flag must be required, got %+v", required, f)
+		}
+	}
+	// Float/bool flag defaults MUST be typed literals — an untyped int default
+	// panics in the registry's `.(float64)`-style assertions.
+	actual := findFlag(a, "quantity-actual")
+	if actual == nil || actual.Type != "float" {
+		t.Fatalf("update must have a float `quantity-actual` flag, got %+v", actual)
+	}
+	if _, ok := actual.Default.(float64); !ok {
+		t.Errorf("quantity-actual Default must be a float64 literal, got %T (%v)", actual.Default, actual.Default)
+	}
+	consumed := findFlag(a, "is-consumed")
+	if consumed == nil || consumed.Type != "bool" {
+		t.Fatalf("update must have a bool `is-consumed` flag, got %+v", consumed)
+	}
+	if _, ok := consumed.Default.(bool); !ok {
+		t.Errorf("is-consumed Default must be a bool literal, got %T (%v)", consumed.Default, consumed.Default)
+	}
+}
+
 func TestCostBudgetThresholdCreateUpdateFlags(t *testing.T) {
 	for _, action := range []string{"create", "update"} {
 		a := findDomainAction(t, "cost-budget-threshold", action)

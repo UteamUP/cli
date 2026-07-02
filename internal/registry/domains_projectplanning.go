@@ -30,6 +30,12 @@ package registry
 //	DELETE /api/projects/{projectGuid}/outputitems/{itemGuid}         — delete item
 //	POST   /api/projects/{projectGuid}/outputitems/{itemGuid}/deliver — mark delivered
 //
+//	GET    /api/projects/{projectGuid}/bom                          — list BOM lines
+//	GET    /api/projects/{projectGuid}/bom/{itemGuid}               — fetch one BOM line
+//	POST   /api/projects/{projectGuid}/bom                          — create BOM line
+//	PUT    /api/projects/{projectGuid}/bom/{itemGuid}              — full update
+//	DELETE /api/projects/{projectGuid}/bom/{itemGuid}              — delete BOM line
+//
 //	GET    /api/projects/{projectGuid}/budget                       — budget summary
 //
 //	GET    /api/projects/{projectGuid}/risks                        — list risks (?status=)
@@ -415,6 +421,76 @@ func init() {
 				ToolName:    "UteamupCostBudgetThresholdDelete",
 				RESTPath:    "{thresholdGuid}",
 				Args:        []ArgDef{{Name: "thresholdGuid", Description: "Threshold GUID", Required: true, Type: "string"}},
+			},
+		},
+	})
+
+	Register(&Domain{
+		Name:        "project-bom",
+		Aliases:     []string{"project-boms", "bom"},
+		Description: "Manage a project's bill of materials: planned resource lines (StockItem/Chemical/Part/Tool/Asset) with required/actual quantities and consumption state",
+		APIPath:     "/api/projects",
+		Actions: []Action{
+			{
+				Name:        "list",
+				Description: "List the BOM lines of a project",
+				ToolName:    "UteamupProjectBomList",
+				RESTPath:    "{projectGuid}/bom",
+				Args:        []ArgDef{{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"}},
+			},
+			{
+				Name:        "get",
+				Description: "Get a single BOM line by GUID",
+				ToolName:    "UteamupProjectBomGet",
+				RESTPath:    "{projectGuid}/bom/{itemGuid}",
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
+					{Name: "itemGuid", Description: "BOM line GUID", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "create",
+				Description: "Create a BOM line on a project",
+				ToolName:    "UteamupProjectBomCreate",
+				RESTPath:    "{projectGuid}/bom",
+				Args:        []ArgDef{{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "item-type", Description: "Item type: StockItem, Chemical, Part, Tool, or Asset", Required: true, Type: "string"},
+					{Name: "item-guid", Description: "External GUID of the referenced catalog item (of the matching item type)", Required: true, Type: "string"},
+					{Name: "quantity-required", Description: "Quantity of this item required for the project", Required: true, Type: "float"},
+				},
+			},
+			{
+				Name:        "update",
+				Description: "Full update of a BOM line (PUT — supply every field you want kept)",
+				ToolName:    "UteamupProjectBomUpdate",
+				RESTPath:    "{projectGuid}/bom/{itemGuid}",
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
+					{Name: "itemGuid", Description: "BOM line GUID", Required: true, Type: "string"},
+				},
+				// PUT binds ProjectBomItemUpdateModel : ProjectBomItemCreateModel —
+				// itemType, itemGuid and quantityRequired are required on the create
+				// base, so a full update must send them. quantityActual/isConsumed
+				// carry defaults matching the backend's non-nullable DTO fields, so an
+				// omitted flag still sends 0.0 / false rather than dropping the field.
+				Flags: []FlagDef{
+					{Name: "item-type", Description: "Item type: StockItem, Chemical, Part, Tool, or Asset", Required: true, Type: "string"},
+					{Name: "item-guid", Description: "External GUID of the referenced catalog item (of the matching item type)", Required: true, Type: "string"},
+					{Name: "quantity-required", Description: "Quantity of this item required for the project", Required: true, Type: "float"},
+					{Name: "quantity-actual", Description: "Actual quantity consumed/used so far", Default: 0.0, Type: "float"},
+					{Name: "is-consumed", Description: "Whether this line has been fully consumed/allocated", Default: false, Type: "bool"},
+				},
+			},
+			{
+				Name:        "delete",
+				Description: "Delete a BOM line from a project",
+				ToolName:    "UteamupProjectBomDelete",
+				RESTPath:    "{projectGuid}/bom/{itemGuid}",
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
+					{Name: "itemGuid", Description: "BOM line GUID", Required: true, Type: "string"},
+				},
 			},
 		},
 	})
