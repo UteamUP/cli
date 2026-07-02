@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.33.0](https://github.com/UteamUP/cli/compare/1.32.0...1.33.0) (2026-07-02)
+
+
+### Features
+
+* **cli:** add marketplace and wholesaler read domains ([8deae80](https://github.com/UteamUP/cli/commit/8deae80eda485f70d579140f876586cc4551649a))
+* **cli:** add project PM domains (risk register, insights, cost budget thresholds) and AI planning suite ([4a5a80a](https://github.com/UteamUP/cli/commit/4a5a80a81823a299dbdf72fead42bd92c6362e52))
+
 ## [1.32.0](https://github.com/UteamUP/cli/compare/1.31.0...1.32.0) (2026-07-02)
 
 
