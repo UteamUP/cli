@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.32.0](https://github.com/UteamUP/cli/compare/1.31.0...1.32.0) (2026-07-02)
+
+
+### Features
+
+* **cli:** add knowledge entity-link actions (linked/link/unlink) and fix APIPath ([660db3d](https://github.com/UteamUP/cli/commit/660db3d7e7ac0759c713f392613f39f934b8e737))
+* **cli:** add project-planning domains (stage/output/budget) and project setters ([ddabc21](https://github.com/UteamUP/cli/commit/ddabc21727f53e539fe0868d05fd76e9da237dbd))
+
 ## [1.31.0](https://github.com/UteamUP/cli/compare/1.30.0...1.31.0) (2026-07-01)
 
 
