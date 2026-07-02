@@ -85,18 +85,28 @@ func TestPromotionGrantWiring(t *testing.T) {
 	if grant.HTTPMethod != "POST" || grant.RESTPath != "by-guid/{guid}/grant" {
 		t.Errorf("grant routing = %s %s, want POST by-guid/{guid}/grant", grant.HTTPMethod, grant.RESTPath)
 	}
-	// tenant-guid must be a required flag (camelCases to tenantGuid in the body).
-	var foundTenant bool
+	// Bulk grants: either --tenant-guid (single) or --tenant-guids (list) — the backend
+	// normalizes the union and rejects an empty selection, so neither flag is CLI-required.
+	var foundTenant, foundBulk bool
 	for _, f := range grant.Flags {
 		if f.Name == "tenant-guid" {
 			foundTenant = true
-			if !f.Required {
-				t.Error("grant --tenant-guid must be required")
+			if f.Required {
+				t.Error("grant --tenant-guid must be optional (bulk grants use --tenant-guids)")
+			}
+		}
+		if f.Name == "tenant-guids" {
+			foundBulk = true
+			if f.Type != "stringSlice" || f.BodyName != "tenantGuids" {
+				t.Errorf("grant --tenant-guids must be a stringSlice mapped to tenantGuids, got type=%q body=%q", f.Type, f.BodyName)
 			}
 		}
 	}
 	if !foundTenant {
 		t.Error("grant action must declare a --tenant-guid flag")
+	}
+	if !foundBulk {
+		t.Error("grant action must declare a --tenant-guids flag for bulk grants")
 	}
 }
 

@@ -28,6 +28,19 @@ func init() {
 					{Name: "role-id", Description: "GUID of the default tenant-scoped role to auto-assign", Type: "string"},
 				},
 			},
+			{
+				Name:        "extend-trial",
+				Description: "Extend a tenant's trial period (revives expired trials; requires Tenant.ExtendTrial)",
+				ToolName:    "UteamupTenantExtendTrial",
+				HTTPMethod:  "POST",
+				RESTPath:    "{tenantGuid}/extend-trial",
+				Args:        []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "extend-by-days", BodyName: "extendByDays", Description: "Days to add to the current trial end (1-365); exactly one of this or --new-trial-end", Type: "int"},
+					{Name: "new-trial-end", BodyName: "newTrialEndDate", Description: "Absolute new trial end (ISO 8601 UTC); exactly one of this or --extend-by-days", Type: "string"},
+					{Name: "note", Description: "Audit note stored with the extension", Type: "string"},
+				},
+			},
 		},
 	})
 }
