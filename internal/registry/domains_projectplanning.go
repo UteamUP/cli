@@ -154,6 +154,30 @@ func init() {
 					{Name: "status", Description: "New status: NotStarted, InProgress, Completed, Blocked, or Skipped", Required: true, Type: "string"},
 				},
 			},
+			{
+				Name:        "assign-workorder",
+				Description: "Assign a work order to this stage (the work order must already belong to the project)",
+				ToolName:    "UteamupProjectStageAssignWorkorder",
+				HTTPMethod:  "PUT",
+				RESTPath:    "{projectGuid}/stages/{stageGuid}/workorders/{workorderGuid}",
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
+					{Name: "stageGuid", Description: "Stage GUID", Required: true, Type: "string"},
+					{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "unassign-workorder",
+				Description: "Remove a work order from this stage (clears its stage assignment)",
+				ToolName:    "UteamupProjectStageUnassignWorkorder",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "{projectGuid}/stages/{stageGuid}/workorders/{workorderGuid}",
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
+					{Name: "stageGuid", Description: "Stage GUID", Required: true, Type: "string"},
+					{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "string"},
+				},
+			},
 		},
 	})
 
@@ -346,6 +370,40 @@ func init() {
 				},
 				Flags: []FlagDef{
 					{Name: "status", Description: "New status: Open, Mitigating, Accepted, or Closed", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "list-workorders",
+				Description: "List the work orders linked to this risk as mitigation actions",
+				ToolName:    "UteamupProjectRiskListWorkorders",
+				RESTPath:    "{projectGuid}/risks/{riskGuid}/workorders",
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
+					{Name: "riskGuid", Description: "Risk GUID", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "link-workorder",
+				Description: "Link a work order to this risk as a mitigation action (idempotent; the work order must already belong to the project)",
+				ToolName:    "UteamupProjectRiskLinkWorkorder",
+				HTTPMethod:  "POST",
+				RESTPath:    "{projectGuid}/risks/{riskGuid}/workorders/{workorderGuid}",
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
+					{Name: "riskGuid", Description: "Risk GUID", Required: true, Type: "string"},
+					{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "unlink-workorder",
+				Description: "Remove a work order link from this risk",
+				ToolName:    "UteamupProjectRiskUnlinkWorkorder",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "{projectGuid}/risks/{riskGuid}/workorders/{workorderGuid}",
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
+					{Name: "riskGuid", Description: "Risk GUID", Required: true, Type: "string"},
+					{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "string"},
 				},
 			},
 		},

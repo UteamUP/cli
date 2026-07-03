@@ -612,3 +612,37 @@ func TestCostBudgetThresholdCreateUpdateFlags(t *testing.T) {
 		}
 	}
 }
+
+// --- work-order link actions on project-stage / project-risk ---
+
+func TestProjectStageRiskWorkorderLinkActions(t *testing.T) {
+	cases := []struct {
+		domain   string
+		action   string
+		tool     string
+		method   string
+		restPath string
+		args     []string
+	}{
+		{"project-stage", "assign-workorder", "UteamupProjectStageAssignWorkorder", "PUT", "{projectGuid}/stages/{stageGuid}/workorders/{workorderGuid}", []string{"projectGuid", "stageGuid", "workorderGuid"}},
+		{"project-stage", "unassign-workorder", "UteamupProjectStageUnassignWorkorder", "DELETE", "{projectGuid}/stages/{stageGuid}/workorders/{workorderGuid}", []string{"projectGuid", "stageGuid", "workorderGuid"}},
+		{"project-risk", "list-workorders", "UteamupProjectRiskListWorkorders", "", "{projectGuid}/risks/{riskGuid}/workorders", []string{"projectGuid", "riskGuid"}},
+		{"project-risk", "link-workorder", "UteamupProjectRiskLinkWorkorder", "POST", "{projectGuid}/risks/{riskGuid}/workorders/{workorderGuid}", []string{"projectGuid", "riskGuid", "workorderGuid"}},
+		{"project-risk", "unlink-workorder", "UteamupProjectRiskUnlinkWorkorder", "DELETE", "{projectGuid}/risks/{riskGuid}/workorders/{workorderGuid}", []string{"projectGuid", "riskGuid", "workorderGuid"}},
+	}
+	for _, c := range cases {
+		a := findDomainAction(t, c.domain, c.action)
+		if a.ToolName != c.tool || a.HTTPMethod != c.method || a.RESTPath != c.restPath {
+			t.Errorf("%s %s: want tool=%s method=%q path=%s, got tool=%s method=%q path=%s",
+				c.domain, c.action, c.tool, c.method, c.restPath, a.ToolName, a.HTTPMethod, a.RESTPath)
+		}
+		if len(a.Args) != len(c.args) {
+			t.Fatalf("%s %s expected %d args, got %+v", c.domain, c.action, len(c.args), a.Args)
+		}
+		for i, name := range c.args {
+			if a.Args[i].Name != name || !a.Args[i].Required || a.Args[i].Type != "string" {
+				t.Errorf("%s %s arg[%d] must be required string %q, got %+v", c.domain, c.action, i, name, a.Args[i])
+			}
+		}
+	}
+}
