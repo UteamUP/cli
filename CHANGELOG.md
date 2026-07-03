@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.36.0](https://github.com/UteamUP/cli/compare/1.35.0...1.36.0) (2026-07-03)
+
+
+### Features
+
+* **registry:** Part 2 plan-management domains ([99f41e8](https://github.com/UteamUP/cli/commit/99f41e8a69037526dccc673e1236dab5f2e24ea8))
+
+
+### Bug Fixes
+
+* **registry:** key knowledge article CRUD by GUID ([b2b2036](https://github.com/UteamUP/cli/commit/b2b203682bc42f1b9b74121bde081c90cd83f7f5))
+
 ## [1.35.0](https://github.com/UteamUP/cli/compare/1.34.0...1.35.0) (2026-07-02)
 
 
