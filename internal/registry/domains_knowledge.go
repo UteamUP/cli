@@ -13,7 +13,19 @@ func init() {
 		// Without this override the auto-derived base path would be /api/knowledge,
 		// which matches no backend route.
 		APIPath: "/api/knowledgearticle",
-		Actions: append(crudActions("KnowledgeArticle"),
+		// GUID-first per CLIGuidelines.md: get/update/delete target the backend
+		// by-guid/{guid} routes. The int {id} routes are [Obsolete] and do not
+		// survive reseeds. list/create carry no identifier so they stay on the
+		// base path.
+		Actions: []Action{
+			{Name: "list", Description: "List records", ToolName: "UteamupKnowledgeArticleList", Flags: paginationFlags()},
+			{Name: "get", Description: "Get an article by GUID", ToolName: "UteamupKnowledgeArticleGet", RESTPath: "by-guid/{articleGuid}",
+				Args: []ArgDef{{Name: "articleGuid", Description: "Knowledge article GUID", Required: true, Type: "string"}}},
+			{Name: "create", Description: "Create a record", ToolName: "UteamupKnowledgeArticleCreate", Flags: []FlagDef{jsonFlag()}},
+			{Name: "update", Description: "Update an article by GUID", ToolName: "UteamupKnowledgeArticleUpdate", RESTPath: "by-guid/{articleGuid}",
+				Args: []ArgDef{{Name: "articleGuid", Description: "Knowledge article GUID", Required: true, Type: "string"}}, Flags: []FlagDef{jsonFlag()}},
+			{Name: "delete", Description: "Delete an article by GUID", ToolName: "UteamupKnowledgeArticleDelete", RESTPath: "by-guid/{articleGuid}",
+				Args: []ArgDef{{Name: "articleGuid", Description: "Knowledge article GUID", Required: true, Type: "string"}}},
 			Action{Name: "search", Description: "Search articles", ToolName: "UteamupKnowledgeArticleSearch", Args: queryArg(), Flags: paginationFlags()},
 			Action{Name: "linked", Description: "List articles linked to an entity (valid entityTypes: " + knowledgeEntityTypes + ")",
 				ToolName: "UteamupKnowledgeArticleGetLinked", HTTPMethod: "GET", RESTPath: "linked/{entityType}/{entityGuid}",
@@ -35,7 +47,7 @@ func init() {
 					{Name: "entityGuid", Description: "Entity GUID", Required: true, Type: "string"},
 					{Name: "articleGuid", Description: "Knowledge article GUID", Required: true, Type: "string"},
 				}},
-		),
+		},
 	})
 
 	Register(&Domain{

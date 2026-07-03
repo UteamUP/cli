@@ -50,6 +50,66 @@ func TestKnowledgeDomainWired(t *testing.T) {
 	}
 }
 
+func TestKnowledgeArticleCrudGuidKeyed(t *testing.T) {
+	d := findDomainByName(t, "knowledge")
+	actions := map[string]Action{}
+	for _, a := range d.Actions {
+		actions[a.Name] = a
+	}
+
+	// get/update/delete target the GUID route by-guid/{articleGuid}; the int
+	// {id} route is [Obsolete] on the backend and does not survive reseeds.
+	for _, name := range []string{"get", "update", "delete"} {
+		a, ok := actions[name]
+		if !ok {
+			t.Errorf("action %q not registered on knowledge domain", name)
+			continue
+		}
+		if a.RESTPath != "by-guid/{articleGuid}" {
+			t.Errorf("action %q RESTPath = %q, want %q", name, a.RESTPath, "by-guid/{articleGuid}")
+		}
+		if len(a.Args) != 1 {
+			t.Errorf("action %q arg count = %d, want 1", name, len(a.Args))
+			continue
+		}
+		arg := a.Args[0]
+		if arg.Name != "articleGuid" {
+			t.Errorf("action %q arg = %q, want %q", name, arg.Name, "articleGuid")
+		}
+		if !arg.Required {
+			t.Errorf("action %q arg %q must be Required", name, arg.Name)
+		}
+		if arg.Type != "string" {
+			t.Errorf("action %q arg %q Type = %q, want %q (GUIDs travel as validated strings)", name, arg.Name, arg.Type, "string")
+		}
+		// GUID-first: the article CRUD surface never takes an int id.
+		for _, ar := range a.Args {
+			if ar.Name == "id" || ar.Type == "int" {
+				t.Errorf("action %q uses an int id arg; knowledge article CRUD is GUID-first", name)
+			}
+		}
+	}
+}
+
+func TestKnowledgeArticleGuidRESTPathExpansion(t *testing.T) {
+	d := findDomainByName(t, "knowledge")
+	var get Action
+	for _, a := range d.Actions {
+		if a.Name == "get" {
+			get = a
+		}
+	}
+	args := map[string]any{"articleGuid": "11111111-2222-3333-4444-555555555555"}
+	path, consumed := buildRESTPath(d, get, args)
+	want := "/api/knowledgearticle/by-guid/11111111-2222-3333-4444-555555555555"
+	if path != want {
+		t.Errorf("get REST path = %q, want %q", path, want)
+	}
+	if len(consumed) != 1 || consumed[0] != "articleGuid" {
+		t.Errorf("get path expansion consumed %v, want [articleGuid]", consumed)
+	}
+}
+
 func TestKnowledgeEntityLinkActionsWired(t *testing.T) {
 	d := findDomainByName(t, "knowledge")
 	actions := map[string]Action{}
