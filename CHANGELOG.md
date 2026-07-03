@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.38.0](https://github.com/UteamUP/cli/compare/1.37.0...1.38.0) (2026-07-03)
+
+
+### Features
+
+* **projectplanning:** add work-order link commands for stages and risks ([e1232c0](https://github.com/UteamUP/cli/commit/e1232c037dbbb16282d5c5571d123b58837c5de3))
+
 ## [1.37.0](https://github.com/UteamUP/cli/compare/1.36.0...1.37.0) (2026-07-03)
 
 
