@@ -22,6 +22,12 @@ func init() {
 				RESTPath:    "by-guid/{guid}",
 				Args:        []ArgDef{{Name: "guid", Description: "Plan GUID (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
 			},
+			{
+				Name:        "ai-credit-packages",
+				Description: "List the active AI-credit packages (Bronze/Silver/Gold) available to purchase",
+				ToolName:    "UteamupAiCreditPackagesList",
+				RESTPath:    "ai-credit-packages",
+			},
 		},
 	})
 }
