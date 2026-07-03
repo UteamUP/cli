@@ -190,3 +190,39 @@ func TestProjectCopilotAiPlanningActionsWired(t *testing.T) {
 		}
 	}
 }
+
+func TestProjectCopilotEstimateActionWired(t *testing.T) {
+	action := findProjectCopilotAction(t, "estimate")
+	if action.ToolName != "UteamupProjectEstimate" || action.HTTPMethod != "POST" || action.RESTPath != "{projectGuid}/estimate" {
+		t.Errorf("estimate must be POST {projectGuid}/estimate, got %+v", action)
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "projectGuid" || !action.Args[0].Required || action.Args[0].Type != "string" {
+		t.Fatalf("estimate expected single required positional arg 'projectGuid', got %+v", action.Args)
+	}
+}
+
+func TestProjectCopilotEstimateApplyActionWired(t *testing.T) {
+	action := findProjectCopilotAction(t, "estimate-apply")
+	if action.ToolName != "UteamupProjectApplyEstimate" || action.HTTPMethod != "POST" || action.RESTPath != "{projectGuid}/estimate/apply" {
+		t.Errorf("estimate-apply must be POST {projectGuid}/estimate/apply, got %+v", action)
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "projectGuid" || !action.Args[0].Required {
+		t.Fatalf("estimate-apply expected single required positional arg 'projectGuid', got %+v", action.Args)
+	}
+	// The four scalar flags must map to the flat ApplyProjectEstimateRequest body.
+	want := map[string]string{
+		"duration-days":  "estimatedDurationDays",
+		"cost":           "estimatedCost",
+		"apply-duration": "applyDuration",
+		"apply-cost":     "applyCost",
+	}
+	got := map[string]string{}
+	for i := range action.Flags {
+		got[action.Flags[i].Name] = action.Flags[i].BodyName
+	}
+	for name, bodyName := range want {
+		if got[name] != bodyName {
+			t.Errorf("estimate-apply flag %q BodyName = %q, want %q", name, got[name], bodyName)
+		}
+	}
+}

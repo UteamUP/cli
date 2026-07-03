@@ -89,6 +89,28 @@ func init() {
 				},
 			},
 			{
+				Name:        "estimate",
+				Description: "AI-estimated duration + cost for a project or template, from its workorders/stages and similar completed projects (review-first — nothing persisted)",
+				ToolName:    "UteamupProjectEstimate",
+				HTTPMethod:  "POST",
+				RESTPath:    "{projectGuid}/estimate",
+				Args:        []ArgDef{{Name: "projectGuid", Description: "Project or template GUID", Required: true, Type: "string"}},
+			},
+			{
+				Name:        "estimate-apply",
+				Description: "Write a reviewed estimate onto a project — estimated cost and/or the end date (free)",
+				ToolName:    "UteamupProjectApplyEstimate",
+				HTTPMethod:  "POST",
+				RESTPath:    "{projectGuid}/estimate/apply",
+				Args:        []ArgDef{{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "duration-days", Description: "Estimated duration in days (sets end date = start + days when --apply-duration)", Type: "int", BodyName: "estimatedDurationDays"},
+					{Name: "cost", Description: "Estimated cost (sets Estimated Cost when --apply-cost)", Type: "float", BodyName: "estimatedCost"},
+					{Name: "apply-duration", Description: "Apply the duration to the project end date", Type: "bool", Default: true, BodyName: "applyDuration"},
+					{Name: "apply-cost", Description: "Apply the cost to the project estimated cost", Type: "bool", Default: true, BodyName: "applyCost"},
+				},
+			},
+			{
 				Name:        "prioritize-suggest",
 				Description: "AI-suggested priority ranking of a project's open workorders (review-first — nothing persisted)",
 				ToolName:    "UteamupProjectSuggestPrioritization",
