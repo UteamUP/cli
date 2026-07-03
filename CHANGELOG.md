@@ -5,6 +5,15 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.37.0](https://github.com/UteamUP/cli/compare/1.36.0...1.37.0) (2026-07-03)
+
+
+### Features
+
+* **cli:** add UPMate estimate + estimate-apply project-copilot actions ([b5f16b0](https://github.com/UteamUP/cli/commit/b5f16b0ed9f7dccaf6b900ae9803de5beded093e))
+* **marketplace:** add near-me lat/long flags to browse ([4b9f6a6](https://github.com/UteamUP/cli/commit/4b9f6a6e059e7ad5130afdd75b2bf4d84d0ee64b))
+* **plan:** add ai-credit-packages CLI action ([b63ac49](https://github.com/UteamUP/cli/commit/b63ac4960e156bacd0c9d27e62413a5df9894e09))
+
 ## [1.36.0](https://github.com/UteamUP/cli/compare/1.35.0...1.36.0) (2026-07-03)
 
 
