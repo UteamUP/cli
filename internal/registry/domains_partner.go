@@ -1,83 +1,83 @@
 package registry
 
-// Reseller CLI surface — mirrors the Reseller MCP tools (read-oriented).
+// Partner CLI surface — mirrors the Partner MCP tools (read-oriented).
 
 func init() {
 	Register(&Domain{
-		Name:        "reseller",
-		Aliases:     []string{"resellers", "rs"},
-		Description: "Read reseller program data: resellers, applications, managed tenants, earnings",
+		Name:        "partner",
+		Aliases:     []string{"partners", "resellers", "reseller", "rs"},
+		Description: "Read partner program data: partners, applications, managed tenants, earnings",
 		Actions: []Action{
 			{
 				Name:        "list",
-				Description: "List resellers",
-				ToolName:    "UteamupResellerList",
+				Description: "List partners",
+				ToolName:    "UteamupPartnerList",
 			},
 			{
 				Name:        "get",
-				Description: "Get a reseller by GUID",
-				ToolName:    "UteamupResellerGet",
+				Description: "Get a partner by GUID",
+				ToolName:    "UteamupPartnerGet",
 				Flags: []FlagDef{
-					{Name: "guid", Short: "g", Description: "Reseller GUID", Required: true, Type: "string"},
+					{Name: "guid", Short: "g", Description: "Partner GUID", Required: true, Type: "string"},
 				},
 			},
 			{
 				Name:        "applications",
-				Description: "List reseller applications",
-				ToolName:    "UteamupResellerApplicationsList",
+				Description: "List partner applications",
+				ToolName:    "UteamupPartnerApplicationsList",
 			},
 			{
 				Name:        "tenants",
-				Description: "List a reseller's managed tenants",
-				ToolName:    "UteamupResellerTenantsList",
+				Description: "List a partner's managed tenants",
+				ToolName:    "UteamupPartnerTenantsList",
 				Flags: []FlagDef{
-					{Name: "reseller-guid", Short: "r", Description: "Reseller GUID", Required: true, Type: "string"},
+					{Name: "partner-guid", Short: "r", Description: "Partner GUID", Required: true, Type: "string"},
 				},
 			},
 			{
 				Name:        "earnings",
-				Description: "List a reseller's earnings ledger",
-				ToolName:    "UteamupResellerEarningsList",
+				Description: "List a partner's earnings ledger",
+				ToolName:    "UteamupPartnerEarningsList",
 				Flags: []FlagDef{
-					{Name: "reseller-guid", Short: "r", Description: "Reseller GUID", Required: true, Type: "string"},
+					{Name: "partner-guid", Short: "r", Description: "Partner GUID", Required: true, Type: "string"},
 				},
 			},
 			{
 				Name:        "program-defaults",
-				Description: "Get the global reseller-program defaults new resellers inherit",
-				ToolName:    "UteamupResellerProgramDefaultsGet",
+				Description: "Get the global partner-program defaults new partners inherit",
+				ToolName:    "UteamupPartnerProgramDefaultsGet",
 			},
-			// New actions — 2026-06 reseller program overhaul
+			// New actions — 2026-06 partner program overhaul
 			{
 				Name:        "application-get",
-				Description: "Get your own reseller application thread (applicant self-serve)",
-				ToolName:    "UteamupResellerMyApplicationGet",
+				Description: "Get your own partner application thread (applicant self-serve)",
+				ToolName:    "UteamupPartnerMyApplicationGet",
 			},
 			{
 				Name:        "checklist",
-				Description: "Get the reviewer validation checklist for a reseller application",
-				ToolName:    "UteamupResellerApplicationChecksGet",
+				Description: "Get the reviewer validation checklist for a partner application",
+				ToolName:    "UteamupPartnerApplicationChecksGet",
 				Flags: []FlagDef{
 					{Name: "application-guid", Short: "a", Description: "Application GUID", Required: true, Type: "string"},
 				},
 			},
 			{
 				Name:        "meetings",
-				Description: "List the meetings (Teams + calendar invite) scheduled on a reseller application",
-				ToolName:    "UteamupResellerApplicationMeetingsGet",
+				Description: "List the meetings (Teams + calendar invite) scheduled on a partner application",
+				ToolName:    "UteamupPartnerApplicationMeetingsGet",
 				Flags: []FlagDef{
 					{Name: "application-guid", Short: "a", Description: "Application GUID", Required: true, Type: "string"},
 				},
 			},
 			{
 				Name:        "referral-codes",
-				Description: "List your reseller referral codes (self-serve portal)",
-				ToolName:    "UteamupResellerMyReferralCodesGet",
+				Description: "List your partner referral codes (self-serve portal)",
+				ToolName:    "UteamupPartnerMyReferralCodesGet",
 			},
 			{
 				Name:        "tenant-manager",
-				Description: "Get the reseller managing your current tenant (visible to any tenant member)",
-				ToolName:    "UteamupResellerMyTenantManagerGet",
+				Description: "Get the partner managing your current tenant (visible to any tenant member)",
+				ToolName:    "UteamupPartnerMyTenantManagerGet",
 			},
 		},
 	})

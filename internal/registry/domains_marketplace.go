@@ -33,6 +33,46 @@ func init() {
 				},
 			},
 			{
+				Name:        "listing-report",
+				Description: "Report a listing for moderation review",
+				ToolName:    "UteamupMarketplaceListingReport",
+				Flags: []FlagDef{
+					{Name: "guid", Short: "g", Description: "Listing GUID", Required: true, Type: "string"},
+					{Name: "reason", Short: "r", Description: "Illegal | Prohibited | Misleading | Offensive | WrongCategory | Other", Required: true, Type: "string"},
+					{Name: "details", Description: "Optional details for the moderation team", Type: "string"},
+				},
+			},
+			{
+				Name:        "messages-list",
+				Description: "List buyer↔seller message threads on a listing or a transaction",
+				ToolName:    "UteamupMarketplaceMessagesList",
+				Flags: []FlagDef{
+					{Name: "listing-guid", Description: "Listing GUID (pass this OR --transaction-guid)", Type: "string"},
+					{Name: "transaction-guid", Description: "Transaction GUID (pass this OR --listing-guid)", Type: "string"},
+					{Name: "page", Description: "Page number", Type: "float", Default: 1.0},
+					{Name: "page-size", Description: "Page size", Type: "float", Default: 20.0},
+				},
+			},
+			{
+				Name:        "message-send",
+				Description: "Send a buyer↔seller message on a listing or a transaction",
+				ToolName:    "UteamupMarketplaceMessageSend",
+				Flags: []FlagDef{
+					{Name: "listing-guid", Description: "Listing GUID (for a listing thread)", Type: "string"},
+					{Name: "transaction-guid", Description: "Transaction GUID (for a transaction thread)", Type: "string"},
+					{Name: "parent-guid", Description: "Parent message GUID to reply to", Type: "string"},
+					{Name: "body", Short: "b", Description: "Message body", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "message-thread",
+				Description: "Get one message thread (root + replies) by root message GUID",
+				ToolName:    "UteamupMarketplaceMessageThreadGet",
+				Flags: []FlagDef{
+					{Name: "guid", Short: "g", Description: "Root message GUID", Required: true, Type: "string"},
+				},
+			},
+			{
 				Name:        "requirements",
 				Description: "List open anonymous stock requirements visible to your tenant",
 				ToolName:    "UteamupMarketplaceRequirementsList",

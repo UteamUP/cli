@@ -2,46 +2,46 @@ package registry
 
 import "testing"
 
-func findResellerDomain() *Domain {
+func findPartnerDomain() *Domain {
 	for _, d := range DefaultRegistry.Domains() {
-		if d.Name == "reseller" {
+		if d.Name == "partner" {
 			return d
 		}
 	}
 	return nil
 }
 
-func TestResellerDomainRegistered(t *testing.T) {
-	d := findResellerDomain()
+func TestPartnerDomainRegistered(t *testing.T) {
+	d := findPartnerDomain()
 	if d == nil {
-		t.Fatal("expected reseller domain to be registered")
+		t.Fatal("expected partner domain to be registered")
 	}
 	if d.Description == "" {
-		t.Error("reseller domain must have a Description")
+		t.Error("partner domain must have a Description")
 	}
 	if len(d.Aliases) == 0 {
-		t.Error("reseller domain should have aliases")
+		t.Error("partner domain should have aliases")
 	}
 }
 
-func TestResellerActionsWired(t *testing.T) {
-	d := findResellerDomain()
+func TestPartnerActionsWired(t *testing.T) {
+	d := findPartnerDomain()
 	if d == nil {
-		t.Fatal("expected reseller domain to be registered")
+		t.Fatal("expected partner domain to be registered")
 	}
 	expected := map[string]string{
-		"list":             "UteamupResellerList",
-		"get":              "UteamupResellerGet",
-		"applications":     "UteamupResellerApplicationsList",
-		"tenants":          "UteamupResellerTenantsList",
-		"earnings":         "UteamupResellerEarningsList",
-		"program-defaults": "UteamupResellerProgramDefaultsGet",
-		// New actions — 2026-06 reseller program overhaul
-		"application-get": "UteamupResellerMyApplicationGet",
-		"checklist":        "UteamupResellerApplicationChecksGet",
-		"meetings":         "UteamupResellerApplicationMeetingsGet",
-		"referral-codes":   "UteamupResellerMyReferralCodesGet",
-		"tenant-manager":   "UteamupResellerMyTenantManagerGet",
+		"list":             "UteamupPartnerList",
+		"get":              "UteamupPartnerGet",
+		"applications":     "UteamupPartnerApplicationsList",
+		"tenants":          "UteamupPartnerTenantsList",
+		"earnings":         "UteamupPartnerEarningsList",
+		"program-defaults": "UteamupPartnerProgramDefaultsGet",
+		// New actions — 2026-06 partner program overhaul
+		"application-get": "UteamupPartnerMyApplicationGet",
+		"checklist":        "UteamupPartnerApplicationChecksGet",
+		"meetings":         "UteamupPartnerApplicationMeetingsGet",
+		"referral-codes":   "UteamupPartnerMyReferralCodesGet",
+		"tenant-manager":   "UteamupPartnerMyTenantManagerGet",
 	}
 	got := map[string]string{}
 	for _, a := range d.Actions {
@@ -49,15 +49,15 @@ func TestResellerActionsWired(t *testing.T) {
 	}
 	for action, tool := range expected {
 		if got[action] != tool {
-			t.Errorf("expected reseller action %q to map to %q, got %q", action, tool, got[action])
+			t.Errorf("expected partner action %q to map to %q, got %q", action, tool, got[action])
 		}
 	}
 }
 
-func TestResellerNewActionsHaveNoSpoofingFlags(t *testing.T) {
-	d := findResellerDomain()
+func TestPartnerNewActionsHaveNoSpoofingFlags(t *testing.T) {
+	d := findPartnerDomain()
 	if d == nil {
-		t.Fatal("expected reseller domain to be registered")
+		t.Fatal("expected partner domain to be registered")
 	}
 	// Self-serve tools must take zero flags (identity comes from Bearer token, not a CLI arg).
 	noFlagActions := []string{"application-get", "referral-codes", "tenant-manager"}
@@ -77,10 +77,10 @@ func TestResellerNewActionsHaveNoSpoofingFlags(t *testing.T) {
 	}
 }
 
-func TestResellerChecklistFlagPresent(t *testing.T) {
-	d := findResellerDomain()
+func TestPartnerChecklistFlagPresent(t *testing.T) {
+	d := findPartnerDomain()
 	if d == nil {
-		t.Fatal("expected reseller domain to be registered")
+		t.Fatal("expected partner domain to be registered")
 	}
 	for _, a := range d.Actions {
 		if a.Name != "checklist" {
@@ -102,13 +102,13 @@ func TestResellerChecklistFlagPresent(t *testing.T) {
 		}
 		return
 	}
-	t.Error("checklist action not found in reseller domain")
+	t.Error("checklist action not found in partner domain")
 }
 
-func TestResellerMeetingsFlagPresent(t *testing.T) {
-	d := findResellerDomain()
+func TestPartnerMeetingsFlagPresent(t *testing.T) {
+	d := findPartnerDomain()
 	if d == nil {
-		t.Fatal("expected reseller domain to be registered")
+		t.Fatal("expected partner domain to be registered")
 	}
 	for _, a := range d.Actions {
 		if a.Name != "meetings" {
@@ -126,5 +126,5 @@ func TestResellerMeetingsFlagPresent(t *testing.T) {
 		}
 		return
 	}
-	t.Error("meetings action not found in reseller domain")
+	t.Error("meetings action not found in partner domain")
 }

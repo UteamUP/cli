@@ -30,12 +30,16 @@ func TestMarketplaceActionsWired(t *testing.T) {
 		t.Fatal("expected marketplace domain to be registered")
 	}
 	expected := map[string]string{
-		"browse":       "UteamupMarketplaceBrowse",
-		"listing-get":  "UteamupMarketplaceListingGet",
-		"requirements": "UteamupMarketplaceRequirementsList",
-		"my-offers":    "UteamupMarketplaceMyOffersList",
-		"transactions": "UteamupMarketplaceTransactionsList",
-		"settings":     "UteamupMarketplaceSettingsGet",
+		"browse":         "UteamupMarketplaceBrowse",
+		"listing-get":    "UteamupMarketplaceListingGet",
+		"listing-report": "UteamupMarketplaceListingReport",
+		"messages-list":  "UteamupMarketplaceMessagesList",
+		"message-send":   "UteamupMarketplaceMessageSend",
+		"message-thread": "UteamupMarketplaceMessageThreadGet",
+		"requirements":   "UteamupMarketplaceRequirementsList",
+		"my-offers":      "UteamupMarketplaceMyOffersList",
+		"transactions":   "UteamupMarketplaceTransactionsList",
+		"settings":       "UteamupMarketplaceSettingsGet",
 	}
 	actions := map[string]Action{}
 	for _, a := range d.Actions {
@@ -49,6 +53,33 @@ func TestMarketplaceActionsWired(t *testing.T) {
 		}
 		if a.ToolName != tool {
 			t.Errorf("action %q maps to %q, want %q", name, a.ToolName, tool)
+		}
+	}
+}
+
+func TestMarketplaceListingReportFlags(t *testing.T) {
+	d := findMarketplaceDomain()
+	if d == nil {
+		t.Fatal("expected marketplace domain to be registered")
+	}
+	var report *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "listing-report" {
+			report = &d.Actions[i]
+		}
+	}
+	if report == nil {
+		t.Fatal("missing marketplace action \"listing-report\"")
+	}
+	required := map[string]bool{}
+	for _, f := range report.Flags {
+		if f.Required {
+			required[f.Name] = true
+		}
+	}
+	for _, want := range []string{"guid", "reason"} {
+		if !required[want] {
+			t.Errorf("listing-report must require the %q flag", want)
 		}
 	}
 }
