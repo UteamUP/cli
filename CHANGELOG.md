@@ -5,6 +5,15 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.39.0](https://github.com/UteamUP/cli/compare/1.38.0...1.39.0) (2026-07-04)
+
+
+### Features
+
+* **registry:** add duplicate actions for code catalog subtrees and stock items ([d62304d](https://github.com/UteamUP/cli/commit/d62304d36baeaba21cd31d65a92ac772afeb9b09))
+* **registry:** add reseller CLI surface with actions and tests ([a25a51f](https://github.com/UteamUP/cli/commit/a25a51f1aaa14944b89e5d27dd1d2c41a48bad74))
+* **registry:** update partner CLI surface and add new actions for listing and messaging ([5da676d](https://github.com/UteamUP/cli/commit/5da676d4eb6d4aed231560629d7de608708dccb1))
+
 ## [1.38.0](https://github.com/UteamUP/cli/compare/1.37.0...1.38.0) (2026-07-03)
 
 
