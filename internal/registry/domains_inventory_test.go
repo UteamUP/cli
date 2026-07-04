@@ -577,6 +577,43 @@ func TestStockAtpActionWired(t *testing.T) {
 	}
 }
 
+func TestStockDuplicateActionWired(t *testing.T) {
+	action := findStockAction(t, "duplicate")
+
+	if action.ToolName != "UteamupStockItemDuplicate" {
+		t.Errorf("duplicate ToolName = %q, want %q", action.ToolName, "UteamupStockItemDuplicate")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("duplicate HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "items/{itemGuid}/duplicate" {
+		t.Errorf("duplicate RESTPath = %q, want %q", action.RESTPath, "items/{itemGuid}/duplicate")
+	}
+
+	// Single Guid (string) positional arg feeding the {itemGuid} path placeholder.
+	if len(action.Args) != 1 || action.Args[0].Name != "itemGuid" || !action.Args[0].Required || action.Args[0].Type != "string" {
+		t.Errorf("duplicate expected single required string positional arg 'itemGuid', got %+v", action.Args)
+	}
+
+	// target-stock-guid is a required Guid string → body targetStockGuid.
+	target := stockActionFlag(t, "duplicate", "target-stock-guid")
+	if !target.Required || target.Type != "string" {
+		t.Errorf("target-stock-guid must be a Required string Guid, got %+v", target)
+	}
+	if target.BodyName != "targetStockGuid" {
+		t.Errorf("target-stock-guid BodyName = %q, want targetStockGuid", target.BodyName)
+	}
+
+	// name is an optional string → body name.
+	name := stockActionFlag(t, "duplicate", "name")
+	if name.Required {
+		t.Error("name flag must be optional")
+	}
+	if name.Type != "string" || name.BodyName != "name" {
+		t.Errorf("name flag = %+v, want optional string → body name", name)
+	}
+}
+
 func TestReadJSONFileFlagParsesArray(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "ops.json")
 	if err := os.WriteFile(path, []byte(`[{"stockItemGuid":"11111111-1111-1111-1111-111111111111","action":"Add","quantity":3}]`), 0o600); err != nil {

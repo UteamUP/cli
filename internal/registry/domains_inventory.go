@@ -243,6 +243,18 @@ func init() {
 				Args:        []ArgDef{{Name: "itemGuid", Description: "Stock item GUID", Required: true, Type: "string"}},
 			},
 			Action{
+				Name:        "duplicate",
+				Description: "Clone a stock item (part/tool/chemical) into a chosen target stock location, sharing the same catalog master and starting at zero stock. The target location must not already hold that master.",
+				ToolName:    "UteamupStockItemDuplicate",
+				HTTPMethod:  "POST",
+				RESTPath:    "items/{itemGuid}/duplicate",
+				Args:        []ArgDef{{Name: "itemGuid", Description: "Stock item GUID to duplicate", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "target-stock-guid", Description: "GUID of the target stock location the clone is created in", Required: true, Type: "string", BodyName: "targetStockGuid"},
+					{Name: "name", Description: "Optional name for the clone (defaults to the source item's name)", Type: "string", BodyName: "name"},
+				},
+			},
+			Action{
 				Name:        "bins-create",
 				Description: "Create a bin (Zone, Aisle, Rack, Shelf, or Bin) inside a stock location",
 				ToolName:    "UteamupStockUpsertBin",

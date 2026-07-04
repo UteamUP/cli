@@ -209,3 +209,96 @@ func TestCodecatalogMoveActionWired(t *testing.T) {
 		}
 	}
 }
+
+func TestCodecatalogDuplicateActionWired(t *testing.T) {
+	var d *Domain
+	for _, dom := range DefaultRegistry.Domains() {
+		if dom.Name == "codecatalog" {
+			d = dom
+			break
+		}
+	}
+	if d == nil {
+		t.Fatal("expected codecatalog domain to be registered")
+	}
+
+	var action *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "duplicate" {
+			action = &d.Actions[i]
+			break
+		}
+	}
+	if action == nil {
+		t.Fatal("expected `duplicate` action on codecatalog domain")
+	}
+
+	if action.ToolName != "UteamupCodeCatalogDuplicate" {
+		t.Errorf("duplicate ToolName = %q, want %q", action.ToolName, "UteamupCodeCatalogDuplicate")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("duplicate HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "entries/by-guid/{guid}/duplicate" {
+		t.Errorf("duplicate RESTPath = %q, want %q", action.RESTPath, "entries/by-guid/{guid}/duplicate")
+	}
+
+	// Single Guid (string) positional arg feeding the {guid} path placeholder.
+	if len(action.Args) != 1 || action.Args[0].Name != "guid" {
+		t.Fatalf("duplicate expected single positional arg 'guid', got %+v", action.Args)
+	}
+	if action.Args[0].Type != "string" {
+		t.Errorf("guid arg type = %q, want string (Guids are strings)", action.Args[0].Type)
+	}
+	if !action.Args[0].Required {
+		t.Error("guid arg must be Required")
+	}
+
+	flags := make(map[string]FlagDef)
+	for _, f := range action.Flags {
+		flags[f.Name] = f
+	}
+
+	if f, ok := flags["copies"]; !ok {
+		t.Error("duplicate must expose a `copies` flag")
+	} else {
+		if f.Type != "int" {
+			t.Errorf("copies flag type = %q, want int", f.Type)
+		}
+		if f.BodyName != "copies" {
+			t.Errorf("copies BodyName = %q, want copies", f.BodyName)
+		}
+		if f.Default != 1 {
+			t.Errorf("copies Default = %v, want 1", f.Default)
+		}
+	}
+
+	if f, ok := flags["target-parent-guid"]; !ok {
+		t.Error("duplicate must expose a `target-parent-guid` flag")
+	} else if f.Type != "string" || f.BodyName != "targetParentGuid" {
+		t.Errorf("target-parent-guid flag = %+v, want string Guid → body targetParentGuid", f)
+	}
+
+	if f, ok := flags["include-descendant-guids"]; !ok {
+		t.Error("duplicate must expose an `include-descendant-guids` flag")
+	} else if f.Type != "stringSlice" || f.BodyName != "includeDescendantGuids" {
+		t.Errorf("include-descendant-guids flag = %+v, want stringSlice → body includeDescendantGuids", f)
+	}
+
+	if f, ok := flags["include-tagged-assets"]; !ok {
+		t.Error("duplicate must expose an `include-tagged-assets` flag")
+	} else {
+		if f.Type != "bool" || f.BodyName != "includeTaggedAssets" {
+			t.Errorf("include-tagged-assets flag = %+v, want bool → body includeTaggedAssets", f)
+		}
+		if f.Default != true {
+			t.Errorf("include-tagged-assets Default = %v, want true", f.Default)
+		}
+	}
+
+	if f, ok := flags["new-root-code"]; !ok {
+		t.Error("duplicate must expose a `new-root-code` flag")
+	} else if f.Type != "string" || f.BodyName != "newRootCode" {
+		t.Errorf("new-root-code flag = %+v, want string → body newRootCode", f)
+	}
+}

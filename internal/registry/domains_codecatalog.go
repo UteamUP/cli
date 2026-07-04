@@ -53,6 +53,23 @@ func init() {
 				},
 			},
 			{
+				Name:        "duplicate",
+				Description: "Duplicate a code subtree (root + a selectable subset of descendants) as a numbered series under a chosen parent, optionally cloning the tagged assets. Each copy's root takes the next free sibling code; DisplayCodes stay unique; cables are remapped to copied endpoints or skipped.",
+				ToolName:    "UteamupCodeCatalogDuplicate",
+				HTTPMethod:  "POST",
+				RESTPath:    "entries/by-guid/{guid}/duplicate",
+				Args: []ArgDef{
+					{Name: "guid", Description: "ExternalGuid of the code to duplicate", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "copies", Description: "Number of copies to create (1-20)", Default: 1, Type: "int", BodyName: "copies"},
+					{Name: "target-parent-guid", Description: "ExternalGuid of the parent to place copies under (default: the source's own parent)", Type: "string", BodyName: "targetParentGuid"},
+					{Name: "include-descendant-guids", Description: "Descendant ExternalGuids to include — repeatable or comma-separated (omit for all descendants)", Type: "stringSlice", BodyName: "includeDescendantGuids"},
+					{Name: "include-tagged-assets", Description: "Also clone the assets tagged to each cloned code (default true)", Default: true, Type: "bool", BodyName: "includeTaggedAssets"},
+					{Name: "new-root-code", Description: "Explicit root code for a single copy (honored only when copies=1)", Type: "string", BodyName: "newRootCode"},
+				},
+			},
+			{
 				Name:        "remove-asset-assignment",
 				Description: "Remove the code assignment from an asset by its ExternalGuid — preserves audit log",
 				ToolName:    "UteamupCodingsystemRemoveAssetAssignment",
