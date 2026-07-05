@@ -1,7 +1,7 @@
 package registry
 
 // Wholesaler CLI surface — mirrors the Wholesaler MCP tools (read-oriented; the
-// goods-supplier program, distinct from the license reseller program).
+// goods-supplier program, distinct from the license partner program).
 
 func init() {
 	Register(&Domain{
