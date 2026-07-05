@@ -43,6 +43,7 @@ func TestMarketplaceActionsWired(t *testing.T) {
 		"saved-searches":      "UteamupMarketplaceSavedSearchesList",
 		"save-search":         "UteamupMarketplaceSaveSearch",
 		"delete-saved-search": "UteamupMarketplaceDeleteSavedSearch",
+		"seller-scorecard":    "UteamupMarketplaceSellerScorecard",
 	}
 	actions := map[string]Action{}
 	for _, a := range d.Actions {
@@ -135,6 +136,37 @@ func TestMarketplaceSavedSearchFlags(t *testing.T) {
 	}
 	if !guidRequired {
 		t.Error("delete-saved-search must require the \"guid\" flag")
+	}
+}
+
+func TestMarketplaceSellerScorecardFlags(t *testing.T) {
+	d := findMarketplaceDomain()
+	if d == nil {
+		t.Fatal("expected marketplace domain to be registered")
+	}
+	var scorecard *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "seller-scorecard" {
+			scorecard = &d.Actions[i]
+		}
+	}
+	if scorecard == nil {
+		t.Fatal("missing marketplace action \"seller-scorecard\"")
+	}
+	var sellerGuid *FlagDef
+	for i := range scorecard.Flags {
+		if scorecard.Flags[i].Name == "seller-guid" {
+			sellerGuid = &scorecard.Flags[i]
+		}
+	}
+	if sellerGuid == nil {
+		t.Fatal("seller-scorecard must define the \"seller-guid\" flag")
+	}
+	if !sellerGuid.Required {
+		t.Error("seller-scorecard must require the \"seller-guid\" flag")
+	}
+	if sellerGuid.Type != "string" {
+		t.Errorf("seller-scorecard \"seller-guid\" flag type is %q, want \"string\"", sellerGuid.Type)
 	}
 }
 

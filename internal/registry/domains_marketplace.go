@@ -119,6 +119,14 @@ func init() {
 					{Name: "guid", Short: "g", Description: "Saved search GUID", Required: true, Type: "string"},
 				},
 			},
+			{
+				Name:        "seller-scorecard",
+				Description: "Get a seller's trust scorecard (rating, fulfillment, response time)",
+				ToolName:    "UteamupMarketplaceSellerScorecard",
+				Flags: []FlagDef{
+					{Name: "seller-guid", Short: "s", Description: "Seller tenant GUID", Required: true, Type: "string"},
+				},
+			},
 		},
 	})
 }
