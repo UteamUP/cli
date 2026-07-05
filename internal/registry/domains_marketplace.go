@@ -135,6 +135,14 @@ func init() {
 					{Name: "search", Description: "Optional free-text search to facet within", Type: "string"},
 				},
 			},
+			{
+				Name:        "buyer-reputation",
+				Description: "Get a buyer's reputation (completed purchases, tenure, verified badge)",
+				ToolName:    "UteamupMarketplaceBuyerReputation",
+				Flags: []FlagDef{
+					{Name: "buyer-guid", Short: "b", Description: "Buyer tenant GUID", Required: true, Type: "string"},
+				},
+			},
 		},
 	})
 }
