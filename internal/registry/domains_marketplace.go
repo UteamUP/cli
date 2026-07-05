@@ -127,6 +127,14 @@ func init() {
 					{Name: "seller-guid", Short: "s", Description: "Seller tenant GUID", Required: true, Type: "string"},
 				},
 			},
+			{
+				Name:        "facets",
+				Description: "Get item-type / condition / price-band facet counts for a search",
+				ToolName:    "UteamupMarketplaceFacets",
+				Flags: []FlagDef{
+					{Name: "search", Description: "Optional free-text search to facet within", Type: "string"},
+				},
+			},
 		},
 	})
 }

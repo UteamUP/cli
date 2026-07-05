@@ -44,6 +44,7 @@ func TestMarketplaceActionsWired(t *testing.T) {
 		"save-search":         "UteamupMarketplaceSaveSearch",
 		"delete-saved-search": "UteamupMarketplaceDeleteSavedSearch",
 		"seller-scorecard":    "UteamupMarketplaceSellerScorecard",
+		"facets":              "UteamupMarketplaceFacets",
 	}
 	actions := map[string]Action{}
 	for _, a := range d.Actions {
