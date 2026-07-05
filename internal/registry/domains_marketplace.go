@@ -96,6 +96,29 @@ func init() {
 				Description: "Get your tenant's marketplace settings",
 				ToolName:    "UteamupMarketplaceSettingsGet",
 			},
+			{
+				Name:        "saved-searches",
+				Description: "List your saved marketplace searches",
+				ToolName:    "UteamupMarketplaceSavedSearchesList",
+			},
+			{
+				Name:        "save-search",
+				Description: "Save a browse filter as a search, optionally notifying you on new matches",
+				ToolName:    "UteamupMarketplaceSaveSearch",
+				Flags: []FlagDef{
+					{Name: "name", Short: "n", Description: "A short name for the saved search", Required: true, Type: "string"},
+					{Name: "filters-json", Description: `Browse filter as JSON, e.g. {"itemType":"Tool","maxPrice":200}`, Type: "string", Default: "{}"},
+					{Name: "notify-on-new-match", Description: "Notify me when a new listing matches", Type: "bool", Default: true},
+				},
+			},
+			{
+				Name:        "delete-saved-search",
+				Description: "Delete one of your saved searches",
+				ToolName:    "UteamupMarketplaceDeleteSavedSearch",
+				Flags: []FlagDef{
+					{Name: "guid", Short: "g", Description: "Saved search GUID", Required: true, Type: "string"},
+				},
+			},
 		},
 	})
 }

@@ -30,16 +30,19 @@ func TestMarketplaceActionsWired(t *testing.T) {
 		t.Fatal("expected marketplace domain to be registered")
 	}
 	expected := map[string]string{
-		"browse":         "UteamupMarketplaceBrowse",
-		"listing-get":    "UteamupMarketplaceListingGet",
-		"listing-report": "UteamupMarketplaceListingReport",
-		"messages-list":  "UteamupMarketplaceMessagesList",
-		"message-send":   "UteamupMarketplaceMessageSend",
-		"message-thread": "UteamupMarketplaceMessageThreadGet",
-		"requirements":   "UteamupMarketplaceRequirementsList",
-		"my-offers":      "UteamupMarketplaceMyOffersList",
-		"transactions":   "UteamupMarketplaceTransactionsList",
-		"settings":       "UteamupMarketplaceSettingsGet",
+		"browse":              "UteamupMarketplaceBrowse",
+		"listing-get":         "UteamupMarketplaceListingGet",
+		"listing-report":      "UteamupMarketplaceListingReport",
+		"messages-list":       "UteamupMarketplaceMessagesList",
+		"message-send":        "UteamupMarketplaceMessageSend",
+		"message-thread":      "UteamupMarketplaceMessageThreadGet",
+		"requirements":        "UteamupMarketplaceRequirementsList",
+		"my-offers":           "UteamupMarketplaceMyOffersList",
+		"transactions":        "UteamupMarketplaceTransactionsList",
+		"settings":            "UteamupMarketplaceSettingsGet",
+		"saved-searches":      "UteamupMarketplaceSavedSearchesList",
+		"save-search":         "UteamupMarketplaceSaveSearch",
+		"delete-saved-search": "UteamupMarketplaceDeleteSavedSearch",
 	}
 	actions := map[string]Action{}
 	for _, a := range d.Actions {
@@ -81,6 +84,57 @@ func TestMarketplaceListingReportFlags(t *testing.T) {
 		if !required[want] {
 			t.Errorf("listing-report must require the %q flag", want)
 		}
+	}
+}
+
+func TestMarketplaceSavedSearchFlags(t *testing.T) {
+	d := findMarketplaceDomain()
+	if d == nil {
+		t.Fatal("expected marketplace domain to be registered")
+	}
+	byName := map[string]Action{}
+	for _, a := range d.Actions {
+		byName[a.Name] = a
+	}
+
+	save, ok := byName["save-search"]
+	if !ok {
+		t.Fatal("missing marketplace action \"save-search\"")
+	}
+	var nameRequired bool
+	var notifyDefault any
+	var notifyType string
+	for _, f := range save.Flags {
+		if f.Name == "name" && f.Required {
+			nameRequired = true
+		}
+		if f.Name == "notify-on-new-match" {
+			notifyDefault = f.Default
+			notifyType = f.Type
+		}
+	}
+	if !nameRequired {
+		t.Error("save-search must require the \"name\" flag")
+	}
+	if notifyType != "bool" {
+		t.Errorf("save-search \"notify-on-new-match\" flag type is %q, want \"bool\"", notifyType)
+	}
+	if v, ok := notifyDefault.(bool); !ok || !v {
+		t.Errorf("save-search \"notify-on-new-match\" default is %v (%T), want true (bool)", notifyDefault, notifyDefault)
+	}
+
+	del, ok := byName["delete-saved-search"]
+	if !ok {
+		t.Fatal("missing marketplace action \"delete-saved-search\"")
+	}
+	var guidRequired bool
+	for _, f := range del.Flags {
+		if f.Name == "guid" && f.Required {
+			guidRequired = true
+		}
+	}
+	if !guidRequired {
+		t.Error("delete-saved-search must require the \"guid\" flag")
 	}
 }
 
