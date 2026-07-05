@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.41.0](https://github.com/UteamUP/cli/compare/1.40.0...1.41.0) (2026-07-05)
+
+
+### Features
+
+* **marketplace:** add seller-scorecard CLI action ([35e1fe5](https://github.com/UteamUP/cli/commit/35e1fe5ff20c9ede9b59e32af2780cce726d953d))
+
 ## [1.40.0](https://github.com/UteamUP/cli/compare/1.39.0...1.40.0) (2026-07-05)
 
 
