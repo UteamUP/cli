@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.40.0](https://github.com/UteamUP/cli/compare/1.39.0...1.40.0) (2026-07-05)
+
+
+### Features
+
+* **marketplace:** add saved-search CLI actions ([6b431bc](https://github.com/UteamUP/cli/commit/6b431bc68e5b23d1b86776b0b4aa55e1e4d3871a))
+
+
+### Miscellaneous
+
+* **partner:** update wholesaler comment to reference partner program ([b00995b](https://github.com/UteamUP/cli/commit/b00995b4517d8c94c2e3451bd2eb9875f97107a5))
+
 ## [1.39.0](https://github.com/UteamUP/cli/compare/1.38.0...1.39.0) (2026-07-04)
 
 
