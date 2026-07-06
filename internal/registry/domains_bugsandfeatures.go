@@ -163,7 +163,7 @@ func init() {
 			},
 			{
 				Name:        "attachments-list",
-				Description: "List image attachments on a bug (global-admin only). Output is oldest-first.",
+				Description: "List attachments on a bug (global-admin only) — images, documents, and videos. Output is oldest-first. Each row exposes Kind (Image|Document|Video), ContentType, OriginalFileName, and Extension so the caller can pick the right preview affordance.",
 				ToolName:    "UteamupBugsAndFeaturesAttachmentsList",
 				HTTPMethod:  "GET",
 				RESTPath:    "{bugExternalGuid}/attachments",
@@ -173,7 +173,7 @@ func init() {
 			},
 			{
 				Name:        "attachments-upload",
-				Description: "Upload an image (PNG/JPEG/GIF/WEBP, max 2 MB) to a bug as a global admin. Multipart over REST.",
+				Description: "Upload an image, document, or video attachment to a bug. Per-family caps: image 2 MB, document 25 MB, video 100 MB. Server stores in the global-admin-owned namespace inside the shared bugattachments blob container — never to a tenant's SharePoint or dedicated tenant storage. Bytes are byte-verbatim for documents/videos; images are re-encoded via SkiaSharp (drops EXIF, bounds longest edge to 1600 px). Multipart over REST.",
 				ToolName:    "UteamupBugsAndFeaturesAttachmentsUpload",
 				HTTPMethod:  "POST",
 				RESTPath:    "{bugExternalGuid}/attachments",
@@ -181,12 +181,12 @@ func init() {
 					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
-					{Name: "file", Short: "f", Description: "Local path to the image file (PNG/JPEG/GIF/WEBP). Required.", Required: true, Type: "string", UploadFile: true},
+					{Name: "file", Short: "f", Description: "Local path to the file to upload. Supported: PNG, JPEG, GIF, WebP, SVG; PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, MD, CSV, RTF, JSON, XML; MP4, MOV, WEBM, MKV. Required.", Required: true, Type: "string", UploadFile: true},
 				},
 			},
 			{
 				Name:        "attachments-download",
-				Description: "Download a single attachment via the SAS URL endpoint. Writes to ./<attachmentGuid>.<ext> by default; --out overrides.",
+				Description: "Download a single attachment via the SAS URL endpoint. Works for images, documents, and videos alike. Writes to ./<attachmentGuid>.<ext> by default; --out overrides. The server reuses the original extension for the output filename when known so the downloaded file opens in the right app.",
 				ToolName:    "UteamupBugsAndFeaturesAttachmentsDownload",
 				Args: []ArgDef{
 					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
@@ -198,7 +198,7 @@ func init() {
 			},
 			{
 				Name:        "attachments-delete",
-				Description: "Hard-delete a single attachment row + best-effort delete its blob (global-admin only). Audit-logged server-side.",
+				Description: "Hard-delete a single attachment row + best-effort delete its blob (global-admin only). Audit-logged server-side with the original filename and content-type. Works for images, documents, and videos.",
 				ToolName:    "UteamupBugsAndFeaturesAttachmentsDelete",
 				HTTPMethod:  "DELETE",
 				RESTPath:    "{bugExternalGuid}/attachments/{attachmentExternalGuid}",
