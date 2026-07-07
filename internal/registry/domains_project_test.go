@@ -57,6 +57,38 @@ func TestProjectDomainActions(t *testing.T) {
 	}
 }
 
+func TestProjectCrudIsGuidFirst(t *testing.T) {
+	d := findDomain("project")
+	if d == nil {
+		t.Fatal("expected project domain to be registered")
+	}
+
+	actionMap := make(map[string]Action)
+	for _, a := range d.Actions {
+		actionMap[a.Name] = a
+	}
+
+	// get/update/delete must take the project ExternalGuid positional arg
+	// (string), never a legacy integer id — GUIDs In, Integer IDs Out.
+	for _, name := range []string{"get", "update", "delete"} {
+		a, ok := actionMap[name]
+		if !ok {
+			t.Errorf("missing CRUD action %q", name)
+			continue
+		}
+		if len(a.Args) != 1 {
+			t.Errorf("action %q: expected 1 positional arg, got %d", name, len(a.Args))
+			continue
+		}
+		if a.Args[0].Name != "externalGuid" {
+			t.Errorf("action %q: expected positional arg %q, got %q", name, "externalGuid", a.Args[0].Name)
+		}
+		if a.Args[0].Type != "string" {
+			t.Errorf("action %q: identity arg must be string (guid), got %q", name, a.Args[0].Type)
+		}
+	}
+}
+
 func TestProjectMyProjectsIsArgless(t *testing.T) {
 	d := findDomain("project")
 	if d == nil {

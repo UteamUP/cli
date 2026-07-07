@@ -5,7 +5,17 @@ func init() {
 		Name:        "project",
 		Aliases:     []string{"projects"},
 		Description: "Manage projects",
-		Actions: append(crudActions("Project"),
+		// GUID-first CRUD: get/update/delete take the project ExternalGuid
+		// positional arg and hit the backend /project/{externalGuid:guid}
+		// routes. The int-keyed twins are [Obsolete] on the backend and are
+		// not surfaced by the CLI (per Guidelines/ApiHowToGuidelinesReadme.md
+		// §id→guid — GUIDs In, Integer IDs Out).
+		Actions: []Action{
+			{Name: "list", Description: "List projects", ToolName: "UteamupProjectList", Flags: paginationFlags()},
+			{Name: "get", Description: "Get a project by GUID", ToolName: "UteamupProjectGet", Args: externalGuidArg()},
+			{Name: "create", Description: "Create a project", ToolName: "UteamupProjectCreate", Flags: []FlagDef{jsonFlag()}},
+			{Name: "update", Description: "Update a project by GUID", ToolName: "UteamupProjectUpdate", Args: externalGuidArg(), Flags: []FlagDef{jsonFlag()}},
+			{Name: "delete", Description: "Delete a project by GUID", ToolName: "UteamupProjectDelete", Args: externalGuidArg()},
 			Action{Name: "search", Description: "Search projects", ToolName: "UteamupProjectSearch", Args: queryArg(), Flags: paginationFlags()},
 			// my-projects mirrors GET /api/project/my-projects — lists projects
 			// containing workorders assigned to the authenticated user.
@@ -47,6 +57,6 @@ func init() {
 					{Name: "ownerId", Description: "New owner's Identity user id", Required: true, Type: "string"},
 				},
 			},
-		),
+		},
 	})
 }
