@@ -40,6 +40,7 @@ var commandsExemptFromAuth = map[string]bool{
 	"completion": true,
 	"config":     true,
 	"help":       true,
+	"health":     true,
 }
 
 var rootCmd = &cobra.Command{
