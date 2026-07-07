@@ -436,7 +436,7 @@ so the HTTP method and URL are built from the action's `Name`, the domain's
 | `delete`        | `DELETE`    | `{basePath}/{id|externalGuid}`                   |
 | `search`        | `GET`       | `{basePath}/search` (or `{basePath}/{RESTPath}`)  |
 
-GUID-first domains (every new domain, per `Guidelines/ApiHowToGuidelinesReadme.md`)
+GUID-first domains (every new domain, per `Guidelines/ApiGuidelines.md`)
 should declare their positional arg as `externalGuid`; legacy integer-id domains
 can keep `id`. `buildRESTPath` accepts either.
 
