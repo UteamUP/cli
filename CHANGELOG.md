@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.43.1](https://github.com/UteamUP/cli/compare/1.43.0...1.43.1) (2026-07-08)
+
+
+### Bug Fixes
+
+* **deps:** pin cloud.google.com/go/ai v0.8.0 for generative-ai-go compat ([407d0bb](https://github.com/UteamUP/cli/commit/407d0bbb17ef12fa58f732c9ba3fb42ddaa55ac9))
+
+
+### Build System
+
+* **deps:** update go dependencies ([71889eb](https://github.com/UteamUP/cli/commit/71889eb4a446c1f62e95e2bd3b143f03ab473463))
+
 ## [1.43.0](https://github.com/UteamUP/cli/compare/1.42.0...1.43.0) (2026-07-08)
 
 
