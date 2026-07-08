@@ -5,6 +5,22 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.43.0](https://github.com/UteamUP/cli/compare/1.42.0...1.43.0) (2026-07-08)
+
+
+### Features
+
+* **bug-and-feature:** update attachments-* CLI descriptions to reflect documents and videos ([360f1fa](https://github.com/UteamUP/cli/commit/360f1faffee17fa751f172d97e1b68885b15ec59))
+* **cli:** add health command to report auth env and backend status ([871e271](https://github.com/UteamUP/cli/commit/871e27154bb870330b41d45a8de31480e4a770d7))
+* **marketplace:** buyer-reputation CLI action (H13) ([450997a](https://github.com/UteamUP/cli/commit/450997ac2640f637490363af0b3a70d7eec1f732))
+* **registry:** add aicreditrequest CLI domain ([c0e63cf](https://github.com/UteamUP/cli/commit/c0e63cf718d0bb0c3a63bd0bc8083f2332f1edf9))
+* **registry:** make project CRUD GUID-first (get/update/delete take externalGuid) ([b0c7515](https://github.com/UteamUP/cli/commit/b0c751500f3cb9cbb453c524973c05aa92c6bcc6))
+
+
+### Documentation
+
+* **guidelines:** update reference to ApiGuidelines in GUID-first domains section ([d22a6be](https://github.com/UteamUP/cli/commit/d22a6bee9592a28ed9e6c57660ceba78f00cf5bf))
+
 ## [1.42.0](https://github.com/UteamUP/cli/compare/1.41.0...1.42.0) (2026-07-05)
 
 
