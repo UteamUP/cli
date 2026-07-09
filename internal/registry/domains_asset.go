@@ -7,6 +7,17 @@ func init() {
 		Description: "Manage assets and equipment inventory",
 		Actions: []Action{
 			{
+				Name:        "ask",
+				Description: "Ask a source-grounded question about an asset (2 AI credits; requires Asset.View)",
+				ToolName:    "UteamupAssetAsk",
+				HTTPMethod:  "POST",
+				RESTPath:    "{assetGuid}/ask",
+				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset ExternalGuid", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "question", Short: "q", Description: "Question to answer from records linked to the asset", Required: true, Type: "string"},
+				},
+			},
+			{
 				Name:        "list",
 				Description: "List all assets with pagination and filtering",
 				ToolName:    "UteamupAssetList",

@@ -52,6 +52,22 @@ func TestAssetDuplicateAction(t *testing.T) {
 	}
 }
 
+func TestAssetAskAction(t *testing.T) {
+	action := findAssetAction(t, "ask")
+	if action.ToolName != "UteamupAssetAsk" {
+		t.Errorf("ask ToolName = %q", action.ToolName)
+	}
+	if action.HTTPMethod != "POST" || action.RESTPath != "{assetGuid}/ask" {
+		t.Fatalf("ask route = %s %s", action.HTTPMethod, action.RESTPath)
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "assetGuid" || action.Args[0].Type != "string" {
+		t.Fatalf("ask args = %+v", action.Args)
+	}
+	if len(action.Flags) != 1 || action.Flags[0].Name != "question" || !action.Flags[0].Required {
+		t.Fatalf("ask flags = %+v", action.Flags)
+	}
+}
+
 func TestAssetSetResponsibleOwnersAction(t *testing.T) {
 	action := findAssetAction(t, "set-responsible-owners")
 
