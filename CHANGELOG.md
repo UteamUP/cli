@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.47.0](https://github.com/UteamUP/cli/compare/1.46.0...1.47.0) (2026-07-09)
+
+
+### Features
+
+* **registry:** add asset ask + shift-handover generate-summary ([e16112e](https://github.com/UteamUP/cli/commit/e16112e554db93eed8ec13b9ba2c7395753bf65d))
+
 ## [1.46.0](https://github.com/UteamUP/cli/compare/1.45.0...1.46.0) (2026-07-09)
 
 
