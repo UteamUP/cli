@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.44.0](https://github.com/UteamUP/cli/compare/1.43.1...1.44.0) (2026-07-09)
+
+
+### Features
+
+* **registry:** restore AI tier CLI parity with workforce-ai and work-permit-ai domains ([1ecaf87](https://github.com/UteamUP/cli/commit/1ecaf872825848a54440ed996e3207617ea01a4d))
+
 ## [1.43.1](https://github.com/UteamUP/cli/compare/1.43.0...1.43.1) (2026-07-08)
 
 
