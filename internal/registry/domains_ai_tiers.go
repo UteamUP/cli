@@ -16,6 +16,8 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "date", Description: "Brief date (UTC ISO-8601 or YYYY-MM-DD). Defaults to today.", Type: "string"},
 					{Name: "regenerate", Description: "Force a fresh brief and re-charge credits", Type: "bool"},
+					{Name: "currentLatitude", Description: "Optional current GPS latitude for route ordering", Type: "float"},
+					{Name: "currentLongitude", Description: "Optional current GPS longitude for route ordering", Type: "float"},
 				},
 			},
 		},

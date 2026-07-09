@@ -27,6 +27,13 @@ func TestAiTierDomainsExposeNewBackendEndpoints(t *testing.T) {
 	if brief.RESTPath != "daily-brief" || brief.HTTPMethod != "POST" {
 		t.Fatalf("daily-brief route = method %q path %q", brief.HTTPMethod, brief.RESTPath)
 	}
+	briefFlags := make(map[string]FlagDef)
+	for _, f := range brief.Flags {
+		briefFlags[f.Name] = f
+	}
+	if briefFlags["currentLatitude"].Type != "float" || briefFlags["currentLongitude"].Type != "float" {
+		t.Fatalf("daily-brief GPS flags missing or wrong type: %#v", briefFlags)
+	}
 
 	prefill := findDomainAction(t, "work-permit-ai", "prefill")
 	if prefill.RESTPath != "by-guid/{work-permit-guid}/ai-prefill" || prefill.HTTPMethod != "POST" {
