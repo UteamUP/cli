@@ -56,6 +56,20 @@ func init() {
 				},
 			},
 			{
+				Name:        "ocr",
+				Description: "Analyze a meter photo and return a review-only OCR reading suggestion",
+				ToolName:    "UteamupMeterreadingPhotoOcr",
+				RESTPath:    "{asset-guid}/meter-readings/{attribute-definition-guid}/ocr",
+				HTTPMethod:  "POST",
+				Args: []ArgDef{
+					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "attribute-definition-guid", Description: "Attribute definition external Guid", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "photo", Description: "Path to meter photo", Required: true, Type: "string", UploadFile: true},
+				},
+			},
+			{
 				Name:        "update-attributes",
 				Description: "Upsert (create or update) attribute values for an asset",
 				ToolName:    "UteamupMeterreadingUpdateAttributes",

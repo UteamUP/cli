@@ -13,6 +13,7 @@ func init() {
 				Name:        "summary",
 				Description: "Aggregated usage grouped by provider and operation type",
 				ToolName:    "UteamupAIUsageSummary",
+				RESTPath:    "summary",
 				Flags: []FlagDef{
 					{Name: "from", Short: "f", Description: "Window start (UTC, ISO-8601). Defaults to 30 days ago.", Type: "string"},
 					{Name: "to", Short: "t", Description: "Window end (UTC, ISO-8601). Defaults to now.", Type: "string"},

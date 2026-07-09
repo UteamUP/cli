@@ -5,6 +5,7 @@ func init() {
 		Name:        "ai-provider",
 		Aliases:     []string{"aip", "byok"},
 		Description: "Manage BYOK AI provider configuration (Bring Your Own Key)",
+		APIPath:     "/api/tenant-ai-provider",
 		Actions: []Action{
 			{
 				Name:        "get",
@@ -27,6 +28,8 @@ func init() {
 				Name:        "test-connection",
 				Description: "Test connection to an AI provider",
 				ToolName:    "UteamupTestAIProviderConnection",
+				RESTPath:    "test-connection",
+				HTTPMethod:  "POST",
 				Flags: []FlagDef{
 					{Name: "provider", Short: "p", Description: "Provider type", Required: true, Type: "string"},
 					{Name: "api-key", Short: "k", Description: "API key", Required: true, Type: "string"},
