@@ -36,6 +36,50 @@ func TestStockDomainRegistered(t *testing.T) {
 	}
 }
 
+func findChemicalAction(t *testing.T, name string) *Action {
+	t.Helper()
+	for _, dom := range DefaultRegistry.Domains() {
+		if dom.Name != "chemical" {
+			continue
+		}
+		for i := range dom.Actions {
+			if dom.Actions[i].Name == name {
+				return &dom.Actions[i]
+			}
+		}
+		t.Fatalf("expected `%s` action on chemical domain", name)
+	}
+	t.Fatal("expected chemical domain to be registered")
+	return nil
+}
+
+// Chemical is GUID-first. crudActions() would give it the legacy integer `id` arg and route to the
+// now-[Obsolete] /api/chemical/{id}. And because Chemical's GUID routes are prefixed `by-guid/`, each
+// identified action MUST declare an explicit RESTPath — without it buildRESTPath falls back to
+// /api/chemical/{guid}, a route Chemical does not expose (codes does, chemical doesn't).
+func TestChemicalDomainIsGuidFirst(t *testing.T) {
+	for _, name := range []string{"get", "update", "delete"} {
+		action := findChemicalAction(t, name)
+
+		if len(action.Args) != 1 || action.Args[0].Name != "externalGuid" {
+			t.Errorf("chemical %s args = %+v, want a single externalGuid positional (GUIDs-in rule)", name, action.Args)
+		}
+		if action.Args[0].Type != "string" {
+			t.Errorf("chemical %s arg type = %q, want string (a GUID, never an int id)", name, action.Args[0].Type)
+		}
+		if action.RESTPath != "by-guid/{externalGuid}" {
+			t.Errorf("chemical %s RESTPath = %q, want %q (backend exposes by-guid/, not /{guid})", name, action.RESTPath, "by-guid/{externalGuid}")
+		}
+	}
+
+	// list/create take no identifier, so they must not have picked up a positional arg.
+	for _, name := range []string{"list", "create"} {
+		if action := findChemicalAction(t, name); len(action.Args) != 0 {
+			t.Errorf("chemical %s expected no positional args, got %+v", name, action.Args)
+		}
+	}
+}
+
 func TestStockSearchActionWired(t *testing.T) {
 	action := findStockAction(t, "search")
 
