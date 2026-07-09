@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.46.0](https://github.com/UteamUP/cli/compare/1.45.0...1.46.0) (2026-07-09)
+
+
+### Features
+
+* **registry:** make chemical domain GUID-first (get/update/delete take externalGuid) ([2449a07](https://github.com/UteamUP/cli/commit/2449a07d873fc89c60cc76c490d7748c91bd89b6))
+
 ## [1.45.0](https://github.com/UteamUP/cli/compare/1.44.0...1.45.0) (2026-07-09)
 
 
