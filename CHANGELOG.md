@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.52.0](https://github.com/UteamUP/cli/compare/1.51.0...1.52.0) (2026-07-10)
+
+
+### Features
+
+* **registry:** add condition grade filter to stock search ([940c1b8](https://github.com/UteamUP/cli/commit/940c1b86a493355adbf143df50a5606844e96594))
+
 ## [1.51.0](https://github.com/UteamUP/cli/compare/1.50.0...1.51.0) (2026-07-10)
 
 
