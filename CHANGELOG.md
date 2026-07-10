@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.50.0](https://github.com/UteamUP/cli/compare/1.49.0...1.50.0) (2026-07-10)
+
+
+### Features
+
+* **registry:** add stock ai-count-session review actions ([dc19891](https://github.com/UteamUP/cli/commit/dc198912be6bd14d5104ed70c21afdd99400a15c))
+
 ## [1.49.0](https://github.com/UteamUP/cli/compare/1.48.1...1.49.0) (2026-07-10)
 
 
