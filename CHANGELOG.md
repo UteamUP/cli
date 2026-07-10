@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.48.0](https://github.com/UteamUP/cli/compare/1.47.0...1.48.0) (2026-07-10)
+
+
+### Features
+
+* **registry:** add project governance + stock activity feeds and make set-owner GUID-first ([d83662d](https://github.com/UteamUP/cli/commit/d83662d5f66bacb4d764d651fe1e0245f0c201ca))
+
 ## [1.47.0](https://github.com/UteamUP/cli/compare/1.46.0...1.47.0) (2026-07-09)
 
 
