@@ -116,6 +116,45 @@ func TestStockSearchActionWired(t *testing.T) {
 	}
 }
 
+func TestStockActivityActionWired(t *testing.T) {
+	action := findStockAction(t, "activity")
+
+	if action.ToolName != "UteamupStockGetActivity" {
+		t.Errorf("activity ToolName = %q, want %q", action.ToolName, "UteamupStockGetActivity")
+	}
+	if action.RESTPath != "activity" {
+		t.Errorf("activity RESTPath = %q, want %q (the backend route is GET /api/stock/activity)", action.RESTPath, "activity")
+	}
+	if len(action.Args) != 0 {
+		t.Errorf("activity expected no positional args (all filters are optional flags), got %+v", action.Args)
+	}
+
+	expectedFlags := map[string]string{
+		"event-types": "stringSlice",
+		"stock-guid":  "string",
+		"item-guid":   "string",
+		"from":        "string",
+		"to":          "string",
+		"search":      "string",
+		"page":        "int",
+		"page-size":   "int",
+	}
+	gotFlags := make(map[string]string)
+	for _, f := range action.Flags {
+		gotFlags[f.Name] = f.Type
+	}
+	for name, ty := range expectedFlags {
+		got, ok := gotFlags[name]
+		if !ok {
+			t.Errorf("activity action missing expected flag %q", name)
+			continue
+		}
+		if got != ty {
+			t.Errorf("activity action flag %q type = %q, want %q", name, got, ty)
+		}
+	}
+}
+
 func TestStockAlertsActionWired(t *testing.T) {
 	action := findStockAction(t, "alerts")
 
@@ -1381,6 +1420,16 @@ func TestStockLifecycleRuleDeleteActionWired(t *testing.T) {
 	action := assertStockActionRoute(t, "lifecycle-rule-delete", "UteamupStockDeleteLifecycleRule", "DELETE", "lifecycle-rules/{guid}")
 	if len(action.Args) != 1 || action.Args[0].Name != "guid" {
 		t.Fatalf("lifecycle-rule-delete expected guid arg, got %+v", action.Args)
+	}
+}
+
+func TestStockLifecycleRuleLogsActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "lifecycle-rule-logs", "UteamupStockGetLifecycleRuleLogs", "", "lifecycle-rules/{guid}/logs")
+	if len(action.Args) != 1 || action.Args[0].Name != "guid" {
+		t.Fatalf("lifecycle-rule-logs expected guid arg, got %+v", action.Args)
+	}
+	if stockFlagByName(action, "page") == nil {
+		t.Error("lifecycle-rule-logs expected pagination flags")
 	}
 }
 

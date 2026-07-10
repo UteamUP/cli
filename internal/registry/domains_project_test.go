@@ -130,7 +130,7 @@ func TestProjectByGuidSetterActionsWired(t *testing.T) {
 	}{
 		{"set-status", "UteamupProjectSetStatus", "by-guid/{projectGuid}/status/{statusId}", "statusId", "int"},
 		{"set-priority", "UteamupProjectSetPriority", "by-guid/{projectGuid}/priority/{priorityId}", "priorityId", "int"},
-		{"set-owner", "UteamupProjectSetOwner", "by-guid/{projectGuid}/owner/{ownerId}", "ownerId", "string"},
+		{"set-owner", "UteamupProjectSetOwner", "by-guid/{projectGuid}/owner-guid/{ownerGuid}", "ownerGuid", "string"},
 	}
 
 	for _, c := range cases {

@@ -48,13 +48,13 @@ func init() {
 			},
 			Action{
 				Name:        "set-owner",
-				Description: "Set a project's owner by GUID (ownerId is the new owner's Identity user id)",
+				Description: "Set a project's owner using public project and user GUIDs",
 				ToolName:    "UteamupProjectSetOwner",
 				HTTPMethod:  "PUT",
-				RESTPath:    "by-guid/{projectGuid}/owner/{ownerId}",
+				RESTPath:    "by-guid/{projectGuid}/owner-guid/{ownerGuid}",
 				Args: []ArgDef{
 					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
-					{Name: "ownerId", Description: "New owner's Identity user id", Required: true, Type: "string"},
+					{Name: "ownerGuid", Description: "New owner's user GUID", Required: true, Type: "string"},
 				},
 			},
 		},

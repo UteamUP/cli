@@ -432,6 +432,20 @@ func init() {
 				Flags:       paginationFlags(),
 			},
 			Action{
+				Name:        "activity",
+				Description: "Tenant-wide stock activity feed: movements, workorder take/return, stock takes, alerts and automation runs, newest first (paged, max 100)",
+				ToolName:    "UteamupStockGetActivity",
+				RESTPath:    "activity",
+				Flags: append([]FlagDef{
+					{Name: "event-types", Description: "Event types to include — repeatable or comma-separated (movement, workorder, take, alert, automation; omit for all)", Type: "stringSlice"},
+					{Name: "stock-guid", Description: "Stock location GUID filter", Type: "string"},
+					{Name: "item-guid", Description: "Stock item GUID filter", Type: "string"},
+					{Name: "from", Description: "Only events at or after this UTC timestamp (RFC3339)", Type: "string"},
+					{Name: "to", Description: "Only events at or before this UTC timestamp (RFC3339)", Type: "string"},
+					{Name: "search", Description: "Case-insensitive item/location name search", Type: "string"},
+				}, paginationFlags()...),
+			},
+			Action{
 				Name:        "forecast-apply",
 				Description: "Apply the current server-side forecast suggestion for the named fields (the server recomputes — client numbers are never accepted)",
 				ToolName:    "UteamupStockApplyForecast",
@@ -664,6 +678,14 @@ func init() {
 				HTTPMethod:  "DELETE",
 				RESTPath:    "lifecycle-rules/{guid}",
 				Args:        []ArgDef{{Name: "guid", Description: "Lifecycle rule GUID", Required: true, Type: "string"}},
+			},
+			Action{
+				Name:        "lifecycle-rule-logs",
+				Description: "Get a lifecycle rule's execution log: fired-at, outcome (Success/Skipped/Failed), items affected, message (paged, newest first)",
+				ToolName:    "UteamupStockGetLifecycleRuleLogs",
+				RESTPath:    "lifecycle-rules/{guid}/logs",
+				Args:        []ArgDef{{Name: "guid", Description: "Lifecycle rule GUID", Required: true, Type: "string"}},
+				Flags:       paginationFlags(),
 			},
 			// --- Unified search (stock_plan §18.1) ---
 			Action{
