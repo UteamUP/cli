@@ -15,6 +15,7 @@ func init() {
 					{Name: "q", Description: "Free-text search term (name, SKU, part number, GTIN)", Type: "string"},
 					{Name: "type", Description: "Item type filter (Part, Tool, Chemical)", Type: "string"},
 					{Name: "stock-guid", Description: "Stock location GUID filter", Type: "string"},
+					{Name: "condition", Description: "Condition grade filter (New, Used, Refurbished, OpenBox)", Type: "string"},
 				}, paginationFlags()...),
 			},
 			Action{

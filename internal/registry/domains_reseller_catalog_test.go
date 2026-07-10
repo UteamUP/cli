@@ -203,6 +203,18 @@ func TestUomDomainWired(t *testing.T) {
 	}
 }
 
+func TestStockSearchConditionFlagWired(t *testing.T) {
+	// stock-reseller-catalog §4.3 — condition grade filter on stock item search.
+	search := findDomainAction(t, "stock", "search")
+	if search.ToolName != "UteamupStockSearchItems" || search.RESTPath != "items/search" {
+		t.Errorf("stock search miswired: %+v", search)
+	}
+	f := actionFlagByName(t, search, "condition")
+	if f.Required || f.Type != "string" {
+		t.Errorf("stock search condition flag must be an optional string, got %+v", f)
+	}
+}
+
 func TestStockSuggestedOrdersActionsWired(t *testing.T) {
 	get := findDomainAction(t, "stock", "suggested-orders")
 	if get.ToolName != "UteamupStockGetSuggestedOrders" || get.RESTPath != "suggested-orders" || get.HTTPMethod != "" {
