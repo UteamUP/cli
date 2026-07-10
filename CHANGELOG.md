@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.49.0](https://github.com/UteamUP/cli/compare/1.48.1...1.49.0) (2026-07-10)
+
+
+### Features
+
+* **registry:** add stock seasonal intelligence (8 actions) ([fa3562c](https://github.com/UteamUP/cli/commit/fa3562ceb06460fa718ececcfb71a7a0c2ef032b))
+
 ## [1.48.1](https://github.com/UteamUP/cli/compare/1.48.0...1.48.1) (2026-07-10)
 
 
