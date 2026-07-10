@@ -7,6 +7,14 @@ func init() {
 		Description: "Manage vendors",
 		Actions: append(crudActions("Vendor"),
 			Action{Name: "search", Description: "Search vendors", ToolName: "UteamupVendorSearch", Args: queryArg(), Flags: paginationFlags()},
+			// --- Reseller catalog: vendor's part catalog (stock-reseller-catalog §6) ---
+			Action{
+				Name:        "catalog",
+				Description: "List the part-catalog entries a vendor supplies (vendor part numbers, costs, MOQ, lead times)",
+				ToolName:    "UteamupVendorGetCatalog",
+				RESTPath:    "by-guid/{guid}/catalog",
+				Args:        []ArgDef{{Name: "guid", Description: "Vendor GUID", Required: true, Type: "string"}},
+			},
 		),
 	})
 

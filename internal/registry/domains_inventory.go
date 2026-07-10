@@ -795,6 +795,23 @@ func init() {
 					{Name: "q", Description: "Free-text search query", Required: true, Type: "string"},
 				},
 			},
+			// --- Suggested orders inbox (stock-reseller-catalog §6) ---
+			Action{
+				Name:        "suggested-orders",
+				Description: "Suggested-orders inbox: reorder shortfalls grouped by preferred vendor, with per-group line preview and estimated total",
+				ToolName:    "UteamupStockGetSuggestedOrders",
+				RESTPath:    "suggested-orders",
+			},
+			Action{
+				Name:        "suggested-orders-create-po",
+				Description: "Create one Draft purchase order from a confirmed suggested-orders vendor group (omit --vendor-guid to confirm the no-resolvable-vendor group; quantities are MOQ-rounded)",
+				ToolName:    "UteamupStockCreateSuggestedOrderPo",
+				HTTPMethod:  "POST",
+				RESTPath:    "suggested-orders/create-po",
+				Flags: []FlagDef{
+					{Name: "vendor-guid", Description: "Vendor GUID of the group to confirm (omit for the no-resolvable-vendor group)", Type: "string", BodyName: "vendorGuid"},
+				},
+			},
 		),
 	})
 
@@ -822,6 +839,149 @@ func init() {
 		Description: "Manage parts",
 		Actions: append(crudActions("Part"),
 			Action{Name: "search", Description: "Search parts", ToolName: "UteamupPartSearch", Args: queryArg(), Flags: paginationFlags()},
+
+			// --- Reseller catalog: cross-references (stock-reseller-catalog §2) ---
+			Action{
+				Name:        "crossrefs-list",
+				Description: "List a part's cross-references (OEM/alternate/supersession/competitor numbers)",
+				ToolName:    "UteamupPartListCrossReferences",
+				RESTPath:    "by-guid/{guid}/cross-references",
+				Args:        []ArgDef{{Name: "guid", Description: "Part GUID", Required: true, Type: "string"}},
+			},
+			Action{
+				Name:        "crossrefs-add",
+				Description: "Add a cross-reference to a part (duplicate part+type+number is rejected)",
+				ToolName:    "UteamupPartAddCrossReference",
+				HTTPMethod:  "POST",
+				RESTPath:    "by-guid/{guid}/cross-references",
+				Args:        []ArgDef{{Name: "guid", Description: "Part GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "reference-type", Description: "OEM, Alternate, Supersedes, SupersededBy, Competitor, or Custom", Required: true, Type: "string"},
+					{Name: "reference-number", Description: "The cross-reference number (max 200 characters)", Required: true, Type: "string"},
+					{Name: "manufacturer", Description: "Manufacturer of the referenced number (optional)", Type: "string"},
+					{Name: "related-part-guid", Description: "GUID of an in-catalog part this reference points at (optional)", Type: "string"},
+					{Name: "notes", Description: "Free-text notes (optional)", Type: "string"},
+				},
+			},
+			Action{
+				Name:        "crossrefs-delete",
+				Description: "Remove a cross-reference from a part",
+				ToolName:    "UteamupPartDeleteCrossReference",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "by-guid/{guid}/cross-references/{refGuid}",
+				Args: []ArgDef{
+					{Name: "guid", Description: "Part GUID", Required: true, Type: "string"},
+					{Name: "refGuid", Description: "Cross-reference GUID to remove", Required: true, Type: "string"},
+				},
+			},
+
+			// --- Reseller catalog: vendor catalog (stock-reseller-catalog §6) ---
+			Action{
+				Name:        "vendor-catalog-list",
+				Description: "List the per-vendor catalog entries for a part (vendor part numbers, costs, MOQ, lead times)",
+				ToolName:    "UteamupPartListVendorCatalog",
+				RESTPath:    "by-guid/{guid}/vendor-catalog",
+				Args:        []ArgDef{{Name: "guid", Description: "Part GUID", Required: true, Type: "string"}},
+			},
+			Action{
+				Name:        "vendor-catalog-upsert",
+				Description: "Create or update (upsert, keyed by vendor) a vendor catalog entry for a part",
+				ToolName:    "UteamupPartUpsertVendorCatalog",
+				HTTPMethod:  "POST",
+				RESTPath:    "by-guid/{guid}/vendor-catalog",
+				Args:        []ArgDef{{Name: "guid", Description: "Part GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "vendor-guid", Description: "Vendor GUID", Required: true, Type: "string"},
+					{Name: "vendor-part-number", Description: "The vendor's part number (max 200 characters)", Required: true, Type: "string"},
+					{Name: "unit-cost", Description: "Unit cost from this vendor (optional)", Type: "float"},
+					{Name: "currency-guid", Description: "Currency GUID for the unit cost (optional)", Type: "string"},
+					{Name: "minimum-order-quantity", Description: "Minimum order quantity (optional)", Type: "int"},
+					{Name: "lead-time-days", Description: "Lead time in days (optional)", Type: "int"},
+					{Name: "preferred", Description: "Mark this vendor as the preferred supplier", Default: false, Type: "bool", BodyName: "isPreferred"},
+				},
+			},
+			Action{
+				Name:        "vendor-catalog-delete",
+				Description: "Remove a vendor catalog entry from a part",
+				ToolName:    "UteamupPartDeleteVendorCatalog",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "by-guid/{guid}/vendor-catalog/{entryGuid}",
+				Args: []ArgDef{
+					{Name: "guid", Description: "Part GUID", Required: true, Type: "string"},
+					{Name: "entryGuid", Description: "Vendor catalog entry GUID to remove", Required: true, Type: "string"},
+				},
+			},
+
+			// --- Reseller catalog: kit components (stock-reseller-catalog §10) ---
+			Action{
+				Name:        "kit-list",
+				Description: "List the component lines of a kit part",
+				ToolName:    "UteamupPartListKitComponents",
+				RESTPath:    "by-guid/{guid}/kit-components",
+				Args:        []ArgDef{{Name: "guid", Description: "Kit part GUID", Required: true, Type: "string"}},
+			},
+			Action{
+				Name:        "kit-add",
+				Description: "Add a component to a kit part (self/cycle/duplicate is rejected)",
+				ToolName:    "UteamupPartAddKitComponent",
+				HTTPMethod:  "POST",
+				RESTPath:    "by-guid/{guid}/kit-components",
+				Args:        []ArgDef{{Name: "guid", Description: "Kit part GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "component-part-guid", Description: "Component part GUID", Required: true, Type: "string"},
+					{Name: "quantity", Description: "Quantity of the component per kit (minimum 0.01)", Required: true, Type: "float"},
+				},
+			},
+			Action{
+				Name:        "kit-delete",
+				Description: "Remove a component line from a kit part",
+				ToolName:    "UteamupPartDeleteKitComponent",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "by-guid/{guid}/kit-components/{componentGuid}",
+				Args: []ArgDef{
+					{Name: "guid", Description: "Kit part GUID", Required: true, Type: "string"},
+					{Name: "componentGuid", Description: "Kit component line GUID to remove", Required: true, Type: "string"},
+				},
+			},
+			Action{
+				Name:        "kit-availability",
+				Description: "Compute how many kits are buildable from current component availability",
+				ToolName:    "UteamupPartGetKitAvailability",
+				RESTPath:    "by-guid/{guid}/kit-availability",
+				Args:        []ArgDef{{Name: "guid", Description: "Kit part GUID", Required: true, Type: "string"}},
+			},
+
+			// --- Reseller catalog: fitment / compatibility (stock-reseller-catalog §12) ---
+			Action{
+				Name:        "compat-list",
+				Description: "List the asset types a part is declared compatible with (fits)",
+				ToolName:    "UteamupPartListCompatibility",
+				RESTPath:    "by-guid/{guid}/compatibility",
+				Args:        []ArgDef{{Name: "guid", Description: "Part GUID", Required: true, Type: "string"}},
+			},
+			Action{
+				Name:        "compat-add",
+				Description: "Declare a part compatible with (fits) an asset type (duplicate is rejected)",
+				ToolName:    "UteamupPartAddCompatibility",
+				HTTPMethod:  "POST",
+				RESTPath:    "by-guid/{guid}/compatibility",
+				Args:        []ArgDef{{Name: "guid", Description: "Part GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "asset-type-guid", Description: "Asset type GUID", Required: true, Type: "string"},
+					{Name: "notes", Description: "Free-text notes about the fitment (optional)", Type: "string"},
+				},
+			},
+			Action{
+				Name:        "compat-delete",
+				Description: "Remove a fitment declaration from a part",
+				ToolName:    "UteamupPartDeleteCompatibility",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "by-guid/{guid}/compatibility/{compatibilityGuid}",
+				Args: []ArgDef{
+					{Name: "guid", Description: "Part GUID", Required: true, Type: "string"},
+					{Name: "compatibilityGuid", Description: "Compatibility declaration GUID to remove", Required: true, Type: "string"},
+				},
+			},
 		),
 	})
 
