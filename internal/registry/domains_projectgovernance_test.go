@@ -39,12 +39,12 @@ func TestProjectGovernanceMutationRoutes(t *testing.T) {
 		path   string
 		tool   string
 	}{
-		{"project-member", "add", "POST", "{projectGuid}/members", "uteamup_project_members_add"},
-		{"project-member", "update", "PUT", "{projectGuid}/members/{memberGuid}", "uteamup_project_members_update"},
-		{"project-dependency", "remove", "DELETE", "{projectGuid}/dependencies/{dependencyGuid}", "uteamup_project_dependencies_remove"},
-		{"project-comment", "update", "PUT", "{projectGuid}/comments/{commentGuid}", "uteamup_project_comments_update"},
-		{"project-baseline", "capture", "POST", "{projectGuid}/baselines", "uteamup_project_baselines_capture"},
-		{"project-change-request", "apply", "POST", "{projectGuid}/change-requests/{requestGuid}/apply", "uteamup_project_change_requests_apply"},
+		{"project-member", "add", "POST", "{projectGuid}/members", "UteamupProjectMembersAdd"},
+		{"project-member", "update", "PUT", "{projectGuid}/members/{memberGuid}", "UteamupProjectMembersUpdate"},
+		{"project-dependency", "remove", "DELETE", "{projectGuid}/dependencies/{dependencyGuid}", "UteamupProjectDependenciesRemove"},
+		{"project-comment", "update", "PUT", "{projectGuid}/comments/{commentGuid}", "UteamupProjectCommentsUpdate"},
+		{"project-baseline", "capture", "POST", "{projectGuid}/baselines", "UteamupProjectBaselinesCapture"},
+		{"project-change-request", "apply", "POST", "{projectGuid}/change-requests/{requestGuid}/apply", "UteamupProjectChangeRequestsApply"},
 	}
 
 	for _, testCase := range cases {
