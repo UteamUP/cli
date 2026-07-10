@@ -524,6 +524,36 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "seasonality/insights",
 			},
+			// --- AI count sessions (review side only — session CREATE is camera-bound
+			// to mobile/web multipart upload, intentionally absent per design Non-Goals) ---
+			Action{
+				Name:        "ai-count-get",
+				Description: "Get an AI count session with its suggested lines (status, matched items, suggested counts, confidence)",
+				ToolName:    "UteamupStockGetAiCountSession",
+				RESTPath:    "count-sessions/{sessionGuid}",
+				Args:        []ArgDef{{Name: "sessionGuid", Description: "AI count session GUID", Required: true, Type: "string"}},
+			},
+			Action{
+				Name:        "ai-count-confirm",
+				Description: "Confirm reviewed AI count session lines into a DRAFT stock take (the accept boolean keys rejection; lines not listed are rejected; stock quantities are never written)",
+				ToolName:    "UteamupStockConfirmAiCountSession",
+				HTTPMethod:  "POST",
+				RESTPath:    "count-sessions/{sessionGuid}/confirm",
+				Args:        []ArgDef{{Name: "sessionGuid", Description: "AI count session GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "file", Short: "f", Description: "Path to a JSON file with the line decisions: [{\"lineGuid\":\"…\",\"accept\":true|false,\"stockItemGuid\":\"… (bind unmatched line)\",\"finalCount\":N}]", Required: true, Type: "string", JSONFile: true, BodyName: "lines"},
+					{Name: "stock-guid", Description: "Target stock location GUID when the session was created without one (optional)", Type: "string", BodyName: "stockGuid"},
+					{Name: "take-name", Description: "Name for the draft stock take (optional, max 200 characters)", Type: "string", BodyName: "takeName"},
+				},
+			},
+			Action{
+				Name:        "ai-count-cancel",
+				Description: "Cancel a pending/reviewable AI count session (confirmed sessions cannot be cancelled)",
+				ToolName:    "UteamupStockCancelAiCountSession",
+				HTTPMethod:  "POST",
+				RESTPath:    "count-sessions/{sessionGuid}/cancel",
+				Args:        []ArgDef{{Name: "sessionGuid", Description: "AI count session GUID", Required: true, Type: "string"}},
+			},
 			Action{
 				Name:        "ops-batch",
 				Description: "Ingest a batch of offline stock operations (take/return/count) with per-op idempotency — results are per-op, the batch never throws as a whole (operations come from a JSON file, max 200)",

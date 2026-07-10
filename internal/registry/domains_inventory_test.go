@@ -1521,3 +1521,49 @@ func TestStockSeasonalInsightsActionWired(t *testing.T) {
 		t.Errorf("seasonal-insights expected no args or flags (identity + tenant come from the token), got args=%+v flags=%+v", action.Args, action.Flags)
 	}
 }
+
+// --- AI count sessions (stock-ai-seasonal-intelligence §12; review side only) ---
+
+func TestStockAiCountGetActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "ai-count-get", "UteamupStockGetAiCountSession", "", "count-sessions/{sessionGuid}")
+	if len(action.Args) != 1 || action.Args[0].Name != "sessionGuid" || !action.Args[0].Required || action.Args[0].Type != "string" {
+		t.Fatalf("ai-count-get expected a single required string sessionGuid arg (GUIDs-in rule), got %+v", action.Args)
+	}
+}
+
+func TestStockAiCountConfirmActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "ai-count-confirm", "UteamupStockConfirmAiCountSession", "POST", "count-sessions/{sessionGuid}/confirm")
+	if len(action.Args) != 1 || action.Args[0].Name != "sessionGuid" || !action.Args[0].Required {
+		t.Fatalf("ai-count-confirm expected a required sessionGuid arg, got %+v", action.Args)
+	}
+	if f := stockFlagByName(action, "file"); f == nil || !f.Required || !f.JSONFile || f.BodyName != "lines" {
+		t.Errorf("ai-count-confirm expected a required JSONFile flag bound to body `lines` (the accept boolean keys rejection), got %+v", f)
+	}
+	if f := stockFlagByName(action, "stock-guid"); f == nil || f.BodyName != "stockGuid" || f.Required {
+		t.Errorf("stock-guid flag must be an optional string bound to `stockGuid`, got %+v", f)
+	}
+	if f := stockFlagByName(action, "take-name"); f == nil || f.BodyName != "takeName" || f.Required {
+		t.Errorf("take-name flag must be an optional string bound to `takeName`, got %+v", f)
+	}
+}
+
+func TestStockAiCountCancelActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "ai-count-cancel", "UteamupStockCancelAiCountSession", "POST", "count-sessions/{sessionGuid}/cancel")
+	if len(action.Args) != 1 || action.Args[0].Name != "sessionGuid" || !action.Args[0].Required {
+		t.Fatalf("ai-count-cancel expected a required sessionGuid arg, got %+v", action.Args)
+	}
+	if len(action.Flags) != 0 {
+		t.Errorf("ai-count-cancel expected no flags, got %+v", action.Flags)
+	}
+}
+
+// Session CREATE is intentionally absent from the CLI (design Non-Goals): capture is
+// camera-bound multipart upload in the mobile/web app. Guard against accidental addition.
+func TestStockAiCountCreateActionAbsent(t *testing.T) {
+	d := findStockDomain(t)
+	for i := range d.Actions {
+		if d.Actions[i].Name == "ai-count-create" || d.Actions[i].ToolName == "UteamupStockCreateAiCountSession" {
+			t.Fatalf("ai-count session CREATE must not be exposed via CLI/MCP (camera-bound capture; design Non-Goals), found %+v", d.Actions[i].Name)
+		}
+	}
+}
