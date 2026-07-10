@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.51.0](https://github.com/UteamUP/cli/compare/1.50.0...1.51.0) (2026-07-10)
+
+
+### Features
+
+* **registry:** add stock-reseller-catalog CLI bindings ([ae1fc8f](https://github.com/UteamUP/cli/commit/ae1fc8f071eff1e259b1d09e111d8d7a91368552))
+
 ## [1.50.0](https://github.com/UteamUP/cli/compare/1.49.0...1.50.0) (2026-07-10)
 
 
