@@ -456,6 +456,74 @@ func init() {
 					{Name: "fields", Description: "Suggestion fields to apply: reorderPoint, minimumAmount, maximumAmount", Required: true, Type: "stringSlice"},
 				},
 			},
+			// --- Seasonal intelligence (stock-ai-seasonal-intelligence §12) ---
+			Action{
+				Name:        "seasonality-get",
+				Description: "Full 12-month seasonal demand profile for one stock item (monthly indices, peak periods, per-month reorder points, window projections)",
+				ToolName:    "UteamupStockGetItemSeasonality",
+				RESTPath:    "items/{itemGuid}/seasonality",
+				Args:        []ArgDef{{Name: "itemGuid", Description: "Stock item GUID", Required: true, Type: "string"}},
+			},
+			Action{
+				Name:        "seasonality-report",
+				Description: "Tenant seasonality report, most-seasonal first (paged)",
+				ToolName:    "UteamupStockGetSeasonalityReport",
+				RESTPath:    "reports/seasonality",
+				Flags: append([]FlagDef{
+					{Name: "only-seasonal", Description: "Only include items flagged as seasonal", Default: false, Type: "bool", BodyName: "onlySeasonal"},
+				}, paginationFlags()...),
+			},
+			Action{
+				Name:        "peaks",
+				Description: "Seasonal peak runs starting within the horizon with shortfall + order-by-date math (the pre-season stock-up checklist), soonest first (paged)",
+				ToolName:    "UteamupStockGetUpcomingPeaks",
+				RESTPath:    "seasonality/upcoming",
+				Flags: append([]FlagDef{
+					{Name: "horizon-days", Description: "Look-ahead horizon in days", Default: 90, Type: "int", BodyName: "horizonDays"},
+				}, paginationFlags()...),
+			},
+			Action{
+				Name:        "season-windows-list",
+				Description: "List the tenant's recurring season windows (year-wrap capable)",
+				ToolName:    "UteamupStockListSeasonWindows",
+				RESTPath:    "season-windows",
+			},
+			Action{
+				Name:        "season-windows-set",
+				Description: "Replace the tenant's season windows in bulk (replace-by-guid — send the COMPLETE desired set; windows absent from the file are DELETED)",
+				ToolName:    "UteamupStockSetSeasonWindows",
+				HTTPMethod:  "PUT",
+				RESTPath:    "season-windows",
+				Flags: []FlagDef{
+					{Name: "file", Short: "f", Description: "Path to a JSON file with the complete window set: [{\"guid\":\"… (omit to create)\",\"name\":\"Winter\",\"startMonth\":11,\"startDay\":1,\"endMonth\":2,\"endDay\":28,\"isActive\":true}]", Required: true, Type: "string", JSONFile: true, BodyName: "windows"},
+				},
+			},
+			Action{
+				Name:        "seasonality-recompute",
+				Description: "Recompute every seasonal profile in the tenant on demand (returns the number of profiles written)",
+				ToolName:    "UteamupStockRecomputeSeasonality",
+				HTTPMethod:  "POST",
+				RESTPath:    "seasonality/recompute",
+			},
+			Action{
+				Name:        "seasonality-apply",
+				Description: "Apply the current server-side seasonal recommendation for the named fields (the server recomputes — client numbers are never accepted)",
+				ToolName:    "UteamupStockApplySeasonalSuggestion",
+				HTTPMethod:  "POST",
+				RESTPath:    "items/{itemGuid}/seasonality/apply",
+				Args:        []ArgDef{{Name: "itemGuid", Description: "Stock item GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "fields", Description: "Suggestion fields to apply: reorderPoint, minimumAmount", Required: true, Type: "stringSlice"},
+					{Name: "target-month", Description: "Month (1-12) whose recommendation to apply; defaults to the next peak month", Type: "int", BodyName: "targetMonth"},
+				},
+			},
+			Action{
+				Name:        "seasonal-insights",
+				Description: "AI narrative over the tenant's top seasonal profiles (charged against the AI quota; quota exhaustion rides back on the body)",
+				ToolName:    "UteamupStockGenerateSeasonalInsights",
+				HTTPMethod:  "POST",
+				RESTPath:    "seasonality/insights",
+			},
 			Action{
 				Name:        "ops-batch",
 				Description: "Ingest a batch of offline stock operations (take/return/count) with per-op idempotency — results are per-op, the batch never throws as a whole (operations come from a JSON file, max 200)",

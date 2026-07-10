@@ -1439,3 +1439,85 @@ func TestStockUnifiedSearchActionWired(t *testing.T) {
 		t.Errorf("unified-search expected a required q flag, got %+v", q)
 	}
 }
+
+// --- Seasonal intelligence (stock-ai-seasonal-intelligence §12) ---
+
+func TestStockSeasonalityGetActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "seasonality-get", "UteamupStockGetItemSeasonality", "", "items/{itemGuid}/seasonality")
+	if len(action.Args) != 1 || action.Args[0].Name != "itemGuid" || !action.Args[0].Required || action.Args[0].Type != "string" {
+		t.Fatalf("seasonality-get expected a single required string itemGuid arg (GUIDs-in rule), got %+v", action.Args)
+	}
+}
+
+func TestStockSeasonalityReportActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "seasonality-report", "UteamupStockGetSeasonalityReport", "", "reports/seasonality")
+	if len(action.Args) != 0 {
+		t.Errorf("seasonality-report expected no positional args, got %+v", action.Args)
+	}
+	if f := stockFlagByName(action, "only-seasonal"); f == nil || f.Type != "bool" || f.BodyName != "onlySeasonal" {
+		t.Errorf("only-seasonal flag must be a bool bound to `onlySeasonal`, got %+v", f)
+	}
+	if stockFlagByName(action, "page") == nil || stockFlagByName(action, "page-size") == nil {
+		t.Error("seasonality-report expected pagination flags")
+	}
+}
+
+func TestStockPeaksActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "peaks", "UteamupStockGetUpcomingPeaks", "", "seasonality/upcoming")
+	f := stockFlagByName(action, "horizon-days")
+	if f == nil || f.Type != "int" || f.BodyName != "horizonDays" {
+		t.Fatalf("horizon-days flag must be an int bound to `horizonDays`, got %+v", f)
+	}
+	if f.Default != 90 {
+		t.Errorf("horizon-days Default = %v, want 90", f.Default)
+	}
+	if stockFlagByName(action, "page") == nil {
+		t.Error("peaks expected pagination flags")
+	}
+}
+
+func TestStockSeasonWindowsActionsWired(t *testing.T) {
+	list := assertStockActionRoute(t, "season-windows-list", "UteamupStockListSeasonWindows", "", "season-windows")
+	if len(list.Args) != 0 || len(list.Flags) != 0 {
+		t.Errorf("season-windows-list expected no args or flags, got args=%+v flags=%+v", list.Args, list.Flags)
+	}
+
+	set := assertStockActionRoute(t, "season-windows-set", "UteamupStockSetSeasonWindows", "PUT", "season-windows")
+	f := stockFlagByName(set, "file")
+	if f == nil || !f.Required || !f.JSONFile || f.BodyName != "windows" {
+		t.Errorf("season-windows-set expected a required JSONFile flag bound to body `windows`, got %+v", f)
+	}
+}
+
+func TestStockSeasonalityRecomputeActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "seasonality-recompute", "UteamupStockRecomputeSeasonality", "POST", "seasonality/recompute")
+	if len(action.Args) != 0 {
+		t.Errorf("seasonality-recompute expected no positional args, got %+v", action.Args)
+	}
+}
+
+func TestStockSeasonalityApplyActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "seasonality-apply", "UteamupStockApplySeasonalSuggestion", "POST", "items/{itemGuid}/seasonality/apply")
+	if len(action.Args) != 1 || action.Args[0].Name != "itemGuid" || !action.Args[0].Required {
+		t.Fatalf("seasonality-apply expected a required itemGuid arg, got %+v", action.Args)
+	}
+	if f := stockFlagByName(action, "fields"); f == nil || !f.Required || f.Type != "stringSlice" {
+		t.Errorf("fields flag must be a required stringSlice, got %+v", f)
+	}
+	if f := stockFlagByName(action, "target-month"); f == nil || f.Type != "int" || f.BodyName != "targetMonth" {
+		t.Errorf("target-month flag must be an optional int bound to `targetMonth`, got %+v", f)
+	}
+	// Tamper-proofing: the action must NOT expose numeric override flags — the server recomputes.
+	for _, forbidden := range []string{"reorder-point", "minimum-amount"} {
+		if stockFlagByName(action, forbidden) != nil {
+			t.Errorf("seasonality-apply must not expose a %q flag (client numbers are never accepted)", forbidden)
+		}
+	}
+}
+
+func TestStockSeasonalInsightsActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "seasonal-insights", "UteamupStockGenerateSeasonalInsights", "POST", "seasonality/insights")
+	if len(action.Args) != 0 || len(action.Flags) != 0 {
+		t.Errorf("seasonal-insights expected no args or flags (identity + tenant come from the token), got args=%+v flags=%+v", action.Args, action.Flags)
+	}
+}
