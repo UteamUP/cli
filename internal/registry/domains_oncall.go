@@ -55,6 +55,21 @@ func init() {
 					{Name: "days-mask", Description: "Sun=1..Sat=64 bitmask; 0 = every day", Type: "int", BodyName: "daysOfWeekMask"},
 				},
 			},
+			{
+				Name:        "override-add",
+				Description: "Add a one-off override (someone covers the pager for a window; wins over layers)",
+				ToolName:    "UteamupOnCallOverrideAdd",
+				HTTPMethod:  "POST",
+				RESTPath:    "{schedule-guid}/overrides",
+				Args: []ArgDef{
+					{Name: "schedule-guid", Description: "On-call schedule external Guid", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "user", Description: "The covering user's GUID", Type: "string", Required: true, BodyName: "targetUserGuid"},
+					{Name: "start", Description: "Window start (ISO-8601 UTC)", Type: "string", Required: true, BodyName: "startAt"},
+					{Name: "end", Description: "Window end (ISO-8601 UTC, after start)", Type: "string", Required: true, BodyName: "endAt"},
+				},
+			},
 		},
 	})
 }

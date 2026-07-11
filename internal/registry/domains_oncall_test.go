@@ -135,3 +135,32 @@ func TestOnCallLayerAddActionWired(t *testing.T) {
 		t.Errorf("layer-add 'precedence' default should be 1, got %+v", p)
 	}
 }
+
+func TestOnCallOverrideAddActionWired(t *testing.T) {
+	d := findOnCallDomain(t)
+	var oa *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "override-add" {
+			oa = &d.Actions[i]
+		}
+	}
+	if oa == nil {
+		t.Fatal("expected 'override-add' action")
+	}
+	if oa.HTTPMethod != "POST" || oa.RESTPath != "{schedule-guid}/overrides" {
+		t.Errorf("override-add = %s %q, want POST \"{schedule-guid}/overrides\"", oa.HTTPMethod, oa.RESTPath)
+	}
+	byFlag := map[string]*FlagDef{}
+	for i := range oa.Flags {
+		byFlag[oa.Flags[i].Name] = &oa.Flags[i]
+	}
+	if u, ok := byFlag["user"]; !ok || u.BodyName != "targetUserGuid" || !u.Required {
+		t.Errorf("override-add 'user' must be required → targetUserGuid, got %+v", u)
+	}
+	if s, ok := byFlag["start"]; !ok || s.BodyName != "startAt" {
+		t.Errorf("override-add 'start' must map to startAt, got %+v", s)
+	}
+	if e, ok := byFlag["end"]; !ok || e.BodyName != "endAt" {
+		t.Errorf("override-add 'end' must map to endAt, got %+v", e)
+	}
+}
