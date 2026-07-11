@@ -6,7 +6,9 @@ func TestShiftHandoverAcceptanceActionsUseGuidContracts(t *testing.T) {
 	domain := findRegisteredDomain(t, "shift-handover")
 
 	assertShiftHandoverAction(t, domain, "pending-acceptances", "GET", "acceptances/pending", false)
+	assertShiftHandoverAction(t, domain, "start-review", "PUT", "by-guid/{handoverGuid}/start-review", true)
 	assertShiftHandoverAction(t, domain, "accept", "PUT", "by-guid/{handoverGuid}/accept", true)
+	assertShiftHandoverAction(t, domain, "complete", "PUT", "by-guid/{handoverGuid}/complete", true)
 	assertShiftHandoverAction(
 		t,
 		domain,

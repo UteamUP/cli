@@ -30,6 +30,16 @@ func init() {
 			RESTPath:    "acceptances/pending",
 		},
 		Action{
+			Name:        "start-review",
+			Description: "Start reviewing a submitted handover as its designated incoming operator",
+			ToolName:    "UteamupShiftHandoverStartReview",
+			HTTPMethod:  "PUT",
+			RESTPath:    "by-guid/{handoverGuid}/start-review",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+		},
+		Action{
 			Name:        "accept",
 			Description: "Accept a handover as its designated incoming operator",
 			ToolName:    "UteamupShiftHandoverAccept",
@@ -40,6 +50,16 @@ func init() {
 			},
 			Flags: []FlagDef{
 				{Name: "notes", Description: "Optional acceptance notes", Type: "string"},
+			},
+		},
+		Action{
+			Name:        "complete",
+			Description: "Complete an accepted handover as its designated incoming operator",
+			ToolName:    "UteamupShiftHandoverComplete",
+			HTTPMethod:  "PUT",
+			RESTPath:    "by-guid/{handoverGuid}/complete",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
 			},
 		},
 		Action{
