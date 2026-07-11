@@ -5,6 +5,16 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.59.0](https://github.com/UteamUP/cli/compare/1.58.0...1.59.0) (2026-07-11)
+
+
+### Features
+
+* add shift handover acceptance commands ([eac5797](https://github.com/UteamUP/cli/commit/eac5797f47d2efddbc05fb80f8b797dbc64e5df3))
+* add shift handover start-review and complete commands ([8beeb07](https://github.com/UteamUP/cli/commit/8beeb07c0394a15e818df108383ae7c3e19471e5))
+* **marketplace:** add labour AI CLI commands ([34c7fea](https://github.com/UteamUP/cli/commit/34c7feae758ec8c79c538da91014c6fe61077b70))
+* **marketplace:** add labour AI offer-comparison commands ([af7713b](https://github.com/UteamUP/cli/commit/af7713bfa85db2fdfd7073a932b7f4ac3ec78995))
+
 ## [1.58.0](https://github.com/UteamUP/cli/compare/1.57.0...1.58.0) (2026-07-11)
 
 
