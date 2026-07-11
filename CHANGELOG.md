@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.58.0](https://github.com/UteamUP/cli/compare/1.57.0...1.58.0) (2026-07-11)
+
+
+### Features
+
+* **registry:** add handoverattestation domain ([ef0522a](https://github.com/UteamUP/cli/commit/ef0522a275d385e8d12a5d0622c4ca7eb7a993bf))
+
 ## [1.57.0](https://github.com/UteamUP/cli/compare/1.56.0...1.57.0) (2026-07-11)
 
 
