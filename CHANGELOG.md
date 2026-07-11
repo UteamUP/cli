@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.60.0](https://github.com/UteamUP/cli/compare/1.59.0...1.60.0) (2026-07-11)
+
+
+### Features
+
+* **marketplace:** add participant-scoped conversation AI summary domain ([633af60](https://github.com/UteamUP/cli/commit/633af60419f085df666f9ff4f5ee47a5b835d55b))
+
 ## [1.59.0](https://github.com/UteamUP/cli/compare/1.58.0...1.59.0) (2026-07-11)
 
 
