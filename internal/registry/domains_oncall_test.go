@@ -164,3 +164,32 @@ func TestOnCallOverrideAddActionWired(t *testing.T) {
 		t.Errorf("override-add 'end' must map to endAt, got %+v", e)
 	}
 }
+
+func TestOnCallClassifyStandbyActionWired(t *testing.T) {
+	d := findOnCallDomain(t)
+	var cs *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "classify-standby" {
+			cs = &d.Actions[i]
+		}
+	}
+	if cs == nil {
+		t.Fatal("expected 'classify-standby' action")
+	}
+	if cs.HTTPMethod != "POST" || cs.RESTPath != "classify-standby" {
+		t.Errorf("classify-standby = %s %q, want POST \"classify-standby\"", cs.HTTPMethod, cs.RESTPath)
+	}
+	byFlag := map[string]*FlagDef{}
+	for i := range cs.Flags {
+		byFlag[cs.Flags[i].Name] = &cs.Flags[i]
+	}
+	// float flag default must be a float literal (registry type-assert panic guard)
+	if c, ok := byFlag["callouts-per-week"]; !ok {
+		t.Error("classify-standby missing 'callouts-per-week'")
+	} else if _, isFloat := c.Default.(float64); !isFloat {
+		t.Errorf("'callouts-per-week' default must be a float literal, got %T", c.Default)
+	}
+	if r, ok := byFlag["response-minutes"]; !ok || r.BodyName != "responseTimeMinutes" {
+		t.Errorf("'response-minutes' must map to responseTimeMinutes, got %+v", r)
+	}
+}

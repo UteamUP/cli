@@ -92,3 +92,22 @@ func TestWorkingTimeProjectOvertimeActionWired(t *testing.T) {
 		t.Errorf("project-overtime 'rostered' must be a required float → rosteredHours, got %+v", r)
 	}
 }
+
+func TestWorkingTimeHolidaysActionWired(t *testing.T) {
+	d := findWorkingTimeDomain(t)
+	var h *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "holidays" {
+			h = &d.Actions[i]
+		}
+	}
+	if h == nil {
+		t.Fatal("expected 'holidays' action")
+	}
+	if h.HTTPMethod != "GET" || h.RESTPath != "holidays/{year}" {
+		t.Errorf("holidays = %s %q, want GET \"holidays/{year}\"", h.HTTPMethod, h.RESTPath)
+	}
+	if len(h.Args) != 1 || h.Args[0].Name != "year" || !h.Args[0].Required || h.Args[0].Type != "int" {
+		t.Errorf("holidays must take a required int 'year' arg, got %+v", h.Args)
+	}
+}

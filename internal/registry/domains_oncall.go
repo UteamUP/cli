@@ -70,6 +70,19 @@ func init() {
 					{Name: "end", Description: "Window end (ISO-8601 UTC, after start)", Type: "string", Required: true, BodyName: "endAt"},
 				},
 			},
+			{
+				Name:        "classify-standby",
+				Description: "Classify whether a standby period counts as working time (ECJ test)",
+				ToolName:    "UteamupOnCallClassifyStandby",
+				HTTPMethod:  "POST",
+				RESTPath:    "classify-standby",
+				Flags: []FlagDef{
+					{Name: "response-minutes", Description: "Required response time in minutes (omit = no hard obligation)", Type: "int", BodyName: "responseTimeMinutes"},
+					{Name: "callouts-per-week", Description: "Observed callouts per week", Type: "float", Default: 0.0, BodyName: "calloutsPerWeek"},
+					{Name: "freedom", Description: "0=Reachable, 1=Restricted, 2=ConfinedToPremises", Type: "int", Default: 0},
+					{Name: "override", Description: "Human determination (wins when set)", Type: "bool", BodyName: "countsAsWorkingTimeOverride"},
+				},
+			},
 		},
 	})
 }

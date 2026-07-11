@@ -38,6 +38,16 @@ func init() {
 					{Name: "overtime-max-minutes", Description: "Cap on overtime minutes (0 = uncapped)", Type: "int", Default: 0, BodyName: "overtimeMaxMinutes"},
 				},
 			},
+			{
+				Name:        "holidays",
+				Description: "List the statutory Icelandic public holidays for a year",
+				ToolName:    "UteamupWorkingTimeHolidays",
+				HTTPMethod:  "GET",
+				RESTPath:    "holidays/{year}",
+				Args: []ArgDef{
+					{Name: "year", Description: "Calendar year (e.g. 2026)", Required: true, Type: "int"},
+				},
+			},
 		},
 	})
 }
