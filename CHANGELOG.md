@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.56.0](https://github.com/UteamUP/cli/compare/1.55.0...1.56.0) (2026-07-11)
+
+
+### Features
+
+* **registry:** add workingtime domain and oncall override-add action ([b969395](https://github.com/UteamUP/cli/commit/b96939572d7248aa8d0e5648f27b309a0b68a25a))
+
 ## [1.55.0](https://github.com/UteamUP/cli/compare/1.54.0...1.55.0) (2026-07-11)
 
 
