@@ -21,6 +21,41 @@ func init() {
 			{Name: "summary-type", Description: "brief, detailed, or technical", Default: "detailed", Type: "string", BodyName: "summaryType"},
 		},
 	})
+	shiftHandoverActions = append(shiftHandoverActions,
+		Action{
+			Name:        "pending-acceptances",
+			Description: "List handovers awaiting acceptance by the current incoming operator",
+			ToolName:    "UteamupShiftHandoverGetPendingAcceptances",
+			HTTPMethod:  "GET",
+			RESTPath:    "acceptances/pending",
+		},
+		Action{
+			Name:        "accept",
+			Description: "Accept a handover as its designated incoming operator",
+			ToolName:    "UteamupShiftHandoverAccept",
+			HTTPMethod:  "PUT",
+			RESTPath:    "by-guid/{handoverGuid}/accept",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{
+				{Name: "notes", Description: "Optional acceptance notes", Type: "string"},
+			},
+		},
+		Action{
+			Name:        "decline-acceptance",
+			Description: "Decline a handover as its designated incoming operator",
+			ToolName:    "UteamupShiftHandoverDeclineAcceptance",
+			HTTPMethod:  "PUT",
+			RESTPath:    "by-guid/{handoverGuid}/decline-acceptance",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{
+				{Name: "notes", Description: "Optional decline reason", Type: "string"},
+			},
+		},
+	)
 	Register(&Domain{Name: "shift-handover", Description: "Manage shift handovers", Actions: shiftHandoverActions})
 	Register(&Domain{Name: "time-entry", Aliases: []string{"time", "timesheet"}, Description: "Manage time entries", Actions: crudActions("TimeEntry")})
 }
