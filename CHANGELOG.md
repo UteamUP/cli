@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.55.0](https://github.com/UteamUP/cli/compare/1.54.0...1.55.0) (2026-07-11)
+
+
+### Features
+
+* **oncall:** add schedule-list, schedule-create, and layer-add actions ([aa9bf98](https://github.com/UteamUP/cli/commit/aa9bf981f3e403264d8695eb86af0954d2e0d5bd))
+
 ## [1.54.0](https://github.com/UteamUP/cli/compare/1.53.0...1.54.0) (2026-07-11)
 
 
