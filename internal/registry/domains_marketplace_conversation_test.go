@@ -22,6 +22,7 @@ func TestMarketplaceConversationDomainIsParticipantScopedAndGuidFirst(t *testing
 		path string
 		args int
 	}{
+		"send":            {"UteamupMarketplaceConversationMessageSend", "{conversationGuid}/messages", 1},
 		"search":          {"UteamupMarketplaceConversationMessagesSearch", "{conversationGuid}/messages/search", 1},
 		"mute":            {"UteamupMarketplaceConversationPreferencesUpdate", "{conversationGuid}/preferences", 1},
 		"pin":             {"UteamupMarketplaceConversationMessagePinUpdate", "{conversationGuid}/messages/{messageGuid}/pin", 2},
@@ -53,6 +54,42 @@ func TestMarketplaceConversationDomainIsParticipantScopedAndGuidFirst(t *testing
 	}
 	if len(want) != 0 {
 		t.Fatalf("missing actions: %v", want)
+	}
+}
+
+func TestMarketplaceConversationSendUsesGuidOnlyMentionAndAttachmentLists(t *testing.T) {
+	var action *Action
+	for _, domain := range DefaultRegistry.Domains() {
+		if domain.Name != "marketplace-conversation" {
+			continue
+		}
+		for index := range domain.Actions {
+			if domain.Actions[index].Name == "send" {
+				action = &domain.Actions[index]
+				break
+			}
+		}
+	}
+	if action == nil {
+		t.Fatal("expected send action")
+	}
+
+	want := map[string]string{
+		"mention":       "mentionedParticipantGuids",
+		"document-guid": "documentGuids",
+	}
+	for _, flag := range action.Flags {
+		bodyName, ok := want[flag.Name]
+		if !ok {
+			continue
+		}
+		if flag.Type != "stringSlice" || flag.BodyName != bodyName {
+			t.Errorf("flag %s = %+v", flag.Name, flag)
+		}
+		delete(want, flag.Name)
+	}
+	if len(want) != 0 {
+		t.Fatalf("missing GUID list flags: %v", want)
 	}
 }
 

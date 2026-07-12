@@ -14,6 +14,20 @@ func init() {
 		APIPath:     "/api/marketplace/conversations",
 		Actions: []Action{
 			{
+				Name:        "send",
+				Description: "Send private text and optional active-participant mentions without granting access or sharing history",
+				ToolName:    "UteamupMarketplaceConversationMessageSend",
+				RESTPath:    "{conversationGuid}/messages",
+				HTTPMethod:  "POST",
+				Args:        []ArgDef{conversationGuid},
+				Flags: []FlagDef{
+					{Name: "body", Description: "Message body", Type: "string", Required: true},
+					{Name: "parent-message-guid", BodyName: "parentMessageGuid", Description: "Optional visible parent message GUID", Type: "string"},
+					{Name: "mention", BodyName: "mentionedParticipantGuids", Description: "Active participant GUID to mention; repeatable, maximum 20", Type: "stringSlice"},
+					{Name: "document-guid", BodyName: "documentGuids", Description: "Entitled document GUID to attach; repeatable, maximum 5", Type: "stringSlice"},
+				},
+			},
+			{
 				Name:        "search",
 				Description: "Search only conversation messages the authenticated participant may read",
 				ToolName:    "UteamupMarketplaceConversationMessagesSearch",
