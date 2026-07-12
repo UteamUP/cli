@@ -192,6 +192,18 @@ func init() {
 			Flags: []FlagDef{handoverConcurrencyFlag()},
 		},
 		Action{
+			Name:        "carryover-critical-acknowledge",
+			Description: "Acknowledge an unresolved P0/P1 carry-over without resolving it",
+			ToolName:    "UteamupShiftHandoverAcknowledgeCriticalCarryOver",
+			HTTPMethod:  "PUT",
+			RESTPath:    "by-guid/{handoverGuid}/carryovers/{carryOverGuid}/acknowledge-critical",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "carryOverGuid", Description: "Carry-over ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: criticalItemAcknowledgmentFlags(),
+		},
+		Action{
 			Name:        "sections",
 			Description: "List handover sections by stable handover GUID",
 			ToolName:    "UteamupShiftHandoverGetSections",
@@ -299,6 +311,18 @@ func init() {
 			},
 			Flags: []FlagDef{handoverConcurrencyFlag()},
 		},
+		Action{
+			Name:        "section-critical-acknowledge",
+			Description: "Acknowledge a completed critical section as the incoming operator",
+			ToolName:    "UteamupShiftHandoverAcknowledgeCriticalSection",
+			HTTPMethod:  "PUT",
+			RESTPath:    "by-guid/{handoverGuid}/sections/{sectionGuid}/acknowledge-critical",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "sectionGuid", Description: "Section ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: criticalItemAcknowledgmentFlags(),
+		},
 	)
 	Register(&Domain{Name: "shift-handover", Description: "Manage shift handovers", Actions: shiftHandoverActions})
 	Register(&Domain{Name: "time-entry", Aliases: []string{"time", "timesheet"}, Description: "Manage time entries", Actions: crudActions("TimeEntry")})
@@ -329,6 +353,17 @@ func handoverItemLinkCreateFlags() []FlagDef {
 			Description: "ExternalGuid of the operational record to link",
 			Required:    true,
 			Type:        "uuid",
+		},
+		handoverConcurrencyFlag(),
+	}
+}
+
+func criticalItemAcknowledgmentFlags() []FlagDef {
+	return []FlagDef{
+		{
+			Name:        "notes",
+			Description: "Optional acknowledgement notes",
+			Type:        "string",
 		},
 		handoverConcurrencyFlag(),
 	}
