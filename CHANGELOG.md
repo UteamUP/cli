@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.61.0](https://github.com/UteamUP/cli/compare/1.60.0...1.61.0) (2026-07-12)
+
+
+### Features
+
+* **marketplace:** add contractor analytics commands ([65a9506](https://github.com/UteamUP/cli/commit/65a9506720e53e6f78c89cb3037a5fd00c21edfc))
+
 ## [1.60.0](https://github.com/UteamUP/cli/compare/1.59.0...1.60.0) (2026-07-11)
 
 
