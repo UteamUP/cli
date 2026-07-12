@@ -89,6 +89,73 @@ func init() {
 			),
 		},
 		Action{
+			Name:        "carryovers",
+			Description: "List carry-over items by stable handover GUID",
+			ToolName:    "UteamupShiftHandoverGetCarryOvers",
+			HTTPMethod:  "GET",
+			RESTPath:    "by-guid/{handoverGuid}/carryovers",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+		},
+		Action{
+			Name:        "carryover-create",
+			Description: "Add a carry-over item to a draft or rejected handover",
+			ToolName:    "UteamupShiftHandoverCreateCarryOver",
+			HTTPMethod:  "POST",
+			RESTPath:    "by-guid/{handoverGuid}/carryovers",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{
+				{Name: "description", Required: true, Type: "string", Description: "Operational issue that must continue to the next shift"},
+				{Name: "priority", Type: "int", Description: "Priority from 0 (highest) to 5 (lowest)"},
+				{Name: "original-handover-guid", BodyName: "originalShiftHandoverGuid", Type: "uuid", Description: "Optional origin handover GUID for migrated issues"},
+				handoverConcurrencyFlag(),
+			},
+		},
+		Action{
+			Name:        "carryover-update",
+			Description: "Update a carry-over item by stable GUID",
+			ToolName:    "UteamupShiftHandoverUpdateCarryOver",
+			HTTPMethod:  "PUT",
+			RESTPath:    "by-guid/{handoverGuid}/carryovers/{carryOverGuid}",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "carryOverGuid", Description: "Carry-over ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{
+				{Name: "description", Type: "string", Description: "Updated operational issue"},
+				{Name: "status", Type: "string", Description: "active, resolved, or escalated; conversion uses carryover-convert"},
+				{Name: "priority", Type: "int", Description: "Priority from 0 (highest) to 5 (lowest)"},
+				handoverConcurrencyFlag(),
+			},
+		},
+		Action{
+			Name:        "carryover-delete",
+			Description: "Delete an unconverted carry-over item by stable GUID",
+			ToolName:    "UteamupShiftHandoverDeleteCarryOver",
+			HTTPMethod:  "DELETE",
+			RESTPath:    "by-guid/{handoverGuid}/carryovers/{carryOverGuid}",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "carryOverGuid", Description: "Carry-over ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{handoverConcurrencyFlag()},
+		},
+		Action{
+			Name:        "carryover-convert",
+			Description: "Convert a carry-over into one traceable workorder exactly once",
+			ToolName:    "UteamupShiftHandoverConvertCarryOverToWorkOrder",
+			HTTPMethod:  "POST",
+			RESTPath:    "by-guid/{handoverGuid}/carryovers/{carryOverGuid}/convert-to-workorder",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "carryOverGuid", Description: "Carry-over ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: handoverMutationFlags(),
+		},
+		Action{
 			Name:        "sections",
 			Description: "List handover sections by stable handover GUID",
 			ToolName:    "UteamupShiftHandoverGetSections",
