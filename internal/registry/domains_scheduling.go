@@ -156,6 +156,42 @@ func init() {
 			Flags: handoverMutationFlags(),
 		},
 		Action{
+			Name:        "carryover-links",
+			Description: "List operational records linked to a carry-over item",
+			ToolName:    "UteamupShiftHandoverGetCarryOverLinks",
+			HTTPMethod:  "GET",
+			RESTPath:    "by-guid/{handoverGuid}/carryovers/{carryOverGuid}/links",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "carryOverGuid", Description: "Carry-over ExternalGuid", Required: true, Type: "uuid"},
+			},
+		},
+		Action{
+			Name:        "carryover-link-create",
+			Description: "Link an operational record to a carry-over without changing the source record",
+			ToolName:    "UteamupShiftHandoverCreateCarryOverLink",
+			HTTPMethod:  "POST",
+			RESTPath:    "by-guid/{handoverGuid}/carryovers/{carryOverGuid}/links",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "carryOverGuid", Description: "Carry-over ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: handoverItemLinkCreateFlags(),
+		},
+		Action{
+			Name:        "carryover-link-delete",
+			Description: "Remove a carry-over operational link without changing the source record",
+			ToolName:    "UteamupShiftHandoverDeleteCarryOverLink",
+			HTTPMethod:  "DELETE",
+			RESTPath:    "by-guid/{handoverGuid}/carryovers/{carryOverGuid}/links/{linkGuid}",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "carryOverGuid", Description: "Carry-over ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "linkGuid", Description: "Link ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{handoverConcurrencyFlag()},
+		},
+		Action{
 			Name:        "sections",
 			Description: "List handover sections by stable handover GUID",
 			ToolName:    "UteamupShiftHandoverGetSections",
@@ -227,6 +263,42 @@ func init() {
 				handoverConcurrencyFlag(),
 			},
 		},
+		Action{
+			Name:        "section-links",
+			Description: "List operational records linked to a handover section",
+			ToolName:    "UteamupShiftHandoverGetSectionLinks",
+			HTTPMethod:  "GET",
+			RESTPath:    "by-guid/{handoverGuid}/sections/{sectionGuid}/links",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "sectionGuid", Description: "Section ExternalGuid", Required: true, Type: "uuid"},
+			},
+		},
+		Action{
+			Name:        "section-link-create",
+			Description: "Link an operational record to a section without changing the source record",
+			ToolName:    "UteamupShiftHandoverCreateSectionLink",
+			HTTPMethod:  "POST",
+			RESTPath:    "by-guid/{handoverGuid}/sections/{sectionGuid}/links",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "sectionGuid", Description: "Section ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: handoverItemLinkCreateFlags(),
+		},
+		Action{
+			Name:        "section-link-delete",
+			Description: "Remove a section operational link without changing the source record",
+			ToolName:    "UteamupShiftHandoverDeleteSectionLink",
+			HTTPMethod:  "DELETE",
+			RESTPath:    "by-guid/{handoverGuid}/sections/{sectionGuid}/links/{linkGuid}",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "sectionGuid", Description: "Section ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "linkGuid", Description: "Link ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{handoverConcurrencyFlag()},
+		},
 	)
 	Register(&Domain{Name: "shift-handover", Description: "Manage shift handovers", Actions: shiftHandoverActions})
 	Register(&Domain{Name: "time-entry", Aliases: []string{"time", "timesheet"}, Description: "Manage time entries", Actions: crudActions("TimeEntry")})
@@ -239,6 +311,26 @@ func handoverConcurrencyFlag() FlagDef {
 		Description: "Latest opaque concurrency token from the handover response",
 		Required:    true,
 		Type:        "string",
+	}
+}
+
+func handoverItemLinkCreateFlags() []FlagDef {
+	return []FlagDef{
+		{
+			Name:        "linked-entity-type",
+			BodyName:    "linkedEntityType",
+			Description: "project, workOrder, asset, location, workPermit, incident, journal, or document",
+			Required:    true,
+			Type:        "string",
+		},
+		{
+			Name:        "linked-entity-guid",
+			BodyName:    "linkedEntityGuid",
+			Description: "ExternalGuid of the operational record to link",
+			Required:    true,
+			Type:        "uuid",
+		},
+		handoverConcurrencyFlag(),
 	}
 }
 
