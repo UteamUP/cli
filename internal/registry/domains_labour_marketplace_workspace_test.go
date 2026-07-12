@@ -16,8 +16,8 @@ func TestLabourMarketplaceWorkspaceDomain(t *testing.T) {
 	if domain.APIPath != "/api/labour-marketplace" {
 		t.Fatalf("unexpected API path %q", domain.APIPath)
 	}
-	if len(domain.Actions) != 2 {
-		t.Fatalf("expected two actions, got %d", len(domain.Actions))
+	if len(domain.Actions) != 3 {
+		t.Fatalf("expected three actions, got %d", len(domain.Actions))
 	}
 	action := domain.Actions[0]
 	if action.Name != "me" || action.ToolName != "UteamupLabourMarketplaceWorkspaceMe" {
@@ -38,5 +38,18 @@ func TestLabourMarketplaceWorkspaceDomain(t *testing.T) {
 	}
 	if len(timesheets.Args) != 1 || timesheets.Args[0].Name != "agreementGuid" || !timesheets.Args[0].Required {
 		t.Fatal("timesheets must require exactly one agreement GUID argument")
+	}
+	replacement := domain.Actions[2]
+	if replacement.Name != "replace-worker" || replacement.ToolName != "UteamupLabourWorkerDispatchReplace" {
+		t.Fatalf("unexpected replacement action %#v", replacement)
+	}
+	if replacement.RESTPath != "dispatches/{dispatchGuid}/replacement" || replacement.HTTPMethod != "POST" {
+		t.Fatalf("unexpected replacement REST contract %s %s", replacement.HTTPMethod, replacement.RESTPath)
+	}
+	if len(replacement.Args) != 1 || replacement.Args[0].Name != "dispatchGuid" || !replacement.Args[0].Required {
+		t.Fatal("replacement must require the dispatch GUID")
+	}
+	if len(replacement.Flags) != 2 || !replacement.Flags[0].Required || !replacement.Flags[1].Required {
+		t.Fatal("replacement membership GUID and reason must both be required")
 	}
 }

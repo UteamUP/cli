@@ -27,6 +27,23 @@ func init() {
 					Type:        "string",
 				}},
 			},
+			{
+				Name:        "replace-worker",
+				Description: "Replace a proposed worker and create a new immutable roster revision",
+				ToolName:    "UteamupLabourWorkerDispatchReplace",
+				RESTPath:    "dispatches/{dispatchGuid}/replacement",
+				HTTPMethod:  "POST",
+				Args: []ArgDef{{
+					Name:        "dispatchGuid",
+					Description: "Dispatch GUID being replaced",
+					Required:    true,
+					Type:        "string",
+				}},
+				Flags: []FlagDef{
+					{Name: "replacement-workforce-membership-guid", Description: "Registered replacement workforce membership GUID", Type: "string", Required: true},
+					{Name: "reason", Description: "Auditable reason for the roster change", Type: "string", Required: true},
+				},
+			},
 		},
 	})
 }
