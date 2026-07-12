@@ -16,8 +16,8 @@ func TestLabourMarketplaceWorkspaceDomain(t *testing.T) {
 	if domain.APIPath != "/api/labour-marketplace" {
 		t.Fatalf("unexpected API path %q", domain.APIPath)
 	}
-	if len(domain.Actions) != 1 {
-		t.Fatalf("expected one action, got %d", len(domain.Actions))
+	if len(domain.Actions) != 2 {
+		t.Fatalf("expected two actions, got %d", len(domain.Actions))
 	}
 	action := domain.Actions[0]
 	if action.Name != "me" || action.ToolName != "UteamupLabourMarketplaceWorkspaceMe" {
@@ -28,5 +28,15 @@ func TestLabourMarketplaceWorkspaceDomain(t *testing.T) {
 	}
 	if len(action.Args) != 0 || len(action.Flags) != 0 {
 		t.Fatal("current-user workspace must not accept party or user selectors")
+	}
+	timesheets := domain.Actions[1]
+	if timesheets.Name != "timesheets" || timesheets.ToolName != "UteamupLabourAgreementTimesheets" {
+		t.Fatalf("unexpected timesheets action %#v", timesheets)
+	}
+	if timesheets.RESTPath != "agreements/{agreementGuid}/timesheets" || timesheets.HTTPMethod != "GET" {
+		t.Fatalf("unexpected timesheets REST contract %s %s", timesheets.HTTPMethod, timesheets.RESTPath)
+	}
+	if len(timesheets.Args) != 1 || timesheets.Args[0].Name != "agreementGuid" || !timesheets.Args[0].Required {
+		t.Fatal("timesheets must require exactly one agreement GUID argument")
 	}
 }

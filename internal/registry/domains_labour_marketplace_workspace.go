@@ -14,6 +14,19 @@ func init() {
 				RESTPath:    "workspace/me",
 				HTTPMethod:  "GET",
 			},
+			{
+				Name:        "timesheets",
+				Description: "List rate-derived timesheets and dual-approval state for an accessible labour agreement",
+				ToolName:    "UteamupLabourAgreementTimesheets",
+				RESTPath:    "agreements/{agreementGuid}/timesheets",
+				HTTPMethod:  "GET",
+				Args: []ArgDef{{
+					Name:        "agreementGuid",
+					Description: "Labour agreement GUID",
+					Required:    true,
+					Type:        "string",
+				}},
+			},
 		},
 	})
 }
