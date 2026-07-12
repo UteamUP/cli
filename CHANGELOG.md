@@ -5,6 +5,16 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.62.0](https://github.com/UteamUP/cli/compare/1.61.0...1.62.0) (2026-07-12)
+
+
+### Features
+
+* **marketplace:** add labour worker replacement command ([c3f66d1](https://github.com/UteamUP/cli/commit/c3f66d1e48b6a857ca4e4c826f5837b072b37ebe))
+* **marketplace:** add labour workspace commands ([1e09f9a](https://github.com/UteamUP/cli/commit/1e09f9a10cda043d7ea75e8dfc4e118f4615fcfd))
+* **marketplace:** list labour agreement timesheets ([b803481](https://github.com/UteamUP/cli/commit/b80348127af3ec60dbd9e9d0d37394061e313c77))
+* **scheduling:** add shift-handover submit and mutation guard flags ([d648572](https://github.com/UteamUP/cli/commit/d64857263860df479ebf6aa24b0c4605b1b9de29))
+
 ## [1.61.0](https://github.com/UteamUP/cli/compare/1.60.0...1.61.0) (2026-07-12)
 
 
