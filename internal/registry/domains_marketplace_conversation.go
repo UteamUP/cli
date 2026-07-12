@@ -79,6 +79,17 @@ func init() {
 					{Name: "status", Description: "accepted, declined, or cancelled", Type: "string", Required: true},
 				},
 			},
+			{
+				Name:        "offer-share",
+				Description: "Share a server-generated snapshot of the current authoritative offer revision",
+				ToolName:    "UteamupMarketplaceConversationOfferCardCreate",
+				RESTPath:    "{conversationGuid}/messages/offer-cards",
+				HTTPMethod:  "POST",
+				Args:        []ArgDef{conversationGuid},
+				Flags: []FlagDef{
+					{Name: "offer-revision-guid", BodyName: "offerRevisionGuid", Description: "Authoritative labour offer revision GUID", Type: "string", Required: true},
+				},
+			},
 		},
 	})
 }
