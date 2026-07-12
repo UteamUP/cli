@@ -49,6 +49,36 @@ func init() {
 					{Name: "pinned", BodyName: "isPinned", Description: "True to pin; false to unpin", Type: "bool", Required: true},
 				},
 			},
+			{
+				Name:        "meeting-create",
+				Description: "Create a private server-owned meeting proposal; this does not approve a job, offer, or agreement",
+				ToolName:    "UteamupMarketplaceConversationMeetingCreate",
+				RESTPath:    "{conversationGuid}/messages/meeting-proposals",
+				HTTPMethod:  "POST",
+				Args:        []ArgDef{conversationGuid},
+				Flags: []FlagDef{
+					{Name: "subject", Description: "Meeting subject", Type: "string", Required: true},
+					{Name: "start-utc", BodyName: "scheduledStartUtc", Description: "Future ISO-8601 meeting start in UTC", Type: "string", Required: true},
+					{Name: "end-utc", BodyName: "scheduledEndUtc", Description: "ISO-8601 meeting end in UTC", Type: "string", Required: true},
+					{Name: "time-zone", BodyName: "timeZone", Description: "IANA or supported system time-zone identifier", Type: "string", Required: true},
+					{Name: "location", Description: "Optional location or meeting link", Type: "string"},
+					{Name: "notes", Description: "Optional private meeting notes", Type: "string"},
+				},
+			},
+			{
+				Name:        "meeting-respond",
+				Description: "Accept, decline, or cancel a meeting through participant-side authorization",
+				ToolName:    "UteamupMarketplaceConversationMeetingRespond",
+				RESTPath:    "{conversationGuid}/messages/{messageGuid}/meeting-response",
+				HTTPMethod:  "PATCH",
+				Args: []ArgDef{
+					conversationGuid,
+					{Name: "messageGuid", Description: "Meeting proposal message GUID", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "status", Description: "accepted, declined, or cancelled", Type: "string", Required: true},
+				},
+			},
 		},
 	})
 }

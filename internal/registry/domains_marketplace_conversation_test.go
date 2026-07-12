@@ -22,9 +22,11 @@ func TestMarketplaceConversationDomainIsParticipantScopedAndGuidFirst(t *testing
 		path string
 		args int
 	}{
-		"search": {"UteamupMarketplaceConversationMessagesSearch", "{conversationGuid}/messages/search", 1},
-		"mute":   {"UteamupMarketplaceConversationPreferencesUpdate", "{conversationGuid}/preferences", 1},
-		"pin":    {"UteamupMarketplaceConversationMessagePinUpdate", "{conversationGuid}/messages/{messageGuid}/pin", 2},
+		"search":          {"UteamupMarketplaceConversationMessagesSearch", "{conversationGuid}/messages/search", 1},
+		"mute":            {"UteamupMarketplaceConversationPreferencesUpdate", "{conversationGuid}/preferences", 1},
+		"pin":             {"UteamupMarketplaceConversationMessagePinUpdate", "{conversationGuid}/messages/{messageGuid}/pin", 2},
+		"meeting-create":  {"UteamupMarketplaceConversationMeetingCreate", "{conversationGuid}/messages/meeting-proposals", 1},
+		"meeting-respond": {"UteamupMarketplaceConversationMeetingRespond", "{conversationGuid}/messages/{messageGuid}/meeting-response", 2},
 	}
 	for _, action := range domain.Actions {
 		expected, ok := want[action.Name]
