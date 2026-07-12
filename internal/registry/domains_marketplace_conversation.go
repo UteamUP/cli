@@ -90,6 +90,19 @@ func init() {
 					{Name: "offer-revision-guid", BodyName: "offerRevisionGuid", Description: "Authoritative labour offer revision GUID", Type: "string", Required: true},
 				},
 			},
+			{
+				Name:        "contact-share",
+				Description: "Share selected server-owned account contact fields after the configured disclosure stage",
+				ToolName:    "UteamupMarketplaceConversationContactCardCreate",
+				RESTPath:    "{conversationGuid}/messages/contact-cards",
+				HTTPMethod:  "POST",
+				Args:        []ArgDef{conversationGuid},
+				Flags: []FlagDef{
+					{Name: "email", BodyName: "includeEmail", Description: "Share the authenticated account email when available", Type: "bool"},
+					{Name: "phone", BodyName: "includePhone", Description: "Share the authenticated work or mobile phone when available", Type: "bool"},
+					{Name: "website", BodyName: "includeWebsite", Description: "Share the authenticated account website when available", Type: "bool"},
+				},
+			},
 		},
 	})
 }

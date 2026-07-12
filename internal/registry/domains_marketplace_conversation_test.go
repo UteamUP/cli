@@ -28,6 +28,7 @@ func TestMarketplaceConversationDomainIsParticipantScopedAndGuidFirst(t *testing
 		"meeting-create":  {"UteamupMarketplaceConversationMeetingCreate", "{conversationGuid}/messages/meeting-proposals", 1},
 		"meeting-respond": {"UteamupMarketplaceConversationMeetingRespond", "{conversationGuid}/messages/{messageGuid}/meeting-response", 2},
 		"offer-share":     {"UteamupMarketplaceConversationOfferCardCreate", "{conversationGuid}/messages/offer-cards", 1},
+		"contact-share":   {"UteamupMarketplaceConversationContactCardCreate", "{conversationGuid}/messages/contact-cards", 1},
 	}
 	for _, action := range domain.Actions {
 		expected, ok := want[action.Name]
@@ -52,5 +53,43 @@ func TestMarketplaceConversationDomainIsParticipantScopedAndGuidFirst(t *testing
 	}
 	if len(want) != 0 {
 		t.Fatalf("missing actions: %v", want)
+	}
+}
+
+func TestMarketplaceConversationContactShareSendsOnlyFieldSelectionBooleans(t *testing.T) {
+	var action *Action
+	for _, domain := range DefaultRegistry.Domains() {
+		if domain.Name != "marketplace-conversation" {
+			continue
+		}
+		for index := range domain.Actions {
+			if domain.Actions[index].Name == "contact-share" {
+				action = &domain.Actions[index]
+				break
+			}
+		}
+	}
+	if action == nil {
+		t.Fatal("expected contact-share action")
+	}
+
+	want := map[string]string{
+		"email":   "includeEmail",
+		"phone":   "includePhone",
+		"website": "includeWebsite",
+	}
+	for _, flag := range action.Flags {
+		bodyName, ok := want[flag.Name]
+		if !ok {
+			t.Errorf("contact-share exposes unexpected flag %q", flag.Name)
+			continue
+		}
+		if flag.Type != "bool" || flag.BodyName != bodyName {
+			t.Errorf("flag %s = %+v", flag.Name, flag)
+		}
+		delete(want, flag.Name)
+	}
+	if len(want) != 0 {
+		t.Fatalf("missing contact selection flags: %v", want)
 	}
 }
