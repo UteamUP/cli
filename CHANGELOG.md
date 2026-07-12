@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.64.0](https://github.com/UteamUP/cli/compare/1.63.0...1.64.0) (2026-07-12)
+
+
+### Features
+
+* **marketplace:** add CLI conversation domain ([e7803bb](https://github.com/UteamUP/cli/commit/e7803bb6e5b28b8bd879257cc23bea8611fb1c9e))
+* **scheduling:** add GUID-first handover carry-over actions ([76cdf1d](https://github.com/UteamUP/cli/commit/76cdf1d4510508964224ac07caa8c5d60cec1c30))
+
 ## [1.63.0](https://github.com/UteamUP/cli/compare/1.62.0...1.63.0) (2026-07-12)
 
 
