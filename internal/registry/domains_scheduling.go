@@ -88,9 +88,91 @@ func init() {
 				FlagDef{Name: "notes", Description: "Optional decline reason", Type: "string"},
 			),
 		},
+		Action{
+			Name:        "sections",
+			Description: "List handover sections by stable handover GUID",
+			ToolName:    "UteamupShiftHandoverGetSections",
+			HTTPMethod:  "GET",
+			RESTPath:    "by-guid/{handoverGuid}/sections",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+		},
+		Action{
+			Name:        "section-create",
+			Description: "Add a validated section to a draft or rejected handover",
+			ToolName:    "UteamupShiftHandoverCreateSection",
+			HTTPMethod:  "POST",
+			RESTPath:    "by-guid/{handoverGuid}/sections",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{
+				{Name: "section-type", BodyName: "sectionType", Required: true, Type: "int", Description: "Section type enum value"},
+				{Name: "title", Type: "string", Description: "Section title; required for custom sections"},
+				{Name: "content", Type: "string", Description: "Section content"},
+				{Name: "sort-order", BodyName: "sortOrder", Type: "int", Description: "Optional unique sort order"},
+				{Name: "required", BodyName: "isRequired", Type: "bool", Description: "Require completion before submit"},
+				handoverConcurrencyFlag(),
+			},
+		},
+		Action{
+			Name:        "section-update",
+			Description: "Update a handover section by stable GUID",
+			ToolName:    "UteamupShiftHandoverUpdateSection",
+			HTTPMethod:  "PUT",
+			RESTPath:    "by-guid/{handoverGuid}/sections/{sectionGuid}",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "sectionGuid", Description: "Section ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{
+				{Name: "title", Type: "string", Description: "Updated title"},
+				{Name: "content", Type: "string", Description: "Updated content"},
+				{Name: "completed", BodyName: "isCompleted", Type: "bool", Description: "Completion state"},
+				{Name: "sort-order", BodyName: "sortOrder", Type: "int", Description: "Unique sort order"},
+				handoverConcurrencyFlag(),
+			},
+		},
+		Action{
+			Name:        "section-delete",
+			Description: "Delete an optional handover section by stable GUID",
+			ToolName:    "UteamupShiftHandoverDeleteSection",
+			HTTPMethod:  "DELETE",
+			RESTPath:    "by-guid/{handoverGuid}/sections/{sectionGuid}",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+				{Name: "sectionGuid", Description: "Section ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{handoverConcurrencyFlag()},
+		},
+		Action{
+			Name:        "sections-reorder",
+			Description: "Replace the absolute order of every handover section",
+			ToolName:    "UteamupShiftHandoverReorderSections",
+			HTTPMethod:  "PUT",
+			RESTPath:    "by-guid/{handoverGuid}/sections/reorder",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{
+				{Name: "section-guids", BodyName: "sectionGuids", Required: true, Type: "stringSlice", Description: "Every section GUID in the desired order"},
+				handoverConcurrencyFlag(),
+			},
+		},
 	)
 	Register(&Domain{Name: "shift-handover", Description: "Manage shift handovers", Actions: shiftHandoverActions})
 	Register(&Domain{Name: "time-entry", Aliases: []string{"time", "timesheet"}, Description: "Manage time entries", Actions: crudActions("TimeEntry")})
+}
+
+func handoverConcurrencyFlag() FlagDef {
+	return FlagDef{
+		Name:        "concurrency-token",
+		BodyName:    "concurrencyToken",
+		Description: "Latest opaque concurrency token from the handover response",
+		Required:    true,
+		Type:        "string",
+	}
 }
 
 func handoverMutationFlags() []FlagDef {
