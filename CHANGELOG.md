@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.63.0](https://github.com/UteamUP/cli/compare/1.62.0...1.63.0) (2026-07-12)
+
+
+### Features
+
+* **iot:** add CLI monitoring domain ([d0323d1](https://github.com/UteamUP/cli/commit/d0323d182760ec0414dd5fe6a5b6c3b5ef6f0ec6))
+* **scheduling:** add shift-handover section actions ([6732c4f](https://github.com/UteamUP/cli/commit/6732c4fa71d831be428d55efa697517359bd8956))
+
 ## [1.62.0](https://github.com/UteamUP/cli/compare/1.61.0...1.62.0) (2026-07-12)
 
 
