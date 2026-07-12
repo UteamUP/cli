@@ -23,6 +23,17 @@ func init() {
 	})
 	shiftHandoverActions = append(shiftHandoverActions,
 		Action{
+			Name:        "submit",
+			Description: "Submit a draft handover as its designated outgoing operator",
+			ToolName:    "UteamupShiftHandoverSubmit",
+			HTTPMethod:  "PUT",
+			RESTPath:    "by-guid/{handoverGuid}/submit",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: handoverMutationFlags(),
+		},
+		Action{
 			Name:        "pending-acceptances",
 			Description: "List handovers awaiting acceptance by the current incoming operator",
 			ToolName:    "UteamupShiftHandoverGetPendingAcceptances",
@@ -38,6 +49,7 @@ func init() {
 			Args: []ArgDef{
 				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
 			},
+			Flags: handoverMutationFlags(),
 		},
 		Action{
 			Name:        "accept",
@@ -48,9 +60,9 @@ func init() {
 			Args: []ArgDef{
 				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
 			},
-			Flags: []FlagDef{
-				{Name: "notes", Description: "Optional acceptance notes", Type: "string"},
-			},
+			Flags: append(handoverMutationFlags(),
+				FlagDef{Name: "notes", Description: "Optional acceptance notes", Type: "string"},
+			),
 		},
 		Action{
 			Name:        "complete",
@@ -61,6 +73,7 @@ func init() {
 			Args: []ArgDef{
 				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
 			},
+			Flags: handoverMutationFlags(),
 		},
 		Action{
 			Name:        "decline-acceptance",
@@ -71,11 +84,30 @@ func init() {
 			Args: []ArgDef{
 				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
 			},
-			Flags: []FlagDef{
-				{Name: "notes", Description: "Optional decline reason", Type: "string"},
-			},
+			Flags: append(handoverMutationFlags(),
+				FlagDef{Name: "notes", Description: "Optional decline reason", Type: "string"},
+			),
 		},
 	)
 	Register(&Domain{Name: "shift-handover", Description: "Manage shift handovers", Actions: shiftHandoverActions})
 	Register(&Domain{Name: "time-entry", Aliases: []string{"time", "timesheet"}, Description: "Manage time entries", Actions: crudActions("TimeEntry")})
+}
+
+func handoverMutationFlags() []FlagDef {
+	return []FlagDef{
+		{
+			Name:        "concurrency-token",
+			BodyName:    "concurrencyToken",
+			Description: "Latest opaque concurrency token from the handover response",
+			Required:    true,
+			Type:        "string",
+		},
+		{
+			Name:        "idempotency-key",
+			HeaderName:  "Idempotency-Key",
+			Description: "Client-generated GUID that remains stable across retries",
+			Required:    true,
+			Type:        "string",
+		},
+	}
 }
