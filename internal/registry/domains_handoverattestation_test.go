@@ -35,17 +35,25 @@ func TestHandoverAttestationActionsWired(t *testing.T) {
 		t.Errorf("issue must take a uuid 'handover-guid' arg, got %+v", issue.Args)
 	}
 
-	verify, ok := byName["verify"]
-	if !ok || verify.HTTPMethod != "POST" || verify.RESTPath != "verify" {
-		t.Fatalf("verify must be POST \"verify\", got %+v", verify)
+	redeem, ok := byName["redeem"]
+	if !ok || redeem.HTTPMethod != "POST" || redeem.RESTPath != "redeem" {
+		t.Fatalf("redeem must be POST \"redeem\", got %+v", redeem)
 	}
 	var tokenFlag *FlagDef
-	for i := range verify.Flags {
-		if verify.Flags[i].Name == "token" {
-			tokenFlag = &verify.Flags[i]
+	for i := range redeem.Flags {
+		if redeem.Flags[i].Name == "token" {
+			tokenFlag = &redeem.Flags[i]
 		}
 	}
 	if tokenFlag == nil || !tokenFlag.Required {
-		t.Errorf("verify must have a required 'token' flag, got %+v", verify.Flags)
+		t.Errorf("redeem must have a required 'token' flag, got %+v", redeem.Flags)
+	}
+
+	verify, ok := byName["verify"]
+	if !ok || verify.HTTPMethod != "POST" || verify.RESTPath != "redeem" {
+		t.Fatalf("verify compatibility alias must redeem atomically, got %+v", verify)
+	}
+	if verify.ToolName != redeem.ToolName {
+		t.Errorf("verify alias tool = %q, want %q", verify.ToolName, redeem.ToolName)
 	}
 }
