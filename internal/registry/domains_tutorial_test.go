@@ -20,6 +20,9 @@ func TestTutorialDomainWired(t *testing.T) {
 	if len(list.Args) != 0 {
 		t.Errorf("tutorial list must not accept identity arguments: %+v", list.Args)
 	}
+	if len(list.Flags) != 2 || list.Flags[0].Name != "module" || list.Flags[0].Default != nil {
+		t.Errorf("tutorial list module filter must be optional: %+v", list.Flags)
+	}
 
 	get := actions["get"]
 	if get.ToolName != "UteamupTutorialGet" || get.HTTPMethod != "GET" {
