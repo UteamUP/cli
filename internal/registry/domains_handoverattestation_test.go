@@ -1,6 +1,9 @@
 package registry
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func findHandoverAttestationDomain(t *testing.T) *Domain {
 	t.Helper()
@@ -34,6 +37,9 @@ func TestHandoverAttestationActionsWired(t *testing.T) {
 	if len(issue.Args) != 1 || issue.Args[0].Name != "handover-guid" || issue.Args[0].Type != "uuid" {
 		t.Errorf("issue must take a uuid 'handover-guid' arg, got %+v", issue.Args)
 	}
+	if !issue.DisableResponseExport {
+		t.Error("issue must disable response export because it returns transfer secrets")
+	}
 
 	redeem, ok := byName["redeem"]
 	if !ok || redeem.HTTPMethod != "POST" || redeem.RESTPath != "redeem" {
@@ -45,8 +51,28 @@ func TestHandoverAttestationActionsWired(t *testing.T) {
 			tokenFlag = &redeem.Flags[i]
 		}
 	}
-	if tokenFlag == nil || !tokenFlag.Required {
-		t.Errorf("redeem must have a required 'token' flag, got %+v", redeem.Flags)
+	if tokenFlag == nil || !tokenFlag.Required || !tokenFlag.Sensitive {
+		t.Errorf("redeem must have a required sensitive 'token' flag, got %+v", redeem.Flags)
+	}
+
+	redeemCode, ok := byName["redeem-code"]
+	if !ok || redeemCode.HTTPMethod != "POST" || redeemCode.RESTPath != "redeem-code" {
+		t.Fatalf("redeem-code must be POST \"redeem-code\", got %+v", redeemCode)
+	}
+	if redeemCode.ToolName != "UteamupHandoverAttestationRedeemCode" {
+		t.Errorf("redeem-code tool = %q", redeemCode.ToolName)
+	}
+	if !strings.Contains(redeemCode.Description, "5 attempts/minute") || !strings.Contains(redeemCode.Description, "0 AI credits") || !strings.Contains(redeemCode.Description, "review only") {
+		t.Errorf("redeem-code description must disclose limits, credit cost, and review-only behavior: %q", redeemCode.Description)
+	}
+	var codeFlag *FlagDef
+	for i := range redeemCode.Flags {
+		if redeemCode.Flags[i].Name == "code" {
+			codeFlag = &redeemCode.Flags[i]
+		}
+	}
+	if codeFlag == nil || !codeFlag.Required || !codeFlag.Sensitive || codeFlag.BodyName != "code" {
+		t.Errorf("redeem-code must have a required sensitive 'code' body flag, got %+v", redeemCode.Flags)
 	}
 
 	verify, ok := byName["verify"]

@@ -40,6 +40,34 @@ func TestHTTPMethodForUpdateNotes(t *testing.T) {
 	}
 }
 
+func TestRedactSensitiveActionValues(t *testing.T) {
+	action := Action{Flags: []FlagDef{
+		{Name: "code", BodyName: "numericCode", Sensitive: true},
+		{Name: "request-key", HeaderName: "X-Request-Key", Sensitive: true},
+		{Name: "note"},
+	}}
+	args := map[string]any{
+		"numericCode": "12345678",
+		"note":        "handover review",
+	}
+	headers := map[string]string{"X-Request-Key": "secret-header"}
+
+	redactedArgs, redactedHeaders := redactSensitiveActionValues(action, args, headers)
+
+	if redactedArgs["numericCode"] != "[REDACTED]" {
+		t.Errorf("sensitive body value = %v, want [REDACTED]", redactedArgs["numericCode"])
+	}
+	if redactedArgs["note"] != "handover review" {
+		t.Errorf("ordinary body value changed: %v", redactedArgs["note"])
+	}
+	if redactedHeaders["X-Request-Key"] != "[REDACTED]" {
+		t.Errorf("sensitive header value = %q, want [REDACTED]", redactedHeaders["X-Request-Key"])
+	}
+	if args["numericCode"] != "12345678" || headers["X-Request-Key"] != "secret-header" {
+		t.Error("redaction mutated the outgoing request values")
+	}
+}
+
 // TestBuildRESTPathTemplate locks in the sub-resource path-template routing
 // for verbs that don't fit the standard CRUD pattern. Without it, the CLI's
 // `comments-list` / `comments-add` / `attachments-list` / `attachments-delete`

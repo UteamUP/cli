@@ -39,6 +39,9 @@ type FlagDef struct {
 	Default     any
 	Type        string // "string", "int", "bool", "float", "stringSlice"
 	Required    bool
+	// Sensitive keeps the value available to the outgoing request while
+	// replacing it with [REDACTED] in diagnostic argument/header logs.
+	Sensitive bool
 	// BodyName overrides the JSON body field name when the flag value is sent
 	// in a POST/PUT/PATCH body. Default is camelCase(Name). Use this when the
 	// CLI flag name and the backend DTO field name diverge — e.g. CLI flag
@@ -102,6 +105,9 @@ type Action struct {
 	HTTPMethod string
 	Args       []ArgDef
 	Flags      []FlagDef
+	// DisableResponseExport prevents the profile-level JSON export feature
+	// from persisting secret-bearing responses such as transfer challenges.
+	DisableResponseExport bool
 }
 
 // Domain represents an entity domain with its available actions.
@@ -345,7 +351,8 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		}
 	}
 
-	logger.Debug("calling %s %s (tool: %s) with args %v headers %v", httpMethod, restPath, action.ToolName, toolArgs, headers)
+	loggedArgs, loggedHeaders := redactSensitiveActionValues(action, toolArgs, headers)
+	logger.Debug("calling %s %s (tool: %s) with args %v headers %v", httpMethod, restPath, action.ToolName, loggedArgs, loggedHeaders)
 
 	var result json.RawMessage
 	var err error
@@ -359,7 +366,7 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 	}
 
 	// Export JSON to file if enabled
-	if export != nil && export.Enabled && result != nil {
+	if export != nil && export.Enabled && result != nil && !action.DisableResponseExport {
 		if exportErr := exportJSON(export, domain.Name, action.Name, result, logger); exportErr != nil {
 			logger.Warn("failed to export JSON: %v", exportErr)
 		}
@@ -367,6 +374,41 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 
 	format := output.ParseFormat(*outputFormat)
 	return output.Print(format, result)
+}
+
+// redactSensitiveActionValues returns diagnostic-only copies with values from
+// Sensitive flags removed. The original request maps are never mutated.
+func redactSensitiveActionValues(action Action, args map[string]any, headers map[string]string) (map[string]any, map[string]string) {
+	redactedArgs := make(map[string]any, len(args))
+	for key, value := range args {
+		redactedArgs[key] = value
+	}
+	redactedHeaders := make(map[string]string, len(headers))
+	for key, value := range headers {
+		redactedHeaders[key] = value
+	}
+
+	for _, flag := range action.Flags {
+		if !flag.Sensitive {
+			continue
+		}
+		if flag.HeaderName != "" {
+			if _, exists := redactedHeaders[flag.HeaderName]; exists {
+				redactedHeaders[flag.HeaderName] = "[REDACTED]"
+			}
+			continue
+		}
+
+		fieldName := flag.BodyName
+		if fieldName == "" {
+			fieldName = toCamelCase(flag.Name)
+		}
+		if _, exists := redactedArgs[fieldName]; exists {
+			redactedArgs[fieldName] = "[REDACTED]"
+		}
+	}
+
+	return redactedArgs, redactedHeaders
 }
 
 // readJSONFileFlag loads a JSONFile-marked flag: the file at path is read and
