@@ -23,6 +23,43 @@ func init() {
 	})
 	shiftHandoverActions = append(shiftHandoverActions,
 		Action{
+			Name:        "history",
+			Description: "Verify and show immutable handover versions, events, and signatures",
+			ToolName:    "UteamupShiftHandoverGetHistory",
+			HTTPMethod:  "GET",
+			RESTPath:    "by-guid/{handoverGuid}/history",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+		},
+		Action{
+			Name:        "signature-create",
+			Description: "Add idempotent manager or compliance evidence to the latest immutable version",
+			ToolName:    "UteamupShiftHandoverCreateSignature",
+			HTTPMethod:  "POST",
+			RESTPath:    "by-guid/{handoverGuid}/signatures",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{
+				{Name: "purpose", Description: "managerApproval or complianceAttestation", Required: true, Type: "string"},
+				{Name: "method", Description: "Authenticated or device attestation method", Required: true, Type: "string"},
+				{Name: "meaning", Description: "Explicit signer meaning (10-1000 characters)", Required: true, Type: "string"},
+				{Name: "device-key-identifier", BodyName: "deviceKeyIdentifier", Description: "Optional managed-device key identifier", Type: "string"},
+				{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Client-generated GUID stable across retries", Required: true, Type: "uuid"},
+			},
+		},
+		Action{
+			Name:        "audit-export",
+			Description: "Return a portable audit manifest with verified history and manifest hash",
+			ToolName:    "UteamupShiftHandoverExportAudit",
+			HTTPMethod:  "GET",
+			RESTPath:    "by-guid/{handoverGuid}/audit-export",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+		},
+		Action{
 			Name:        "submit",
 			Description: "Submit a draft handover as its designated outgoing operator",
 			ToolName:    "UteamupShiftHandoverSubmit",
