@@ -13,7 +13,7 @@ func init() {
 			},
 			{
 				Name:        "monitoring",
-				Description: "Show device health, ingestion usage and recent alerts",
+				Description: "Show device health, data freshness, queue backlogs, credentials and alerts",
 				ToolName:    "UteamupIoTMonitoringDashboard",
 			},
 			{

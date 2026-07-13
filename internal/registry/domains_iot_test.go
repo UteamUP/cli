@@ -2,6 +2,8 @@ package registry
 
 import "testing"
 
+import "strings"
+
 func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 	domain := findDomain("iot")
 	if domain == nil {
@@ -46,4 +48,20 @@ func TestIoTTelemetryUsesGuidFiltersAndBoundedLimit(t *testing.T) {
 	if flags["limit"].Default != 100 {
 		t.Errorf("telemetry limit default = %v, want 100", flags["limit"].Default)
 	}
+}
+
+func TestIoTMonitoringDescriptionExposesOperationalHealth(t *testing.T) {
+	domain := findDomain("iot")
+	for _, action := range domain.Actions {
+		if action.Name != "monitoring" {
+			continue
+		}
+		for _, term := range []string{"freshness", "backlogs", "credentials"} {
+			if !strings.Contains(action.Description, term) {
+				t.Errorf("monitoring description must mention %q", term)
+			}
+		}
+		return
+	}
+	t.Fatal("expected monitoring action")
 }
