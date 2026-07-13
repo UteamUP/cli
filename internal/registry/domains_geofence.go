@@ -20,9 +20,10 @@ func init() {
 			},
 			{
 				Name:        "get",
-				Description: "Get geofence zone details by ID",
+				Description: "Get geofence zone details by GUID",
 				ToolName:    "UteamupGeofenceZoneGet",
-				Args:        []ArgDef{{Name: "id", Description: "Geofence zone ID", Required: true, Type: "int"}},
+				Args:        externalGuidArg(),
+				RESTPath:    "by-guid/{externalGuid}",
 			},
 			{
 				Name:        "create",
@@ -38,9 +39,10 @@ func init() {
 			},
 			{
 				Name:        "update",
-				Description: "Update an existing geofence zone",
+				Description: "Update an existing geofence zone by GUID",
 				ToolName:    "UteamupGeofenceZoneUpdate",
-				Args:        []ArgDef{{Name: "id", Description: "Geofence zone ID", Required: true, Type: "int"}},
+				Args:        externalGuidArg(),
+				RESTPath:    "by-guid/{externalGuid}",
 				Flags: []FlagDef{
 					{Name: "name", Description: "New zone name", Type: "string"},
 					{Name: "center-latitude", Description: "New center latitude", Type: "float"},
@@ -51,9 +53,10 @@ func init() {
 			},
 			{
 				Name:        "delete",
-				Description: "Delete a geofence zone by ID",
+				Description: "Delete a geofence zone by GUID",
 				ToolName:    "UteamupGeofenceZoneDelete",
-				Args:        []ArgDef{{Name: "id", Description: "Geofence zone ID", Required: true, Type: "int"}},
+				Args:        externalGuidArg(),
+				RESTPath:    "by-guid/{externalGuid}",
 			},
 		},
 	})
