@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.66.0](https://github.com/UteamUP/cli/compare/1.65.0...1.66.0) (2026-07-13)
+
+
+### Features
+
+* **shift-handover:** expose operational metrics in CLI ([e1c7e7a](https://github.com/UteamUP/cli/commit/e1c7e7a78ab032e1f40e4bbc9d487b7b2ac8d678))
+* **upmate:** generalize tutorial discovery ([9454c7d](https://github.com/UteamUP/cli/commit/9454c7da25a37c88199b2fff9f7a92b3aa670a6c))
+
 ## [1.65.0](https://github.com/UteamUP/cli/compare/1.64.0...1.65.0) (2026-07-13)
 
 
