@@ -33,6 +33,17 @@ func init() {
 			},
 		},
 		Action{
+			Name:        "operational-metrics",
+			Description: "Show deterministic handover SLA, quality, rework, and overdue evidence (zero AI credits)",
+			ToolName:    "UteamupShiftHandoverGetStats",
+			HTTPMethod:  "GET",
+			RESTPath:    "stats",
+			Flags: []FlagDef{
+				{Name: "from-date", BodyName: "fromDate", Description: "Optional UTC ISO-8601 window start; defaults to 30 days ago", Type: "string"},
+				{Name: "to-date", BodyName: "toDate", Description: "Optional UTC ISO-8601 window end; defaults to now", Type: "string"},
+			},
+		},
+		Action{
 			Name:        "history",
 			Description: "Verify and show immutable handover versions, events, and signatures",
 			ToolName:    "UteamupShiftHandoverGetHistory",
