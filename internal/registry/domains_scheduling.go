@@ -23,6 +23,16 @@ func init() {
 	})
 	shiftHandoverActions = append(shiftHandoverActions,
 		Action{
+			Name:        "operational-baton",
+			Description: "Show the deterministic action-first handover baton (zero AI credits)",
+			ToolName:    "UteamupShiftHandoverGetOperationalBaton",
+			HTTPMethod:  "GET",
+			RESTPath:    "by-guid/{handoverGuid}/operational-baton",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+		},
+		Action{
 			Name:        "history",
 			Description: "Verify and show immutable handover versions, events, and signatures",
 			ToolName:    "UteamupShiftHandoverGetHistory",
