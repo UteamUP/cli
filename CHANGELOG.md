@@ -5,6 +5,27 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.65.0](https://github.com/UteamUP/cli/compare/1.64.0...1.65.0) (2026-07-13)
+
+
+### Features
+
+* **cli:** acknowledge critical handover items ([3c58781](https://github.com/UteamUP/cli/commit/3c5878118559373fd66ffa99168dcf705184dc8e))
+* **cli:** add authoritative offer sharing ([3adaf86](https://github.com/UteamUP/cli/commit/3adaf86a173cd8cc2e3e00d9f6da3d6adb46cae4))
+* **cli:** add contractor application AI drafts ([0757980](https://github.com/UteamUP/cli/commit/0757980215b4009f0f8d52bf6db1cc3138eeff51))
+* **cli:** add marketplace contact sharing ([5fe9956](https://github.com/UteamUP/cli/commit/5fe99569e86d8277528efacaa0321c9c0341497a))
+* **cli:** add marketplace meeting commands ([bacc62c](https://github.com/UteamUP/cli/commit/bacc62c7e1d11887fb2321d5fc4a6a7b95ba851b))
+* **cli:** add marketplace messages with mentions ([3d4491b](https://github.com/UteamUP/cli/commit/3d4491b2f46905c3faa9bf92ff8b57f9dc7cad41))
+* **cli:** add shift handover operational link actions ([99e7066](https://github.com/UteamUP/cli/commit/99e706637d7bf774bc6b67641579f0d2c79b468f))
+* describe IoT operational monitoring ([1073122](https://github.com/UteamUP/cli/commit/1073122c921aae4ed2c43b71ae28291ff76d975a))
+* expose shift handover audit commands ([3787348](https://github.com/UteamUP/cli/commit/378734894bbf056436470e061b6ca4a358e23fdb))
+* expose shift handover operational baton ([c86d029](https://github.com/UteamUP/cli/commit/c86d02997a7eb6d104f3f4b6bcd55a9abd0e7973))
+
+
+### Bug Fixes
+
+* **cli:** make labour rate commands GUID-first ([6acfeb8](https://github.com/UteamUP/cli/commit/6acfeb8b7e5d2ca200a0240c6bbdc1396c32d072))
+
 ## [1.64.0](https://github.com/UteamUP/cli/compare/1.63.0...1.64.0) (2026-07-12)
 
 
