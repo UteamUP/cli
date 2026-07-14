@@ -69,3 +69,41 @@ func TestShiftGuidRoutesResolve(t *testing.T) {
 		}
 	}
 }
+
+func TestShiftInstanceGuidRoutesResolve(t *testing.T) {
+	d := findDomain("shift-instance")
+	if d == nil {
+		t.Fatal("expected shift-instance domain to be registered")
+	}
+
+	actions := map[string]Action{}
+	for _, action := range d.Actions {
+		actions[action.Name] = action
+	}
+
+	cases := []struct {
+		name string
+		args map[string]any
+		want string
+	}{
+		{"get", map[string]any{"instanceGuid": "instance-1"}, "/api/shiftinstance/by-guid/instance-1"},
+		{"update", map[string]any{"instanceGuid": "instance-1"}, "/api/shiftinstance/by-guid/instance-1"},
+		{"delete", map[string]any{"instanceGuid": "instance-1"}, "/api/shiftinstance/by-guid/instance-1"},
+		{"approve", map[string]any{"instanceGuid": "instance-1"}, "/api/shiftinstance/by-guid/instance-1/approve"},
+		{"status", map[string]any{"instanceGuid": "instance-1"}, "/api/shiftinstance/by-guid/instance-1/status"},
+	}
+
+	for _, tc := range cases {
+		action, ok := actions[tc.name]
+		if !ok {
+			t.Fatalf("missing shift-instance action %q", tc.name)
+		}
+		got, consumed := buildRESTPath(d, action, tc.args)
+		if got != tc.want {
+			t.Fatalf("%s path = %q, want %q", tc.name, got, tc.want)
+		}
+		if len(consumed) != 1 {
+			t.Fatalf("%s consumed = %v, want one path arg", tc.name, consumed)
+		}
+	}
+}

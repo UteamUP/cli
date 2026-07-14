@@ -20,7 +20,16 @@ func init() {
 		},
 	})
 	Register(&Domain{Name: "shift-template", Description: "Manage shift templates", Actions: crudActions("ShiftTemplate")})
-	Register(&Domain{Name: "shift-instance", Description: "Manage shift instances", Actions: crudActions("ShiftInstance")})
+	Register(&Domain{Name: "shift-instance", Description: "Manage shift instances", Actions: []Action{
+		{Name: "range", Description: "Get shift instances in a date range", ToolName: "UteamupShiftInstanceGetByRange", HTTPMethod: "GET", RESTPath: "range", Flags: []FlagDef{{Name: "date-from", Description: "Start date", Required: true, Type: "string"}, {Name: "date-to", Description: "End date", Required: true, Type: "string"}, {Name: "shift-guid", Description: "Optional shift GUID", Type: "string"}}},
+		{Name: "get", Description: "Get a shift instance by GUID", ToolName: "UteamupShiftInstanceGet", Args: []ArgDef{{Name: "instanceGuid", Description: "Shift instance GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{instanceGuid}"},
+		{Name: "create", Description: "Create a shift instance", ToolName: "UteamupShiftInstanceCreate", Flags: []FlagDef{jsonFlag()}},
+		{Name: "update", Description: "Update a shift instance by GUID", ToolName: "UteamupShiftInstanceUpdate", Args: []ArgDef{{Name: "instanceGuid", Description: "Shift instance GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{instanceGuid}", Flags: []FlagDef{jsonFlag()}},
+		{Name: "delete", Description: "Delete a shift instance by GUID", ToolName: "UteamupShiftInstanceDelete", Args: []ArgDef{{Name: "instanceGuid", Description: "Shift instance GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{instanceGuid}"},
+		{Name: "generate", Description: "Generate shift instances", ToolName: "UteamupShiftInstanceGenerate", HTTPMethod: "POST", RESTPath: "generate", Flags: []FlagDef{jsonFlag()}},
+		{Name: "approve", Description: "Approve a shift instance by GUID", ToolName: "UteamupShiftInstanceApprove", HTTPMethod: "PUT", Args: []ArgDef{{Name: "instanceGuid", Description: "Shift instance GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{instanceGuid}/approve"},
+		{Name: "status", Description: "Set shift instance status by GUID", ToolName: "UteamupShiftInstanceSetStatus", HTTPMethod: "PUT", Args: []ArgDef{{Name: "instanceGuid", Description: "Shift instance GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{instanceGuid}/status", Flags: []FlagDef{{Name: "status", Description: "New status", Required: true, Type: "string"}}},
+	}})
 	Register(&Domain{Name: "shift-request", Description: "Manage shift requests", Actions: crudActions("ShiftRequest")})
 	Register(&Domain{Name: "shift-assignment", Description: "Manage shift user assignments", Actions: crudActions("ShiftUserAssignment")})
 	shiftHandoverActions := crudActions("ShiftHandover")
