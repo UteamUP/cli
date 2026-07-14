@@ -38,10 +38,10 @@ func TestPartnerActionsWired(t *testing.T) {
 		"program-defaults": "UteamupPartnerProgramDefaultsGet",
 		// New actions — 2026-06 partner program overhaul
 		"application-get": "UteamupPartnerMyApplicationGet",
-		"checklist":        "UteamupPartnerApplicationChecksGet",
-		"meetings":         "UteamupPartnerApplicationMeetingsGet",
-		"referral-codes":   "UteamupPartnerMyReferralCodesGet",
-		"tenant-manager":   "UteamupPartnerMyTenantManagerGet",
+		"checklist":       "UteamupPartnerApplicationChecksGet",
+		"meetings":        "UteamupPartnerApplicationMeetingsGet",
+		"referral-codes":  "UteamupPartnerMyReferralCodesGet",
+		"tenant-manager":  "UteamupPartnerMyTenantManagerGet",
 	}
 	got := map[string]string{}
 	for _, a := range d.Actions {

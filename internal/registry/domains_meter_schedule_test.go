@@ -27,9 +27,9 @@ func TestMeterScheduleDomainRegistered(t *testing.T) {
 	// or the short name. `meter-reading-schedule` matches the backend
 	// controller route prefix.
 	wantAliases := map[string]bool{
-		"meter-reading-schedule":  false,
-		"meter-schedules":         false,
-		"ms":                      false,
+		"meter-reading-schedule": false,
+		"meter-schedules":        false,
+		"ms":                     false,
 	}
 	for _, a := range d.Aliases {
 		if _, ok := wantAliases[a]; ok {

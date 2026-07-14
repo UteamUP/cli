@@ -37,14 +37,14 @@ type Catalog struct {
 }
 
 var (
-	csClassRe   = regexp.MustCompile(`\bclass\s+(\w+)Controller\b`)
-	csMethodRe  = regexp.MustCompile(`(\w+)\s*\(`)
-	ifaceRe     = regexp.MustCompile(`\binterface\s+(I\w+Repository)\b`)
-	ifaceMethRe = regexp.MustCompile(`(\w+)\s*\(`)
-	goRouteRe   = regexp.MustCompile(`path:\s*'([^']+)'`)
+	csClassRe    = regexp.MustCompile(`\bclass\s+(\w+)Controller\b`)
+	csMethodRe   = regexp.MustCompile(`(\w+)\s*\(`)
+	ifaceRe      = regexp.MustCompile(`\binterface\s+(I\w+Repository)\b`)
+	ifaceMethRe  = regexp.MustCompile(`(\w+)\s*\(`)
+	goRouteRe    = regexp.MustCompile(`path:\s*'([^']+)'`)
 	dartWidgetRe = regexp.MustCompile(`\bclass\s+(\w+)\s+extends\s+(?:Consumer)?(?:Stateless|Stateful)Widget\b`)
-	vUsageRe    = regexp.MustCompile(`v-usage="'([^']+)'"`)
-	dartCompRe  = regexp.MustCompile(`trackComponentUsage\(\s*'([^']+)'\s*\)`)
+	vUsageRe     = regexp.MustCompile(`v-usage="'([^']+)'"`)
+	dartCompRe   = regexp.MustCompile(`trackComponentUsage\(\s*'([^']+)'\s*\)`)
 	routeParamRe = regexp.MustCompile(`:([A-Za-z0-9_]+)`)
 )
 

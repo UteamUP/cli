@@ -51,7 +51,7 @@ type ReportInput struct {
 
 // BuildSummaries diffs the scanned catalog against runtime usage.
 func BuildSummaries(in ReportInput) []TypeSummary {
-	hits := map[string]map[string]int64{}      // type -> key -> hitCount
+	hits := map[string]map[string]int64{}       // type -> key -> hitCount
 	runtimeKeys := map[string]map[string]bool{} // type -> set of runtime keys
 	for _, r := range in.Usage {
 		if hits[r.Type] == nil {

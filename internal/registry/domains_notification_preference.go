@@ -9,12 +9,12 @@ package registry
 // REST: GET|PUT /api/notificationpreference (current-user scoped, no path id).
 //   - get → GET base path (action-name default).
 //   - set → PUT base path (HTTPMethod override; "set" is not in the name->verb
-//           map). Only flags the user actually passes are sent, so set is a true
-//           partial update — flags must therefore carry NO Default. BodyName pins
-//           each flag onto the backend WorkorderNotificationPreferenceUpdateModel
-//           field, which the CLI's kebab->camel auto-conversion would otherwise
-//           miss (e.g. --due-window-start -> dueWindowStart, not the field
-//           dueDateWindowStartHours).
+//     map). Only flags the user actually passes are sent, so set is a true
+//     partial update — flags must therefore carry NO Default. BodyName pins
+//     each flag onto the backend WorkorderNotificationPreferenceUpdateModel
+//     field, which the CLI's kebab->camel auto-conversion would otherwise
+//     miss (e.g. --due-window-start -> dueWindowStart, not the field
+//     dueDateWindowStartHours).
 //
 // Paired MCP tools:
 //

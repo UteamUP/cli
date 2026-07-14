@@ -5,7 +5,7 @@ func init() {
 		Name:        "tutorial",
 		Aliases:     []string{"tutorials", "guide"},
 		Description: "Discover published UPMate guided tutorials across modules",
-		APIPath:    "/api/tutorials",
+		APIPath:     "/api/tutorials",
 		Actions: []Action{
 			{
 				Name:        "list",

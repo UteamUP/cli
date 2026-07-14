@@ -16,15 +16,15 @@ func init() {
 			{Name: "create", Description: "Create a project", ToolName: "UteamupProjectCreate", Flags: []FlagDef{jsonFlag()}},
 			{Name: "update", Description: "Update a project by GUID", ToolName: "UteamupProjectUpdate", Args: externalGuidArg(), Flags: []FlagDef{jsonFlag()}},
 			{Name: "delete", Description: "Delete a project by GUID", ToolName: "UteamupProjectDelete", Args: externalGuidArg()},
-			Action{Name: "search", Description: "Search projects", ToolName: "UteamupProjectSearch", Args: queryArg(), Flags: paginationFlags()},
+			{Name: "search", Description: "Search projects", ToolName: "UteamupProjectSearch", Args: queryArg(), Flags: paginationFlags()},
 			// my-projects mirrors GET /api/project/my-projects — lists projects
 			// containing workorders assigned to the authenticated user.
 			// Requires backend MediatR handler registered for UteamupProjectMyProjects.
-			Action{Name: "my-projects", Description: "List projects where the current user has assigned workorders", ToolName: "UteamupProjectMyProjects"},
+			{Name: "my-projects", Description: "List projects where the current user has assigned workorders", ToolName: "UteamupProjectMyProjects"},
 			// GUID-keyed field setters on ProjectController. Both identifiers ride
 			// the URL (no body) — the int-keyed originals are [Obsolete] on the
 			// backend, so the CLI only exposes the by-guid routes.
-			Action{
+			{
 				Name:        "set-status",
 				Description: "Set a project's status by GUID (0=Planning, 1=Active, 2=OnHold, 3=Completed, 4=Cancelled)",
 				ToolName:    "UteamupProjectSetStatus",
@@ -35,7 +35,7 @@ func init() {
 					{Name: "statusId", Description: "New status (0=Planning, 1=Active, 2=OnHold, 3=Completed, 4=Cancelled)", Required: true, Type: "int"},
 				},
 			},
-			Action{
+			{
 				Name:        "set-priority",
 				Description: "Set a project's priority by GUID (1=Low … 5=Critical)",
 				ToolName:    "UteamupProjectSetPriority",
@@ -46,7 +46,7 @@ func init() {
 					{Name: "priorityId", Description: "New priority (1=Low, 2=Medium, 3=High, 4=Urgent, 5=Critical)", Required: true, Type: "int"},
 				},
 			},
-			Action{
+			{
 				Name:        "set-owner",
 				Description: "Set a project's owner using public project and user GUIDs",
 				ToolName:    "UteamupProjectSetOwner",
