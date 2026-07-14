@@ -181,3 +181,25 @@ func TestShiftAssignmentGuidRoutesResolve(t *testing.T) {
 		}
 	}
 }
+
+func TestShiftHandoverPreviousUsesShiftGuid(t *testing.T) {
+	action := findDomainAction(t, "shift-handover", "previous")
+	if action.ToolName != "UteamupShiftHandoverGetPrevious" {
+		t.Fatalf("previous ToolName = %q, want UteamupShiftHandoverGetPrevious", action.ToolName)
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "shiftGuid" {
+		t.Fatalf("previous args = %+v, want single shiftGuid arg", action.Args)
+	}
+
+	d := findDomain("shift-handover")
+	if d == nil {
+		t.Fatal("expected shift-handover domain to be registered")
+	}
+	got, consumed := buildRESTPath(d, *action, map[string]any{"shiftGuid": "shift-1"})
+	if got != "/api/shifthandover/previous/by-guid/shift-1" {
+		t.Fatalf("previous path = %q, want /api/shifthandover/previous/by-guid/shift-1", got)
+	}
+	if len(consumed) != 1 {
+		t.Fatalf("previous consumed = %v, want one path arg", consumed)
+	}
+}

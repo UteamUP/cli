@@ -48,6 +48,14 @@ func init() {
 	}})
 	shiftHandoverActions := crudActions("ShiftHandover")
 	shiftHandoverActions = append(shiftHandoverActions, Action{
+		Name:        "previous",
+		Description: "Get the previous handover for a shift by shift GUID",
+		ToolName:    "UteamupShiftHandoverGetPrevious",
+		HTTPMethod:  "GET",
+		RESTPath:    "previous/by-guid/{shiftGuid}",
+		Args:        []ArgDef{{Name: "shiftGuid", Description: "Shift GUID", Required: true, Type: "string"}},
+	})
+	shiftHandoverActions = append(shiftHandoverActions, Action{
 		Name:        "generate-summary",
 		Description: "Generate an editable AI handover draft (5 credits; never submits)",
 		ToolName:    "UteamupShiftHandoverGenerateSummary",
