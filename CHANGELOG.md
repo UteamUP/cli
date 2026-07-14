@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.67.1](https://github.com/UteamUP/cli/compare/1.67.0...1.67.1) (2026-07-14)
+
+
+### Code Refactoring
+
+* retire shift-template CLI domain ([9998bf1](https://github.com/UteamUP/cli/commit/9998bf1534107748dba042859d022fc9d288ae67))
+
 ## [1.67.0](https://github.com/UteamUP/cli/compare/1.66.1...1.67.0) (2026-07-14)
 
 
