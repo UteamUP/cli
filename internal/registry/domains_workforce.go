@@ -17,7 +17,35 @@ func init() {
 			{Name: "member-remove", Description: "Remove a workforce group member by member GUID", ToolName: "UteamupWorkforceGroupRemoveMember", HTTPMethod: "DELETE", Args: []ArgDef{{Name: "groupGuid", Description: "Workforce group GUID", Required: true, Type: "string"}, {Name: "memberGuid", Description: "Workforce group member GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{groupGuid}/members/by-guid/{memberGuid}"},
 		},
 	})
-	Register(&Domain{Name: "workforce-training", Description: "Manage workforce group required training", Actions: crudActions("WorkforceGroupRequiredTraining")})
+	Register(&Domain{
+		Name:        "workforce-training",
+		Description: "Manage workforce group required training",
+		APIPath:     "/api/workforcegrouprequiredtraining",
+		Actions: []Action{
+			{
+				Name:        "list",
+				Description: "List workforce group required training",
+				ToolName:    "UteamupWorkforceGroupRequiredTrainingList",
+				Flags:       []FlagDef{{Name: "group-guid", Description: "Optional workforce group GUID filter", Type: "string"}},
+			},
+			{Name: "create", Description: "Create required training", ToolName: "UteamupWorkforceGroupRequiredTrainingCreate", Flags: []FlagDef{jsonFlag()}},
+			{
+				Name:        "update",
+				Description: "Update required training by GUID",
+				ToolName:    "UteamupWorkforceGroupRequiredTrainingUpdate",
+				Args:        []ArgDef{{Name: "trainingGuid", Description: "Required training GUID", Required: true, Type: "string"}},
+				RESTPath:    "by-guid/{trainingGuid}",
+				Flags:       []FlagDef{jsonFlag()},
+			},
+			{
+				Name:        "delete",
+				Description: "Delete required training by GUID",
+				ToolName:    "UteamupWorkforceGroupRequiredTrainingDelete",
+				Args:        []ArgDef{{Name: "trainingGuid", Description: "Required training GUID", Required: true, Type: "string"}},
+				RESTPath:    "by-guid/{trainingGuid}",
+			},
+		},
+	})
 	Register(&Domain{Name: "workforce-planning", Aliases: []string{"wp"}, Description: "Manage workforce planning", Actions: crudActions("WorkforcePlanning")})
 	Register(&Domain{Name: "skill", Aliases: []string{"skills"}, Description: "Manage skills", Actions: crudActions("Skill")})
 	Register(&Domain{Name: "team", Aliases: []string{"teams"}, Description: "Manage teams", Actions: crudActions("Team")})

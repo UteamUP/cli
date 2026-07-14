@@ -75,3 +75,82 @@ func TestWorkforceGroupGuidRoutesResolve(t *testing.T) {
 		}
 	}
 }
+
+func TestWorkforceTrainingDomainIsGuidFirst(t *testing.T) {
+	d := findDomain("workforce-training")
+	if d == nil {
+		t.Fatal("expected workforce-training domain to be registered")
+	}
+	if d.APIPath != "/api/workforcegrouprequiredtraining" {
+		t.Fatalf("workforce-training APIPath = %q, want /api/workforcegrouprequiredtraining", d.APIPath)
+	}
+
+	actions := map[string]Action{}
+	for _, action := range d.Actions {
+		actions[action.Name] = action
+	}
+
+	for _, name := range []string{"update", "delete"} {
+		action, ok := actions[name]
+		if !ok {
+			t.Fatalf("missing workforce-training action %q", name)
+		}
+		if len(action.Args) != 1 || action.Args[0].Name != "trainingGuid" {
+			t.Fatalf("%s args = %+v, want single trainingGuid arg", name, action.Args)
+		}
+		if action.RESTPath != "by-guid/{trainingGuid}" {
+			t.Fatalf("%s RESTPath = %q, want by-guid/{trainingGuid}", name, action.RESTPath)
+		}
+	}
+
+	list, ok := actions["list"]
+	if !ok {
+		t.Fatal("missing workforce-training list action")
+	}
+	if len(list.Flags) != 1 || list.Flags[0].Name != "group-guid" {
+		t.Fatalf("list flags = %+v, want group-guid filter", list.Flags)
+	}
+}
+
+func TestWorkforceTrainingGuidRoutesResolve(t *testing.T) {
+	d := findDomain("workforce-training")
+	if d == nil {
+		t.Fatal("expected workforce-training domain to be registered")
+	}
+
+	actions := map[string]Action{}
+	for _, action := range d.Actions {
+		actions[action.Name] = action
+	}
+
+	cases := []struct {
+		name string
+		args map[string]any
+		want string
+	}{
+		{
+			"update",
+			map[string]any{"trainingGuid": "training-1"},
+			"/api/workforcegrouprequiredtraining/by-guid/training-1",
+		},
+		{
+			"delete",
+			map[string]any{"trainingGuid": "training-1"},
+			"/api/workforcegrouprequiredtraining/by-guid/training-1",
+		},
+	}
+
+	for _, tc := range cases {
+		action, ok := actions[tc.name]
+		if !ok {
+			t.Fatalf("missing workforce-training action %q", tc.name)
+		}
+		got, consumed := buildRESTPath(d, action, tc.args)
+		if got != tc.want {
+			t.Fatalf("%s path = %q, want %q", tc.name, got, tc.want)
+		}
+		if len(consumed) != 1 {
+			t.Fatalf("%s consumed = %v, want one path arg", tc.name, consumed)
+		}
+	}
+}
