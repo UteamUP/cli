@@ -2,6 +2,12 @@ package registry
 
 import "testing"
 
+func TestShiftTemplateDomainIsRetired(t *testing.T) {
+	if d := findDomain("shift-template"); d != nil {
+		t.Fatalf("shift-template domain should stay retired; found %+v", d)
+	}
+}
+
 func TestShiftCrudIsGuidFirst(t *testing.T) {
 	d := findDomain("shift")
 	if d == nil {

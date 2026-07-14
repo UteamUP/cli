@@ -19,7 +19,6 @@ func init() {
 			{Name: "pattern-delete", Description: "Delete a shift pattern by GUID", ToolName: "UteamupShiftPatternDelete", HTTPMethod: "DELETE", RESTPath: "patterns/by-guid/{patternGuid}", Args: []ArgDef{{Name: "patternGuid", Description: "Shift pattern GUID", Required: true, Type: "string"}}},
 		},
 	})
-	Register(&Domain{Name: "shift-template", Description: "Manage shift templates", Actions: crudActions("ShiftTemplate")})
 	Register(&Domain{Name: "shift-instance", Description: "Manage shift instances", Actions: []Action{
 		{Name: "range", Description: "Get shift instances in a date range", ToolName: "UteamupShiftInstanceGetByRange", HTTPMethod: "GET", RESTPath: "range", Flags: []FlagDef{{Name: "date-from", Description: "Start date", Required: true, Type: "string"}, {Name: "date-to", Description: "End date", Required: true, Type: "string"}, {Name: "shift-guid", Description: "Optional shift GUID", Type: "string"}}},
 		{Name: "get", Description: "Get a shift instance by GUID", ToolName: "UteamupShiftInstanceGet", Args: []ArgDef{{Name: "instanceGuid", Description: "Shift instance GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{instanceGuid}"},
