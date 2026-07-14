@@ -24,6 +24,12 @@ func init() {
 	})
 	Register(&Domain{Name: "tag", Aliases: []string{"tags"}, Description: "Manage tags", Actions: crudActions("Tag")})
 	Register(&Domain{Name: "tenant", Aliases: []string{"tenants"}, Description: "Manage tenants", Actions: listGetActions("Tenant")})
-	Register(&Domain{Name: "tenant-holiday", Description: "Manage tenant holidays", Actions: crudActions("TenantHoliday")})
+	Register(&Domain{Name: "tenant-holiday", Description: "Manage tenant holidays", Actions: []Action{
+		{Name: "year", Description: "List tenant holidays for a year", ToolName: "UteamupTenantHolidayGetByYear", RESTPath: "year/{year}", Args: []ArgDef{{Name: "year", Description: "Holiday year", Required: true, Type: "int"}}},
+		{Name: "create", Description: "Create a tenant holiday", ToolName: "UteamupTenantHolidayCreate", Flags: []FlagDef{jsonFlag()}},
+		{Name: "update", Description: "Update a tenant holiday by GUID", ToolName: "UteamupTenantHolidayUpdate", Args: []ArgDef{{Name: "holidayGuid", Description: "Tenant holiday GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{holidayGuid}", Flags: []FlagDef{jsonFlag()}},
+		{Name: "delete", Description: "Delete a tenant holiday by GUID", ToolName: "UteamupTenantHolidayDelete", Args: []ArgDef{{Name: "holidayGuid", Description: "Tenant holiday GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{holidayGuid}"},
+		{Name: "import", Description: "Import tenant holidays for a country and year", ToolName: "UteamupTenantHolidayImport", HTTPMethod: "POST", RESTPath: "import/{year}", Args: []ArgDef{{Name: "year", Description: "Holiday year", Required: true, Type: "int"}}, Flags: []FlagDef{{Name: "country-code", Description: "ISO 2-letter country code", Default: "IS", Type: "string"}}},
+	}})
 	Register(&Domain{Name: "role", Aliases: []string{"roles"}, Description: "Manage roles", Actions: listGetActions("Role")})
 }

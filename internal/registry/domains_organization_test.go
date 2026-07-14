@@ -54,3 +54,40 @@ func TestCodeResolveActionWired(t *testing.T) {
 		t.Fatalf("resolve expected single required string positional arg 'value', got %+v", action.Args)
 	}
 }
+
+func TestTenantHolidayGuidRoutesResolve(t *testing.T) {
+	d := findDomain("tenant-holiday")
+	if d == nil {
+		t.Fatal("expected tenant-holiday domain to be registered")
+	}
+
+	actions := map[string]Action{}
+	for _, action := range d.Actions {
+		actions[action.Name] = action
+	}
+
+	cases := []struct {
+		name string
+		args map[string]any
+		want string
+	}{
+		{"year", map[string]any{"year": 2026}, "/api/tenantholiday/year/2026"},
+		{"update", map[string]any{"holidayGuid": "holiday-1"}, "/api/tenantholiday/by-guid/holiday-1"},
+		{"delete", map[string]any{"holidayGuid": "holiday-1"}, "/api/tenantholiday/by-guid/holiday-1"},
+		{"import", map[string]any{"year": 2026}, "/api/tenantholiday/import/2026"},
+	}
+
+	for _, tc := range cases {
+		action, ok := actions[tc.name]
+		if !ok {
+			t.Fatalf("missing tenant-holiday action %q", tc.name)
+		}
+		got, consumed := buildRESTPath(d, action, tc.args)
+		if got != tc.want {
+			t.Fatalf("%s path = %q, want %q", tc.name, got, tc.want)
+		}
+		if len(consumed) != 1 {
+			t.Fatalf("%s consumed = %v, want one path arg", tc.name, consumed)
+		}
+	}
+}
