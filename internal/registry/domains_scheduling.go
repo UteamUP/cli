@@ -3,7 +3,22 @@ package registry
 func init() {
 	Register(&Domain{Name: "schedule", Aliases: []string{"schedules"}, Description: "Manage schedules", Actions: crudActions("Schedule")})
 	Register(&Domain{Name: "schedule-assignment", Description: "Manage schedule assignments", Actions: crudActions("ScheduleAssignment")})
-	Register(&Domain{Name: "shift", Aliases: []string{"shifts"}, Description: "Manage shifts", Actions: crudActions("Shift")})
+	Register(&Domain{
+		Name:        "shift",
+		Aliases:     []string{"shifts"},
+		Description: "Manage shifts",
+		Actions: []Action{
+			{Name: "list", Description: "List shifts", ToolName: "UteamupShiftList", Flags: paginationFlags()},
+			{Name: "get", Description: "Get a shift by GUID", ToolName: "UteamupShiftGet", Args: externalGuidArg(), RESTPath: "by-guid/{externalGuid}"},
+			{Name: "create", Description: "Create a shift", ToolName: "UteamupShiftCreate", Flags: []FlagDef{jsonFlag()}},
+			{Name: "update", Description: "Update a shift by GUID", ToolName: "UteamupShiftUpdate", Args: externalGuidArg(), RESTPath: "by-guid/{externalGuid}", Flags: []FlagDef{jsonFlag()}},
+			{Name: "delete", Description: "Delete a shift by GUID", ToolName: "UteamupShiftDelete", Args: externalGuidArg(), RESTPath: "by-guid/{externalGuid}"},
+			{Name: "pattern-list", Description: "List shift patterns by shift GUID", ToolName: "UteamupShiftPatternListByShift", HTTPMethod: "GET", RESTPath: "by-guid/{shiftGuid}/patterns", Args: []ArgDef{{Name: "shiftGuid", Description: "Shift GUID", Required: true, Type: "string"}}},
+			{Name: "pattern-get", Description: "Get a shift pattern by GUID", ToolName: "UteamupShiftPatternGet", HTTPMethod: "GET", RESTPath: "patterns/by-guid/{patternGuid}", Args: []ArgDef{{Name: "patternGuid", Description: "Shift pattern GUID", Required: true, Type: "string"}}},
+			{Name: "pattern-update", Description: "Update a shift pattern by GUID", ToolName: "UteamupShiftPatternUpdate", HTTPMethod: "PUT", RESTPath: "patterns/by-guid/{patternGuid}", Args: []ArgDef{{Name: "patternGuid", Description: "Shift pattern GUID", Required: true, Type: "string"}}, Flags: []FlagDef{jsonFlag()}},
+			{Name: "pattern-delete", Description: "Delete a shift pattern by GUID", ToolName: "UteamupShiftPatternDelete", HTTPMethod: "DELETE", RESTPath: "patterns/by-guid/{patternGuid}", Args: []ArgDef{{Name: "patternGuid", Description: "Shift pattern GUID", Required: true, Type: "string"}}},
+		},
+	})
 	Register(&Domain{Name: "shift-template", Description: "Manage shift templates", Actions: crudActions("ShiftTemplate")})
 	Register(&Domain{Name: "shift-instance", Description: "Manage shift instances", Actions: crudActions("ShiftInstance")})
 	Register(&Domain{Name: "shift-request", Description: "Manage shift requests", Actions: crudActions("ShiftRequest")})
