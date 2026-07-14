@@ -5,6 +5,30 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.67.0](https://github.com/UteamUP/cli/compare/1.66.1...1.67.0) (2026-07-14)
+
+
+### Features
+
+* add GUID previous handover CLI route ([24eb697](https://github.com/UteamUP/cli/commit/24eb6978bbd7d221ad56dfbbc10b18cc9cf417b4))
+* **handover:** add secure numeric redemption command ([0540498](https://github.com/UteamUP/cli/commit/0540498436a44dd620aca4a77a3cd78866e35d16))
+* use GUID routes for shift CLI ([a96760a](https://github.com/UteamUP/cli/commit/a96760aee005770a0808e23f295f0dc4e90c25d3))
+* use GUID routes for shift instance CLI ([00bc101](https://github.com/UteamUP/cli/commit/00bc101bc513d56008f9183c98d5812a08e62294))
+* use GUID routes for shift request CLI ([d07949a](https://github.com/UteamUP/cli/commit/d07949a60873fde2e48f6075b38281d7d6b82061))
+* use GUID routes for tenant holiday CLI ([e57579b](https://github.com/UteamUP/cli/commit/e57579b7519c48560775710044f4db1dd64dfbef))
+* use GUID routes for workforce group CLI ([a2005b3](https://github.com/UteamUP/cli/commit/a2005b35ede9c9f7384ac51bb7f70386910ec92f))
+* use GUID routes for workforce training CLI ([40c94e3](https://github.com/UteamUP/cli/commit/40c94e347ed9d09c349cc4738e194078c27fe5c9))
+
+
+### Bug Fixes
+
+* **cli:** use GUIDs for geofence zones ([28807dd](https://github.com/UteamUP/cli/commit/28807dd9715cb4e5bad5f258c96335e4306e6cd9))
+
+
+### Miscellaneous
+
+* format CLI sources ([05ea4b0](https://github.com/UteamUP/cli/commit/05ea4b066642e0fa67551a99d9958ea279b86cb7))
+
 ## [1.66.1](https://github.com/UteamUP/cli/compare/1.66.0...1.66.1) (2026-07-13)
 
 
