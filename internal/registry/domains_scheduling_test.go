@@ -107,3 +107,77 @@ func TestShiftInstanceGuidRoutesResolve(t *testing.T) {
 		}
 	}
 }
+
+func TestShiftRequestGuidRoutesResolve(t *testing.T) {
+	d := findDomain("shift-request")
+	if d == nil {
+		t.Fatal("expected shift-request domain to be registered")
+	}
+
+	actions := map[string]Action{}
+	for _, action := range d.Actions {
+		actions[action.Name] = action
+	}
+
+	cases := []struct {
+		name string
+		args map[string]any
+		want string
+	}{
+		{"get", map[string]any{"requestGuid": "request-1"}, "/api/shiftrequest/by-guid/request-1"},
+		{"approve", map[string]any{"requestGuid": "request-1"}, "/api/shiftrequest/by-guid/request-1/approve"},
+		{"deny", map[string]any{"requestGuid": "request-1"}, "/api/shiftrequest/by-guid/request-1/deny"},
+		{"withdraw", map[string]any{"requestGuid": "request-1"}, "/api/shiftrequest/by-guid/request-1"},
+	}
+
+	for _, tc := range cases {
+		action, ok := actions[tc.name]
+		if !ok {
+			t.Fatalf("missing shift-request action %q", tc.name)
+		}
+		got, consumed := buildRESTPath(d, action, tc.args)
+		if got != tc.want {
+			t.Fatalf("%s path = %q, want %q", tc.name, got, tc.want)
+		}
+		if len(consumed) != 1 {
+			t.Fatalf("%s consumed = %v, want one path arg", tc.name, consumed)
+		}
+	}
+}
+
+func TestShiftAssignmentGuidRoutesResolve(t *testing.T) {
+	d := findDomain("shift-assignment")
+	if d == nil {
+		t.Fatal("expected shift-assignment domain to be registered")
+	}
+
+	actions := map[string]Action{}
+	for _, action := range d.Actions {
+		actions[action.Name] = action
+	}
+
+	cases := []struct {
+		name string
+		args map[string]any
+		want string
+	}{
+		{"instance", map[string]any{"instanceGuid": "instance-1"}, "/api/shiftuserassignment/instance/by-guid/instance-1"},
+		{"update", map[string]any{"assignmentGuid": "assignment-1"}, "/api/shiftuserassignment/by-guid/assignment-1"},
+		{"delete", map[string]any{"assignmentGuid": "assignment-1"}, "/api/shiftuserassignment/by-guid/assignment-1"},
+		{"unavailable", map[string]any{"assignmentGuid": "assignment-1"}, "/api/shiftuserassignment/by-guid/assignment-1/unavailable"},
+	}
+
+	for _, tc := range cases {
+		action, ok := actions[tc.name]
+		if !ok {
+			t.Fatalf("missing shift-assignment action %q", tc.name)
+		}
+		got, consumed := buildRESTPath(d, action, tc.args)
+		if got != tc.want {
+			t.Fatalf("%s path = %q, want %q", tc.name, got, tc.want)
+		}
+		if len(consumed) != 1 {
+			t.Fatalf("%s consumed = %v, want one path arg", tc.name, consumed)
+		}
+	}
+}
