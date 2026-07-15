@@ -28,6 +28,13 @@ func init() {
 				RESTPath:    "schedules",
 			},
 			{
+				Name:        "callout-summary",
+				Description: "Summarize on-call callout operations, SLA breaches, repeat cycles, and manager reviews",
+				ToolName:    "UteamupOnCallCalloutSummary",
+				HTTPMethod:  "GET",
+				RESTPath:    "callouts/summary",
+			},
+			{
 				Name:        "schedule-create",
 				Description: "Create an on-call schedule",
 				ToolName:    "UteamupOnCallScheduleCreate",

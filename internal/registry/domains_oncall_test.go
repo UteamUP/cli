@@ -101,6 +101,28 @@ func TestOnCallScheduleActionsWired(t *testing.T) {
 	}
 }
 
+func TestOnCallCalloutSummaryActionWired(t *testing.T) {
+	d := findOnCallDomain(t)
+	var summary *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "callout-summary" {
+			summary = &d.Actions[i]
+		}
+	}
+	if summary == nil {
+		t.Fatal("expected 'callout-summary' action")
+	}
+	if summary.ToolName != "UteamupOnCallCalloutSummary" {
+		t.Errorf("callout-summary ToolName = %q, want %q", summary.ToolName, "UteamupOnCallCalloutSummary")
+	}
+	if summary.HTTPMethod != "GET" || summary.RESTPath != "callouts/summary" {
+		t.Errorf("callout-summary = %s %q, want GET \"callouts/summary\"", summary.HTTPMethod, summary.RESTPath)
+	}
+	if len(summary.Args) != 0 || len(summary.Flags) != 0 {
+		t.Errorf("callout-summary should not need args or flags, got args=%+v flags=%+v", summary.Args, summary.Flags)
+	}
+}
+
 func TestOnCallLayerAddActionWired(t *testing.T) {
 	d := findOnCallDomain(t)
 	var la *Action
