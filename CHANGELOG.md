@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.72.0](https://github.com/UteamUP/cli/compare/1.71.0...1.72.0) (2026-07-15)
+
+
+### Features
+
+* **registry:** add customer portal message and rating domains ([b3eb26d](https://github.com/UteamUP/cli/commit/b3eb26d4aaa01b0e348cbc4b8466db83cde1c26d))
+
+
+### Bug Fixes
+
+* **registry:** rename UteamupProjectGetBudget to UteamupProjectBudgetGet ([70ffbb1](https://github.com/UteamUP/cli/commit/70ffbb182d60896d2241648656f4716328ca6a1b))
+
 ## [1.71.0](https://github.com/UteamUP/cli/compare/1.70.0...1.71.0) (2026-07-15)
 
 
