@@ -19,6 +19,4 @@ func init() {
 		),
 	})
 
-	Register(&Domain{Name: "customer-message", Description: "Manage customer portal messages", Actions: crudActions("CustomerPortalMessage")})
-	Register(&Domain{Name: "customer-rating", Description: "Manage customer job ratings", Actions: crudActions("CustomerPortalJobRating")})
 }
