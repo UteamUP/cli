@@ -5,6 +5,37 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.69.0](https://github.com/UteamUP/cli/compare/1.68.0...1.69.0) (2026-07-15)
+
+
+### Features
+
+* mirror enabled UPMate tools in CLI registry ([9bafbbb](https://github.com/UteamUP/cli/commit/9bafbbbcbace6398a9f2a7851b719b5de71dff6a))
+
+
+### Bug Fixes
+
+* use GUID maintenance plan routes ([da5cf47](https://github.com/UteamUP/cli/commit/da5cf478cf31b595204cc105629213c5d28b4fc4))
+
+
+### Miscellaneous
+
+* rename IoT domain label from Beta to Preview ([255ba69](https://github.com/UteamUP/cli/commit/255ba69e98e4f9ff3edc0b7f0c0ca6be3cd1a05e))
+
+
+### Documentation
+
+* update stale API guideline references ([bb6266e](https://github.com/UteamUP/cli/commit/bb6266e903413e3cdf17c38fd140818d37ecb81d))
+
+
+### Tests
+
+* expand UPMate stock CLI parity ([1cdf4f3](https://github.com/UteamUP/cli/commit/1cdf4f3fbf74dbe354504a74a9f2bec0f2c79472))
+* mirror UPMate asset detail in CLI ([ad3def6](https://github.com/UteamUP/cli/commit/ad3def63644bea8b86b90bfe5ad3812d91f30455))
+* mirror UPMate document and vendor reads ([07326dd](https://github.com/UteamUP/cli/commit/07326dd2d39d09cf3e6cf6630df863a9808ff118))
+* mirror UPMate fleet dashboard reads ([4b9ef2d](https://github.com/UteamUP/cli/commit/4b9ef2d3c75c85c36e6bac6f8480d8f078e15aad))
+* mirror UPMate project and shift details ([b7ec249](https://github.com/UteamUP/cli/commit/b7ec24978e8c7a485609be13957d6f29b678a995))
+
 ## [1.68.0](https://github.com/UteamUP/cli/compare/1.67.1...1.68.0) (2026-07-15)
 
 
