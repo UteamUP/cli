@@ -5,6 +5,15 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.68.0](https://github.com/UteamUP/cli/compare/1.67.1...1.68.0) (2026-07-15)
+
+
+### Features
+
+* add on-call calendar cli action ([a17aba4](https://github.com/UteamUP/cli/commit/a17aba46f36e4552ec0b081c22f89b87dee2ce74))
+* add on-call subscription cli actions ([3fd7f1a](https://github.com/UteamUP/cli/commit/3fd7f1abb926ffadfc155ca14139812b92aacb3b))
+* add on-call summary cli action ([5f2eb11](https://github.com/UteamUP/cli/commit/5f2eb11821be23960ef6de391627bf5b83c2257f))
+
 ## [1.67.1](https://github.com/UteamUP/cli/compare/1.67.0...1.67.1) (2026-07-14)
 
 
