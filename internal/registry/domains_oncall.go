@@ -49,6 +49,36 @@ func init() {
 				},
 			},
 			{
+				Name:        "calendar-subscription-get",
+				Description: "Inspect a schedule's revocable public iCalendar subscription status",
+				ToolName:    "UteamupOnCallCalendarSubscriptionGet",
+				HTTPMethod:  "GET",
+				RESTPath:    "{schedule-guid}/calendar-subscription",
+				Args: []ArgDef{
+					{Name: "schedule-guid", Description: "On-call schedule external Guid", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:        "calendar-subscription-rotate",
+				Description: "Create or rotate a schedule's public iCalendar subscription link",
+				ToolName:    "UteamupOnCallCalendarSubscriptionRotate",
+				HTTPMethod:  "POST",
+				RESTPath:    "{schedule-guid}/calendar-subscription",
+				Args: []ArgDef{
+					{Name: "schedule-guid", Description: "On-call schedule external Guid", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:        "calendar-subscription-revoke",
+				Description: "Revoke a schedule's public iCalendar subscription link",
+				ToolName:    "UteamupOnCallCalendarSubscriptionRevoke",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "{schedule-guid}/calendar-subscription",
+				Args: []ArgDef{
+					{Name: "schedule-guid", Description: "On-call schedule external Guid", Required: true, Type: "uuid"},
+				},
+			},
+			{
 				Name:        "schedule-create",
 				Description: "Create an on-call schedule",
 				ToolName:    "UteamupOnCallScheduleCreate",

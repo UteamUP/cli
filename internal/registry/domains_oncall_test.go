@@ -155,6 +155,44 @@ func TestOnCallCalendarActionWired(t *testing.T) {
 	}
 }
 
+func TestOnCallCalendarSubscriptionActionsWired(t *testing.T) {
+	d := findOnCallDomain(t)
+	byName := map[string]*Action{}
+	for i := range d.Actions {
+		byName[d.Actions[i].Name] = &d.Actions[i]
+	}
+
+	cases := []struct {
+		name   string
+		tool   string
+		method string
+	}{
+		{"calendar-subscription-get", "UteamupOnCallCalendarSubscriptionGet", "GET"},
+		{"calendar-subscription-rotate", "UteamupOnCallCalendarSubscriptionRotate", "POST"},
+		{"calendar-subscription-revoke", "UteamupOnCallCalendarSubscriptionRevoke", "DELETE"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			action, ok := byName[tc.name]
+			if !ok {
+				t.Fatalf("expected %q action", tc.name)
+			}
+			if action.ToolName != tc.tool {
+				t.Errorf("%s ToolName = %q, want %q", tc.name, action.ToolName, tc.tool)
+			}
+			if action.HTTPMethod != tc.method || action.RESTPath != "{schedule-guid}/calendar-subscription" {
+				t.Errorf("%s = %s %q, want %s \"{schedule-guid}/calendar-subscription\"", tc.name, action.HTTPMethod, action.RESTPath, tc.method)
+			}
+			if len(action.Args) != 1 || action.Args[0].Name != "schedule-guid" || !action.Args[0].Required || action.Args[0].Type != "uuid" {
+				t.Errorf("%s must take a required uuid 'schedule-guid' arg, got %+v", tc.name, action.Args)
+			}
+			if len(action.Flags) != 0 {
+				t.Errorf("%s should not take flags, got %+v", tc.name, action.Flags)
+			}
+		})
+	}
+}
+
 func TestOnCallLayerAddActionWired(t *testing.T) {
 	d := findOnCallDomain(t)
 	var la *Action
