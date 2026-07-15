@@ -41,6 +41,7 @@ func TestEnabledUpmateCapabilitiesHaveCLIRegistrations(t *testing.T) {
 		"UteamupWorkorderCompleteCloseoutByGuid",
 		"UteamupWorkorderCreateByGuid",
 		"UteamupWorkorderTemplateCreateFromTemplateByGuid",
+		"UteamupWorkorderTemplateAnalyzePreview",
 	}
 
 	registered := make(map[string]bool)
