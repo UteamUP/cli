@@ -39,7 +39,7 @@ func init() {
 		Description: "Manage shifts",
 		Actions: []Action{
 			{Name: "list", Description: "List shifts", ToolName: "UteamupShiftList", Flags: paginationFlags()},
-			{Name: "get", Description: "Get a shift by GUID", ToolName: "UteamupShiftGet", Args: externalGuidArg(), RESTPath: "by-guid/{externalGuid}"},
+			{Name: "get", Description: "Get a shift by GUID", ToolName: "UteamupShiftGetByGuid", Args: []ArgDef{{Name: "shiftGuid", Description: "Shift GUID", Required: true, Type: "uuid"}}, RESTPath: "by-guid/{shiftGuid}"},
 			{Name: "create", Description: "Create a shift", ToolName: "UteamupShiftCreate", Flags: []FlagDef{jsonFlag()}},
 			{Name: "update", Description: "Update a shift by GUID", ToolName: "UteamupShiftUpdate", Args: externalGuidArg(), RESTPath: "by-guid/{externalGuid}", Flags: []FlagDef{jsonFlag()}},
 			{Name: "delete", Description: "Delete a shift by GUID", ToolName: "UteamupShiftDelete", Args: externalGuidArg(), RESTPath: "by-guid/{externalGuid}"},
