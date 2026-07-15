@@ -273,7 +273,7 @@ func init() {
 			{
 				Name:        "get",
 				Description: "Get the budget summary for a project",
-				ToolName:    "UteamupProjectGetBudget",
+				ToolName:    "UteamupProjectBudgetGet",
 				RESTPath:    "{projectGuid}/budget",
 				Args:        []ArgDef{{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"}},
 			},

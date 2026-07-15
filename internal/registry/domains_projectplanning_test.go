@@ -270,7 +270,7 @@ func TestProjectBudgetDomainRegistered(t *testing.T) {
 
 func TestProjectBudgetGetActionWired(t *testing.T) {
 	a := findDomainAction(t, "project-budget", "get")
-	if a.ToolName != "UteamupProjectGetBudget" || a.HTTPMethod != "" || a.RESTPath != "{projectGuid}/budget" {
+	if a.ToolName != "UteamupProjectBudgetGet" || a.HTTPMethod != "" || a.RESTPath != "{projectGuid}/budget" {
 		t.Errorf("budget get must be GET {projectGuid}/budget, got %+v", a)
 	}
 	assertProjectGuidArgs(t, a, "")
