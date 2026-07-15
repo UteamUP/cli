@@ -4,7 +4,7 @@ func init() {
 	Register(&Domain{
 		Name:        "iot",
 		Aliases:     []string{"internet-of-things"},
-		Description: "Inspect the selected tenant's dedicated IoT Beta environment",
+		Description: "Inspect the selected tenant's dedicated IoT Preview environment",
 		Actions: []Action{
 			{
 				Name:        "status",
