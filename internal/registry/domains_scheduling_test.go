@@ -19,7 +19,7 @@ func TestShiftCrudIsGuidFirst(t *testing.T) {
 		actions[action.Name] = action
 	}
 
-	for _, name := range []string{"get", "update", "delete"} {
+	for _, name := range []string{"update", "delete"} {
 		action, ok := actions[name]
 		if !ok {
 			t.Fatalf("missing shift action %q", name)
@@ -33,6 +33,17 @@ func TestShiftCrudIsGuidFirst(t *testing.T) {
 		if action.RESTPath != "by-guid/{externalGuid}" {
 			t.Fatalf("shift %s RESTPath = %q, want by-guid/{externalGuid}", name, action.RESTPath)
 		}
+	}
+
+	get, ok := actions["get"]
+	if !ok {
+		t.Fatal("missing shift action \"get\"")
+	}
+	if len(get.Args) != 1 || get.Args[0].Name != "shiftGuid" || get.Args[0].Type != "uuid" {
+		t.Fatalf("shift get args = %+v, want single shiftGuid UUID arg", get.Args)
+	}
+	if get.RESTPath != "by-guid/{shiftGuid}" {
+		t.Fatalf("shift get RESTPath = %q, want by-guid/{shiftGuid}", get.RESTPath)
 	}
 }
 
@@ -52,7 +63,7 @@ func TestShiftGuidRoutesResolve(t *testing.T) {
 		args map[string]any
 		want string
 	}{
-		{"get", map[string]any{"externalGuid": "shift-1"}, "/api/shift/by-guid/shift-1"},
+		{"get", map[string]any{"shiftGuid": "shift-1"}, "/api/shift/by-guid/shift-1"},
 		{"update", map[string]any{"externalGuid": "shift-1"}, "/api/shift/by-guid/shift-1"},
 		{"delete", map[string]any{"externalGuid": "shift-1"}, "/api/shift/by-guid/shift-1"},
 		{"pattern-list", map[string]any{"shiftGuid": "shift-1"}, "/api/shift/by-guid/shift-1/patterns"},

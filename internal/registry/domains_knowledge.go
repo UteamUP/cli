@@ -64,7 +64,7 @@ func init() {
 			{Name: "create", Description: "Create a record", ToolName: "UteamupDocumentCreate", Flags: []FlagDef{jsonFlag()}},
 			{Name: "update", Description: "Update a record by GUID", ToolName: "UteamupDocumentUpdate", Args: externalGuidArg(), Flags: []FlagDef{jsonFlag()}},
 			{Name: "delete", Description: "Delete a record by GUID", ToolName: "UteamupDocumentDelete", Args: externalGuidArg()},
-			{Name: "list-versions", Description: "List version history for a document by GUID", ToolName: "UteamupDocumentListVersions", HTTPMethod: "GET", RESTPath: "{externalGuid}/versions", Args: externalGuidArg()},
+			{Name: "list-versions", Description: "List version history for a document by GUID", ToolName: "UteamupDocumentListVersionsByGuid", HTTPMethod: "GET", RESTPath: "{externalGuid}/versions", Args: externalGuidArg()},
 			{Name: "upload-version", Description: "Upload a new version of a document by GUID", ToolName: "UteamupDocumentUploadVersion", HTTPMethod: "POST", RESTPath: "{externalGuid}/versions", Args: externalGuidArg(), Flags: []FlagDef{{Name: "file", Description: "Path to file", Default: ""}, {Name: "notes", Description: "Change notes", Default: ""}}},
 			{Name: "restore-version", Description: "Restore a previous version as current by GUID", ToolName: "UteamupDocumentRestoreVersion", HTTPMethod: "POST", RESTPath: "{externalGuid}/versions/{versionNumber}/restore", Args: []ArgDef{{Name: "externalGuid", Description: "Document GUID", Required: true, Type: "string"}, {Name: "versionNumber", Description: "Version number to restore", Required: true, Type: "int"}}},
 		},
