@@ -123,6 +123,38 @@ func TestOnCallCalloutSummaryActionWired(t *testing.T) {
 	}
 }
 
+func TestOnCallCalendarActionWired(t *testing.T) {
+	d := findOnCallDomain(t)
+	var calendar *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "calendar" {
+			calendar = &d.Actions[i]
+		}
+	}
+	if calendar == nil {
+		t.Fatal("expected 'calendar' action")
+	}
+	if calendar.ToolName != "UteamupOnCallCalendar" {
+		t.Errorf("calendar ToolName = %q, want %q", calendar.ToolName, "UteamupOnCallCalendar")
+	}
+	if calendar.HTTPMethod != "GET" || calendar.RESTPath != "{schedule-guid}/calendar.ics" {
+		t.Errorf("calendar = %s %q, want GET \"{schedule-guid}/calendar.ics\"", calendar.HTTPMethod, calendar.RESTPath)
+	}
+	if len(calendar.Args) != 1 || calendar.Args[0].Name != "schedule-guid" || !calendar.Args[0].Required || calendar.Args[0].Type != "uuid" {
+		t.Errorf("calendar must take a required uuid 'schedule-guid' arg, got %+v", calendar.Args)
+	}
+	byFlag := map[string]*FlagDef{}
+	for i := range calendar.Flags {
+		byFlag[calendar.Flags[i].Name] = &calendar.Flags[i]
+	}
+	if _, ok := byFlag["from"]; !ok {
+		t.Errorf("calendar missing 'from' flag, got %+v", calendar.Flags)
+	}
+	if _, ok := byFlag["to"]; !ok {
+		t.Errorf("calendar missing 'to' flag, got %+v", calendar.Flags)
+	}
+}
+
 func TestOnCallLayerAddActionWired(t *testing.T) {
 	d := findOnCallDomain(t)
 	var la *Action

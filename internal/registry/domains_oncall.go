@@ -35,6 +35,20 @@ func init() {
 				RESTPath:    "callouts/summary",
 			},
 			{
+				Name:        "calendar",
+				Description: "Download an authenticated iCalendar feed for an on-call schedule",
+				ToolName:    "UteamupOnCallCalendar",
+				HTTPMethod:  "GET",
+				RESTPath:    "{schedule-guid}/calendar.ics",
+				Args: []ArgDef{
+					{Name: "schedule-guid", Description: "On-call schedule external Guid", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "from", Description: "Calendar window start (ISO-8601 UTC). Defaults to now.", Type: "string"},
+					{Name: "to", Description: "Calendar window end (ISO-8601 UTC). Defaults to 30 days after from.", Type: "string"},
+				},
+			},
+			{
 				Name:        "schedule-create",
 				Description: "Create an on-call schedule",
 				ToolName:    "UteamupOnCallScheduleCreate",
