@@ -5,6 +5,7 @@ import "testing"
 func TestEnabledUpmateCapabilitiesHaveCLIRegistrations(t *testing.T) {
 	expected := []string{
 		"UteamupAssetList",
+		"UteamupAssetGetByGuid",
 		"UteamupIoTMonitoringDashboard",
 		"UteamupIoTTelemetryPoints",
 		"UteamupMarketplaceBrowse",
