@@ -3,7 +3,7 @@ package registry
 // Tenant API key CLI surface — mint + manage tenant-scoped API keys (e.g. an
 // MCP-enabled key for ChatGPT) from the terminal without the web UI.
 //
-// Backend (GUID-first per Guidelines/ApiHowToGuidelinesReadme.md):
+// Backend (GUID-first per Guidelines/ApiGuidelines.md):
 //   create  POST /api/tenant-api-keys                          → key incl. guid, apiKey, secret (shown once)
 //   list    GET  /api/tenant-api-keys                          → items include guid
 //   get     GET  /api/tenant-api-keys/by-guid/{guid}

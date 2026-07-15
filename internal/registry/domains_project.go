@@ -8,7 +8,7 @@ func init() {
 		// GUID-first CRUD: get/update/delete take the project ExternalGuid
 		// positional arg and hit the backend /project/{externalGuid:guid}
 		// routes. The int-keyed twins are [Obsolete] on the backend and are
-		// not surfaced by the CLI (per Guidelines/ApiHowToGuidelinesReadme.md
+		// not surfaced by the CLI (per Guidelines/ApiGuidelines.md
 		// §id→guid — GUIDs In, Integer IDs Out).
 		Actions: []Action{
 			{Name: "list", Description: "List projects", ToolName: "UteamupProjectList", Flags: paginationFlags()},

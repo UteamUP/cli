@@ -2,7 +2,7 @@ package registry
 
 // AI-credit grants CLI surface — issue claim-gated AI credits to a tenant and let the tenant list,
 // claim, or revoke them from the terminal. Mirrors the backend AiCreditGrantController (GUID-first per
-// Guidelines/ApiHowToGuidelinesReadme.md):
+// Guidelines/ApiGuidelines.md):
 //
 //   issue    POST /api/aicreditgrant                 (body = flags, camelCased; global-admin only)
 //   mine     GET  /api/aicreditgrant/mine            (tenant's pending claimable grants)

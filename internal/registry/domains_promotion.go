@@ -1,7 +1,7 @@
 package registry
 
 // Promotions / discounts CLI surface — manage discount offers and grant them to tenants from the
-// terminal. Mirrors the backend PromotionController (GUID-first per Guidelines/ApiHowToGuidelinesReadme.md):
+// terminal. Mirrors the backend PromotionController (GUID-first per Guidelines/ApiGuidelines.md):
 //
 //   list          GET    /api/promotion
 //   get           GET    /api/promotion/by-guid/{guid}

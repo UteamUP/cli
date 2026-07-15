@@ -2,7 +2,7 @@ package registry
 
 // Custom AI-credit requests CLI surface — a tenant asks for a non-catalog credit amount (e.g. 500,000/month
 // billed annually); global admins list, fulfil, or reject them. Mirrors the backend AiCreditRequestController
-// (GUID-first per Guidelines/ApiHowToGuidelinesReadme.md):
+// (GUID-first per Guidelines/ApiGuidelines.md):
 //
 //   submit   POST /api/aicreditrequest                 (body = flags, camelCased; tenant owner)
 //   mine     GET  /api/aicreditrequest/mine            (current tenant's requests)
