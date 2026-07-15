@@ -2,7 +2,37 @@ package registry
 
 func init() {
 	Register(&Domain{Name: "schedule", Aliases: []string{"schedules"}, Description: "Manage schedules", Actions: crudActions("Schedule")})
-	Register(&Domain{Name: "schedule-assignment", Description: "Manage schedule assignments", Actions: crudActions("ScheduleAssignment")})
+	Register(&Domain{
+		Name:        "schedule-assignment",
+		Description: "Manage schedule assignments",
+		Actions: append(crudActions("ScheduleAssignment"),
+			Action{
+				Name:        "workorder-options",
+				Description: "Rank qualified and available technicians for a workorder window",
+				ToolName:    "UteamupScheduleAssignmentGetWorkorderOptions",
+				Args: []ArgDef{
+					{Name: "workorderGuid", Description: "Workorder GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "planned-start-utc", Description: "Planned UTC start", Required: true, Type: "string"},
+					{Name: "planned-end-utc", Description: "Planned UTC end", Required: true, Type: "string"},
+				},
+			},
+			Action{
+				Name:        "create-by-guid",
+				Description: "Create a revalidated GUID-based workorder assignment",
+				ToolName:    "UteamupScheduleAssignmentCreateByGuid",
+				Args: []ArgDef{
+					{Name: "workorderGuid", Description: "Workorder GUID", Required: true, Type: "uuid"},
+					{Name: "technicianGuid", Description: "Technician user GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "planned-start-utc", Description: "Planned UTC start", Required: true, Type: "string"},
+					{Name: "planned-end-utc", Description: "Planned UTC end", Required: true, Type: "string"},
+				},
+			},
+		),
+	})
 	Register(&Domain{
 		Name:        "shift",
 		Aliases:     []string{"shifts"},

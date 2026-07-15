@@ -78,6 +78,48 @@ func init() {
 				ToolName:    "UteamupMarketplaceRequirementsList",
 			},
 			{
+				Name:        "requirement-draft-create",
+				Description: "Create a private tenant-owned marketplace requirement draft",
+				ToolName:    "UteamupMarketplaceRequirementCreateDraft",
+				Flags: []FlagDef{
+					{Name: "stock-item-guid", Description: "Optional tenant stock item GUID", Type: "uuid"},
+					{Name: "item-name", Description: "Item name when no stock item GUID is supplied", Type: "string"},
+					{Name: "item-type", Description: "Part | Tool | Chemical | Asset", Type: "string"},
+					{Name: "requested-quantity", Description: "Exact requested quantity", Required: true, Type: "int"},
+					{Name: "audience", Description: "Wholesalers | Tenants | Both", Required: true, Type: "string"},
+					{Name: "target-unit-price", Description: "Optional target unit price", Type: "float"},
+					{Name: "currency", Description: "Three-letter currency code", Default: "USD", Type: "string"},
+					{Name: "needed-by-date", Description: "Optional needed-by timestamp", Type: "string"},
+					{Name: "expires-at", Description: "Optional draft expiry timestamp", Type: "string"},
+					{Name: "notes", Description: "Optional private owner notes", Type: "string"},
+				},
+			},
+			{
+				Name:        "requirement-publish",
+				Description: "Publish one tenant-owned marketplace requirement",
+				ToolName:    "UteamupMarketplaceRequirementPublish",
+				Args: []ArgDef{
+					{Name: "requirementGuid", Description: "Marketplace requirement GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:        "requirement-offers-compare",
+				Description: "Compare current offers for one tenant-owned requirement",
+				ToolName:    "UteamupMarketplaceRequirementOffersCompare",
+				Args: []ArgDef{
+					{Name: "requirementGuid", Description: "Marketplace requirement GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:        "requirement-offer-accept",
+				Description: "Accept one explicitly selected current offer",
+				ToolName:    "UteamupMarketplaceRequirementOfferAccept",
+				Args: []ArgDef{
+					{Name: "requirementGuid", Description: "Marketplace requirement GUID", Required: true, Type: "uuid"},
+					{Name: "offerGuid", Description: "Selected offer GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
 				Name:        "my-offers",
 				Description: "List your tenant's offers on requirements",
 				ToolName:    "UteamupMarketplaceMyOffersList",

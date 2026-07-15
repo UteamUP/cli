@@ -28,6 +28,20 @@ func init() {
 				},
 			},
 			Action{
+				Name:        "tenant-alerts",
+				Description: "List tenant-wide stock alerts with location grant filtering",
+				ToolName:    "UteamupStockGetTenantAlerts",
+				Flags: []FlagDef{
+					{Name: "page", Description: "Page number", Default: 1, Type: "int"},
+					{Name: "page-size", Description: "Page size", Default: 50, Type: "int"},
+					{Name: "search", Description: "Search alert, item, or location", Type: "string"},
+					{Name: "severity", Description: "Critical | Warning | Info", Type: "string"},
+					{Name: "alert-type", Description: "Alert type filter", Type: "string"},
+					{Name: "include-acknowledged", Description: "Include acknowledged history", Type: "bool"},
+					{Name: "stock-guid", Description: "Optional stock location GUID", Type: "uuid"},
+				},
+			},
+			Action{
 				Name:        "ack-alert",
 				Description: "Acknowledge a stock alert",
 				ToolName:    "UteamupStockAcknowledgeAlert",
@@ -50,6 +64,15 @@ func init() {
 				ToolName:    "UteamupStockGetPurchaseOrder",
 				RESTPath:    "purchase-orders/{guid}",
 				Args:        []ArgDef{{Name: "guid", Description: "Purchase order GUID", Required: true, Type: "string"}},
+			},
+			Action{
+				Name:        "po-marketplace-draft",
+				Description: "Create a Draft purchase order from an accepted marketplace offer",
+				ToolName:    "UteamupStockCreateMarketplacePurchaseOrderDraft",
+				Args: []ArgDef{
+					{Name: "requirementGuid", Description: "Accepted requirement GUID", Required: true, Type: "uuid"},
+					{Name: "offerGuid", Description: "Accepted offer GUID", Required: true, Type: "uuid"},
+				},
 			},
 			Action{
 				Name:        "po-submit",

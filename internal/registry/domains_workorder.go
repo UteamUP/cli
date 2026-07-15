@@ -40,6 +40,44 @@ func init() {
 				},
 			},
 			{
+				Name:        "create-by-guid",
+				Description: "Create a workorder using GUID-only entity references",
+				ToolName:    "UteamupWorkorderCreateByGuid",
+				Flags: []FlagDef{
+					{Name: "title", Description: "Workorder title", Required: true, Type: "string"},
+					{Name: "description", Description: "Work to perform", Required: true, Type: "string"},
+					{Name: "start-utc", Description: "Planned UTC start", Required: true, Type: "string"},
+					{Name: "due-utc", Description: "Planned UTC due time", Required: true, Type: "string"},
+					{Name: "idempotency-key", Description: "Stable retry idempotency key", Required: true, Type: "string"},
+					{Name: "priority", Description: "Priority from 1 to 5", Default: 3, Type: "int"},
+					{Name: "asset-guid", Description: "Optional asset GUID", Type: "uuid"},
+					{Name: "primary-assignee-guid", Description: "Optional primary assignee GUID", Type: "uuid"},
+				},
+			},
+			{
+				Name:        "closeout-prepare",
+				Description: "Build an evidence-bound workorder closeout preview",
+				ToolName:    "UteamupWorkorderPrepareCloseoutByGuid",
+				Args: []ArgDef{
+					{Name: "workorderGuid", Description: "Workorder GUID", Required: true, Type: "uuid"},
+					{Name: "runGuid", Description: "UPMate operations run GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:        "closeout-complete",
+				Description: "Complete an evidence-bound closeout after authorized sign-off",
+				ToolName:    "UteamupWorkorderCompleteCloseoutByGuid",
+				Args: []ArgDef{
+					{Name: "workorderGuid", Description: "Workorder GUID", Required: true, Type: "uuid"},
+					{Name: "runGuid", Description: "UPMate operations run GUID", Required: true, Type: "uuid"},
+					{Name: "executionReferenceGuid", Description: "Stable execution idempotency GUID", Required: true, Type: "uuid"},
+					{Name: "expectedVersion", Description: "Closeout preview version", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "alert-guid", Description: "Optional originating IoT alert GUID", Type: "uuid"},
+				},
+			},
+			{
 				Name:        "update",
 				Description: "Update an existing work order",
 				ToolName:    "UteamupWorkOrderUpdate",
