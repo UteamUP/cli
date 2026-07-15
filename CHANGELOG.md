@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.71.0](https://github.com/UteamUP/cli/compare/1.70.0...1.71.0) (2026-07-15)
+
+
+### Features
+
+* add GUID portal work request commands ([44ac55a](https://github.com/UteamUP/cli/commit/44ac55a02cc4bcadfc6a6eb3ab501031b74e2d73))
+
+
+### Tests
+
+* **registry:** keep UteamupProjectGetHealth in UPMate parity list ([aca77bf](https://github.com/UteamUP/cli/commit/aca77bf3f1f0c92d234c9390a6c7bb813cc8fa1f))
+
 ## [1.70.0](https://github.com/UteamUP/cli/compare/1.69.0...1.70.0) (2026-07-15)
 
 
