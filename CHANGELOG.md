@@ -5,6 +5,19 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.70.0](https://github.com/UteamUP/cli/compare/1.69.0...1.70.0) (2026-07-15)
+
+
+### Features
+
+* **registry:** add customer-portal-user domain, drop legacy customer-portal ([414081b](https://github.com/UteamUP/cli/commit/414081b3946e48624a6c2d6f9f347f90c195f31b))
+
+
+### Tests
+
+* mirror UPMate IoT rules read ([a10e112](https://github.com/UteamUP/cli/commit/a10e1120a83e76566d16947b63983932214c50c5))
+* **registry:** keep UteamupWorkorderTemplateAnalyzePreview in UPMate parity list ([78bf0ba](https://github.com/UteamUP/cli/commit/78bf0ba139ef34c1d7ab43e9b5a6c1646abebe18))
+
 ## [1.69.0](https://github.com/UteamUP/cli/compare/1.68.0...1.69.0) (2026-07-15)
 
 
