@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.74.0](https://github.com/UteamUP/cli/compare/1.73.0...1.74.0) (2026-07-15)
+
+
+### Features
+
+* **schedule:** add optimization apply and revert commands ([f75c199](https://github.com/UteamUP/cli/commit/f75c199b18aacc8eff55142a4bd765ea9ef97238))
+
 ## [1.73.0](https://github.com/UteamUP/cli/compare/1.72.0...1.73.0) (2026-07-15)
 
 
