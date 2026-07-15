@@ -8,6 +8,7 @@ func TestEnabledUpmateCapabilitiesHaveCLIRegistrations(t *testing.T) {
 		"UteamupAssetGetByGuid",
 		"UteamupIoTMonitoringDashboard",
 		"UteamupIoTTelemetryPoints",
+		"UteamupIoTRulesList",
 		"UteamupDocumentListVersionsByGuid",
 		"UteamupDocumentGetMetadata",
 		"UteamupFleetDashboardGet",
