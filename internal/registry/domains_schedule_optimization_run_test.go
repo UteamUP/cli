@@ -34,6 +34,8 @@ func TestScheduleOptimizationRunRoutesUseGuidIdentity(t *testing.T) {
 		{name: "create", args: map[string]any{}, path: "/api/schedule/optimization-runs"},
 		{name: "get", args: map[string]any{"runGuid": "run-guid"}, path: "/api/schedule/optimization-runs/run-guid", consumed: []string{"runGuid"}},
 		{name: "cancel", args: map[string]any{"runGuid": "run-guid"}, path: "/api/schedule/optimization-runs/run-guid/cancel", consumed: []string{"runGuid"}},
+		{name: "apply", args: map[string]any{"runGuid": "run-guid"}, path: "/api/schedule/optimization-runs/run-guid/apply", consumed: []string{"runGuid"}},
+		{name: "revert", args: map[string]any{"runGuid": "run-guid"}, path: "/api/schedule/optimization-runs/run-guid/revert", consumed: []string{"runGuid"}},
 	}
 
 	for _, testCase := range testCases {
@@ -88,8 +90,66 @@ func TestScheduleOptimizationCreateFlagsMirrorBackendModel(t *testing.T) {
 
 	_, get := scheduleOptimizationAction(t, "get")
 	_, cancel := scheduleOptimizationAction(t, "cancel")
+	_, apply := scheduleOptimizationAction(t, "apply")
+	_, revert := scheduleOptimizationAction(t, "revert")
 	if get.ToolName != "UteamupScheduleOptimizationRunGet" ||
-		cancel.ToolName != "UteamupScheduleOptimizationRunCancel" {
+		cancel.ToolName != "UteamupScheduleOptimizationRunCancel" ||
+		apply.ToolName != "UteamupScheduleOptimizationRunApply" ||
+		revert.ToolName != "UteamupScheduleOptimizationRunRevert" {
 		t.Fatal("CLI tool names must mirror backend MCP methods exactly")
+	}
+}
+
+func TestScheduleOptimizationApplyAndRevertFlagsMirrorBackendModels(t *testing.T) {
+	t.Parallel()
+
+	_, apply := scheduleOptimizationAction(t, "apply")
+	wantApply := map[string]struct {
+		bodyName string
+		flagType string
+		required bool
+	}{
+		"idempotency-key":          {bodyName: "idempotencyKey", flagType: "string", required: true},
+		"selected-workorder-guids": {bodyName: "selectedWorkorderGuids", flagType: "stringSlice", required: false},
+	}
+
+	if len(apply.Flags) != len(wantApply) {
+		t.Fatalf("apply flags = %d, want %d", len(apply.Flags), len(wantApply))
+	}
+	for _, flag := range apply.Flags {
+		expected, ok := wantApply[flag.Name]
+		if !ok {
+			t.Fatalf("unexpected apply flag: %+v", flag)
+		}
+		if flag.BodyName != expected.bodyName ||
+			flag.Type != expected.flagType ||
+			flag.Required != expected.required {
+			t.Fatalf("apply flag %q = %+v, want %+v", flag.Name, flag, expected)
+		}
+	}
+
+	_, revert := scheduleOptimizationAction(t, "revert")
+	wantRevert := map[string]struct {
+		bodyName string
+		flagType string
+		required bool
+	}{
+		"idempotency-key": {bodyName: "idempotencyKey", flagType: "string", required: true},
+		"reason":          {bodyName: "reason", flagType: "string", required: false},
+	}
+
+	if len(revert.Flags) != len(wantRevert) {
+		t.Fatalf("revert flags = %d, want %d", len(revert.Flags), len(wantRevert))
+	}
+	for _, flag := range revert.Flags {
+		expected, ok := wantRevert[flag.Name]
+		if !ok {
+			t.Fatalf("unexpected revert flag: %+v", flag)
+		}
+		if flag.BodyName != expected.bodyName ||
+			flag.Type != expected.flagType ||
+			flag.Required != expected.required {
+			t.Fatalf("revert flag %q = %+v, want %+v", flag.Name, flag, expected)
+		}
 	}
 }

@@ -4,7 +4,7 @@ func init() {
 	Register(&Domain{
 		Name:        "schedule-optimization-run",
 		Aliases:     []string{"schedule-optimization", "schedule-opt"},
-		Description: "Create, inspect, and cancel durable schedule optimization proposals",
+		Description: "Create, inspect, apply, revert, and cancel durable schedule optimization proposals",
 		APIPath:     "/api/schedule/optimization-runs",
 		Actions: []Action{
 			{
@@ -41,6 +41,34 @@ func init() {
 				},
 				Flags: []FlagDef{
 					{Name: "reason", Description: "Optional plain-language cancellation reason", Type: "string"},
+				},
+			},
+			{
+				Name:        "apply",
+				Description: "Apply all or selected workorders from a completed optimization proposal after revalidating evidence",
+				ToolName:    "UteamupScheduleOptimizationRunApply",
+				HTTPMethod:  "POST",
+				RESTPath:    "{runGuid}/apply",
+				Args: []ArgDef{
+					{Name: "runGuid", Description: "Schedule optimization run GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Caller-generated GUID reused only when retrying the same apply", Required: true, Type: "string"},
+					{Name: "selected-workorder-guids", BodyName: "selectedWorkorderGuids", Description: "Optional workorder GUID subset; omit to apply every proposal item", Type: "stringSlice"},
+				},
+			},
+			{
+				Name:        "revert",
+				Description: "Cancel exactly the assignments created by an applied optimization run while preserving audit evidence",
+				ToolName:    "UteamupScheduleOptimizationRunRevert",
+				HTTPMethod:  "POST",
+				RESTPath:    "{runGuid}/revert",
+				Args: []ArgDef{
+					{Name: "runGuid", Description: "Schedule optimization run GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Caller-generated GUID reused only when retrying the same revert", Required: true, Type: "string"},
+					{Name: "reason", BodyName: "reason", Description: "Optional plain-language reason for restoring the previous plan", Type: "string"},
 				},
 			},
 		},
