@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.80.1](https://github.com/UteamUP/cli/compare/1.80.0...1.80.1) (2026-07-16)
+
+
+### Bug Fixes
+
+* require emergency insertion idempotency ([938fec6](https://github.com/UteamUP/cli/commit/938fec6dab3ef4126d7b98e4113834f02d74e8a6))
+
 ## [1.80.0](https://github.com/UteamUP/cli/compare/1.79.0...1.80.0) (2026-07-16)
 
 
