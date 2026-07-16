@@ -71,6 +71,7 @@ func TestScheduleOptimizationCreateFlagsMirrorBackendModel(t *testing.T) {
 		"workorder-guids":  {bodyName: "workorderGuids", flagType: "stringSlice", required: true},
 		"technician-guids": {bodyName: "technicianGuids", flagType: "stringSlice", required: true},
 		"team-guid":        {bodyName: "teamGuid", flagType: "string", required: false},
+		"horizon-days":     {bodyName: "horizonDays", flagType: "int", required: false},
 	}
 
 	if len(create.Flags) != len(want) {
