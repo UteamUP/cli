@@ -5,6 +5,32 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.75.0](https://github.com/UteamUP/cli/compare/1.74.0...1.75.0) (2026-07-16)
+
+
+### Features
+
+* add fleet maintenance proposal CLI command ([ca555e5](https://github.com/UteamUP/cli/commit/ca555e55b88c1cf9cd4b68d5a48ef80b0e3aaa15))
+* **schedule:** add guid booking CLI actions ([eb99659](https://github.com/UteamUP/cli/commit/eb99659d47ef794f379d21562c2db253fe4be498))
+* **schedule:** add optimization policy commands ([970b6d1](https://github.com/UteamUP/cli/commit/970b6d1009626e2dc37db2b8b5267a4bfbcd8938))
+* **schedule:** list optimization run history ([acb7f5b](https://github.com/UteamUP/cli/commit/acb7f5b283405f486abab62e2b5d819f299fbef6))
+* **schedule:** preview emergency insertions ([4885287](https://github.com/UteamUP/cli/commit/4885287201c9b045528b25f0b5edfb94f016565f))
+
+
+### Bug Fixes
+
+* route fleet maintenance proposals safely ([016c936](https://github.com/UteamUP/cli/commit/016c9362b3a10af089ac1cf61c28889460952b70))
+
+
+### Documentation
+
+* **fleet:** clarify maintenance package GUID ([ee2ad63](https://github.com/UteamUP/cli/commit/ee2ad63c003405329e260614a444f6e369e542ae))
+
+
+### Tests
+
+* **schedule:** restore shift GUID route coverage ([88114f9](https://github.com/UteamUP/cli/commit/88114f9822ecb33b6d6ccae8d67d080591286736))
+
 ## [1.74.0](https://github.com/UteamUP/cli/compare/1.73.0...1.74.0) (2026-07-15)
 
 
