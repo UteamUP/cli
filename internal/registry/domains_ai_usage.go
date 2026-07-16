@@ -10,6 +10,14 @@ func init() {
 		Description: "View AI request usage (tokens, estimated cost) for the tenant",
 		Actions: []Action{
 			{
+				Name:         "knowledge-tutorial-trust",
+				Description:  "Read Knowledge citation readiness, gaps and tutorial adoption telemetry",
+				ToolName:     "UteamupAIKnowledgeTutorialTrust",
+				RESTBasePath: "/api/aianalytics",
+				RESTPath:     "knowledge-tutorial-trust",
+				HTTPMethod:   "GET",
+			},
+			{
 				Name:         "data-readiness",
 				Description:  "Read deterministic AI readiness scores and actionable data gaps",
 				ToolName:     "UteamupAIDataReadiness",
