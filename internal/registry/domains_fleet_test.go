@@ -48,3 +48,43 @@ func TestFleetMaintenanceProposalUsesGovernedIdempotentRoute(t *testing.T) {
 		t.Fatalf("idempotency flag = %+v", flags["idempotency-key"])
 	}
 }
+
+func TestFleetContactDomainMirrorsGuidFirstMcpTools(t *testing.T) {
+	domain := findDomain("fleet-contact")
+	if domain == nil {
+		t.Fatal("expected fleet-contact domain")
+	}
+
+	want := map[string]struct {
+		tool string
+		args []string
+	}{
+		"list":   {tool: "UteamupFleetAssetContactList", args: []string{"assetExternalGuid"}},
+		"add":    {tool: "UteamupFleetAssetContactAdd", args: []string{"assetExternalGuid"}},
+		"delete": {tool: "UteamupFleetAssetContactDelete", args: []string{"assetExternalGuid", "associationExternalGuid"}},
+	}
+	if len(domain.Actions) != len(want) {
+		t.Fatalf("fleet-contact actions = %d, want %d", len(domain.Actions), len(want))
+	}
+
+	for _, action := range domain.Actions {
+		expected, ok := want[action.Name]
+		if !ok {
+			t.Fatalf("unexpected action %q", action.Name)
+		}
+		if action.ToolName != expected.tool {
+			t.Fatalf("%s tool = %q, want %q", action.Name, action.ToolName, expected.tool)
+		}
+		if len(action.Args) != len(expected.args) {
+			t.Fatalf("%s args = %d, want %d", action.Name, len(action.Args), len(expected.args))
+		}
+		for index, arg := range action.Args {
+			if arg.Name != expected.args[index] || arg.Type != "string" || !arg.Required {
+				t.Fatalf("%s arg[%d] = %+v", action.Name, index, arg)
+			}
+			if arg.Name == "id" || arg.Name == "assetId" || arg.Name == "contactId" {
+				t.Fatalf("%s exposes integer-style argument %q", action.Name, arg.Name)
+			}
+		}
+	}
+}

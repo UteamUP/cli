@@ -25,5 +25,26 @@ func init() {
 			{Name: "date-to", Description: "Optional UTC period end", Type: "string"},
 		}},
 	}})
-	Register(&Domain{Name: "fleet-contact", Description: "Manage fleet asset contacts", Actions: crudActions("FleetAssetContact")})
+	Register(&Domain{
+		Name:        "fleet-contact",
+		Description: "Manage GUID-first fleet asset contact associations",
+		Actions: []Action{
+			{
+				Name: "list", Description: "List contacts linked to an asset", ToolName: "UteamupFleetAssetContactList",
+				Args: []ArgDef{{Name: "assetExternalGuid", Description: "Public asset GUID", Required: true, Type: "string"}},
+			},
+			{
+				Name: "add", Description: "Link a contact to an asset", ToolName: "UteamupFleetAssetContactAdd",
+				Args:  []ArgDef{{Name: "assetExternalGuid", Description: "Public asset GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{jsonFlag()},
+			},
+			{
+				Name: "delete", Description: "Remove a contact association from an asset", ToolName: "UteamupFleetAssetContactDelete",
+				Args: []ArgDef{
+					{Name: "assetExternalGuid", Description: "Public asset GUID", Required: true, Type: "string"},
+					{Name: "associationExternalGuid", Description: "Public asset-contact association GUID", Required: true, Type: "string"},
+				},
+			},
+		},
+	})
 }
