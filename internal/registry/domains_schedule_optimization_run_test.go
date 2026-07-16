@@ -31,6 +31,7 @@ func TestScheduleOptimizationRunRoutesUseGuidIdentity(t *testing.T) {
 		path     string
 		consumed []string
 	}{
+		{name: "list", args: map[string]any{}, path: "/api/schedule/optimization-runs"},
 		{name: "create", args: map[string]any{}, path: "/api/schedule/optimization-runs"},
 		{name: "get", args: map[string]any{"runGuid": "run-guid"}, path: "/api/schedule/optimization-runs/run-guid", consumed: []string{"runGuid"}},
 		{name: "cancel", args: map[string]any{"runGuid": "run-guid"}, path: "/api/schedule/optimization-runs/run-guid/cancel", consumed: []string{"runGuid"}},
@@ -89,15 +90,24 @@ func TestScheduleOptimizationCreateFlagsMirrorBackendModel(t *testing.T) {
 		}
 	}
 
+	_, list := scheduleOptimizationAction(t, "list")
 	_, get := scheduleOptimizationAction(t, "get")
 	_, cancel := scheduleOptimizationAction(t, "cancel")
 	_, apply := scheduleOptimizationAction(t, "apply")
 	_, revert := scheduleOptimizationAction(t, "revert")
-	if get.ToolName != "UteamupScheduleOptimizationRunGet" ||
+	if list.ToolName != "UteamupScheduleOptimizationRunList" ||
+		get.ToolName != "UteamupScheduleOptimizationRunGet" ||
 		cancel.ToolName != "UteamupScheduleOptimizationRunCancel" ||
 		apply.ToolName != "UteamupScheduleOptimizationRunApply" ||
 		revert.ToolName != "UteamupScheduleOptimizationRunRevert" {
 		t.Fatal("CLI tool names must mirror backend MCP methods exactly")
+	}
+	if len(list.Flags) != 1 ||
+		list.Flags[0].Name != "page-size" ||
+		list.Flags[0].BodyName != "pageSize" ||
+		list.Flags[0].Type != "int" ||
+		list.Flags[0].Default != 20 {
+		t.Fatalf("list page-size flag must mirror the bounded backend query: %+v", list.Flags)
 	}
 }
 

@@ -8,6 +8,15 @@ func init() {
 		APIPath:     "/api/schedule/optimization-runs",
 		Actions: []Action{
 			{
+				Name:        "list",
+				Description: "List the most recent review-first optimization runs with status and proposal evidence",
+				ToolName:    "UteamupScheduleOptimizationRunList",
+				HTTPMethod:  "GET",
+				Flags: []FlagDef{
+					{Name: "page-size", BodyName: "pageSize", Description: "Maximum recent runs to return (1-100)", Type: "int", Default: 20},
+				},
+			},
+			{
 				Name:        "create",
 				Description: "Create a review-first optimization run that never applies schedule changes automatically",
 				ToolName:    "UteamupScheduleOptimizationRunCreate",
