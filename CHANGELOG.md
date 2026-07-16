@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.77.0](https://github.com/UteamUP/cli/compare/1.76.0...1.77.0) (2026-07-16)
+
+
+### Features
+
+* **registry:** add maintenance plan templates and due-projection domain ([bd65c30](https://github.com/UteamUP/cli/commit/bd65c30fe70a84ddbad749b171dda82c1cae2bbd))
+
 ## [1.76.0](https://github.com/UteamUP/cli/compare/1.75.0...1.76.0) (2026-07-16)
 
 
