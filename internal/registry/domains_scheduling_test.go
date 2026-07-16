@@ -1,222 +1,115 @@
 package registry
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
-func TestShiftTemplateDomainIsRetired(t *testing.T) {
-	if d := findDomain("shift-template"); d != nil {
-		t.Fatalf("shift-template domain should stay retired; found %+v", d)
+func scheduleAssignmentDomain(t *testing.T) *Domain {
+	t.Helper()
+	for _, domain := range DefaultRegistry.Domains() {
+		if domain.Name == "schedule-assignment" {
+			return domain
+		}
+	}
+	t.Fatal("expected schedule-assignment domain")
+	return nil
+}
+
+func scheduleAssignmentAction(t *testing.T, name string) *Action {
+	t.Helper()
+	for index := range scheduleAssignmentDomain(t).Actions {
+		action := &scheduleAssignmentDomain(t).Actions[index]
+		if action.Name == name {
+			return action
+		}
+	}
+	t.Fatalf("expected schedule-assignment %q action", name)
+	return nil
+}
+
+func TestScheduleAssignmentBookingActionsMirrorGuidMcpTools(t *testing.T) {
+	expected := map[string]string{
+		"week":   "UteamupScheduleAssignmentGetWeekByGuid",
+		"move":   "UteamupScheduleAssignmentMoveByGuid",
+		"status": "UteamupScheduleAssignmentUpdateStatusByGuid",
+		"cancel": "UteamupScheduleAssignmentCancelByGuid",
+	}
+
+	for name, toolName := range expected {
+		action := scheduleAssignmentAction(t, name)
+		if action.ToolName != toolName {
+			t.Errorf("%s ToolName = %q, want %q", name, action.ToolName, toolName)
+		}
 	}
 }
 
-func TestShiftCrudIsGuidFirst(t *testing.T) {
-	d := findDomain("shift")
-	if d == nil {
-		t.Fatal("expected shift domain to be registered")
-	}
-
-	actions := map[string]Action{}
-	for _, action := range d.Actions {
-		actions[action.Name] = action
-	}
-
-	for _, name := range []string{"update", "delete"} {
-		action, ok := actions[name]
-		if !ok {
-			t.Fatalf("missing shift action %q", name)
-		}
-		if len(action.Args) != 1 || action.Args[0].Name != "externalGuid" {
-			t.Fatalf("shift %s args = %+v, want single externalGuid arg", name, action.Args)
-		}
-		if action.Args[0].Type != "string" {
-			t.Fatalf("shift %s externalGuid type = %q, want string", name, action.Args[0].Type)
-		}
-		if action.RESTPath != "by-guid/{externalGuid}" {
-			t.Fatalf("shift %s RESTPath = %q, want by-guid/{externalGuid}", name, action.RESTPath)
-		}
-	}
-
-	get, ok := actions["get"]
-	if !ok {
-		t.Fatal("missing shift action \"get\"")
-	}
-	if len(get.Args) != 1 || get.Args[0].Name != "shiftGuid" || get.Args[0].Type != "uuid" {
-		t.Fatalf("shift get args = %+v, want single shiftGuid UUID arg", get.Args)
-	}
-	if get.RESTPath != "by-guid/{shiftGuid}" {
-		t.Fatalf("shift get RESTPath = %q, want by-guid/{shiftGuid}", get.RESTPath)
-	}
-}
-
-func TestShiftGuidRoutesResolve(t *testing.T) {
-	d := findDomain("shift")
-	if d == nil {
-		t.Fatal("expected shift domain to be registered")
-	}
-
-	actions := map[string]Action{}
-	for _, action := range d.Actions {
-		actions[action.Name] = action
+func TestScheduleAssignmentBookingRoutesAreGuidFirst(t *testing.T) {
+	domain := scheduleAssignmentDomain(t)
+	if domain.APIPath != "/api/scheduleassignment" {
+		t.Fatalf("APIPath = %q, want /api/scheduleassignment", domain.APIPath)
 	}
 
 	cases := []struct {
-		name string
-		args map[string]any
-		want string
+		name       string
+		method     string
+		path       string
+		arguments  map[string]any
+		consumedBy string
 	}{
-		{"get", map[string]any{"shiftGuid": "shift-1"}, "/api/shift/by-guid/shift-1"},
-		{"update", map[string]any{"externalGuid": "shift-1"}, "/api/shift/by-guid/shift-1"},
-		{"delete", map[string]any{"externalGuid": "shift-1"}, "/api/shift/by-guid/shift-1"},
-		{"pattern-list", map[string]any{"shiftGuid": "shift-1"}, "/api/shift/by-guid/shift-1/patterns"},
-		{"pattern-get", map[string]any{"patternGuid": "pattern-1"}, "/api/shift/patterns/by-guid/pattern-1"},
-		{"pattern-update", map[string]any{"patternGuid": "pattern-1"}, "/api/shift/patterns/by-guid/pattern-1"},
-		{"pattern-delete", map[string]any{"patternGuid": "pattern-1"}, "/api/shift/patterns/by-guid/pattern-1"},
+		{"week", "GET", "/api/scheduleassignment/week", map[string]any{}, ""},
+		{"move", "PUT", "/api/scheduleassignment/assignment-guid/move", map[string]any{"assignmentGuid": "assignment-guid"}, "assignmentGuid"},
+		{"status", "PUT", "/api/scheduleassignment/assignment-guid/status", map[string]any{"assignmentGuid": "assignment-guid"}, "assignmentGuid"},
+		{"cancel", "DELETE", "/api/scheduleassignment/assignment-guid", map[string]any{"assignmentGuid": "assignment-guid"}, "assignmentGuid"},
 	}
 
-	for _, tc := range cases {
-		action, ok := actions[tc.name]
-		if !ok {
-			t.Fatalf("missing shift action %q", tc.name)
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			action := scheduleAssignmentAction(t, test.name)
+			path, consumed := buildRESTPath(domain, *action, test.arguments)
+			if action.HTTPMethod != test.method || path != test.path {
+				t.Errorf("route = %s %s, want %s %s", action.HTTPMethod, path, test.method, test.path)
+			}
+			if test.consumedBy != "" && (len(consumed) != 1 || consumed[0] != test.consumedBy) {
+				t.Errorf("consumed args = %v, want [%s]", consumed, test.consumedBy)
+			}
+		})
+	}
+}
+
+func TestScheduleAssignmentDomainPublishesNoIntegerIdentifierArguments(t *testing.T) {
+	legacyActions := map[string]bool{"list": true, "get": true, "create": true, "update": true, "delete": true}
+	for _, action := range scheduleAssignmentDomain(t).Actions {
+		if legacyActions[action.Name] {
+			t.Errorf("legacy integer CRUD action %q must not remain public", action.Name)
 		}
-		got, consumed := buildRESTPath(d, action, tc.args)
-		if got != tc.want {
-			t.Fatalf("%s path = %q, want %q", tc.name, got, tc.want)
-		}
-		if len(consumed) != 1 {
-			t.Fatalf("%s consumed = %v, want exactly one path arg", tc.name, consumed)
+		for _, argument := range action.Args {
+			if strings.Contains(strings.ToLower(argument.Name), "id") && argument.Type == "int" {
+				t.Errorf("%s exposes integer identifier argument %+v", action.Name, argument)
+			}
 		}
 	}
 }
 
-func TestShiftInstanceGuidRoutesResolve(t *testing.T) {
-	d := findDomain("shift-instance")
-	if d == nil {
-		t.Fatal("expected shift-instance domain to be registered")
+func TestScheduleAssignmentCreateByGuidPostsBackendModelFieldNames(t *testing.T) {
+	action := scheduleAssignmentAction(t, "create-by-guid")
+	if action.HTTPMethod != "POST" || action.RESTPath != "" {
+		t.Fatalf("create-by-guid route = %s %q, want POST base path", action.HTTPMethod, action.RESTPath)
 	}
 
-	actions := map[string]Action{}
-	for _, action := range d.Actions {
-		actions[action.Name] = action
+	wantBodyNames := map[string]string{
+		"planned-start-utc": "scheduledStart",
+		"planned-end-utc":   "scheduledEnd",
 	}
-
-	cases := []struct {
-		name string
-		args map[string]any
-		want string
-	}{
-		{"get", map[string]any{"instanceGuid": "instance-1"}, "/api/shiftinstance/by-guid/instance-1"},
-		{"update", map[string]any{"instanceGuid": "instance-1"}, "/api/shiftinstance/by-guid/instance-1"},
-		{"delete", map[string]any{"instanceGuid": "instance-1"}, "/api/shiftinstance/by-guid/instance-1"},
-		{"approve", map[string]any{"instanceGuid": "instance-1"}, "/api/shiftinstance/by-guid/instance-1/approve"},
-		{"status", map[string]any{"instanceGuid": "instance-1"}, "/api/shiftinstance/by-guid/instance-1/status"},
-	}
-
-	for _, tc := range cases {
-		action, ok := actions[tc.name]
-		if !ok {
-			t.Fatalf("missing shift-instance action %q", tc.name)
-		}
-		got, consumed := buildRESTPath(d, action, tc.args)
-		if got != tc.want {
-			t.Fatalf("%s path = %q, want %q", tc.name, got, tc.want)
-		}
-		if len(consumed) != 1 {
-			t.Fatalf("%s consumed = %v, want one path arg", tc.name, consumed)
+	for _, flag := range action.Flags {
+		if expected, ok := wantBodyNames[flag.Name]; ok {
+			if flag.BodyName != expected {
+				t.Errorf("--%s BodyName = %q, want %q", flag.Name, flag.BodyName, expected)
+			}
+			delete(wantBodyNames, flag.Name)
 		}
 	}
-}
-
-func TestShiftRequestGuidRoutesResolve(t *testing.T) {
-	d := findDomain("shift-request")
-	if d == nil {
-		t.Fatal("expected shift-request domain to be registered")
-	}
-
-	actions := map[string]Action{}
-	for _, action := range d.Actions {
-		actions[action.Name] = action
-	}
-
-	cases := []struct {
-		name string
-		args map[string]any
-		want string
-	}{
-		{"get", map[string]any{"requestGuid": "request-1"}, "/api/shiftrequest/by-guid/request-1"},
-		{"approve", map[string]any{"requestGuid": "request-1"}, "/api/shiftrequest/by-guid/request-1/approve"},
-		{"deny", map[string]any{"requestGuid": "request-1"}, "/api/shiftrequest/by-guid/request-1/deny"},
-		{"withdraw", map[string]any{"requestGuid": "request-1"}, "/api/shiftrequest/by-guid/request-1"},
-	}
-
-	for _, tc := range cases {
-		action, ok := actions[tc.name]
-		if !ok {
-			t.Fatalf("missing shift-request action %q", tc.name)
-		}
-		got, consumed := buildRESTPath(d, action, tc.args)
-		if got != tc.want {
-			t.Fatalf("%s path = %q, want %q", tc.name, got, tc.want)
-		}
-		if len(consumed) != 1 {
-			t.Fatalf("%s consumed = %v, want one path arg", tc.name, consumed)
-		}
-	}
-}
-
-func TestShiftAssignmentGuidRoutesResolve(t *testing.T) {
-	d := findDomain("shift-assignment")
-	if d == nil {
-		t.Fatal("expected shift-assignment domain to be registered")
-	}
-
-	actions := map[string]Action{}
-	for _, action := range d.Actions {
-		actions[action.Name] = action
-	}
-
-	cases := []struct {
-		name string
-		args map[string]any
-		want string
-	}{
-		{"instance", map[string]any{"instanceGuid": "instance-1"}, "/api/shiftuserassignment/instance/by-guid/instance-1"},
-		{"update", map[string]any{"assignmentGuid": "assignment-1"}, "/api/shiftuserassignment/by-guid/assignment-1"},
-		{"delete", map[string]any{"assignmentGuid": "assignment-1"}, "/api/shiftuserassignment/by-guid/assignment-1"},
-		{"unavailable", map[string]any{"assignmentGuid": "assignment-1"}, "/api/shiftuserassignment/by-guid/assignment-1/unavailable"},
-	}
-
-	for _, tc := range cases {
-		action, ok := actions[tc.name]
-		if !ok {
-			t.Fatalf("missing shift-assignment action %q", tc.name)
-		}
-		got, consumed := buildRESTPath(d, action, tc.args)
-		if got != tc.want {
-			t.Fatalf("%s path = %q, want %q", tc.name, got, tc.want)
-		}
-		if len(consumed) != 1 {
-			t.Fatalf("%s consumed = %v, want one path arg", tc.name, consumed)
-		}
-	}
-}
-
-func TestShiftHandoverPreviousUsesShiftGuid(t *testing.T) {
-	action := findDomainAction(t, "shift-handover", "previous")
-	if action.ToolName != "UteamupShiftHandoverGetPrevious" {
-		t.Fatalf("previous ToolName = %q, want UteamupShiftHandoverGetPrevious", action.ToolName)
-	}
-	if len(action.Args) != 1 || action.Args[0].Name != "shiftGuid" {
-		t.Fatalf("previous args = %+v, want single shiftGuid arg", action.Args)
-	}
-
-	d := findDomain("shift-handover")
-	if d == nil {
-		t.Fatal("expected shift-handover domain to be registered")
-	}
-	got, consumed := buildRESTPath(d, *action, map[string]any{"shiftGuid": "shift-1"})
-	if got != "/api/shifthandover/previous/by-guid/shift-1" {
-		t.Fatalf("previous path = %q, want /api/shifthandover/previous/by-guid/shift-1", got)
-	}
-	if len(consumed) != 1 {
-		t.Fatalf("previous consumed = %v, want one path arg", consumed)
+	if len(wantBodyNames) != 0 {
+		t.Errorf("missing create-by-guid flags: %v", wantBodyNames)
 	}
 }

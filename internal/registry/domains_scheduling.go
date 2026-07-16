@@ -5,7 +5,19 @@ func init() {
 	Register(&Domain{
 		Name:        "schedule-assignment",
 		Description: "Manage schedule assignments",
-		Actions: append(crudActions("ScheduleAssignment"),
+		APIPath:     "/api/scheduleassignment",
+		Actions: []Action{
+			{
+				Name:        "week",
+				Description: "Read a weekly schedule using an optional team GUID",
+				ToolName:    "UteamupScheduleAssignmentGetWeekByGuid",
+				HTTPMethod:  "GET",
+				RESTPath:    "week",
+				Flags: []FlagDef{
+					{Name: "week-start", Description: "UTC start date of the week", Required: true, Type: "string"},
+					{Name: "team-guid", Description: "Optional tenant-scoped team GUID", Type: "string"},
+				},
+			},
 			Action{
 				Name:        "workorder-options",
 				Description: "Rank qualified and available technicians for a workorder window",
@@ -22,16 +34,55 @@ func init() {
 				Name:        "create-by-guid",
 				Description: "Create a revalidated GUID-based workorder assignment",
 				ToolName:    "UteamupScheduleAssignmentCreateByGuid",
+				HTTPMethod:  "POST",
 				Args: []ArgDef{
 					{Name: "workorderGuid", Description: "Workorder GUID", Required: true, Type: "uuid"},
 					{Name: "technicianGuid", Description: "Technician user GUID", Required: true, Type: "uuid"},
 				},
 				Flags: []FlagDef{
-					{Name: "planned-start-utc", Description: "Planned UTC start", Required: true, Type: "string"},
-					{Name: "planned-end-utc", Description: "Planned UTC end", Required: true, Type: "string"},
+					{Name: "planned-start-utc", BodyName: "scheduledStart", Description: "Planned UTC start", Required: true, Type: "string"},
+					{Name: "planned-end-utc", BodyName: "scheduledEnd", Description: "Planned UTC end", Required: true, Type: "string"},
 				},
 			},
-		),
+			{
+				Name:        "move",
+				Description: "Move or reassign a booking by assignment GUID",
+				ToolName:    "UteamupScheduleAssignmentMoveByGuid",
+				HTTPMethod:  "PUT",
+				RESTPath:    "{assignmentGuid}/move",
+				Args: []ArgDef{
+					{Name: "assignmentGuid", Description: "Schedule assignment GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "new-scheduled-start", Description: "New UTC booking start", Required: true, Type: "string"},
+					{Name: "new-scheduled-end", Description: "New UTC booking end", Required: true, Type: "string"},
+					{Name: "new-technician-guid", Description: "Optional tenant-member GUID receiving the booking", Type: "string"},
+				},
+			},
+			{
+				Name:        "status",
+				Description: "Change a booking lifecycle status by assignment GUID",
+				ToolName:    "UteamupScheduleAssignmentUpdateStatusByGuid",
+				HTTPMethod:  "PUT",
+				RESTPath:    "{assignmentGuid}/status",
+				Args: []ArgDef{
+					{Name: "assignmentGuid", Description: "Schedule assignment GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "status", Description: "scheduled, inTransit, onSite, inProgress, completed, interrupted, cancelled, or onHold", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "cancel",
+				Description: "Cancel a booking by assignment GUID",
+				ToolName:    "UteamupScheduleAssignmentCancelByGuid",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "{assignmentGuid}",
+				Args: []ArgDef{
+					{Name: "assignmentGuid", Description: "Schedule assignment GUID", Required: true, Type: "uuid"},
+				},
+			},
+		},
 	})
 	Register(&Domain{
 		Name:        "shift",
