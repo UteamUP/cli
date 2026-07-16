@@ -5,6 +5,28 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.79.0](https://github.com/UteamUP/cli/compare/1.78.0...1.79.0) (2026-07-16)
+
+
+### Features
+
+* **agreements:** add entitlement CLI domain ([187cf74](https://github.com/UteamUP/cli/commit/187cf749e3a0503bd480e72f7036495d3c7d43b1))
+* **agreements:** add service agreement CLI domain ([5b9962a](https://github.com/UteamUP/cli/commit/5b9962a3dc279d29b47d7681d1f4e0f6e38b89c4))
+* **ai:** expose measured outcomes in CLI ([c49e9e0](https://github.com/UteamUP/cli/commit/c49e9e08b448052d0ddc57d281c893d74a6e2f9c))
+* **stock:** expose replenishment proposal command ([225f11e](https://github.com/UteamUP/cli/commit/225f11ec2c04af4afadbb31ce367713a266fb529))
+
+
+### Bug Fixes
+
+* **fleet:** mirror GUID calendar tools in CLI ([a5a173e](https://github.com/UteamUP/cli/commit/a5a173e4c3e22e450a9303b287594b14156c7958))
+* keep AI provider routing server-owned ([c936d49](https://github.com/UteamUP/cli/commit/c936d495fd5ad6ce804b77e5d979abd3759ea142))
+* **security:** harden CLI transport and retry jitter ([c89fa1e](https://github.com/UteamUP/cli/commit/c89fa1efbeec5bd50adb30cce4d5ec02b1121af1))
+
+
+### CI/CD
+
+* **security:** add dependency release cooldown ([568a25b](https://github.com/UteamUP/cli/commit/568a25b1a55182c5d67bb598eaf00824924e179a))
+
 ## [1.78.0](https://github.com/UteamUP/cli/compare/1.77.0...1.78.0) (2026-07-16)
 
 
