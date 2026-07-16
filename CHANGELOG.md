@@ -5,6 +5,16 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.78.0](https://github.com/UteamUP/cli/compare/1.77.0...1.78.0) (2026-07-16)
+
+
+### Features
+
+* **ai:** expose data readiness in CLI ([614f1b3](https://github.com/UteamUP/cli/commit/614f1b3b53269ada0ac647472f984d8c6479067b))
+* **ai:** expose governance snapshot in CLI ([16e8f35](https://github.com/UteamUP/cli/commit/16e8f359ea1ae9cb1a49df8b37480e3d0e8840f1))
+* **ai:** expose Knowledge tutorial trust in CLI ([6858270](https://github.com/UteamUP/cli/commit/68582707f5f3fff3abcd5c1d1116dd79a84b3772))
+* route CLI media analysis through tenant AI governance ([0fdaffc](https://github.com/UteamUP/cli/commit/0fdaffcb05e381e17b9586cc5f65a9eeb4e2c478))
+
 ## [1.77.0](https://github.com/UteamUP/cli/compare/1.76.0...1.77.0) (2026-07-16)
 
 
