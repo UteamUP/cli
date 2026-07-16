@@ -56,6 +56,31 @@ func TestJournalDomainActions(t *testing.T) {
 	}
 }
 
+func TestJournalCreateSupportsGuidFieldNoteJson(t *testing.T) {
+	d := findDomain("journal")
+	if d == nil {
+		t.Fatal("expected journal domain to be registered")
+	}
+	action := findAction(d, "create")
+	if action == nil {
+		t.Fatal("expected create action on journal domain")
+	}
+	if action.ToolName != "UteamupJournalCreate" {
+		t.Fatalf("unexpected create tool: %s", action.ToolName)
+	}
+	if len(action.Args) != 0 {
+		t.Fatalf("journal create should not expose integer positional IDs: %+v", action.Args)
+	}
+	flags := flagsToMap(action.Flags)
+	fromJSON, ok := flags["from-json"]
+	if !ok || fromJSON.Type != "string" {
+		t.Fatalf("journal create must accept a JSON model, got %+v", action.Flags)
+	}
+	if action.Description != "Create a journal or GUID-linked field note from a JSON request" {
+		t.Fatalf("journal create field-note help is missing: %q", action.Description)
+	}
+}
+
 // Guards the required positional args on the new import action so that
 // accidentally dropping file-name or file-content-base64 becomes a test
 // failure rather than a silent CLI regression.

@@ -1,11 +1,19 @@
 package registry
 
 func init() {
+	journalActions := crudActions("Journal")
+	for index := range journalActions {
+		if journalActions[index].Name == "create" {
+			journalActions[index].Description = "Create a journal or GUID-linked field note from a JSON request"
+			break
+		}
+	}
+
 	Register(&Domain{
 		Name:        "journal",
 		Aliases:     []string{"journals"},
 		Description: "Manage journal entries, import documents, and query by code / asset / workorder",
-		Actions: append(crudActions("Journal"),
+		Actions: append(journalActions,
 			Action{
 				Name:        "by-code",
 				Description: "List journal entries linked to a code catalog entry",
