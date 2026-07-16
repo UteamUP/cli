@@ -15,9 +15,10 @@ func init() {
 	Register(&Domain{Name: "fuel-transaction", Aliases: []string{"fuel"}, Description: "Manage fuel transactions", Actions: crudActions("FuelTransaction")})
 	Register(&Domain{Name: "fleet-dashboard", Description: "View fleet dashboard data", Actions: []Action{
 		{Name: "get", Description: "Get the fleet dashboard summary", ToolName: "UteamupFleetDashboardGet"},
-		{Name: "propose-maintenance", Description: "Prepare a governed maintenance proposal from fleet evidence", ToolName: "UteamupFleetMaintenancePropose", Flags: []FlagDef{
-			{Name: "source-type", BodyName: "sourceType", Description: "vehicle-inspection or telematics-event", Required: true, Type: "string"},
+		{Name: "propose-maintenance", Description: "Prepare a governed maintenance proposal from fleet evidence", ToolName: "UteamupFleetMaintenancePropose", RESTBasePath: "/api/upmateassistant/fleet", RESTPath: "maintenance-proposals", HTTPMethod: "POST", Flags: []FlagDef{
+			{Name: "source-type", BodyName: "sourceType", Description: "vehicle-inspection, telematics-event, or asset-maintenance-package", Required: true, Type: "string"},
 			{Name: "source-guid", BodyName: "sourceGuid", Description: "Public GUID of the failed inspection or DTC event", Required: true, Type: "string"},
+			{Name: "idempotency-key", Description: "Stable retry key", Required: true, Type: "string", HeaderName: "Idempotency-Key"},
 		}},
 		{Name: "costs", Description: "Get fleet costs for an optional date range", ToolName: "UteamupFleetDashboardGetCosts", Flags: []FlagDef{
 			{Name: "date-from", Description: "Optional UTC period start", Type: "string"},

@@ -89,6 +89,9 @@ type Action struct {
 	Name        string
 	Description string
 	ToolName    string // MCP tool name, e.g. "UteamupAssetList"
+	// RESTBasePath overrides the domain API path for a single action. Use it
+	// when one domain action is intentionally served by a cross-domain adapter.
+	RESTBasePath string
 	// RESTPath is the path suffix appended to the domain's basePath. It supports
 	// `{argName}` placeholders that are substituted from the action's positional
 	// args. Examples:
@@ -469,7 +472,10 @@ func exportJSON(export *ExportConfig, domainName, actionName string, data json.R
 // substitution (those must be removed from the JSON body before the request
 // is sent so the same arg doesn't appear in both URL and body).
 func buildRESTPath(domain *Domain, action Action, args map[string]any) (string, []string) {
-	basePath := domain.APIPath
+	basePath := action.RESTBasePath
+	if basePath == "" {
+		basePath = domain.APIPath
+	}
 	if basePath == "" {
 		// Derive from domain name: "vendor" → "/api/vendor", "asset-type" → "/api/assettype"
 		basePath = "/api/" + strings.ReplaceAll(domain.Name, "-", "")
