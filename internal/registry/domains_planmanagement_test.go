@@ -174,7 +174,7 @@ func TestPlanApprovalDomainRegistered(t *testing.T) {
 func TestPlanAnalyticsDomainRegistered(t *testing.T) {
 	assertDomainAPIPath(t, "plan-analytics", "/api/plananalytics")
 
-	for actionName, wantProviderFlag := range map[string]bool{"summary": false, "insights": true} {
+	for _, actionName := range []string{"summary", "insights"} {
 		a := findDomainAction(t, "plan-analytics", actionName)
 		// Method "" derives GET; flags travel on the query string for GET calls.
 		if a.HTTPMethod != "" || a.RESTPath != actionName {
@@ -186,8 +186,8 @@ func TestPlanAnalyticsDomainRegistered(t *testing.T) {
 		if fromDate == nil || fromDate.Required || fromDate.Default != nil {
 			t.Errorf("plan-analytics %s --from-date must be an optional string flag without a default, got %+v", actionName, fromDate)
 		}
-		if got := findFlag(a, "provider") != nil; got != wantProviderFlag {
-			t.Errorf("plan-analytics %s: provider flag present = %v, want %v", actionName, got, wantProviderFlag)
+		if findFlag(a, "provider") != nil {
+			t.Errorf("plan-analytics %s must use the server-owned AI route", actionName)
 		}
 	}
 }

@@ -2,21 +2,6 @@ package registry
 
 import "testing"
 
-func TestAiProviderDomainUsesTenantProviderRoute(t *testing.T) {
-	d := findDomain("ai-provider")
-	if d == nil {
-		t.Fatal("expected ai-provider domain to be registered")
-	}
-	if d.APIPath != "/api/tenant-ai-provider" {
-		t.Fatalf("ai-provider APIPath = %q, want /api/tenant-ai-provider", d.APIPath)
-	}
-
-	a := findDomainAction(t, "ai-provider", "test-connection")
-	if a.RESTPath != "test-connection" || a.HTTPMethod != "POST" {
-		t.Fatalf("test-connection route = method %q path %q, want POST test-connection", a.HTTPMethod, a.RESTPath)
-	}
-}
-
 func TestAiTierDomainsExposeNewBackendEndpoints(t *testing.T) {
 	ocr := findDomainAction(t, "meter-reading", "ocr")
 	if ocr.RESTPath != "{asset-guid}/meter-readings/{attribute-definition-guid}/ocr" || ocr.HTTPMethod != "POST" {

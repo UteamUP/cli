@@ -23,7 +23,6 @@ func init() {
 				RESTPath:    "insights",
 				Flags: []FlagDef{
 					{Name: "from-date", Description: "Window start (ISO 8601 datetime; backend defaults to 90 days back)", Type: "string"},
-					{Name: "provider", Description: "AI provider (backend defaults to openai)", Type: "string"},
 				},
 			},
 		},
