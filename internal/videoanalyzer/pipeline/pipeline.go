@@ -10,31 +10,27 @@ import (
 	"github.com/schollz/progressbar/v3"
 
 	"github.com/uteamup/cli/internal/imageanalyzer/exporter"
-	"github.com/uteamup/cli/internal/imageanalyzer/geocoder"
 	"github.com/uteamup/cli/internal/imageanalyzer/grouper"
 	"github.com/uteamup/cli/internal/imageanalyzer/models"
-	"github.com/uteamup/cli/internal/videoanalyzer/analyzer"
+	"github.com/uteamup/cli/internal/mediaanalyzer"
 	vaconfig "github.com/uteamup/cli/internal/videoanalyzer/config"
 	"github.com/uteamup/cli/internal/videoanalyzer/fileutil"
 	"github.com/uteamup/cli/internal/videoanalyzer/gps"
-	"github.com/uteamup/cli/internal/videoanalyzer/vendor"
-
-	"github.com/google/generative-ai-go/genai"
-	"google.golang.org/api/option"
 )
 
 // Pipeline orchestrates the 4-phase video analysis pipeline.
 type Pipeline struct {
-	config *vaconfig.AppConfig
+	config   *vaconfig.AppConfig
+	analyzer *mediaanalyzer.Analyzer
 }
 
 // NewPipeline creates a new Pipeline with the given configuration.
-func NewPipeline(cfg *vaconfig.AppConfig) *Pipeline {
-	return &Pipeline{config: cfg}
+func NewPipeline(cfg *vaconfig.AppConfig, analyzer *mediaanalyzer.Analyzer) *Pipeline {
+	return &Pipeline{config: cfg, analyzer: analyzer}
 }
 
 // Run executes the full pipeline: validate → upload+analyze → deduplicate → export.
-func (p *Pipeline) Run() error {
+func (p *Pipeline) Run(ctx context.Context) error {
 	startTime := time.Now()
 
 	// ── Phase 1: Validate ──────────────────────────────────────────────
@@ -63,13 +59,17 @@ func (p *Pipeline) Run() error {
 		}
 	}
 
-	// Dry run: show cost estimate and exit.
+	// Dry run: report scope without inventing provider-specific prices.
 	if p.config.Processing.DryRun {
-		estimate := analyzer.EstimateCost(len(scanResult.Videos))
-		fmt.Printf("\n=== Dry Run Cost Estimate ===\n")
+		var totalBytes int64
+		for _, video := range scanResult.Videos {
+			totalBytes += video.SizeBytes
+		}
+		fmt.Printf("\n=== Dry Run Upload Scope ===\n")
 		fmt.Printf("  Videos:        %d\n", len(scanResult.Videos))
-		fmt.Printf("  Est. tokens:   %d input + %d output\n", estimate.InputTokens, estimate.OutputTokens)
-		fmt.Printf("  Est. cost:     $%.4f\n", estimate.EstimatedCostUSD)
+		fmt.Printf("  Input size:    %.2f MB\n", float64(totalBytes)/(1024*1024))
+		fmt.Printf("  AI route:      Resolved by UteamUP for the authenticated tenant\n")
+		fmt.Printf("  Est. cost:     Unavailable without executing the governed route\n")
 		fmt.Printf("=============================\n")
 		return nil
 	}
@@ -77,26 +77,13 @@ func (p *Pipeline) Run() error {
 	// ── Phase 2: Upload + Analyze ──────────────────────────────────────
 	fmt.Println("\nPhase 2: Analyzing videos...")
 
-	ctx := context.Background()
-
-	va, err := analyzer.NewVideoAnalyzer(ctx, analyzer.Config{
-		APIKey:            p.config.Gemini.APIKey,
-		Model:             p.config.Gemini.Model,
-		MaxOutputTokens:   p.config.Gemini.MaxOutputTokens,
-		Temperature:       p.config.Gemini.Temperature,
-		RequestsPerMinute: p.config.Gemini.RequestsPerMinute,
-		MaxRetries:        p.config.Gemini.MaxRetries,
-		PollIntervalSec:   p.config.Processing.PollIntervalSec,
-		PollTimeoutSec:    p.config.Processing.ProcessingTimeoutSec,
-	})
-	if err != nil {
-		return fmt.Errorf("creating video analyzer: %w", err)
-	}
-	defer va.Close()
-
 	var allResults []models.ImageAnalysisResult
 	var gpsLocations []videoGPSData
+	totalCredits := 0
+	credentialSource := ""
+	modelAlias := ""
 	totalVideos := len(scanResult.Videos)
+	processedVideos := 0
 
 	// Overall progress bar (0% to 100% across all videos).
 	overallBar := progressbar.NewOptions(totalVideos,
@@ -114,18 +101,11 @@ func (p *Pipeline) Run() error {
 	)
 
 	for i, video := range scanResult.Videos {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		// Per-video header.
 		fmt.Printf("\n  ── Video %d/%d: %s (%s) ──\n", i+1, totalVideos, video.Filename, formatFileSize(video.SizeBytes))
-
-		// Check max cost.
-		if p.config.Processing.MaxCost != nil {
-			currentCost := va.CostTracker().TotalCost()
-			if currentCost.EstimatedCostUSD >= *p.config.Processing.MaxCost {
-				fmt.Printf("  Max cost limit reached ($%.4f >= $%.4f). Stopping.\n",
-					currentCost.EstimatedCostUSD, *p.config.Processing.MaxCost)
-				break
-			}
-		}
 
 		// Per-video progress: 4 steps (upload → process → analyze → extract GPS).
 		videoBar := progressbar.NewOptions(4,
@@ -141,16 +121,17 @@ func (p *Pipeline) Run() error {
 			progressbar.OptionOnCompletion(func() { fmt.Println() }),
 		)
 
-		// Step 1: Upload + Process (handled inside AnalyzeVideo with spinner).
+		// Step 1: Upload + Process through the authenticated backend route.
 		videoBar.Describe("    Uploading & processing")
-		results, err := va.AnalyzeVideo(ctx, video.Path, string(video.MIMEType))
+		analysis, err := p.analyzer.AnalyzeVideo(ctx, video.Path, string(video.MIMEType))
 		if err != nil {
-			log.Printf("Phase 2: error analyzing %s: %v", video.Filename, err)
-			fmt.Printf("    Error: %v (skipping)\n", err)
-			_ = videoBar.Add(4) // Complete the per-video bar.
-			_ = overallBar.Add(1)
-			continue
+			return fmt.Errorf("analyzing video %q: %w", video.Filename, err)
 		}
+		results := analysis.Items
+		processedVideos++
+		totalCredits += analysis.Receipt.CreditsCharged
+		credentialSource = analysis.Receipt.CredentialSource
+		modelAlias = analysis.Receipt.ModelAlias
 		_ = videoBar.Add(2) // Upload + process done.
 
 		// Step 2: Parse results.
@@ -184,10 +165,9 @@ func (p *Pipeline) Run() error {
 		_ = overallBar.Add(1)
 	}
 
-	cost := va.CostTracker().TotalCost()
-	fmt.Printf("\n  Videos:    %d processed\n", cost.VideosProcessed)
+	fmt.Printf("\n  Videos:    %d processed\n", processedVideos)
 	fmt.Printf("  Entities:  %d found\n", len(allResults))
-	fmt.Printf("  Cost:      $%.4f\n", cost.EstimatedCostUSD)
+	fmt.Printf("  Credits:   %d charged\n", totalCredits)
 
 	if len(allResults) == 0 {
 		fmt.Println("\nNo entities detected in any video.")
@@ -213,44 +193,9 @@ func (p *Pipeline) Run() error {
 	// Extract vendors.
 	vendors := extractVendors(groups)
 
-	// Vendor enrichment.
-	if len(vendors) > 0 {
-		fmt.Printf("  Enriching %d vendors...\n", len(vendors))
-		vendors = p.enrichVendors(ctx, vendors)
-	}
-
-	// Extract and geocode locations.
+	// Extract local GPS and AI-suggested locations. The CLI does not call
+	// third-party URL or geocoding services directly.
 	locations := extractLocations(groups, gpsLocations)
-	geocoderAPIKey := p.config.Gemini.GoogleMapsAPIKey
-	if geocoderAPIKey != "" {
-		geo := geocoder.NewGeocoder(geocoderAPIKey)
-		for i, loc := range locations {
-			if loc.HasGPS && loc.FormattedAddress == "" {
-				result, err := geo.ReverseGeocode(loc.Latitude, loc.Longitude)
-				if err == nil {
-					locations[i].FormattedAddress = result.FormattedAddress
-					locations[i].Source = "gps_reverse_geocoded"
-					if locations[i].Name == "" {
-						locations[i].Name = result.LocationName
-					}
-				}
-			}
-		}
-	} else if hasGPSLocations(locations) {
-		geo := geocoder.NewGeocoder("")
-		for i, loc := range locations {
-			if loc.HasGPS && loc.FormattedAddress == "" {
-				result, err := geo.ReverseGeocode(loc.Latitude, loc.Longitude)
-				if err == nil {
-					locations[i].FormattedAddress = result.FormattedAddress
-					locations[i].Source = "gps_reverse_geocoded"
-					if locations[i].Name == "" {
-						locations[i].Name = result.LocationName
-					}
-				}
-			}
-		}
-	}
 
 	// Assign locations to entities.
 	assignLocations(groups, locations)
@@ -310,10 +255,17 @@ func (p *Pipeline) Run() error {
 	// Print summary.
 	elapsed := time.Since(startTime)
 	fmt.Printf("\n=== Video Analysis Complete ===\n")
-	fmt.Printf("  Videos processed:  %d\n", cost.VideosProcessed)
+	fmt.Printf("  Videos processed:  %d\n", processedVideos)
 	fmt.Printf("  Entities found:    %d\n", len(deduped))
 	fmt.Printf("  Groups:            %d\n", len(groups))
-	fmt.Printf("  Cost:              $%.4f\n", cost.EstimatedCostUSD)
+	fmt.Printf("  Credits charged:   %d\n", totalCredits)
+	if credentialSource != "" {
+		fmt.Printf("  AI source:         %s", credentialSource)
+		if modelAlias != "" {
+			fmt.Printf(" · %s", modelAlias)
+		}
+		fmt.Println()
+	}
 	fmt.Printf("  Elapsed:           %s\n", elapsed.Round(time.Second))
 	fmt.Printf("===============================\n")
 
@@ -324,34 +276,6 @@ func (p *Pipeline) Run() error {
 type videoGPSData struct {
 	videoPath string
 	lat, lng  float64
-}
-
-// enrichVendors enriches vendor data via Gemini lookups.
-func (p *Pipeline) enrichVendors(ctx context.Context, vendors []models.DetectedVendor) []models.DetectedVendor {
-	client, err := genai.NewClient(ctx, option.WithAPIKey(p.config.Gemini.APIKey))
-	if err != nil {
-		log.Printf("vendor enrichment: failed to create client: %v", err)
-		return vendors
-	}
-	defer client.Close()
-
-	model := client.GenerativeModel(p.config.Gemini.Model)
-	model.ResponseMIMEType = "application/json"
-
-	enricher := vendor.NewEnricher(model)
-
-	for i, v := range vendors {
-		enriched := enricher.Enrich(ctx, v.Name)
-		if enriched != nil && enriched.Source == "ai_enriched" {
-			// Store enrichment data in the vendor's entity names as metadata.
-			// The CSV exporter will pick up the vendor name as-is.
-			if enriched.FullName != "" {
-				vendors[i].Name = enriched.FullName
-			}
-		}
-	}
-
-	return vendors
 }
 
 // extractVendors aggregates unique vendors from grouped results.
@@ -436,7 +360,7 @@ func extractLocations(groups []models.ImageGroup, gpsData []videoGPSData) []mode
 			entityType := string(g.Primary.Classification.PrimaryType)
 			locations = append(locations, models.DetectedLocation{
 				Name:        loc,
-				Source:      "gemini_suggested",
+				Source:      "ai_suggested",
 				EntityNames: []string{entityName},
 				EntityTypes: []string{entityType},
 				ImagePaths:  g.AllImagePaths(),
@@ -476,16 +400,6 @@ func assignLocations(groups []models.ImageGroup, locations []models.DetectedLoca
 			groups[i].Primary.EXIFMetadata["assigned_location"] = locName
 		}
 	}
-}
-
-// hasGPSLocations checks if any locations have GPS data.
-func hasGPSLocations(locations []models.DetectedLocation) bool {
-	for _, l := range locations {
-		if l.HasGPS {
-			return true
-		}
-	}
-	return false
 }
 
 // appendUnique appends items to a slice only if they're not already present.

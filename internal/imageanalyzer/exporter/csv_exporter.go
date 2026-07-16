@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/uteamup/cli/internal/imageanalyzer/models"
 )
@@ -25,8 +27,8 @@ func NewExporter(outputFolder, renamedImagesFolder string, renameImages bool, re
 	if renamedImagesFolder == "" {
 		renamedImagesFolder = outputFolder
 	}
-	_ = os.MkdirAll(outputFolder, 0o755)
-	_ = os.MkdirAll(renamedImagesFolder, 0o755)
+	_ = os.MkdirAll(outputFolder, 0o700)
+	_ = os.MkdirAll(renamedImagesFolder, 0o700)
 	return &CSVExporter{
 		outputFolder:        outputFolder,
 		renamedImagesFolder: renamedImagesFolder,
@@ -76,7 +78,7 @@ func (e *CSVExporter) ExportCSVs(groups []models.ImageGroup, unclassified []mode
 // Returns the file path on success.
 func (e *CSVExporter) ExportVendorCSV(vendors []models.DetectedVendor) (string, error) {
 	csvPath := filepath.Join(e.outputFolder, "vendors.csv")
-	f, err := os.Create(csvPath)
+	f, err := createPrivateOutput(csvPath)
 	if err != nil {
 		return "", fmt.Errorf("creating vendor CSV: %w", err)
 	}
@@ -101,7 +103,7 @@ func (e *CSVExporter) ExportVendorCSV(vendors []models.DetectedVendor) (string, 
 			fmt.Sprintf("%d", v.Count),
 			strings.Join(v.ImagePaths, "; "),
 		}
-		if err := w.Write(record); err != nil {
+		if err := w.Write(sanitizeCSVRecord(record)); err != nil {
 			return "", err
 		}
 	}
@@ -113,7 +115,7 @@ func (e *CSVExporter) ExportVendorCSV(vendors []models.DetectedVendor) (string, 
 // Returns the file path on success.
 func (e *CSVExporter) ExportLocationCSV(locations []models.DetectedLocation) (string, error) {
 	csvPath := filepath.Join(e.outputFolder, "locations.csv")
-	f, err := os.Create(csvPath)
+	f, err := createPrivateOutput(csvPath)
 	if err != nil {
 		return "", fmt.Errorf("creating location CSV: %w", err)
 	}
@@ -147,7 +149,7 @@ func (e *CSVExporter) ExportLocationCSV(locations []models.DetectedLocation) (st
 			fmt.Sprintf("%d", loc.Count),
 			strings.Join(loc.ImagePaths, "; "),
 		}
-		if err := w.Write(record); err != nil {
+		if err := w.Write(sanitizeCSVRecord(record)); err != nil {
 			return "", err
 		}
 	}
@@ -157,7 +159,7 @@ func (e *CSVExporter) ExportLocationCSV(locations []models.DetectedLocation) (st
 
 // writeCSV writes a single CSV file for the given entity type.
 func (e *CSVExporter) writeCSV(path string, columns []string, groups []models.ImageGroup, etype models.EntityType) error {
-	f, err := os.Create(path)
+	f, err := createPrivateOutput(path)
 	if err != nil {
 		return err
 	}
@@ -176,11 +178,51 @@ func (e *CSVExporter) writeCSV(path string, columns []string, groups []models.Im
 		for i, col := range columns {
 			record[i] = row[col]
 		}
-		if err := w.Write(record); err != nil {
+		if err := w.Write(sanitizeCSVRecord(record)); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func createPrivateOutput(path string) (*os.File, error) {
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
+	if err != nil {
+		return nil, err
+	}
+	if err := file.Chmod(0o600); err != nil {
+		file.Close()
+		return nil, err
+	}
+	return file, nil
+}
+
+func sanitizeCSVRecord(record []string) []string {
+	safe := make([]string, len(record))
+	for index, value := range record {
+		safe[index] = sanitizeCSVCell(value)
+	}
+	return safe
+}
+
+// sanitizeCSVCell prevents spreadsheet formula execution when a human opens a
+// model-generated export. Genuine signed numeric values remain numeric.
+func sanitizeCSVCell(value string) string {
+	trimmed := strings.TrimLeftFunc(value, unicode.IsSpace)
+	if trimmed == "" {
+		return value
+	}
+	switch trimmed[0] {
+	case '=', '@':
+		return "'" + value
+	case '+', '-':
+		if _, err := strconv.ParseFloat(trimmed, 64); err == nil {
+			return value
+		}
+		return "'" + value
+	default:
+		return value
+	}
 }
 
 // buildRow constructs a column-name-to-value map for a single group.

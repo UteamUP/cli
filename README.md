@@ -75,49 +75,45 @@ ut user list --page 1 --page-size 10
 
 ## Image Analysis
 
-AI-powered image analysis for bulk CMMS inventory onboarding. Analyzes photos of equipment, tools, parts, and chemicals using Google Gemini Vision AI and exports structured CSV data ready for import.
+AI-powered image analysis for bulk CMMS inventory onboarding. The CLI sends
+validated media to UteamUP's authenticated AI gateway and exports structured CSV
+data ready for human review and import. The backend owns the task and model route,
+so managed AI or Tenant BYOK is applied consistently.
 
 ### Setup
 
 ```bash
-# 1. Set your Gemini API key
-ut config apikey YOUR_GEMINI_API_KEY
-
-# 2. Choose a model (optional — defaults to gemini-3.1-flash-lite-preview)
-ut config model list                         # See available models
-ut config model gemini-3.1-pro-preview       # Use pro for higher accuracy
-
-# 3. (Optional) Set Google Maps API key for GPS reverse geocoding
-ut config set googleMapsApiKey YOUR_GOOGLE_MAPS_KEY
+ut login                   # Authenticate first
+ut tenant select           # Select a tenant if your account has several
 ```
+
+Provider credentials and model selection are never stored in the CLI. Tenant
+admins configure BYOK in UteamUP's web administration surface.
 
 ### Usage
 
 ```bash
 ut image analyze ./photos                    # Analyze all images in folder
-ut image analyze ./photos --dry-run          # Estimate cost first
+ut image analyze ./photos --dry-run          # Validate and show upload scope
 ut image analyze ./photos --output ./results # Custom output directory
-ut img analyze ./photos --model gemini-pro-latest --verbose
 ut img analyze ./photos --no-rename          # Keep original filenames
-ut img analyze ./photos --max-cost 5.00      # Budget cap
 ut img analyze ./photos --resume             # Resume interrupted analysis
-ut img analyze ./photos --maps-api-key AIza... # Enable GPS geocoding
+ut img analyze ./photos --timeout 10m         # Per-request timeout
 ```
 
 ### What It Does
 
 1. **Scans** folder for images (JPG, PNG, HEIC, WebP, TIFF, BMP)
 2. **Detects** iPhone edit pairs and duplicates automatically
-3. **Classifies** each image as asset, tool, part, or chemical using Gemini AI
-4. **Extracts** CMMS fields: name, serial number, model, manufacturer, condition, etc.
-5. **Detects multiple entities** per image (e.g., a machine with visible parts)
-6. **Links relationships** — parts/tools/chemicals linked to parent assets via `related_to`
-7. **Extracts GPS** coordinates from EXIF data and reverse geocodes to addresses
-8. **Detects vendors** — extracts manufacturer/brand names, looks up company info online via Gemini
-9. **Creates locations** — from GPS data (with Google Maps reverse geocoding) and Gemini-suggested locations
-10. **Groups** duplicate images of the same item across photos
-11. **Exports** CSVs: `assets.csv`, `tools.csv`, `parts.csv`, `chemicals.csv`, `vendors.csv`, `locations.csv`
-12. **Renames** images with descriptive filenames (e.g., `asset_air_compressor_001_20260322.HEIC`)
+3. **Uploads safely** through an authenticated, HTTPS-only UteamUP endpoint
+4. **Classifies** each image as asset, tool, part, chemical, or unclassified
+5. **Extracts** CMMS fields: name, serial number, model, manufacturer, condition, etc.
+6. **Detects multiple entities** per image (e.g., a machine with visible parts)
+7. **Links relationships** — parts/tools/chemicals linked to parent assets via `related_to`
+8. **Preserves local GPS** coordinates from EXIF without calling mapping services
+9. **Groups** duplicate images of the same item across photos
+10. **Exports** review CSVs and a summary report
+11. **Renames** images with descriptive filenames when enabled
 
 ### CSV Output
 
@@ -127,26 +123,16 @@ ut img analyze ./photos --maps-api-key AIza... # Enable GPS geocoding
 | `tools.csv` | Handheld tools and instruments |
 | `parts.csv` | Spare parts and components |
 | `chemicals.csv` | Chemical products with GHS/safety data |
-| `vendors.csv` | Deduplicated manufacturers with website, email, phone (enriched via Gemini) |
-| `locations.csv` | GPS-derived and detected locations with address, coordinates, Google Maps URL |
+| `vendors.csv` | Deduplicated manufacturers detected in governed analysis results |
+| `locations.csv` | Locally extracted GPS and model-suggested location data |
 | `summary_report.md` | Analysis summary with counts and timing |
-
-### Available Models
-
-| Model | Type | Best For |
-|-------|------|----------|
-| `gemini-pro-latest` | Pro | Always newest, may be unstable |
-| `gemini-3.1-pro-preview` | Pro | Highest accuracy |
-| `gemini-3.1-flash-lite-preview` | Flash Lite | **Default** — fastest, cheapest |
-| `gemini-3-flash-preview` | Flash | Previous gen |
-| `gemini-2.5-pro` | Pro | Stable |
-| `gemini-2.5-flash` | Flash | Stable |
 
 ### Requirements
 
-- Google Gemini API key ([Get one here](https://aistudio.google.com/apikey))
 - Must be logged in (`uteamup login`)
-- (Optional) Google Maps API key for GPS reverse geocoding
+- An authenticated tenant with permission to use the inventory AI task
+- HTTPS backend URL, except where local-development policy explicitly permits otherwise
+- Images no larger than 15 MB each
 
 ---
 
@@ -159,9 +145,8 @@ AI-powered video analysis for CMMS inventory. Walk through a facility recording 
 ```bash
 ut video analyze ./videos                    # Analyze all videos in folder
 ut video analyze ./recording.mp4             # Analyze a single video
-ut video analyze ./videos --dry-run          # Estimate cost first
-ut vid analyze ./videos --model gemini-2.5-pro
-ut vid analyze ./videos --max-cost 5.00      # Budget cap
+ut video analyze ./videos --dry-run          # Validate and show upload scope
+ut vid analyze ./videos --timeout 10m         # Per-request timeout
 ```
 
 ### Supported Formats
@@ -175,12 +160,11 @@ ut vid analyze ./videos --max-cost 5.00      # Budget cap
 ### What It Does
 
 1. **Validates** files via magic byte MIME detection (not extensions)
-2. **Uploads** video to Gemini File API with progress spinner
+2. **Streams** video to the authenticated UteamUP AI gateway
 3. **Analyzes** video frames for CMMS entities with timestamp detection (MM:SS)
 4. **Extracts GPS** from MP4/MOV container metadata (©xyz and ISO 6709 atoms)
 5. **Deduplicates** entities across frames (temporal, 30s window) and across videos (grouping)
-6. **Enriches vendors** with follow-up Gemini lookup (website, full name, business category)
-7. **Exports** same CSV format as image analyzer (`assets.csv`, `tools.csv`, `parts.csv`, `chemicals.csv`, `vendors.csv`, `locations.csv`)
+6. **Exports** the same review CSV format as the image analyzer
 
 ### Authentication & Tenant Required
 
@@ -197,89 +181,32 @@ ut video analyze ./videos  # Tenant + plan validated automatically
 | Flag | Short | Description | Default |
 |------|-------|-------------|---------|
 | `--output` | `-o` | Output folder for CSVs | `./Output` |
-| `--model` | | Gemini model override | From config |
-| `--api-key` | | Gemini API key override | From config |
-| `--dry-run` | | Estimate cost only | `false` |
+| `--dry-run` | | Validate files and show upload scope only | `false` |
 | `--config` | | Config YAML override | |
-| `--verbose` | `-V` | Enable verbose output | `false` |
-| `--max-cost` | | Maximum budget in USD | unlimited |
 | `--similarity-threshold` | | Grouping threshold (0.0-1.0) | `0.75` |
 | `--confidence-threshold` | | Min classification confidence | `0.5` |
-| `--maps-api-key` | | Google Maps API key for GPS geocoding | |
+| `--timeout` | | Maximum time for each backend request | `10m` |
 
 ### Advanced Flags Explained
 
-#### `--max-cost` — Budget Cap
-
-Stops processing when estimated API cost reaches the limit. Useful for large batches where you want to control spending.
-
-```bash
-# Without --max-cost: processes all 500 images (~$0.19)
-ut image analyze ./warehouse-photos
-#   assets.csv: 380 rows
-#   tools.csv: 95 rows
-#   parts.csv: 25 rows
-#   Total cost: $0.19
-
-# With --max-cost 0.05: stops after ~130 images
-ut image analyze ./warehouse-photos --max-cost 0.05
-#   ⚠ Budget limit reached: $0.0498 spent of $0.05 limit
-#   assets.csv: 98 rows (partial)
-#   Checkpoint saved — use --resume to continue later
-```
-
-**Video example:**
-```bash
-# Videos use more tokens — a 5-minute walkthrough costs ~$0.15
-ut video analyze ./facility-tour.mp4 --max-cost 1.00
-```
-
 #### `--resume` — Continue from Checkpoint
 
-Resumes a previously interrupted analysis (from `--max-cost`, crash, or Ctrl+C). Skips already-processed images using the checkpoint at `~/.uteamup/image-checkpoint.json`.
+Resumes a previously interrupted analysis after a failure, cancellation, or
+process restart. Already processed image hashes are skipped.
 
 ```bash
-# Day 1: Process first batch with budget
-ut image analyze ./photos --max-cost 0.05
-#   Processed: 130/500 images
+# Day 1: Processing is interrupted
+ut image analyze ./photos
 #   Checkpoint saved
 
 # Day 2: Resume where you left off
 ut image analyze ./photos --resume
-#   Loaded checkpoint: 130 already processed
-#   Processing remaining 370 images...
-#   assets.csv: 380 rows (complete)
+#   Already processed images are skipped
 ```
 
-#### `--maps-api-key` — GPS Reverse Geocoding
-
-When images contain GPS coordinates in EXIF data (common with phone photos), this flag enables reverse geocoding to convert coordinates into street addresses, city, country, and Google Maps URLs.
-
-```bash
-# Without --maps-api-key: GPS coordinates shown but not resolved
-ut image analyze ./site-photos
-#   locations.csv:
-#     name,latitude,longitude,formatted_address,source
-#     Outdoor Area,64.1354,-21.8954,,gps_exif          ← no address
-
-# With --maps-api-key: full address resolution
-ut image analyze ./site-photos --maps-api-key AIzaSyB1...
-#   locations.csv:
-#     name,latitude,longitude,street,city,country,formatted_address,google_maps_url,source
-#     Outdoor Area,64.1354,-21.8954,Laugavegur 15,Reykjavik,Iceland,"Laugavegur 15, 101 Reykjavik, Iceland",https://www.google.com/maps/place/?q=place_id:ChIJ...,gps_reverse_geocoded
-
-# Or set it once in config (no need for flag every time):
-ut config set googleMapsApiKey AIzaSyB1...
-```
-
-**Video example — GPS from MP4 metadata:**
-```bash
-# Phone videos embed GPS in container metadata (not EXIF)
-ut video analyze ./walkthrough.mov --maps-api-key AIzaSyB1...
-#   Extracted GPS: 64.1354, -21.8954 from MOV ©xyz atom
-#   Reverse geocoded: Kópavogur, Iceland
-#   All entities from this video linked to that location
-```
+Budget enforcement and model eligibility are server-side. The CLI reports the
+usage receipt returned by UteamUP; it never guesses provider pricing. A dry run
+therefore reports validated upload scope, not a fabricated cost estimate.
 
 #### `--similarity-threshold` — Grouping Sensitivity
 
@@ -372,8 +299,8 @@ Active tenant set to: Acme Corp (abc123-def456...)
 ```
 
 The selected tenant is saved to your config profile (`tenantGuid`) and immediately reflected in `ut auth status`.
-
-You can also set a tenant directly: `ut config set tenantGuid <GUID>` or via `UTEAMUP_TENANT_GUID` env var.
+Use `ut tenant select` so membership is checked and the cached authenticated
+tenant is updated atomically.
 
 ---
 
@@ -395,10 +322,7 @@ Config is stored at `~/.uteamup/config.json`. Supports multiple profiles for dif
       "logLevel": "INFO",
       "requestTimeout": 30000,
       "maxRetries": 3,
-      "tenantGuid": "<optional tenant GUID override>",
-      "geminiApiKey": "<Google Gemini API key>",
-      "geminiModel": "gemini-3.1-flash-lite-preview",
-      "googleMapsApiKey": "<Google Maps API key>"
+      "tenantGuid": "<optional tenant GUID override>"
     },
     "development": {
       "name": "Development",
@@ -408,10 +332,7 @@ Config is stored at `~/.uteamup/config.json`. Supports multiple profiles for dif
       "logLevel": "DEBUG",
       "requestTimeout": 30000,
       "maxRetries": 1,
-      "tenantGuid": "<optional tenant GUID override>",
-      "geminiApiKey": "<Google Gemini API key>",
-      "geminiModel": "gemini-3.1-pro-preview",
-      "googleMapsApiKey": "<Google Maps API key>"
+      "tenantGuid": "<optional tenant GUID override>"
     }
   }
 }
@@ -427,10 +348,11 @@ Environment variables override config file values (same names as the MCP server)
 | `UTEAMUP_SECRET` | API secret (64+ characters) |
 | `UTEAMUP_API_BASE_URL` | API endpoint URL |
 | `UTEAMUP_LOG_LEVEL` | Log level: TRACE, DEBUG, INFO, WARN, ERROR |
-| `GEMINI_API_KEY` | Google Gemini API key for image/video analysis |
-| `GEMINI_MODEL` | Default Gemini model name |
-| `GOOGLE_MAPS_API_KEY` | Google Maps API key for GPS reverse geocoding |
 | `UTEAMUP_TENANT_GUID` | Override tenant GUID |
+
+Legacy AI-provider keys are removed from the config file automatically when it
+is loaded. Provider credentials belong in UteamUP web administration, not on a
+CLI workstation.
 
 ### Profile Management
 
@@ -555,7 +477,7 @@ Manage tenants.
 ```bash
 ut tenant show              # List all your tenants
 ut tenant select            # Pick a tenant interactively
-ut config set tenantGuid <GUID>  # Set tenant directly
+ut tenant select            # Select through authenticated memberships
 ```
 
 ### `uteamup config`
@@ -568,11 +490,9 @@ Manage CLI configuration.
 | `config show` | Display current config (secrets redacted) |
 | `config set <key> <value>` | Set a value in the active profile |
 | `config profile <name>` | Switch active profile |
-| `config apikey [key]` | Get or set the Gemini API key |
-| `config model [name]` | Get or set the default Gemini model |
-| `config model list` | List available Gemini models |
 
-**Valid keys for `config set`:** `baseUrl`, `apiKey`, `secret`, `logLevel`, `requestTimeout`, `maxRetries`, `name`, `tenantGuid`, `geminiApiKey`, `geminiModel`, `googleMapsApiKey`, `exportJson`, `exportDir`
+**Valid keys for `config set`:** `baseUrl`, `apiKey`, `secret`, `logLevel`,
+`requestTimeout`, `maxRetries`, `name`, `exportJson`, `exportDir`
 
 **Examples:**
 ```bash
@@ -581,9 +501,6 @@ ut config show
 ut config set baseUrl https://localhost:5002
 ut config set logLevel DEBUG
 ut config profile development
-ut config apikey AIzaSy...
-ut config model gemini-3.1-pro-preview
-ut config model list
 ```
 
 ### `uteamup version`
@@ -639,25 +556,20 @@ AI-powered image analysis for CMMS inventory.
 | Flag | Short | Description | Default |
 |------|-------|-------------|---------|
 | `--output` | `-o` | Output folder for CSVs | `./Output` |
-| `--model` | | Gemini model override | From config |
-| `--api-key` | | Gemini API key override | From config |
-| `--maps-api-key` | | Google Maps API key for GPS geocoding | From config |
-| `--dry-run` | | Estimate cost only | `false` |
+| `--dry-run` | | Validate files and show upload scope only | `false` |
 | `--no-rename` | | Skip image renaming | `false` |
-| `--max-cost` | | Maximum budget in USD | unlimited |
 | `--resume` | | Resume from checkpoint | `false` |
 | `--similarity-threshold` | | Grouping similarity (0.0-1.0) | `0.75` |
 | `--confidence-threshold` | | Min confidence to classify (0.0-1.0) | `0.5` |
 | `--config` | | Config YAML override | |
-| `--verbose` | `-V` | Enable verbose output | `false` |
+| `--timeout` | | Maximum time for each backend request | `5m` |
 
 **Examples:**
 ```bash
 ut image analyze ./photos
 ut image analyze ./photos --dry-run
-ut img analyze ./photos --model gemini-3.1-pro-preview -o ./results
-ut img analyze ./photos --max-cost 5.00 --maps-api-key AIza...
-ut img analyze ./photos --resume --verbose
+ut img analyze ./photos -o ./results
+ut img analyze ./photos --resume --timeout 10m
 ut image status                              # Check analysis progress
 ```
 
@@ -673,7 +585,9 @@ AI-powered video analysis for CMMS inventory.
 |--------|-------|-------------|
 | `analyze` | `ut video analyze <path> [flags]` | Analyze videos in a folder or single file |
 
-Supports same flags as image analyze plus video-specific handling. MP4 and MOV supported; GIFs routed to image analyzer.
+MP4 and MOV are supported up to 100 MB per file. Use `--dry-run` to validate
+files and show upload scope. GIFs are reported for processing by the image
+analyzer.
 
 ---
 
@@ -935,45 +849,33 @@ make release      # Full GoReleaser release (tags + publishes)
 
 ### Project Structure
 
+```text
 uteamup_cli/
 ├── main.go                 # Entry point
 ├── cmd/                    # Cobra commands (root, login, logout, auth, config, image, video, tenant, version)
 ├── internal/
 │   ├── auth/               # OAuth 2.0 + PKCE, login, token cache
-│   ├── client/             # HTTP client, retry, SSE parser
+│   ├── client/             # Authenticated HTTP client, retry, SSE and bounded multipart upload
 │   ├── config/             # Config loading, profiles, validation
+│   ├── mediaanalyzer/      # Governed backend media contract and response validation
 │   ├── registry/           # Domain registry + command builder
 │   ├── output/             # Table / JSON / YAML formatters
 │   ├── logging/            # Structured logging with redaction
 │   ├── errors/             # Typed error hierarchy
-│   └── imageanalyzer/      # Native Go image/video analysis engine
-│       ├── models/         # Entity types, extracted data, CSV columns
-│       ├── config/         # YAML config, env vars, functional options
-│       ├── scanner/        # Folder walk, hashing, EXIF/GPS, duplicates
-│       ├── analyzer/       # Gemini AI client, prompts, multi-entity parser
-│       ├── grouper/        # Similarity scoring, clustering, dedup
-│       ├── exporter/       # CSV export, image renaming, summary report
-│       ├── pipeline/       # 4-phase orchestration
-│       ├── geocoder/       # Google Maps / Nominatim reverse geocoding
-│       ├── vendorlookup/   # Gemini-powered vendor info enrichment
-│       ├── imageutil/      # Image resize, HEIC convert, validation
-│       ├── checkpoint/     # JSON checkpoint, file locking, resume
-│       ├── ratelimiter/    # Token bucket rate limiter
-│       └── retry/          # Exponential backoff with jitter
-├── packaging/              # Installer configs (MSI, pkg, deb, rpm, Homebrew)
-└── docs/commands/          # Auto-generated command docs
-│   ├── videoanalyzer/      # AI video analysis (Gemini File API)
-│   │   ├── analyzer/       # Gemini File API upload + poll + analyze
-│   │   ├── config/         # Video-specific config
-│   │   ├── fileutil/       # MIME detection + file scanner
-│   │   ├── gps/            # GPS extraction from MP4/MOV metadata
-│   │   ├── pipeline/       # 4-phase orchestration + temporal dedup
-│   │   ├── spinner/        # Terminal braille spinner
-│   │   └── vendor/         # Vendor enrichment via Gemini
-│   ├── registry/           # Domain registry + command builder
-│   ├── output/             # Table / JSON / YAML formatters
-│   ├── logging/            # Structured logging with redaction
-│   └── errors/             # Typed error hierarchy
+│   ├── imageanalyzer/      # Local image preparation, grouping and export
+│   │   ├── models/         # Entity types, extracted data, CSV columns
+│   │   ├── config/         # Provider-neutral YAML and functional options
+│   │   ├── scanner/        # Folder walk, size checks, hashing, EXIF/GPS, duplicates
+│   │   ├── grouper/        # Similarity scoring, clustering, dedup
+│   │   ├── exporter/       # CSV export, image renaming, summary report
+│   │   ├── pipeline/       # Backend analysis orchestration
+│   │   ├── imageutil/      # Image resize, normalization and validation
+│   │   └── checkpoint/     # JSON checkpoint, file locking, resume
+│   └── videoanalyzer/      # Local video validation, GPS, grouping and export
+│       ├── config/         # Provider-neutral video config
+│       ├── fileutil/       # MIME detection, bounded file scanning
+│       ├── gps/            # GPS extraction from MP4/MOV metadata
+│       └── pipeline/       # Governed backend analysis orchestration
 ├── packaging/              # Installer configs (MSI, pkg, deb, rpm, Homebrew)
 └── docs/commands/          # Auto-generated command docs
 ```

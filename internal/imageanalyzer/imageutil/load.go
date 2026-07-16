@@ -7,7 +7,7 @@ import (
 
 // LoadImageBytes loads an image from filePath, converts HEIC if needed,
 // resizes to fit within maxDimension, and returns JPEG bytes ready for
-// API submission (e.g. Gemini).
+// authenticated backend submission.
 func LoadImageBytes(filePath string, maxDimension int) ([]byte, error) {
 	var rawBytes []byte
 

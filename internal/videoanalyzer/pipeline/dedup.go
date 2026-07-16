@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/uteamup/cli/internal/imageanalyzer/models"
-	"github.com/uteamup/cli/internal/videoanalyzer/analyzer"
 )
 
 // TemporalDedup merges entities from the same video that have similar names and
@@ -48,7 +47,7 @@ func TemporalDedup(results []models.ImageAnalysisResult, windowSec int) []models
 			}
 
 			primary := items[i]
-			primaryTS := parseTimestampSec(analyzer.GetTimestamp(&primary))
+			primaryTS := parseTimestampSec(getTimestamp(&primary))
 			primaryName := strings.ToLower(strings.TrimSpace(primary.ExtractedData.GetName()))
 
 			for j := i + 1; j < len(items); j++ {
@@ -68,7 +67,7 @@ func TemporalDedup(results []models.ImageAnalysisResult, windowSec int) []models
 				}
 
 				// Check temporal proximity.
-				candidateTS := parseTimestampSec(analyzer.GetTimestamp(&candidate))
+				candidateTS := parseTimestampSec(getTimestamp(&candidate))
 				if primaryTS >= 0 && candidateTS >= 0 {
 					diff := primaryTS - candidateTS
 					if diff < 0 {
@@ -83,7 +82,7 @@ func TemporalDedup(results []models.ImageAnalysisResult, windowSec int) []models
 				if candidate.Classification.Confidence > primary.Classification.Confidence {
 					// Keep candidate's data but primary's timestamp if earlier.
 					if primaryTS >= 0 && (candidateTS < 0 || primaryTS < candidateTS) {
-						candidate.EXIFMetadata["video_timestamp"] = analyzer.GetTimestamp(&primary)
+						candidate.EXIFMetadata["video_timestamp"] = getTimestamp(&primary)
 					}
 					primary = candidate
 				}
@@ -95,6 +94,16 @@ func TemporalDedup(results []models.ImageAnalysisResult, windowSec int) []models
 	}
 
 	return deduped
+}
+
+// getTimestamp extracts the server-supplied video timestamp from normalized
+// analysis metadata without depending on a provider-specific parser package.
+func getTimestamp(result *models.ImageAnalysisResult) string {
+	if result == nil || result.EXIFMetadata == nil {
+		return ""
+	}
+	timestamp, _ := result.EXIFMetadata["video_timestamp"].(string)
+	return timestamp
 }
 
 // parseTimestampSec parses a "MM:SS" timestamp string into total seconds.

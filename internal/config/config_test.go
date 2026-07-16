@@ -123,9 +123,9 @@ func TestRedactedSummary(t *testing.T) {
 		t.Fatal("summary should not be empty")
 	}
 
-	// API key should be partially shown
-	if !contains(summary, "12345678...") {
-		t.Error("API key should be partially redacted")
+	// API credentials should be fully hidden.
+	if contains(summary, "12345678") {
+		t.Error("API key should not appear in summary")
 	}
 
 	// Secret should be fully hidden
@@ -151,6 +151,48 @@ func TestEnvOverrides(t *testing.T) {
 	}
 	if p.BaseURL != "https://dev.uteamup.com" {
 		t.Errorf("env override for base URL not applied: got %s", p.BaseURL)
+	}
+}
+
+func TestLoadRemovesDeprecatedDirectProviderSettings(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	configPath, err := ConfigPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(configPath), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	legacy := `{
+  "activeProfile": "production",
+  "profiles": {
+    "production": {
+      "name": "Production",
+      "baseUrl": "https://api.uteamup.com",
+      "logLevel": "INFO",
+      "requestTimeout": 30000,
+      "maxRetries": 3,
+      "geminiApiKey": "must-be-removed",
+      "geminiModel": "must-be-removed",
+      "googleMapsApiKey": "must-be-removed"
+    }
+  }
+}`
+	if err := os.WriteFile(configPath, []byte(legacy), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := Load(); err != nil {
+		t.Fatal(err)
+	}
+	sanitized, err := os.ReadFile(configPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, forbidden := range []string{"geminiApiKey", "geminiModel", "googleMapsApiKey", "must-be-removed"} {
+		if contains(string(sanitized), forbidden) {
+			t.Fatalf("deprecated provider setting %q remained in config", forbidden)
+		}
 	}
 }
 

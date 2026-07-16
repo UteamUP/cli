@@ -40,7 +40,7 @@ func NewScanner(maxFileSizeMB int) *Scanner {
 // If path is a single file, it validates just that file.
 // If path is a directory, it walks recursively.
 func (s *Scanner) ScanPath(path string) (*ScanResult, error) {
-	info, err := os.Stat(path)
+	info, err := os.Lstat(path)
 	if err != nil {
 		return nil, fmt.Errorf("stat path: %w", err)
 	}
@@ -81,6 +81,18 @@ func (s *Scanner) ScanPath(path string) (*ScanResult, error) {
 // processFile classifies a single file and appends it to the appropriate
 // category in the scan result.
 func (s *Scanner) processFile(path string, info os.FileInfo, result *ScanResult) {
+	if !info.Mode().IsRegular() {
+		log.Printf("skip %s: upload source is not a regular file", filepath.Base(path))
+		result.Skipped = append(result.Skipped, path)
+		return
+	}
+	maxBytes := int64(s.maxFileSizeMB) * 1024 * 1024
+	if info.Size() <= 0 || info.Size() > maxBytes {
+		log.Printf("skip %s: file size is outside the 1-%d MB limit", filepath.Base(path), s.maxFileSizeMB)
+		result.Skipped = append(result.Skipped, path)
+		return
+	}
+
 	mt, err := DetectMIME(path)
 	if err != nil {
 		log.Printf("skip %s: MIME detection failed: %v", filepath.Base(path), err)
@@ -96,15 +108,6 @@ func (s *Scanner) processFile(path string, info os.FileInfo, result *ScanResult)
 
 	if IsGIF(mt) {
 		result.GIFFiles = append(result.GIFFiles, path)
-		return
-	}
-
-	// Check file size limit for video files
-	maxBytes := int64(s.maxFileSizeMB) * 1024 * 1024
-	if info.Size() > maxBytes {
-		log.Printf("skip %s: file size %d bytes exceeds limit %d MB",
-			filepath.Base(path), info.Size(), s.maxFileSizeMB)
-		result.Skipped = append(result.Skipped, path)
 		return
 	}
 

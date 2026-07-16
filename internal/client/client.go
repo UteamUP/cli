@@ -9,14 +9,21 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/uteamup/cli/internal/auth"
 	clierrors "github.com/uteamup/cli/internal/errors"
 	"github.com/uteamup/cli/internal/logging"
+)
+
+const (
+	maxUploadResponseBytes = 4 * 1024 * 1024
+	maxUploadErrorBytes    = 64 * 1024
 )
 
 // JSONRPCRequest represents a JSON-RPC 2.0 request.
@@ -110,9 +117,6 @@ func (c *APIClient) CallTool(ctx context.Context, toolName string, args map[stri
 		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 
 		// Send tenant context headers (required by backend)
-		if token.TenantID > 0 {
-			req.Header.Set("X-Tenant-ID", fmt.Sprintf("%d", token.TenantID))
-		}
 		if token.TenantGuid != "" {
 			req.Header.Set("X-Tenant-Guid", token.TenantGuid)
 		}
@@ -342,6 +346,183 @@ func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField,
 	})
 
 	return result, err
+}
+
+// CallRESTUploadLimited uploads one local file without buffering the complete
+// multipart payload in memory. The caller supplies the maximum accepted file
+// size and the filename/content type exposed to the backend. Error bodies are
+// deliberately not returned because provider failures may contain secrets or
+// untrusted model output.
+func (c *APIClient) CallRESTUploadLimited(
+	ctx context.Context,
+	method string,
+	path string,
+	fileField string,
+	filePath string,
+	uploadFileName string,
+	contentType string,
+	maxFileBytes int64,
+	extraHeaders map[string]string,
+) (json.RawMessage, error) {
+	token, err := auth.LoadToken()
+	if err != nil {
+		return nil, clierrors.NewAuthError("loading token", err)
+	}
+	if token == nil || !token.IsValid() {
+		return nil, &clierrors.NotAuthenticatedError{}
+	}
+
+	if err := validateUploadFile(filePath, maxFileBytes); err != nil {
+		return nil, err
+	}
+	uploadFileName = safeUploadFileName(uploadFileName)
+	if uploadFileName == "" {
+		uploadFileName = "media.bin"
+	}
+
+	var result json.RawMessage
+	err = RetryWithBackoff(ctx, c.logger, fmt.Sprintf("REST %s %s", method, path), c.retryOpts, func() error {
+		body, multipartContentType, streamErr := openMultipartFileStream(
+			ctx,
+			fileField,
+			filePath,
+			uploadFileName,
+			contentType,
+			maxFileBytes,
+		)
+		if streamErr != nil {
+			return streamErr
+		}
+		defer body.Close()
+
+		req, reqErr := http.NewRequestWithContext(ctx, method, c.baseURL+path, body)
+		if reqErr != nil {
+			return fmt.Errorf("creating request: %w", reqErr)
+		}
+		req.Header.Set("Content-Type", multipartContentType)
+		for key, value := range extraHeaders {
+			req.Header.Set(key, value)
+		}
+		// Security-scoping headers always win over caller-supplied metadata.
+		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+		req.Header.Set("X-Requested-With", "XMLHttpRequest")
+		if token.TenantGuid != "" {
+			req.Header.Set("X-Tenant-Guid", token.TenantGuid)
+		}
+
+		c.logger.Debug("%s %s multipart upload", method, c.baseURL+path)
+		resp, requestErr := c.httpClient().Do(req)
+		if requestErr != nil {
+			return fmt.Errorf("request failed: %w", requestErr)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode >= http.StatusBadRequest {
+			_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, maxUploadErrorBytes))
+			return clierrors.NewAPIError(resp.StatusCode, resp.Status, "request rejected")
+		}
+
+		responseBody, readErr := io.ReadAll(io.LimitReader(resp.Body, maxUploadResponseBytes+1))
+		if readErr != nil {
+			return fmt.Errorf("reading response: %w", readErr)
+		}
+		if len(responseBody) > maxUploadResponseBytes {
+			return fmt.Errorf("response exceeds %d bytes", maxUploadResponseBytes)
+		}
+		result = json.RawMessage(responseBody)
+		return nil
+	})
+
+	return result, err
+}
+
+func validateUploadFile(filePath string, maxFileBytes int64) error {
+	if maxFileBytes <= 0 {
+		return fmt.Errorf("maximum upload size must be positive")
+	}
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return fmt.Errorf("reading upload file: %w", err)
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("upload source must be a regular file")
+	}
+	if info.Size() == 0 {
+		return fmt.Errorf("upload source is empty")
+	}
+	if info.Size() > maxFileBytes {
+		return fmt.Errorf("upload source exceeds the %d byte limit", maxFileBytes)
+	}
+	return nil
+}
+
+func safeUploadFileName(name string) string {
+	name = filepath.Base(strings.TrimSpace(name))
+	name = strings.Map(func(r rune) rune {
+		if unicode.IsControl(r) || unicode.Is(unicode.Cf, r) {
+			return -1
+		}
+		return r
+	}, name)
+	runes := []rune(name)
+	if len(runes) > 200 {
+		name = string(runes[:200])
+	}
+	return name
+}
+
+func openMultipartFileStream(
+	ctx context.Context,
+	fileField string,
+	filePath string,
+	uploadFileName string,
+	contentType string,
+	maxFileBytes int64,
+) (io.ReadCloser, string, error) {
+	reader, writer := io.Pipe()
+	multipartWriter := multipart.NewWriter(writer)
+	multipartContentType := multipartWriter.FormDataContentType()
+
+	go func() {
+		defer func() {
+			_ = multipartWriter.Close()
+			_ = writer.Close()
+		}()
+
+		file, err := os.Open(filePath)
+		if err != nil {
+			_ = writer.CloseWithError(fmt.Errorf("opening upload file: %w", err))
+			return
+		}
+		defer file.Close()
+
+		partHeader := make(textproto.MIMEHeader)
+		partHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name=%q; filename=%q`, fileField, uploadFileName))
+		partHeader.Set("Content-Type", contentType)
+		part, err := multipartWriter.CreatePart(partHeader)
+		if err != nil {
+			_ = writer.CloseWithError(fmt.Errorf("creating multipart file: %w", err))
+			return
+		}
+
+		written, err := io.Copy(part, io.LimitReader(file, maxFileBytes+1))
+		if err != nil {
+			_ = writer.CloseWithError(fmt.Errorf("streaming upload file: %w", err))
+			return
+		}
+		if written > maxFileBytes {
+			_ = writer.CloseWithError(fmt.Errorf("upload source exceeds the %d byte limit", maxFileBytes))
+			return
+		}
+
+		select {
+		case <-ctx.Done():
+			_ = writer.CloseWithError(ctx.Err())
+		default:
+		}
+	}()
+
+	return reader, multipartContentType, nil
 }
 
 // buildQueryString converts params to URL query string for GET requests.

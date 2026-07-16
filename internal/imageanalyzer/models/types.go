@@ -65,7 +65,7 @@ type DetectedLocation struct {
 	Longitude        float64 `json:"longitude"`
 	GoogleMapsUrl    string  `json:"google_maps_url"`
 	HasGPS           bool    `json:"has_gps"`
-	Source           string  `json:"source"` // "gps_exif", "gemini_suggested", "reverse_geocoded"
+	Source           string  `json:"source"` // "gps_exif", "gps_video_metadata", "ai_suggested"
 	// Linking info
 	EntityNames []string `json:"entity_names"`
 	EntityTypes []string `json:"entity_types"`

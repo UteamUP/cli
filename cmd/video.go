@@ -1,32 +1,27 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/uteamup/cli/internal/auth"
 	"github.com/uteamup/cli/internal/config"
+	"github.com/uteamup/cli/internal/mediaanalyzer"
 	vaconfig "github.com/uteamup/cli/internal/videoanalyzer/config"
 	"github.com/uteamup/cli/internal/videoanalyzer/pipeline"
 )
 
 var (
 	videoOutputDir           string
-	videoModel               string
-	videoAPIKey              string
 	videoDryRun              bool
 	videoConfig              string
-	videoVerbose             bool
-	videoMaxCost             float64
 	videoSimilarityThreshold float64
 	videoConfidenceThreshold float64
-	videoMapsAPIKey          string
+	videoTimeout             time.Duration
 )
 
 var videoCmd = &cobra.Command{
@@ -35,10 +30,8 @@ var videoCmd = &cobra.Command{
 	Short:   "Analyze videos for CMMS inventory data",
 	Long: `Analyze videos using the UteamUP Video Analyzer.
 
-The video analyzer uses AI (Google Gemini) to process video files,
-extracting CMMS-relevant inventory data (assets, tools, parts, chemicals)
-with timestamps, GPS locations, and vendor information, then exports
-results to CSV.`,
+Media is sent to the authenticated UteamUP backend. The server selects the
+tenant's governed AI route, including Tenant BYOK when it is active.`,
 }
 
 var videoAnalyzeCmd = &cobra.Command{
@@ -46,27 +39,25 @@ var videoAnalyzeCmd = &cobra.Command{
 	Short: "Analyze video files for CMMS inventory data",
 	Long: `Analyze video files (MP4, MOV) in the specified path using AI-powered video analysis.
 
-The analyzer uploads each video to Google Gemini, extracts CMMS-relevant data
+The analyzer uploads each video to UteamUP, extracts CMMS-relevant data
 (equipment type, manufacturer, model, condition, timestamps), deduplicates
 entities across frames and videos, and exports results to CSV files.
 
-GIF files found in the input path are routed to the image analyzer automatically.
+GIF files found in the input path are reported for separate processing with
+the image analyzer.
 
 Examples:
   uteamup video analyze ./videos
   uteamup video analyze ./recording.mp4 --dry-run
-  uteamup vid analyze ./videos --model gemini-2.5-pro --api-key AIza...
   ut vid analyze ./videos -o ./results --verbose
-  ut video analyze ./walkthrough.mov --max-cost 5.00`,
+  ut video analyze ./walkthrough.mov --timeout 10m`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		videoPath := args[0]
 
-		// ── Auth + Tenant + Plan Validation ────────────────────────────
 		token, err := auth.LoadToken()
-		if err != nil || token == nil || !token.IsValid() {
-			fmt.Fprintln(os.Stderr, "Not authenticated. Run \"uteamup login\" first.")
-			os.Exit(1)
+		if err != nil {
+			return fmt.Errorf("loading authentication: %w", err)
 		}
 
 		// Load CLI config for profile settings.
@@ -79,77 +70,13 @@ Examples:
 			return fmt.Errorf("loading active profile: %w", err)
 		}
 
-		// Load Gemini settings from profile.
-		if videoAPIKey == "" && profile.GeminiAPIKey != "" {
-			videoAPIKey = profile.GeminiAPIKey
+		if err := validateMediaTenant(profile, token); err != nil {
+			return err
 		}
-		if videoModel == "" && profile.GeminiModel != "" {
-			videoModel = profile.GeminiModel
-		}
-		if videoMapsAPIKey == "" && profile.GoogleMapsAPIKey != "" {
-			videoMapsAPIKey = profile.GoogleMapsAPIKey
-		}
-
-		// Determine which tenant to use: config override or logged-in tenant.
-		tenantGuid := profile.TenantGuid
-		baseURL := profile.BaseURL
-
-		if tenantGuid != "" && !strings.EqualFold(tenantGuid, token.TenantGuid) {
-			// Config specifies a different tenant than the one we're logged into.
-			fmt.Fprintf(os.Stderr, "Tenant mismatch: config specifies tenant %s but you are logged into tenant %s (%s).\n",
-				tenantGuid, token.TenantGuid, token.TenantName)
-			fmt.Fprintln(os.Stderr, "Please run \"uteamup login\" to re-authenticate with the correct tenant.")
-			os.Exit(1)
-		}
-
-		// If no tenantGuid in config and user has multiple tenants, prompt for selection.
-		if tenantGuid == "" {
-			allTenants, err := auth.FetchAllTenants(token.AccessToken, baseURL)
-			if err != nil {
-				return fmt.Errorf("fetching tenants: %w", err)
-			}
-			if len(allTenants) == 0 {
-				fmt.Fprintln(os.Stderr, "No tenants found for this user.")
-				os.Exit(1)
-			}
-			if len(allTenants) == 1 {
-				tenantGuid = allTenants[0].Guid
-			} else {
-				// Interactive tenant selection.
-				fmt.Println("\nYou have access to multiple tenants. Select one:")
-				for i, t := range allTenants {
-					planLabel := "(no plan)"
-					if t.HasPlan() {
-						planLabel = t.PlanName
-					}
-					fmt.Printf("  %d. %s [%s]\n", i+1, t.Name, planLabel)
-				}
-				fmt.Print("\nSelect tenant (1-" + strconv.Itoa(len(allTenants)) + "): ")
-
-				scanner := bufio.NewScanner(os.Stdin)
-				if !scanner.Scan() {
-					return fmt.Errorf("no tenant selected")
-				}
-				choice, err := strconv.Atoi(strings.TrimSpace(scanner.Text()))
-				if err != nil || choice < 1 || choice > len(allTenants) {
-					return fmt.Errorf("invalid selection: choose 1-%d", len(allTenants))
-				}
-				tenantGuid = allTenants[choice-1].Guid
-				fmt.Printf("  Selected: %s\n", allTenants[choice-1].Name)
-			}
-		}
-
-		// Validate that the tenant has an active plan.
-		tenantInfo, err := auth.FetchTenantInfo(token.AccessToken, baseURL, tenantGuid)
+		apiClient, err := newMediaAPIClient(profile, videoTimeout)
 		if err != nil {
-			return fmt.Errorf("validating tenant: %w", err)
+			return err
 		}
-		if !tenantInfo.HasPlan() {
-			fmt.Fprintf(os.Stderr, "Tenant %q does not have an active subscription plan.\n", tenantInfo.Name)
-			fmt.Fprintln(os.Stderr, "A plan is required to use video analysis. Visit https://app.uteamup.com/plans to subscribe.")
-			os.Exit(1)
-		}
-		fmt.Printf("  Tenant:  %s (plan: %s)\n", tenantInfo.Name, tenantInfo.PlanName)
 
 		// Resolve paths to absolute.
 		absVideoPath, err := filepath.Abs(videoPath)
@@ -174,12 +101,6 @@ Examples:
 		opts = append(opts, vaconfig.WithFolderOverride(absVideoPath))
 		opts = append(opts, vaconfig.WithOutputOverride(absOutputDir))
 		opts = append(opts, vaconfig.WithDryRun(videoDryRun))
-		opts = append(opts, vaconfig.WithAPIKey(videoAPIKey))
-		opts = append(opts, vaconfig.WithModel(videoModel))
-		opts = append(opts, vaconfig.WithGoogleMapsAPIKey(videoMapsAPIKey))
-		if cmd.Flags().Changed("max-cost") {
-			opts = append(opts, vaconfig.WithMaxCost(&videoMaxCost))
-		}
 
 		// Load config.
 		configPath := videoConfig
@@ -209,35 +130,32 @@ Examples:
 		}
 
 		// Print banner.
-		model := videoModel
-		if model == "" {
-			model = cfg.Gemini.Model
-		}
 		fmt.Printf("\n=== UteamUP Video Analyzer ===\n")
 		fmt.Printf("  Source:  %s\n", absVideoPath)
 		fmt.Printf("  Output:  %s\n", absOutputDir)
-		fmt.Printf("  Model:   %s\n", model)
+		tenantName := token.TenantName
+		if tenantName == "" {
+			tenantName = "authenticated tenant"
+		}
+		fmt.Printf("  Tenant:  %s\n", tenantName)
+		fmt.Printf("  AI:      server-governed route\n")
 		if videoDryRun {
-			fmt.Printf("  Mode:    DRY RUN (cost estimate only)\n")
+			fmt.Printf("  Mode:    DRY RUN (validation and upload scope only)\n")
 		}
 		fmt.Printf("==============================\n")
 
 		// Create and run pipeline.
-		return pipeline.NewPipeline(cfg).Run()
+		return pipeline.NewPipeline(cfg, mediaanalyzer.New(apiClient)).Run(cmd.Context())
 	},
 }
 
 func init() {
 	videoAnalyzeCmd.Flags().StringVarP(&videoOutputDir, "output", "o", "./Output", "Output folder for analysis results")
-	videoAnalyzeCmd.Flags().StringVar(&videoModel, "model", "", "Gemini model: gemini-pro-latest, gemini-3.1-pro-preview, gemini-3.1-flash-lite-preview, gemini-2.5-pro, gemini-2.5-flash")
-	videoAnalyzeCmd.Flags().StringVar(&videoAPIKey, "api-key", "", "Google Gemini API key (overrides GEMINI_API_KEY env var)")
-	videoAnalyzeCmd.Flags().BoolVar(&videoDryRun, "dry-run", false, "Estimate cost only, do not process videos")
+	videoAnalyzeCmd.Flags().BoolVar(&videoDryRun, "dry-run", false, "Validate and show upload scope without processing videos")
 	videoAnalyzeCmd.Flags().StringVar(&videoConfig, "config", "", "Path to config.yaml override")
-	videoAnalyzeCmd.Flags().BoolVarP(&videoVerbose, "verbose", "V", false, "Enable verbose output")
-	videoAnalyzeCmd.Flags().Float64Var(&videoMaxCost, "max-cost", 0, "Maximum budget in USD (stops when reached)")
 	videoAnalyzeCmd.Flags().Float64Var(&videoSimilarityThreshold, "similarity-threshold", 0.75, "Grouping similarity threshold (0.0-1.0)")
 	videoAnalyzeCmd.Flags().Float64Var(&videoConfidenceThreshold, "confidence-threshold", 0.5, "Minimum confidence to classify (0.0-1.0)")
-	videoAnalyzeCmd.Flags().StringVar(&videoMapsAPIKey, "maps-api-key", "", "Google Maps API key for reverse geocoding GPS coordinates")
+	videoAnalyzeCmd.Flags().DurationVar(&videoTimeout, "timeout", 10*time.Minute, "Maximum time for each backend media request (max 15m)")
 
 	videoCmd.AddCommand(videoAnalyzeCmd)
 }

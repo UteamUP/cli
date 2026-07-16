@@ -113,7 +113,7 @@ func (cp *Checkpoint) AcquireLock() error {
 	if err != nil {
 		return fmt.Errorf("marshalling lock: %w", err)
 	}
-	if err := os.WriteFile(cp.lockPath, data, 0644); err != nil {
+	if err := os.WriteFile(cp.lockPath, data, 0o600); err != nil {
 		return fmt.Errorf("writing lock file: %w", err)
 	}
 	return nil

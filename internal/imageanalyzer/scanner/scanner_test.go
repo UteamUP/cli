@@ -111,6 +111,41 @@ func TestScanFolderRecursive(t *testing.T) {
 	}
 }
 
+func TestScanFolderSkipsImagesAboveConfiguredLimitBeforeDecode(t *testing.T) {
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "oversized.jpg")
+	createTestJPEG(t, path)
+	if err := os.Truncate(path, 2*1024*1024); err != nil {
+		t.Fatal(err)
+	}
+
+	scanner := NewScanner(tmpDir, false, []string{".jpg"}, 1024, 1)
+	images, err := scanner.ScanFolder()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(images) != 0 {
+		t.Fatalf("expected oversized image to be skipped, got %d images", len(images))
+	}
+}
+
+func TestScanFolderSkipsSymbolicLinks(t *testing.T) {
+	tmpDir := t.TempDir()
+	target := filepath.Join(t.TempDir(), "target.jpg")
+	createTestJPEG(t, target)
+	if err := os.Symlink(target, filepath.Join(tmpDir, "linked.jpg")); err != nil {
+		t.Skipf("symbolic links unavailable: %v", err)
+	}
+
+	images, err := NewScanner(tmpDir, false, []string{".jpg"}, 1024, 10).ScanFolder()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(images) != 0 {
+		t.Fatalf("expected symbolic link to be skipped, got %d images", len(images))
+	}
+}
+
 func TestDetectDuplicates(t *testing.T) {
 	images := []models.ImageInfo{
 		{Path: "/a/img1.jpg", Filename: "img1.jpg", SHA256Hash: "aaa111"},

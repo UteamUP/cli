@@ -195,6 +195,24 @@ func TestScanPath_NonexistentPath(t *testing.T) {
 	}
 }
 
+func TestScanPath_SkipsSymbolicLink(t *testing.T) {
+	targetDir := createTempDir(t)
+	target := filepath.Join(targetDir, "target.mp4")
+	writeTempFile(t, targetDir, "target.mp4", makeMP4Bytes())
+	link := filepath.Join(t.TempDir(), "linked.mp4")
+	if err := os.Symlink(target, link); err != nil {
+		t.Skipf("symbolic links unavailable: %v", err)
+	}
+
+	result, err := NewScanner(100).ScanPath(link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Videos) != 0 || len(result.Skipped) != 1 {
+		t.Fatalf("symbolic link should be skipped: %+v", result)
+	}
+}
+
 func TestScanPath_RecursiveSubdirectories(t *testing.T) {
 	dir := createTempDir(t)
 	writeTempFile(t, dir, "root.mp4", makeMP4Bytes())

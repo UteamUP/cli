@@ -60,27 +60,16 @@ ut config profile dev                             # Switch profile
 ut config show                                    # Display config (redacted)
 ```
 
-### Gemini AI Configuration (Image Analysis)
+### AI Media Analysis
 
-```bash
-ut config apikey AIzaSy...                        # Set Gemini API key
-ut config apikey                                  # Show current key (redacted)
-ut config model gemini-3.1-pro-preview            # Set default model
-ut config model                                   # Show current model
-ut config model list                              # List available models
-```
+The CLI never stores provider credentials or selects provider models. Image and video
+commands upload media to authenticated, server-owned UteamUP endpoints. The backend resolves
+the registered task route, Global Admin policy, Tenant BYOK connection, budget, fallback,
+usage ledger, and model disclosure for the authenticated tenant.
 
-**Available Gemini models:**
-
-| Model | Type | Notes |
-|-------|------|-------|
-| `gemini-pro-latest` | Pro | Rolling alias, always newest |
-| `gemini-3.1-pro-preview` | Pro | Latest explicit pro |
-| `gemini-3.1-flash-lite-preview` | Flash Lite | Default — fastest, cheapest |
-| `gemini-3-pro-preview` | Pro | Previous gen |
-| `gemini-3-flash-preview` | Flash | Previous gen |
-| `gemini-2.5-pro` | Pro | Stable |
-| `gemini-2.5-flash` | Flash | Stable |
+Legacy `geminiApiKey`, `geminiModel`, and `googleMapsApiKey` fields are removed from
+`~/.uteamup/config.json` the next time the CLI loads that profile. Legacy provider sections
+in image/video YAML overrides are rejected instead of silently accepting unused secrets.
 
 ### Environment Variable Overrides
 
@@ -92,8 +81,6 @@ Env vars override config file values:
 | `UTEAMUP_SECRET` | `secret` |
 | `UTEAMUP_API_BASE_URL` | `baseUrl` |
 | `UTEAMUP_LOG_LEVEL` | `logLevel` |
-| `GEMINI_API_KEY` | `geminiApiKey` |
-| `GEMINI_MODEL` | `geminiModel` |
 
 ---
 
@@ -103,34 +90,19 @@ Env vars override config file values:
 
 ```bash
 uteamup image analyze ./photos                              # Analyze images
-uteamup image analyze ./photos --dry-run                     # Cost estimate only
-uteamup image analyze ./photos --model gemini-3.1-pro-preview  # Override model
+uteamup image analyze ./photos --dry-run                     # Upload scope; no AI call
 uteamup image analyze ./photos --output ./results            # Custom output dir
+uteamup image analyze ./photos --timeout 5m                  # Finite backend timeout
 ut img analyze ./photos --no-rename --verbose                # Skip renaming
 ```
 
-### Requirements
+### Requirements and boundary
 
-- UteamUP Image Analyzer Python tool must be installed
-- Python 3.10+ with virtual environment
-- User must be logged in (`uteamup login`)
-
-### Analyzer Discovery
-
-The CLI locates the Image Analyzer in this order:
-1. `UTEAMUP_IMAGE_ANALYZER_PATH` environment variable
-2. Sibling directory `../UteamUP_ImageAnalyzer` relative to the CLI binary
-3. `~/UteamUP_ImageAnalyzer`
-
-### Installing the Analyzer
-
-```bash
-git clone https://github.com/UteamUP/ImageAnalyzer ~/UteamUP_ImageAnalyzer
-cd ~/UteamUP_ImageAnalyzer
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-cp .env.example .env  # Add your GEMINI_API_KEY
-```
+- User must be logged in (`uteamup login`) to the tenant being analyzed.
+- The active profile base URL must be an HTTPS origin without credentials, path, query, or
+  fragment. Local self-signed TLS remains available through the existing `--insecure` flag.
+- Photos are capped at 15 MB before decoding and normalized to JPEG before upload.
+- The CLI sends no tenant integer ID, provider, model, task key, or provider credential.
 
 ---
 
@@ -141,11 +113,9 @@ cp .env.example .env  # Add your GEMINI_API_KEY
 ```bash
 uteamup video analyze ./videos                               # Analyze all videos in folder
 uteamup video analyze ./recording.mp4                         # Analyze a single video file
-uteamup video analyze ./videos --dry-run                      # Cost estimate only
-uteamup vid analyze ./videos --model gemini-2.5-pro           # Override model
+uteamup video analyze ./videos --dry-run                      # Upload scope; no AI call
 ut vid analyze ./videos -o ./results --verbose                # Custom output, verbose
-ut video analyze ./walkthrough.mov --max-cost 5.00            # Budget cap
-ut video analyze ./videos --maps-api-key AIza...              # Enable GPS reverse geocoding
+ut video analyze ./walkthrough.mov --timeout 10m              # Finite backend timeout
 ```
 
 ### Supported Formats
@@ -161,13 +131,14 @@ File format detection uses magic bytes (file header), not file extensions.
 
 ### Requirements
 
-- Google Gemini API key (set via `ut config apikey` or `--api-key` flag)
-- No external dependencies required (built-in Go implementation)
+- An authenticated UteamUP tenant session with the required AI and inventory permissions.
+- No provider SDK, provider key, provider model, or external analyzer is required by the CLI.
+- Videos are capped at 100 MB and must pass MP4/MOV magic-byte validation.
 
 ### How It Works
 
 1. **Validate** — Scan input path, detect MIME types via magic bytes, route GIFs to image analyzer
-2. **Upload + Analyze** — Upload each video to Gemini File API, poll until processed, send CMMS extraction prompt
+2. **Upload + Analyze** — Stream each video to the authenticated UteamUP backend; the server executes the governed task route
 3. **Deduplicate** — Merge duplicate entities within same video (temporal dedup) and across videos (grouping)
 4. **Export** — Write CSVs: assets.csv, tools.csv, parts.csv, chemicals.csv, vendors.csv, locations.csv
 
@@ -175,21 +146,19 @@ File format detection uses magic bytes (file header), not file extensions.
 
 Videos from mobile devices often contain GPS coordinates in container metadata. The video analyzer:
 - Extracts GPS from MP4/MOV metadata atoms (©xyz, ISO 6709)
-- Reverse geocodes coordinates using Google Maps API (if `--maps-api-key` provided) or Nominatim (free fallback)
+- Keeps detected coordinates local; the CLI does not fetch arbitrary or third-party URLs
 - Assigns detected entities to their GPS-derived locations in the CSV output
 
 ### Vendor Enrichment
 
-When vendor/manufacturer names are detected, the analyzer performs a follow-up Gemini lookup to enrich vendor data with:
-- Official company website
-- Full legal company name
-- Business category
-
-Enriched data appears in `vendors.csv`. Lookups are cached per vendor name to avoid duplicates.
+Vendor/manufacturer values returned by the governed backend analysis are deduplicated into
+`vendors.csv`. The CLI performs no direct provider or web lookup.
 
 ### Cost Estimation
 
-Video analysis uses more tokens than image analysis. Use `--dry-run` to estimate costs before processing, and `--max-cost` to cap spending.
+`--dry-run` reports deterministic file counts and bytes without making an AI call. Provider
+cost cannot be inferred locally because routes and BYOK pricing vary; the backend response
+returns the authoritative usage receipt and Tenant Admin budgets remain the hard ceiling.
 
 ---
 

@@ -50,7 +50,7 @@ func NewScanner(imageFolder string, recursive bool, supportedFormats []string, m
 // imageutil.IsValidImage, computes hashes, and extracts EXIF data.
 // Results are sorted by file path.
 func (s *ImageScanner) ScanFolder() ([]models.ImageInfo, error) {
-	info, err := os.Stat(s.imageFolder)
+	info, err := os.Lstat(s.imageFolder)
 	if err != nil || !info.IsDir() {
 		return nil, fmt.Errorf("image folder not found or not a directory: %s", s.imageFolder)
 	}
@@ -71,20 +71,32 @@ func (s *ImageScanner) ScanFolder() ([]models.ImageInfo, error) {
 		if d.IsDir() {
 			return nil
 		}
+		if d.Type()&os.ModeSymlink != 0 {
+			log.Printf("skipped symbolic link: %s", filepath.Base(path))
+			return nil
+		}
 
 		ext := strings.ToLower(filepath.Ext(path))
 		if !s.supportedFormats[ext] {
 			return nil
 		}
 
-		if !imageutil.IsValidImage(path) {
-			log.Printf("skipped invalid image: %s", path)
-			return nil
-		}
-
 		fi, err := d.Info()
 		if err != nil {
 			log.Printf("warning: cannot stat %s: %v", path, err)
+			return nil
+		}
+		if !fi.Mode().IsRegular() {
+			log.Printf("skipped non-regular image: %s", filepath.Base(path))
+			return nil
+		}
+		maxBytes := int64(s.maxFileSizeMB) * 1024 * 1024
+		if fi.Size() <= 0 || fi.Size() > maxBytes {
+			log.Printf("skipped image %s: file size is outside the 1-%d MB limit", filepath.Base(path), s.maxFileSizeMB)
+			return nil
+		}
+		if !imageutil.IsValidImage(path) {
+			log.Printf("skipped invalid image: %s", filepath.Base(path))
 			return nil
 		}
 

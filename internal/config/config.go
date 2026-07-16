@@ -37,10 +37,6 @@ type Profile struct {
 	ExportDir      string `json:"exportDir,omitempty"`
 	// Tenant override — use a specific tenant instead of the logged-in default
 	TenantGuid string `json:"tenantGuid,omitempty"`
-	// Gemini AI settings for image/video analysis
-	GeminiAPIKey     string `json:"geminiApiKey,omitempty"`
-	GeminiModel      string `json:"geminiModel,omitempty"`
-	GoogleMapsAPIKey string `json:"googleMapsApiKey,omitempty"`
 }
 
 // ConfigDir returns ~/.uteamup.
@@ -81,6 +77,9 @@ func Load() (*Config, error) {
 	var cfg Config
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, &clierrors.ConfigError{Message: fmt.Sprintf("invalid JSON in config: %v", err)}
+	}
+	if err := removeDeprecatedMediaSettings(path, data); err != nil {
+		return nil, err
 	}
 
 	if cfg.Profiles == nil {
@@ -171,16 +170,6 @@ func applyEnvOverrides(cfg *Config) {
 	if v := os.Getenv("UTEAMUP_TENANT_GUID"); v != "" {
 		p.TenantGuid = v
 	}
-	if v := os.Getenv("GEMINI_API_KEY"); v != "" {
-		p.GeminiAPIKey = v
-	}
-	if v := os.Getenv("GEMINI_MODEL"); v != "" {
-		p.GeminiModel = v
-	}
-	if v := os.Getenv("GOOGLE_MAPS_API_KEY"); v != "" {
-		p.GoogleMapsAPIKey = v
-	}
-
 	cfg.Profiles[cfg.ActiveProfile] = p
 }
 
@@ -210,11 +199,7 @@ func (c *Config) RedactedSummary() string {
 
 	apiKey := "(not set)"
 	if p.APIKey != "" {
-		if len(p.APIKey) > 8 {
-			apiKey = p.APIKey[:8] + "..."
-		} else {
-			apiKey = "***"
-		}
+		apiKey = "***"
 	}
 
 	secret := "(not set)"
@@ -232,29 +217,6 @@ func (c *Config) RedactedSummary() string {
 		tenantGuid = "(default from login)"
 	}
 
-	geminiKey := "(not set)"
-	if p.GeminiAPIKey != "" {
-		if len(p.GeminiAPIKey) > 8 {
-			geminiKey = p.GeminiAPIKey[:8] + "..."
-		} else {
-			geminiKey = "***"
-		}
-	}
-
-	geminiModel := p.GeminiModel
-	if geminiModel == "" {
-		geminiModel = "(default: gemini-3.1-flash-lite-preview)"
-	}
-
-	mapsKey := "(not set)"
-	if p.GoogleMapsAPIKey != "" {
-		if len(p.GoogleMapsAPIKey) > 8 {
-			mapsKey = p.GoogleMapsAPIKey[:8] + "..."
-		} else {
-			mapsKey = "***"
-		}
-	}
-
 	return fmt.Sprintf(`Active Profile: %s (%s)
   Base URL:        %s
   API Key:         %s
@@ -264,15 +226,47 @@ func (c *Config) RedactedSummary() string {
   Request Timeout: %dms
   Max Retries:     %d
   Export JSON:     %v
-  Export Dir:      %s
-  Gemini API Key:  %s
-  Gemini Model:    %s
-  Maps API Key:    %s`,
+  Export Dir:      %s`,
 		c.ActiveProfile, p.Name,
 		p.BaseURL, apiKey, secret,
 		tenantGuid,
 		p.LogLevel, p.RequestTimeout, p.MaxRetries,
-		p.ExportJSON, exportDir,
-		geminiKey, geminiModel,
-		mapsKey)
+		p.ExportJSON, exportDir)
+}
+
+func removeDeprecatedMediaSettings(path string, data []byte) error {
+	var root map[string]any
+	if err := json.Unmarshal(data, &root); err != nil {
+		return nil
+	}
+	profiles, ok := root["profiles"].(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	changed := false
+	for _, rawProfile := range profiles {
+		profile, ok := rawProfile.(map[string]any)
+		if !ok {
+			continue
+		}
+		for _, key := range []string{"geminiApiKey", "geminiModel", "googleMapsApiKey"} {
+			if _, exists := profile[key]; exists {
+				delete(profile, key)
+				changed = true
+			}
+		}
+	}
+	if !changed {
+		return nil
+	}
+
+	sanitized, err := json.MarshalIndent(root, "", "  ")
+	if err != nil {
+		return fmt.Errorf("removing deprecated media credentials: %w", err)
+	}
+	if err := os.WriteFile(path, sanitized, 0o600); err != nil {
+		return fmt.Errorf("removing deprecated media credentials: %w", err)
+	}
+	return nil
 }

@@ -106,8 +106,8 @@ Examples:
 			fmt.Println("  ^ = tenant set in config profile")
 		}
 		fmt.Println()
-		fmt.Println("To switch tenants, set tenantGuid in your config:")
-		fmt.Println("  ut config set tenantGuid <GUID>")
+		fmt.Println("To switch tenants through the authenticated membership flow:")
+		fmt.Println("  ut tenant select")
 		fmt.Println()
 
 		return nil

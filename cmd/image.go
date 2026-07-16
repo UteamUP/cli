@@ -5,28 +5,27 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
+	"github.com/uteamup/cli/internal/auth"
 	"github.com/uteamup/cli/internal/config"
 	"github.com/uteamup/cli/internal/imageanalyzer/checkpoint"
 	iaconfig "github.com/uteamup/cli/internal/imageanalyzer/config"
 	"github.com/uteamup/cli/internal/imageanalyzer/pipeline"
+	"github.com/uteamup/cli/internal/mediaanalyzer"
 )
 
 var (
 	imageOutputDir           string
-	imageModel               string
-	imageAPIKey              string
 	imageDryRun              bool
 	imageNoRename            bool
 	imageConfig              string
-	imageVerbose             bool
-	imageMaxCost             float64
 	imageResume              bool
 	imageSimilarityThreshold float64
 	imageConfidenceThreshold float64
-	imageMapsAPIKey          string
+	imageTimeout             time.Duration
 )
 
 var imageCmd = &cobra.Command{
@@ -35,8 +34,8 @@ var imageCmd = &cobra.Command{
 	Short:   "Analyze images for CMMS inventory data",
 	Long: `Analyze images using the UteamUP Image Analyzer.
 
-The image analyzer uses AI (Google Gemini) to process batches of images,
-extracting CMMS-relevant inventory data and exporting results to CSV.`,
+Media is sent to the authenticated UteamUP backend. The server selects the
+tenant's governed AI route, including Tenant BYOK when it is active.`,
 }
 
 var imageAnalyzeCmd = &cobra.Command{
@@ -51,28 +50,32 @@ results to CSV files.
 Examples:
   uteamup image analyze ./photos
   uteamup image analyze ./photos --output ./results --dry-run
-  uteamup img analyze ./photos --model gemini-2.5-pro --api-key AIza...
-  uteamup img analyze /path/to/images -o /path/to/output --model gemini-2.5-flash --verbose
+  uteamup img analyze /path/to/images -o /path/to/output --verbose
   ut img analyze ./images --no-rename
-  ut img analyze ./photos --max-cost 5.00 --confidence-threshold 0.7
+  ut img analyze ./photos --confidence-threshold 0.7
   ut img analyze ./photos --resume`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		imagePath := args[0]
 
-		// Load Gemini settings from CLI config (profile defaults).
-		if cfg, err := config.Load(); err == nil {
-			if profile, err := cfg.ActiveProfileConfig(); err == nil {
-				if imageAPIKey == "" && profile.GeminiAPIKey != "" {
-					imageAPIKey = profile.GeminiAPIKey
-				}
-				if imageModel == "" && profile.GeminiModel != "" {
-					imageModel = profile.GeminiModel
-				}
-				if imageMapsAPIKey == "" && profile.GoogleMapsAPIKey != "" {
-					imageMapsAPIKey = profile.GoogleMapsAPIKey
-				}
-			}
+		cliConfig, err := config.Load()
+		if err != nil {
+			return fmt.Errorf("loading CLI config: %w", err)
+		}
+		profile, err := cliConfig.ActiveProfileConfig()
+		if err != nil {
+			return fmt.Errorf("loading active profile: %w", err)
+		}
+		token, err := auth.LoadToken()
+		if err != nil {
+			return fmt.Errorf("loading authentication: %w", err)
+		}
+		if err := validateMediaTenant(profile, token); err != nil {
+			return err
+		}
+		apiClient, err := newMediaAPIClient(profile, imageTimeout)
+		if err != nil {
+			return err
 		}
 
 		// Resolve the image path to absolute.
@@ -102,12 +105,6 @@ Examples:
 		opts = append(opts, iaconfig.WithOutputOverride(absOutputDir))
 		opts = append(opts, iaconfig.WithDryRun(imageDryRun))
 		opts = append(opts, iaconfig.WithNoRename(imageNoRename))
-		opts = append(opts, iaconfig.WithAPIKey(imageAPIKey))
-		opts = append(opts, iaconfig.WithModel(imageModel))
-		opts = append(opts, iaconfig.WithGoogleMapsAPIKey(imageMapsAPIKey))
-		if cmd.Flags().Changed("max-cost") {
-			opts = append(opts, iaconfig.WithMaxCost(&imageMaxCost))
-		}
 
 		// Load config (YAML file + env vars + CLI flag overrides).
 		configPath := imageConfig
@@ -154,17 +151,18 @@ Examples:
 		})
 
 		// Print banner.
-		model := imageModel
-		if model == "" {
-			model = cfg.Gemini.Model
-		}
 		fmt.Printf("\n=== UteamUP Image Analyzer ===\n")
 		fmt.Printf("  Source:  %s\n", absImagePath)
 		fmt.Printf("  Output:  %s\n", absOutputDir)
 		fmt.Printf("  Images:  %d found\n", imageCount)
-		fmt.Printf("  Model:   %s\n", model)
+		tenantName := strings.TrimSpace(token.TenantName)
+		if tenantName == "" {
+			tenantName = "authenticated tenant"
+		}
+		fmt.Printf("  Tenant:  %s\n", tenantName)
+		fmt.Printf("  AI:      server-governed route\n")
 		if imageDryRun {
-			fmt.Printf("  Mode:    DRY RUN (cost estimate only)\n")
+			fmt.Printf("  Mode:    DRY RUN (validation and upload scope only)\n")
 		}
 		if imageResume {
 			fmt.Printf("  Resume:  enabled\n")
@@ -172,7 +170,7 @@ Examples:
 		fmt.Printf("==============================\n")
 
 		// Create and run pipeline.
-		return pipeline.NewPipeline(cfg).Run()
+		return pipeline.NewPipeline(cfg, mediaanalyzer.New(apiClient)).Run(cmd.Context())
 	},
 }
 
@@ -227,17 +225,13 @@ Examples:
 
 func init() {
 	imageAnalyzeCmd.Flags().StringVarP(&imageOutputDir, "output", "o", "./Output", "Output folder for analysis results")
-	imageAnalyzeCmd.Flags().StringVar(&imageModel, "model", "", "Gemini model: gemini-pro-latest (always newest), gemini-3.1-pro-preview, gemini-3.1-flash-lite-preview, gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash")
-	imageAnalyzeCmd.Flags().StringVar(&imageAPIKey, "api-key", "", "Google Gemini API key (overrides GEMINI_API_KEY env var)")
-	imageAnalyzeCmd.Flags().BoolVar(&imageDryRun, "dry-run", false, "Estimate cost only, do not process images")
+	imageAnalyzeCmd.Flags().BoolVar(&imageDryRun, "dry-run", false, "Validate and show upload scope without processing images")
 	imageAnalyzeCmd.Flags().BoolVar(&imageNoRename, "no-rename", false, "Skip image renaming after analysis")
 	imageAnalyzeCmd.Flags().StringVar(&imageConfig, "config", "", "Path to config.yaml override")
-	imageAnalyzeCmd.Flags().BoolVarP(&imageVerbose, "verbose", "V", false, "Enable verbose output")
-	imageAnalyzeCmd.Flags().Float64Var(&imageMaxCost, "max-cost", 0, "Maximum budget in USD (stops when reached)")
 	imageAnalyzeCmd.Flags().BoolVar(&imageResume, "resume", false, "Resume from checkpoint if available")
 	imageAnalyzeCmd.Flags().Float64Var(&imageSimilarityThreshold, "similarity-threshold", 0.75, "Grouping similarity threshold (0.0-1.0)")
 	imageAnalyzeCmd.Flags().Float64Var(&imageConfidenceThreshold, "confidence-threshold", 0.5, "Minimum confidence to classify (0.0-1.0)")
-	imageAnalyzeCmd.Flags().StringVar(&imageMapsAPIKey, "maps-api-key", "", "Google Maps API key for reverse geocoding GPS coordinates")
+	imageAnalyzeCmd.Flags().DurationVar(&imageTimeout, "timeout", 5*time.Minute, "Maximum time for each backend media request (max 15m)")
 
 	imageCmd.AddCommand(imageAnalyzeCmd)
 	imageCmd.AddCommand(imageStatusCmd)

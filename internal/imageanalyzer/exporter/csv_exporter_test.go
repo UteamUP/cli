@@ -90,6 +90,39 @@ func TestExportCSVsAssets(t *testing.T) {
 	}
 }
 
+func TestExportCSVsNeutralizesSpreadsheetFormulasAndUsesPrivatePermissions(t *testing.T) {
+	dir := t.TempDir()
+	exp := NewExporter(dir, "", false, "")
+	result, err := exp.ExportCSVs([]models.ImageGroup{makeAssetGroup("=HYPERLINK(\"https://evil.invalid\")", 0.9, false)}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	path := result["asset"]
+	file, err := os.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	records, err := csv.NewReader(file).ReadAll()
+	file.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := records[1][0]; !strings.HasPrefix(got, "'=") {
+		t.Fatalf("formula cell was not neutralized: %q", got)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0o600 {
+		t.Fatalf("CSV permissions = %o, want 600", info.Mode().Perm())
+	}
+	if got := sanitizeCSVCell("-21.8954"); got != "-21.8954" {
+		t.Fatalf("signed coordinate was changed: %q", got)
+	}
+}
+
 func TestExportCSVsChemicals(t *testing.T) {
 	dir := t.TempDir()
 	exp := NewExporter(dir, "", false, "")

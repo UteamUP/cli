@@ -13,30 +13,29 @@ import (
 
 	"github.com/schollz/progressbar/v3"
 
-	"github.com/uteamup/cli/internal/imageanalyzer/analyzer"
 	"github.com/uteamup/cli/internal/imageanalyzer/checkpoint"
 	iaconfig "github.com/uteamup/cli/internal/imageanalyzer/config"
 	"github.com/uteamup/cli/internal/imageanalyzer/exporter"
-	"github.com/uteamup/cli/internal/imageanalyzer/geocoder"
 	"github.com/uteamup/cli/internal/imageanalyzer/grouper"
 	"github.com/uteamup/cli/internal/imageanalyzer/imageutil"
 	"github.com/uteamup/cli/internal/imageanalyzer/models"
 	"github.com/uteamup/cli/internal/imageanalyzer/scanner"
-	"github.com/uteamup/cli/internal/imageanalyzer/vendorlookup"
+	"github.com/uteamup/cli/internal/mediaanalyzer"
 )
 
 // Pipeline orchestrates the 4-phase image analysis pipeline.
 type Pipeline struct {
-	config *iaconfig.AppConfig
+	config   *iaconfig.AppConfig
+	analyzer *mediaanalyzer.Analyzer
 }
 
 // NewPipeline creates a new Pipeline with the given configuration.
-func NewPipeline(cfg *iaconfig.AppConfig) *Pipeline {
-	return &Pipeline{config: cfg}
+func NewPipeline(cfg *iaconfig.AppConfig, analyzer *mediaanalyzer.Analyzer) *Pipeline {
+	return &Pipeline{config: cfg, analyzer: analyzer}
 }
 
 // Run executes the full pipeline: scan -> analyze -> group -> export.
-func (p *Pipeline) Run() error {
+func (p *Pipeline) Run(ctx context.Context) error {
 	startTime := time.Now()
 
 	// ── Phase 1: Scan ──────────────────────────────────────────────────
@@ -107,13 +106,8 @@ func (p *Pipeline) Run() error {
 	}
 
 	// ── Phase 2: Analyze ───────────────────────────────────────────────
-	fmt.Println("Phase 2: Analyzing images with Gemini...")
-	log.Printf("Phase 2: Analyzing images with Gemini")
-
-	geminiAnalyzer, err := analyzer.NewGeminiAnalyzer(p.config.Gemini)
-	if err != nil {
-		return fmt.Errorf("creating analyzer: %w", err)
-	}
+	fmt.Println("Phase 2: Analyzing images through UteamUP...")
+	log.Printf("Phase 2: Analyzing images through tenant-scoped backend routing")
 
 	cp, err := checkpoint.Load(p.config.Processing.CheckpointFile)
 	if err != nil {
@@ -157,8 +151,13 @@ func (p *Pipeline) Run() error {
 		progressbar.OptionOnCompletion(func() { fmt.Println() }),
 	)
 
-	ctx := context.Background()
+	totalCredits := 0
+	credentialSource := ""
+	modelAlias := ""
 	for i, imageInfo := range imagesToAnalyze {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		// Skip already processed.
 		if cp.IsProcessed(imageInfo.SHA256Hash) {
 			_ = overallBar.Add(1)
@@ -182,17 +181,6 @@ func (p *Pipeline) Run() error {
 			progressbar.OptionOnCompletion(func() { fmt.Println() }),
 		)
 
-		// Check budget.
-		if p.config.Processing.MaxCost != nil {
-			nextCost := analyzer.EstimateCost(1).EstimatedTotalCostUSD
-			spent := geminiAnalyzer.TotalCost().EstimatedTotalCostUSD
-			if spent+nextCost > *p.config.Processing.MaxCost {
-				fmt.Printf("\n  Budget limit reached: spent $%.4f of $%.2f cap\n",
-					spent, *p.config.Processing.MaxCost)
-				break
-			}
-		}
-
 		// Step 1: Load image.
 		imgBar.Describe("    Loading image")
 		imgBytes, err := imageutil.LoadImageBytes(
@@ -211,19 +199,16 @@ func (p *Pipeline) Run() error {
 		}
 		_ = imgBar.Add(1)
 
-		// Step 2: Analyze with Gemini.
+		// Step 2: Analyze through the authenticated backend task route.
 		imgBar.Describe("    Analyzing")
-		imageResults, err := geminiAnalyzer.AnalyzeImage(ctx, imageInfo.Path, imgBytes)
+		analysis, err := p.analyzer.AnalyzePhoto(ctx, imageInfo.Path, imgBytes)
 		if err != nil {
-			log.Printf("Failed to analyze image %s: %v", imageInfo.Path, err)
-			failResult := createFailResult(imageInfo, fmt.Sprintf("Analysis error: %v", err))
-			results = append(results, failResult)
-			raw, _ := json.Marshal(failResult)
-			_ = cp.AddResult(imageInfo.SHA256Hash, raw)
-			_ = imgBar.Add(2)
-			_ = overallBar.Add(1)
-			continue
+			return fmt.Errorf("analyzing image %q: %w", imageInfo.Filename, err)
 		}
+		imageResults := analysis.Items
+		totalCredits += analysis.Receipt.CreditsCharged
+		credentialSource = analysis.Receipt.CredentialSource
+		modelAlias = analysis.Receipt.ModelAlias
 		_ = imgBar.Add(1)
 
 		// Step 3: Process results.
@@ -235,7 +220,8 @@ func (p *Pipeline) Run() error {
 			}
 
 			// Apply confidence threshold.
-			if imageResults[j].Classification.Confidence < p.config.Processing.ConfidenceThreshold {
+			if imageResults[j].Classification.Confidence > 0 &&
+				imageResults[j].Classification.Confidence < p.config.Processing.ConfidenceThreshold {
 				imageResults[j].Classification.PrimaryType = models.EntityTypeUnclassified
 				imageResults[j].FlaggedForReview = true
 				imageResults[j].ReviewReason = fmt.Sprintf(
@@ -285,48 +271,6 @@ func (p *Pipeline) Run() error {
 
 	vendors := extractVendors(groups)
 	locations := extractLocations(groups, allImages)
-
-	// Reverse geocode GPS locations if geocoder available.
-	geocoderAPIKey := p.config.Gemini.GoogleMapsAPIKey
-	if geocoderAPIKey != "" {
-		geo := geocoder.NewGeocoder(geocoderAPIKey)
-		for i, loc := range locations {
-			if loc.HasGPS && loc.FormattedAddress == "" {
-				result, err := geo.ReverseGeocode(loc.Latitude, loc.Longitude)
-				if err == nil {
-					applyGeocodeResult(&locations[i], result)
-				} else {
-					log.Printf("Reverse geocode failed for (%.6f, %.6f): %v", loc.Latitude, loc.Longitude, err)
-				}
-			}
-		}
-	} else if hasGPSLocations(locations) {
-		// Try Nominatim as free fallback.
-		geo := geocoder.NewGeocoder("")
-		for i, loc := range locations {
-			if loc.HasGPS && loc.FormattedAddress == "" {
-				result, err := geo.ReverseGeocode(loc.Latitude, loc.Longitude)
-				if err == nil {
-					applyGeocodeResult(&locations[i], result)
-				} else {
-					log.Printf("Nominatim reverse geocode failed for (%.6f, %.6f): %v", loc.Latitude, loc.Longitude, err)
-				}
-			}
-		}
-	}
-
-	// Enrich vendors with online information via Gemini.
-	if p.config.Gemini.APIKey != "" && len(vendors) > 0 {
-		lookup, err := vendorlookup.NewVendorLookup(p.config.Gemini.APIKey, p.config.Gemini.Model)
-		if err == nil {
-			defer lookup.Close()
-			log.Println("Looking up vendor information online...")
-			fmt.Println("  Looking up vendor information online...")
-			lookup.EnrichBatch(ctx, vendors)
-		} else {
-			log.Printf("Warning: could not create vendor lookup: %v", err)
-		}
-	}
 
 	fmt.Printf("  Vendors found:   %d\n", len(vendors))
 	fmt.Printf("  Locations found: %d\n\n", len(locations))
@@ -386,6 +330,14 @@ func (p *Pipeline) Run() error {
 	_ = cp.Delete()
 
 	fmt.Printf("\n=== Pipeline complete in %.1fs ===\n", duration)
+	if credentialSource != "" {
+		fmt.Printf("  AI source: %s", credentialSource)
+		if modelAlias != "" {
+			fmt.Printf(" · %s", modelAlias)
+		}
+		fmt.Println()
+	}
+	fmt.Printf("  Credits charged: %d\n", totalCredits)
 	return nil
 }
 
@@ -510,7 +462,7 @@ func extractLocations(groups []models.ImageGroup, allImages []models.ImageInfo) 
 		})
 	}
 
-	// Extract suggested locations from Gemini analysis (for entities without GPS).
+	// Extract suggested locations from governed backend analysis (for entities without GPS).
 	suggestedMap := make(map[string]*models.DetectedLocation) // key: lowercase location name
 	for _, g := range groups {
 		data := g.Primary.ExtractedData
@@ -532,7 +484,7 @@ func extractLocations(groups []models.ImageGroup, allImages []models.ImageInfo) 
 		} else {
 			suggestedMap[key] = &models.DetectedLocation{
 				Name:        locName,
-				Source:      "gemini_suggested",
+				Source:      "ai_suggested",
 				EntityNames: []string{entityName},
 				EntityTypes: []string{entityType},
 				ImagePaths:  imagePaths,
@@ -563,33 +515,6 @@ func extractLocations(groups []models.ImageGroup, allImages []models.ImageInfo) 
 	return locations
 }
 
-// applyGeocodeResult fills in all location fields from a reverse geocode result.
-func applyGeocodeResult(loc *models.DetectedLocation, result *geocoder.ReverseGeocodeResult) {
-	loc.FormattedAddress = result.FormattedAddress
-	loc.Street = result.Street
-	loc.City = result.City
-	loc.State = result.State
-	loc.ZipCode = result.ZipCode
-	loc.PostalCode = result.PostalCode
-	loc.Country = result.Country
-	loc.GooglePlaceId = result.GooglePlaceId
-	loc.GoogleMapsUrl = result.GoogleMapsUrl
-	loc.Source = "reverse_geocoded"
-	if loc.Name == "" {
-		loc.Name = result.LocationName
-	}
-}
-
-// hasGPSLocations returns true if any location has GPS coordinates.
-func hasGPSLocations(locations []models.DetectedLocation) bool {
-	for _, loc := range locations {
-		if loc.HasGPS {
-			return true
-		}
-	}
-	return false
-}
-
 // haversineDistance returns the distance in meters between two GPS coordinates.
 func haversineDistance(lat1, lng1, lat2, lng2 float64) float64 {
 	const earthRadiusM = 6371000.0
@@ -617,28 +542,22 @@ func appendUnique(slice []string, values ...string) []string {
 	return slice
 }
 
-// printDryRun displays a cost estimate without making API calls.
+// printDryRun reports the deterministic upload scope without making AI calls.
+// Pricing is route-specific and therefore cannot be truthfully estimated by
+// the CLI without asking the backend.
 func (p *Pipeline) printDryRun(images []models.ImageInfo, duplicatesFound int, editPairs map[string][]string) {
-	estimate := analyzer.EstimateCost(len(images))
-	rpm := p.config.Gemini.RequestsPerMinute
-	if rpm < 1 {
-		rpm = 1
+	var totalBytes int64
+	for _, image := range images {
+		totalBytes += image.FileSizeBytes
 	}
-	estMinutes := float64(len(images)) / float64(rpm)
 
-	fmt.Println("\n=== DRY RUN — Cost Estimate ===")
+	fmt.Println("\n=== DRY RUN — Upload Scope ===")
 	fmt.Printf("Images to analyze:  %d\n", len(images))
 	fmt.Printf("Duplicates skipped: %d\n", duplicatesFound)
 	fmt.Printf("iPhone edit pairs:  %d (variants skipped)\n", len(editPairs))
-	fmt.Printf("Model:              %s\n", p.config.Gemini.Model)
-	fmt.Printf("Est. input tokens:  %d\n", estimate.EstimatedInputTokens)
-	fmt.Printf("Est. output tokens: %d\n", estimate.EstimatedOutputTokens)
-	fmt.Printf("Est. total cost:    $%.4f\n", estimate.EstimatedTotalCostUSD)
-	fmt.Printf("Est. time:          %.1f minutes\n", estMinutes)
-	fmt.Printf("                    (at %d req/min)\n", p.config.Gemini.RequestsPerMinute)
-	if p.config.Processing.MaxCost != nil {
-		fmt.Printf("Budget cap:         $%.2f\n", *p.config.Processing.MaxCost)
-	}
+	fmt.Printf("Input size:         %.2f MB\n", float64(totalBytes)/(1024*1024))
+	fmt.Println("AI route:           Resolved by UteamUP for the authenticated tenant")
+	fmt.Println("Estimated cost:     Unavailable without executing the governed route")
 	fmt.Println("================================")
 }
 
