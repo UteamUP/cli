@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.80.0](https://github.com/UteamUP/cli/compare/1.79.0...1.80.0) (2026-07-16)
+
+
+### Features
+
+* **agreements:** add service price list CLI domain ([3da7413](https://github.com/UteamUP/cli/commit/3da74138e893f05f95bc104a59cd115d8a40af98))
+
+
+### Bug Fixes
+
+* **fleet:** mirror GUID-first contact tools in CLI ([78d5080](https://github.com/UteamUP/cli/commit/78d5080666c5e31e591a0a9a3a1f4f17118b3d97))
+
 ## [1.79.0](https://github.com/UteamUP/cli/compare/1.78.0...1.79.0) (2026-07-16)
 
 
