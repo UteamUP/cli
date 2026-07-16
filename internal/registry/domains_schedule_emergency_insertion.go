@@ -14,6 +14,7 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "preview",
 				Flags: []FlagDef{
+					{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Caller-generated GUID reused only when retrying the same preview", Required: true, Type: "string"},
 					{Name: "workorder-guid", BodyName: "workorderGuid", Description: "Tenant-scoped urgent workorder GUID", Required: true, Type: "string"},
 					{Name: "desired-start-utc", BodyName: "desiredStartUtc", Description: "Requested UTC start for the emergency work", Required: true, Type: "string"},
 					{Name: "planning-window-end-utc", BodyName: "planningWindowEndUtc", Description: "Optional UTC end of the review window", Type: "string"},

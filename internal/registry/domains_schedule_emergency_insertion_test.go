@@ -35,6 +35,7 @@ func TestScheduleEmergencyInsertionPreviewMirrorsGuidOnlyBackendContract(t *test
 		flagType string
 		required bool
 	}{
+		"idempotency-key":           {bodyName: "idempotencyKey", flagType: "string", required: true},
 		"workorder-guid":            {bodyName: "workorderGuid", flagType: "string", required: true},
 		"desired-start-utc":         {bodyName: "desiredStartUtc", flagType: "string", required: true},
 		"planning-window-end-utc":   {bodyName: "planningWindowEndUtc", flagType: "string", required: false},
