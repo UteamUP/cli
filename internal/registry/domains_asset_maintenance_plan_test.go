@@ -38,6 +38,9 @@ func TestAssetMaintenancePlanRoutesAreGuidOnly(t *testing.T) {
 		{name: "item-add", args: map[string]any{"planExternalGuid": "plan-guid"}, path: "/api/v1/maintenanceplans/plan-guid/items"},
 		{name: "item-update", args: map[string]any{"itemExternalGuid": "item-guid"}, path: "/api/v1/maintenanceplans/items/item-guid"},
 		{name: "item-delete", args: map[string]any{"itemExternalGuid": "item-guid"}, path: "/api/v1/maintenanceplans/items/item-guid"},
+		{name: "template-get", args: map[string]any{"templateExternalGuid": "template-guid"}, path: "/api/v1/maintenanceplans/templates/template-guid"},
+		{name: "template-version", args: map[string]any{"templateExternalGuid": "template-guid"}, path: "/api/v1/maintenanceplans/templates/template-guid/versions"},
+		{name: "due-projection", args: map[string]any{"planExternalGuid": "plan-guid"}, path: "/api/v1/maintenanceplans/plan-guid/due-projection"},
 	}
 
 	for _, testCase := range testCases {
@@ -74,6 +77,12 @@ func TestAssetMaintenancePlanFlagsMirrorBackendModels(t *testing.T) {
 		_, action := maintenancePlanAction(t, actionName)
 		assertMaintenanceFlag(t, action, "name", "name", "string", true)
 		assertMaintenanceFlag(t, action, "is-active", "isActive", "bool", false)
+		assertMaintenanceFlag(t, action, "template-external-guid", "templateExternalGuid", "string", false)
+		assertMaintenanceFlag(t, action, "effective-date", "effectiveDate", "string", false)
+		assertMaintenanceFlag(t, action, "baseline-meter-value", "baselineMeterValue", "float", false)
+		assertMaintenanceFlag(t, action, "baseline-meter-attribute-external-guid", "baselineMeterAttributeExternalGuid", "string", false)
+		assertMaintenanceFlag(t, action, "consolidation-window-days", "consolidationWindowDays", "int", false)
+		assertMaintenanceFlag(t, action, "due-trigger-policy", "dueTriggerPolicy", "int", false)
 	}
 
 	for _, actionName := range []string{"item-add", "item-update"} {
@@ -81,10 +90,22 @@ func TestAssetMaintenancePlanFlagsMirrorBackendModels(t *testing.T) {
 		assertMaintenanceFlag(t, action, "trigger-type", "triggerType", "int", false)
 		assertMaintenanceFlag(t, action, "calendar-interval-days", "calendarIntervalDays", "int", false)
 		assertMaintenanceFlag(t, action, "meter-interval-value", "meterIntervalValue", "float", false)
+		assertMaintenanceFlag(t, action, "meter-attribute-definition-external-guid", "meterAttributeDefinitionExternalGuid", "string", false)
 		assertMaintenanceFlag(t, action, "workorder-template-external-guid", "workorderTemplateExternalGuid", "string", false)
 		assertMaintenanceFlag(t, action, "required-for-warranty", "isRequiredForWarranty", "bool", false)
 		assertMaintenanceFlag(t, action, "required-for-certification", "isRequiredForCertification", "bool", false)
 	}
+
+	for _, actionName := range []string{"template-create", "template-version"} {
+		_, action := maintenancePlanAction(t, actionName)
+		assertMaintenanceFlag(t, action, "name", "name", "string", true)
+		assertMaintenanceFlag(t, action, "consolidation-window-days", "consolidationWindowDays", "int", false)
+	}
+
+	_, templateList := maintenancePlanAction(t, "template-list")
+	assertMaintenanceFlag(t, templateList, "include-history", "includeHistory", "bool", false)
+	_, dueProjection := maintenancePlanAction(t, "due-projection")
+	assertMaintenanceFlag(t, dueProjection, "as-of", "asOf", "string", false)
 }
 
 func assertMaintenanceFlag(
