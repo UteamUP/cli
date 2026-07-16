@@ -1375,6 +1375,28 @@ func TestStockVendorRankingActionWired(t *testing.T) {
 	}
 }
 
+func TestStockOptimizationProposalActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "optimization-propose", "UteamupStockProposeOptimization", "POST", "optimization/proposals")
+	item := stockFlagByName(action, "stock-item-guid")
+	if item == nil || !item.Required || item.BodyName != "stockItemGuid" || item.Type != "string" {
+		t.Fatalf("optimization-propose stock-item-guid must be required and GUID-first, got %+v", item)
+	}
+	if quantity := stockFlagByName(action, "required-quantity"); quantity == nil || quantity.Type != "int" || quantity.BodyName != "requiredQuantity" {
+		t.Errorf("optimization-propose required-quantity miswired: %+v", quantity)
+	}
+	if objective := stockFlagByName(action, "objective"); objective == nil || objective.Default != "availability" || objective.BodyName != "objectiveKey" {
+		t.Errorf("optimization-propose objective miswired: %+v", objective)
+	}
+	if substitutes := stockFlagByName(action, "include-substitutes"); substitutes == nil || substitutes.Default != true || substitutes.BodyName != "includeSubstitutes" {
+		t.Errorf("optimization-propose include-substitutes miswired: %+v", substitutes)
+	}
+	for _, flag := range action.Flags {
+		if flag.Name == "tenant-id" || flag.Name == "stock-item-id" {
+			t.Fatalf("optimization-propose leaked integer boundary flag: %+v", flag)
+		}
+	}
+}
+
 func TestStockTcoActionWired(t *testing.T) {
 	action := assertStockActionRoute(t, "tco", "UteamupStockItemTco", "", "items/{guid}/tco")
 	if len(action.Args) != 1 || action.Args[0].Name != "guid" {

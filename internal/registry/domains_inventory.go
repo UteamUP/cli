@@ -827,6 +827,20 @@ func init() {
 				RESTPath:    "suggested-orders",
 			},
 			Action{
+				Name:        "optimization-propose",
+				Description: "Compare reservation-aware transfer, supplier purchase, explicit substitute and defer scenarios without executing them",
+				ToolName:    "UteamupStockProposeOptimization",
+				HTTPMethod:  "POST",
+				RESTPath:    "optimization/proposals",
+				Flags: []FlagDef{
+					{Name: "stock-item-guid", BodyName: "stockItemGuid", Description: "Destination stock item GUID", Required: true, Type: "string"},
+					{Name: "required-quantity", BodyName: "requiredQuantity", Description: "Required quantity (omit for live server-derived reorder shortfall)", Type: "int"},
+					{Name: "needed-by-utc", BodyName: "neededByUtc", Description: "Latest acceptable availability time in ISO 8601 UTC", Type: "string"},
+					{Name: "objective", BodyName: "objectiveKey", Description: "availability, cost, working-capital, or supplier-reliability", Default: "availability", Type: "string"},
+					{Name: "include-substitutes", BodyName: "includeSubstitutes", Description: "Include explicit Alternate/SupersededBy catalog links", Default: true, Type: "bool"},
+				},
+			},
+			Action{
 				Name:        "suggested-orders-create-po",
 				Description: "Create one Draft purchase order from a confirmed suggested-orders vendor group (omit --vendor-guid to confirm the no-resolvable-vendor group; quantities are MOQ-rounded)",
 				ToolName:    "UteamupStockCreateSuggestedOrderPo",
