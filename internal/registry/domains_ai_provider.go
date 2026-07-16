@@ -8,6 +8,14 @@ func init() {
 		APIPath:     "/api/tenant-ai-provider",
 		Actions: []Action{
 			{
+				Name:         "governance-snapshot",
+				Description:  "Read masked tenant AI providers, models, routes, coverage and policy",
+				ToolName:     "UteamupGetTenantAIControlPlaneSnapshot",
+				RESTBasePath: "/api/tenant-ai-governance",
+				RESTPath:     "snapshot",
+				HTTPMethod:   "GET",
+			},
+			{
 				Name:        "get",
 				Description: "Get the current tenant's BYOK AI provider configuration",
 				ToolName:    "UteamupGetAIProviderConfig",
