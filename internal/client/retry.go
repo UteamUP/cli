@@ -2,8 +2,9 @@ package client
 
 import (
 	"context"
+	cryptorand "crypto/rand"
+	"encoding/binary"
 	"math"
-	"math/rand/v2"
 	"net"
 	"strings"
 	"time"
@@ -68,9 +69,23 @@ func CalculateBackoff(attempt int, baseDelay, maxDelay time.Duration) time.Durat
 	if delay > float64(maxDelay) {
 		delay = float64(maxDelay)
 	}
-	// Add +/-20% jitter
-	jitter := delay * 0.2 * (rand.Float64()*2 - 1)
+	// Add +/-20% jitter from the operating system's secure random source. If that source is
+	// temporarily unavailable, retain the bounded exponential delay without jitter.
+	jitter := delay * 0.2 * secureRandomSignedUnit()
 	return time.Duration(delay + jitter)
+}
+
+func secureRandomSignedUnit() float64 {
+	var randomBytes [8]byte
+	if _, err := cryptorand.Read(randomBytes[:]); err != nil {
+		return 0
+	}
+
+	const mantissaBits = 53
+	const maximumMantissa = uint64(1<<mantissaBits) - 1
+	randomMantissa := binary.LittleEndian.Uint64(randomBytes[:]) >> (64 - mantissaBits)
+	unit := float64(randomMantissa) / float64(maximumMantissa)
+	return unit*2 - 1
 }
 
 // IsRetryable determines if an error should be retried.

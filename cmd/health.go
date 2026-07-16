@@ -83,12 +83,7 @@ func environmentFromBaseURL(baseURL string) string {
 // checkBackendHealth performs a best-effort GET against /health.
 func checkBackendHealth(baseURL string) bool {
 	url := strings.TrimRight(baseURL, "/") + "/health"
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure}, //nolint:gosec // user-requested dev flag
-		},
-	}
+	client := newHealthClient()
 
 	resp, err := client.Get(url)
 	if err != nil {
@@ -97,6 +92,18 @@ func checkBackendHealth(baseURL string) bool {
 	defer resp.Body.Close()
 
 	return resp.StatusCode == http.StatusOK
+}
+
+func newHealthClient() *http.Client {
+	return &http.Client{
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				MinVersion:         tls.VersionTLS12,
+				InsecureSkipVerify: insecure, //nolint:gosec // user-requested dev flag
+			},
+		},
+	}
 }
 
 func init() {
