@@ -26,7 +26,7 @@ func init() {
 					{Name: "week-start", BodyName: "weekStart", Description: "UTC start of the planning week", Required: true, Type: "string"},
 					{Name: "workorder-guids", BodyName: "workorderGuids", Description: "Tenant-scoped workorder GUIDs", Required: true, Type: "stringSlice"},
 					{Name: "technician-guids", BodyName: "technicianGuids", Description: "Eligible tenant member GUIDs", Required: true, Type: "stringSlice"},
-					{Name: "team-guid", BodyName: "teamGuid", Description: "Optional tenant-scoped team GUID", Type: "string"},
+					{Name: "team-guid", BodyName: "teamGuid", Description: "Optional tenant-scoped team GUID", Type: "uuid"},
 					{Name: "horizon-days", BodyName: "horizonDays", Description: "Planning horizon in days (1-30)", Type: "int", Default: 7},
 				},
 			},

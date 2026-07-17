@@ -71,7 +71,7 @@ func TestScheduleOptimizationCreateFlagsMirrorBackendModel(t *testing.T) {
 		"week-start":       {bodyName: "weekStart", flagType: "string", required: true},
 		"workorder-guids":  {bodyName: "workorderGuids", flagType: "stringSlice", required: true},
 		"technician-guids": {bodyName: "technicianGuids", flagType: "stringSlice", required: true},
-		"team-guid":        {bodyName: "teamGuid", flagType: "string", required: false},
+		"team-guid":        {bodyName: "teamGuid", flagType: "uuid", required: false},
 		"horizon-days":     {bodyName: "horizonDays", flagType: "int", required: false},
 	}
 
