@@ -28,7 +28,17 @@ func init() {
 			},
 		),
 	})
-	Register(&Domain{Name: "asset-rental", Description: "Manage asset rentals", Actions: crudActions("AssetRental")})
+	Register(&Domain{
+		Name:        "asset-rental",
+		Description: "Manage asset rentals",
+		Actions: append(crudActions("AssetRental"), Action{
+			Name:        "available",
+			Description: "List rental-configured assets currently available",
+			ToolName:    "UteamupAssetrentalGetAvailable",
+			HTTPMethod:  "GET",
+			RESTPath:    "available",
+		}),
+	})
 	Register(&Domain{Name: "asset-replacement-plan", Description: "Manage asset replacement plans", Actions: crudActions("AssetReplacementPlan")})
 	Register(&Domain{Name: "asset-scan-log", Description: "View asset scan logs", Actions: listGetActions("AssetScanLog")})
 	Register(&Domain{
