@@ -4,6 +4,7 @@ import "testing"
 
 func TestProjectGovernanceDomainsAreGuidFirst(t *testing.T) {
 	domains := []string{
+		"project-field-context",
 		"project-member",
 		"project-dependency",
 		"project-activity",
@@ -28,6 +29,20 @@ func TestProjectGovernanceDomainsAreGuidFirst(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestProjectFieldContextReadRoute(t *testing.T) {
+	action := findDomainAction(t, "project-field-context", "get")
+	if action.HTTPMethod != "" ||
+		action.RESTPath != "{projectGuid}/field-context" ||
+		action.ToolName != "UteamupProjectFieldContextGet" {
+		t.Errorf(
+			"project-field-context get: want GET {projectGuid}/field-context UteamupProjectFieldContextGet, got %s %s %s",
+			action.HTTPMethod,
+			action.RESTPath,
+			action.ToolName,
+		)
 	}
 }
 

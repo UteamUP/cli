@@ -13,6 +13,22 @@ func projectResourceArguments(resourceName, description string) []ArgDef {
 
 func init() {
 	Register(&Domain{
+		Name:        "project-field-context",
+		Aliases:     []string{"project-field", "project-context"},
+		Description: "Read deterministic project context for field execution",
+		APIPath:     "/api/projects",
+		Actions: []Action{
+			{
+				Name:        "get",
+				Description: "Get stage, milestone, critical-path, budget, risk, and evidence context",
+				ToolName:    "UteamupProjectFieldContextGet",
+				RESTPath:    "{projectGuid}/field-context",
+				Args:        projectGUIDArgument,
+			},
+		},
+	})
+
+	Register(&Domain{
 		Name:        "project-member",
 		Aliases:     []string{"project-members"},
 		Description: "Manage project team membership, roles, and allocation",
