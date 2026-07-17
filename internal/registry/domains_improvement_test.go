@@ -90,14 +90,56 @@ func TestImprovementProjectNestedRoutesExpandAllGuids(t *testing.T) {
 	}
 }
 
+func TestKaizenAndSuggestionDomainsUseGuidFirstRoutes(t *testing.T) {
+	testCases := []struct {
+		domainName string
+		actionName string
+		expected   string
+	}{
+		{"kaizen-card", "get", "by-guid/{cardGuid}"},
+		{"kaizen-card", "update", "by-guid/{cardGuid}"},
+		{"kaizen-card", "delete", "by-guid/{cardGuid}"},
+		{"kaizen-card", "move", "by-guid/{cardGuid}/move"},
+		{"kaizen-card", "escalate", "by-guid/{cardGuid}/escalate"},
+		{"kaizen-card", "create-suggestion", "by-guid/{cardGuid}/create-suggestion"},
+		{"improvement-suggestion", "get", "by-guid/{suggestionGuid}"},
+		{"improvement-suggestion", "review", "by-guid/{suggestionGuid}/review"},
+		{"improvement-suggestion", "convert", "by-guid/{suggestionGuid}/convert"},
+		{"improvement-suggestion", "create-workorder", "by-guid/{suggestionGuid}/create-workorder"},
+		{"improvement-suggestion", "linked-workorders", "by-guid/{suggestionGuid}/linked-workorders"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.domainName+"/"+testCase.actionName, func(t *testing.T) {
+			domain := findImprovementRelatedDomain(t, testCase.domainName)
+			action := findImprovementAction(t, domain, testCase.actionName)
+			if action.RESTPath != testCase.expected {
+				t.Fatalf("RESTPath = %q, want %q", action.RESTPath, testCase.expected)
+			}
+			if strings.Contains(action.RESTPath, "{id}") {
+				t.Fatalf("RESTPath exposes integer identity: %q", action.RESTPath)
+			}
+			for _, arg := range action.Args {
+				if arg.Name == "id" || arg.Type != "uuid" {
+					t.Fatalf("action exposes non-GUID identity argument: %+v", arg)
+				}
+			}
+		})
+	}
+}
+
 func findImprovementDomain(t *testing.T) *Domain {
+	return findImprovementRelatedDomain(t, "improvement-project")
+}
+
+func findImprovementRelatedDomain(t *testing.T, name string) *Domain {
 	t.Helper()
 	for _, domain := range DefaultRegistry.Domains() {
-		if domain.Name == "improvement-project" {
+		if domain.Name == name {
 			return domain
 		}
 	}
-	t.Fatal("improvement-project domain is not registered")
+	t.Fatalf("%s domain is not registered", name)
 	return nil
 }
 

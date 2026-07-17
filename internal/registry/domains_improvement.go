@@ -125,16 +125,53 @@ func init() {
 	Register(&Domain{
 		Name:        "kaizen-card",
 		Aliases:     []string{"kaizen", "kc"},
-		Description: "Manage kaizen cards",
-		Actions:     crudActions("KaizenCard"),
+		Description: "Manage GUID-first kaizen cards",
+		APIPath:     "/api/kaizen",
+		Actions: []Action{
+			{Name: "board", Description: "Get the kaizen board", ToolName: "UteamupKaizenGetBoard", HTTPMethod: "GET", RESTPath: "board"},
+			{Name: "get", Description: "Get a kaizen card by public GUID", ToolName: "UteamupKaizenGet", RESTPath: "by-guid/{cardGuid}", Args: []ArgDef{kaizenCardGuidArg()}},
+			{Name: "create", Description: "Create a kaizen card", ToolName: "UteamupKaizenCreate", Flags: []FlagDef{jsonFlag()}},
+			{Name: "update", Description: "Update a kaizen card by public GUID", ToolName: "UteamupKaizenUpdate", RESTPath: "by-guid/{cardGuid}", Args: []ArgDef{kaizenCardGuidArg()}, Flags: []FlagDef{jsonFlag()}},
+			{Name: "delete", Description: "Delete a kaizen card by public GUID", ToolName: "UteamupKaizenDelete", RESTPath: "by-guid/{cardGuid}", Args: []ArgDef{kaizenCardGuidArg()}},
+			{Name: "move", Description: "Move a kaizen card by public GUID", ToolName: "UteamupKaizenMove", HTTPMethod: "PUT", RESTPath: "by-guid/{cardGuid}/move", Args: []ArgDef{kaizenCardGuidArg()}, Flags: []FlagDef{jsonFlag()}},
+			{Name: "escalate", Description: "Escalate a kaizen card to a project", ToolName: "UteamupKaizenEscalate", HTTPMethod: "POST", RESTPath: "by-guid/{cardGuid}/escalate", Args: []ArgDef{kaizenCardGuidArg()}},
+			{Name: "create-suggestion", Description: "Create a suggestion from a kaizen card", ToolName: "UteamupKaizenCreateSuggestion", HTTPMethod: "POST", RESTPath: "by-guid/{cardGuid}/create-suggestion", Args: []ArgDef{kaizenCardGuidArg()}},
+		},
 	})
 
 	Register(&Domain{
 		Name:        "improvement-suggestion",
 		Aliases:     []string{"suggestion", "imp-suggestion"},
-		Description: "Manage improvement suggestions",
-		Actions:     crudActions("ImprovementSuggestion"),
+		Description: "Manage GUID-first improvement suggestions",
+		APIPath:     "/api/improvementsuggestion",
+		Actions: []Action{
+			{Name: "list", Description: "List improvement suggestions", ToolName: "UteamupImprovementSuggestionList", Flags: paginationFlags()},
+			{Name: "get", Description: "Get an improvement suggestion by public GUID", ToolName: "UteamupImprovementSuggestionGet", RESTPath: "by-guid/{suggestionGuid}", Args: []ArgDef{improvementSuggestionGuidArg()}},
+			{Name: "create", Description: "Create an improvement suggestion", ToolName: "UteamupImprovementSuggestionCreate", Flags: []FlagDef{jsonFlag()}},
+			{Name: "review", Description: "Review an improvement suggestion", ToolName: "UteamupImprovementSuggestionReview", HTTPMethod: "POST", RESTPath: "by-guid/{suggestionGuid}/review", Args: []ArgDef{improvementSuggestionGuidArg()}, Flags: []FlagDef{jsonFlag()}},
+			{Name: "convert", Description: "Convert an improvement suggestion to a project", ToolName: "UteamupImprovementSuggestionConvert", HTTPMethod: "POST", RESTPath: "by-guid/{suggestionGuid}/convert", Args: []ArgDef{improvementSuggestionGuidArg()}},
+			{Name: "create-workorder", Description: "Create a linked work order", ToolName: "UteamupImprovementSuggestionCreateWorkOrder", HTTPMethod: "POST", RESTPath: "by-guid/{suggestionGuid}/create-workorder", Args: []ArgDef{improvementSuggestionGuidArg()}},
+			{Name: "linked-workorders", Description: "List linked work orders", ToolName: "UteamupImprovementSuggestionLinkedWorkOrders", HTTPMethod: "GET", RESTPath: "by-guid/{suggestionGuid}/linked-workorders", Args: []ArgDef{improvementSuggestionGuidArg()}},
+		},
 	})
+}
+
+func kaizenCardGuidArg() ArgDef {
+	return ArgDef{
+		Name:        "cardGuid",
+		Description: "Kaizen card public GUID",
+		Required:    true,
+		Type:        "uuid",
+	}
+}
+
+func improvementSuggestionGuidArg() ArgDef {
+	return ArgDef{
+		Name:        "suggestionGuid",
+		Description: "Improvement suggestion public GUID",
+		Required:    true,
+		Type:        "uuid",
+	}
 }
 
 func improvementProjectGuidArg() ArgDef {
