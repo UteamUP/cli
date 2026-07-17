@@ -18,9 +18,7 @@ package registry
 //	GET    /api/meter-reading-schedules/compliance/summary                — tenant-wide compliance (paginated)
 //	GET    /api/meter-reading-schedules/asset/{assetGuid}/open-workorders  — all open meter-reading workorders
 //
-// Legacy int-keyed routes are still callable as `[Obsolete]` deprecation
-// shims on the backend; the CLI surface intentionally omits them so new
-// users don't reach for the deprecated identifiers.
+// Integer-keyed routes are not exposed; every CLI identity is an external Guid.
 func init() {
 	Register(&Domain{
 		Name:        "meter-schedule",
