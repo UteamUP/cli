@@ -31,13 +31,32 @@ func init() {
 	Register(&Domain{
 		Name:        "asset-rental",
 		Description: "Manage asset rentals",
-		Actions: append(crudActions("AssetRental"), Action{
-			Name:        "available",
-			Description: "List rental-configured assets currently available",
-			ToolName:    "UteamupAssetrentalGetAvailable",
-			HTTPMethod:  "GET",
-			RESTPath:    "available",
-		}),
+		Actions: append(crudActions("AssetRental"),
+			Action{
+				Name:        "available",
+				Description: "List rental-configured assets currently available",
+				ToolName:    "UteamupAssetrentalGetAvailable",
+				HTTPMethod:  "GET",
+				RESTPath:    "available",
+			},
+			Action{
+				Name:        "active",
+				Description: "List rental-configured assets currently rented",
+				ToolName:    "UteamupAssetrentalGetRented",
+				HTTPMethod:  "GET",
+				RESTPath:    "rented",
+			},
+			Action{
+				Name:        "expiring",
+				Description: "List rentals due back within a planning window",
+				ToolName:    "UteamupAssetrentalGetExpiringSoon",
+				HTTPMethod:  "GET",
+				RESTPath:    "expiring-soon",
+				Flags: []FlagDef{
+					{Name: "days", Description: "Planning window in days (1-365)", Type: "int", Default: 30},
+				},
+			},
+		),
 	})
 	Register(&Domain{Name: "asset-replacement-plan", Description: "Manage asset replacement plans", Actions: crudActions("AssetReplacementPlan")})
 	Register(&Domain{Name: "asset-scan-log", Description: "View asset scan logs", Actions: listGetActions("AssetScanLog")})

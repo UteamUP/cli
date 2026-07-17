@@ -21,3 +21,25 @@ func TestAssetRentalAvailableActionHasNoIdentifierBoundary(t *testing.T) {
 	}
 	t.Fatal("asset-rental available action is not registered")
 }
+
+func TestAssetRentalActiveAndExpiringActionsUseNoIdentifierBoundary(t *testing.T) {
+	domain := findDomain("asset-rental")
+	if domain == nil {
+		t.Fatal("asset-rental domain is not registered")
+	}
+	actions := map[string]*Action{}
+	for index := range domain.Actions {
+		actions[domain.Actions[index].Name] = &domain.Actions[index]
+	}
+	active := actions["active"]
+	if active == nil || active.ToolName != "UteamupAssetrentalGetRented" ||
+		len(active.Args) != 0 || len(active.Flags) != 0 {
+		t.Fatalf("unexpected active-rental action: %+v", active)
+	}
+	expiring := actions["expiring"]
+	if expiring == nil || expiring.ToolName != "UteamupAssetrentalGetExpiringSoon" ||
+		len(expiring.Args) != 0 || len(expiring.Flags) != 1 ||
+		expiring.Flags[0].Name != "days" {
+		t.Fatalf("unexpected expiring-rental action: %+v", expiring)
+	}
+}
