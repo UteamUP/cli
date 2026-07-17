@@ -37,6 +37,8 @@ func TestServiceBillingRoutesAndArgumentsAreGuidOnly(t *testing.T) {
 		{"service-invoice", "paid", "invoiceGuid", "/api/service-invoices/invoice-guid/paid"},
 		{"service-invoice", "void", "invoiceGuid", "/api/service-invoices/invoice-guid/void"},
 		{"service-invoice", "credit", "invoiceGuid", "/api/service-invoices/invoice-guid/credit"},
+		{"service-invoice", "accounting-exports", "invoiceGuid", "/api/service-invoices/invoice-guid/exports"},
+		{"service-invoice", "accounting-export", "invoiceGuid", "/api/service-invoices/invoice-guid/exports"},
 	}
 	for _, test := range tests {
 		t.Run(test.domainName+"-"+test.actionName, func(t *testing.T) {
@@ -69,7 +71,12 @@ func TestServiceBillingActionsMirrorBackendToolsAndReviewedEvidence(t *testing.T
 			"list": "UteamupServiceInvoiceList", "get": "UteamupServiceInvoiceGet",
 			"issue": "UteamupServiceInvoiceIssue", "send": "UteamupServiceInvoiceSend",
 			"paid": "UteamupServiceInvoicePaid", "void": "UteamupServiceInvoiceVoid",
-			"credit": "UteamupServiceInvoiceCredit",
+			"credit":                      "UteamupServiceInvoiceCredit",
+			"accounting-exports":          "UteamupServiceAccountingExportList",
+			"accounting-export":           "UteamupServiceAccountingExportCreate",
+			"accounting-export-retry":     "UteamupServiceAccountingExportRetry",
+			"accounting-export-reconcile": "UteamupServiceAccountingExportReconcile",
+			"accounting-export-download":  "UteamupServiceAccountingExportDownload",
 		},
 	}
 	for domainName, actions := range expectedTools {
@@ -102,6 +109,93 @@ func TestServiceBillingActionsMirrorBackendToolsAndReviewedEvidence(t *testing.T
 	for _, actionName := range []string{"void", "credit"} {
 		_, action := serviceBillingAction(t, "service-invoice", actionName)
 		assertServiceBillingFlag(t, action, "reason", "reason", true)
+	}
+
+	_, accountingExport := serviceBillingAction(t, "service-invoice", "accounting-export")
+	assertServiceBillingFlag(
+		t,
+		accountingExport,
+		"idempotency-key",
+		"idempotencyKey",
+		true)
+	assertServiceBillingFlag(
+		t,
+		accountingExport,
+		"expected-invoice-updated-at",
+		"expectedInvoiceUpdatedAt",
+		true)
+	assertServiceBillingFlag(t, accountingExport, "connector", "connectorKey", false)
+
+	_, accountingRetry := serviceBillingAction(
+		t,
+		"service-invoice",
+		"accounting-export-retry")
+	assertServiceBillingFlag(
+		t,
+		accountingRetry,
+		"idempotency-key",
+		"idempotencyKey",
+		true)
+
+	_, accountingReconcile := serviceBillingAction(
+		t,
+		"service-invoice",
+		"accounting-export-reconcile")
+	assertServiceBillingFlag(
+		t,
+		accountingReconcile,
+		"external-reference",
+		"externalReference",
+		true)
+	assertServiceBillingFlag(t, accountingReconcile, "status", "status", true)
+	assertServiceBillingFlag(t, accountingReconcile, "reason", "reason", false)
+}
+
+func TestServiceAccountingExportRoutesUseOnlyGuidArguments(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		actionName string
+		path       string
+	}{
+		{
+			"accounting-export-retry",
+			"/api/service-invoices/invoice-guid/exports/export-guid/retry",
+		},
+		{
+			"accounting-export-reconcile",
+			"/api/service-invoices/invoice-guid/exports/export-guid/reconcile",
+		},
+		{
+			"accounting-export-download",
+			"/api/service-invoices/invoice-guid/exports/export-guid/content",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.actionName, func(t *testing.T) {
+			_, action := serviceBillingAction(t, "service-invoice", test.actionName)
+			path, consumed := buildRESTPath(
+				findDomain("service-invoice"),
+				action,
+				map[string]any{
+					"invoiceGuid": "invoice-guid",
+					"exportGuid":  "export-guid",
+				})
+			if path != test.path {
+				t.Fatalf("path = %q, want %q", path, test.path)
+			}
+			if len(consumed) != 2 || len(action.Args) != 2 {
+				t.Fatalf(
+					"accounting route must consume two GUIDs: args=%+v consumed=%v",
+					action.Args,
+					consumed)
+			}
+			for _, argument := range action.Args {
+				if argument.Type != "uuid" || !strings.HasSuffix(argument.Name, "Guid") {
+					t.Fatalf("public accounting identity is not a GUID: %+v", argument)
+				}
+			}
+		})
 	}
 }
 

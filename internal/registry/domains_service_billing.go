@@ -40,6 +40,23 @@ func serviceInvoiceCorrectionFlags() []FlagDef {
 	})
 }
 
+func serviceAccountingExportCreateFlags() []FlagDef {
+	return []FlagDef{
+		{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Tenant-scoped export idempotency UUID", Required: true, Type: "string"},
+		{Name: "expected-invoice-updated-at", BodyName: "expectedInvoiceUpdatedAt", Description: "Exact reviewed invoice UpdatedAt timestamp", Required: true, Type: "string"},
+		{Name: "connector", BodyName: "connectorKey", Description: "Reviewed accounting connector key", Default: "neutral-csv", Type: "string"},
+	}
+}
+
+func serviceAccountingReconcileFlags() []FlagDef {
+	return []FlagDef{
+		{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Tenant-scoped reconciliation idempotency UUID", Required: true, Type: "string"},
+		{Name: "external-reference", BodyName: "externalReference", Description: "External accounting reference", Required: true, Type: "string"},
+		{Name: "status", BodyName: "status", Description: "Accounting outcome: 0=Accepted, 1=Rejected", Required: true, Type: "int"},
+		{Name: "reason", BodyName: "reason", Description: "Required when the external outcome is Rejected", Type: "string"},
+	}
+}
+
 func init() {
 	Register(&Domain{
 		Name:        "service-billing",
@@ -174,6 +191,65 @@ func init() {
 					{Name: "invoiceGuid", Description: "Service invoice external GUID", Required: true, Type: "uuid"},
 				},
 				Flags: serviceInvoiceCorrectionFlags(),
+			},
+			{
+				Name:        "accounting-exports",
+				Description: "List immutable accounting export attempts and reconciliation evidence",
+				ToolName:    "UteamupServiceAccountingExportList",
+				HTTPMethod:  "GET",
+				RESTPath:    "{invoiceGuid}/exports",
+				Args: []ArgDef{
+					{Name: "invoiceGuid", Description: "Service invoice external GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:        "accounting-export",
+				Description: "Create a reviewed neutral or provider-specific accounting export",
+				ToolName:    "UteamupServiceAccountingExportCreate",
+				HTTPMethod:  "POST",
+				RESTPath:    "{invoiceGuid}/exports",
+				Args: []ArgDef{
+					{Name: "invoiceGuid", Description: "Service invoice external GUID", Required: true, Type: "uuid"},
+				},
+				Flags: serviceAccountingExportCreateFlags(),
+			},
+			{
+				Name:        "accounting-export-retry",
+				Description: "Retry an export as a new immutable attempt linked to the earlier attempt",
+				ToolName:    "UteamupServiceAccountingExportRetry",
+				HTTPMethod:  "POST",
+				RESTPath:    "{invoiceGuid}/exports/{exportGuid}/retry",
+				Args: []ArgDef{
+					{Name: "invoiceGuid", Description: "Service invoice external GUID", Required: true, Type: "uuid"},
+					{Name: "exportGuid", Description: "Failed accounting export external GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Tenant-scoped retry idempotency UUID", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "accounting-export-reconcile",
+				Description: "Record the reviewed external acceptance or rejection for one export",
+				ToolName:    "UteamupServiceAccountingExportReconcile",
+				HTTPMethod:  "POST",
+				RESTPath:    "{invoiceGuid}/exports/{exportGuid}/reconcile",
+				Args: []ArgDef{
+					{Name: "invoiceGuid", Description: "Service invoice external GUID", Required: true, Type: "uuid"},
+					{Name: "exportGuid", Description: "Successful accounting export external GUID", Required: true, Type: "uuid"},
+				},
+				Flags: serviceAccountingReconcileFlags(),
+			},
+			{
+				Name:        "accounting-export-download",
+				Description: "Download the exact immutable accounting CSV payload",
+				ToolName:    "UteamupServiceAccountingExportDownload",
+				HTTPMethod:  "GET",
+				RESTPath:    "{invoiceGuid}/exports/{exportGuid}/content",
+				Args: []ArgDef{
+					{Name: "invoiceGuid", Description: "Service invoice external GUID", Required: true, Type: "uuid"},
+					{Name: "exportGuid", Description: "Successful accounting export external GUID", Required: true, Type: "uuid"},
+				},
+				DisableResponseExport: true,
 			},
 		},
 	})
