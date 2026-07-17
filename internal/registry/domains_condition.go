@@ -10,7 +10,7 @@ func init() {
 				Description: "Create a condition assessment for an asset",
 				ToolName:    "UteamupConditionAssess",
 				Flags: []FlagDef{
-					{Name: "asset-id", Description: "Asset ID", Required: true, Type: "int"},
+					{Name: "asset-guid", Description: "Public asset GUID", Required: true, Type: "string"},
 					{Name: "overall-grade", Description: "Overall condition grade", Required: true, Type: "int"},
 					{Name: "structural-grade", Description: "Structural condition grade", Type: "int"},
 					{Name: "performance-grade", Description: "Performance condition grade", Type: "int"},
@@ -24,7 +24,7 @@ func init() {
 				Description: "Get the latest condition assessment for an asset",
 				ToolName:    "UteamupConditionGet",
 				Flags: []FlagDef{
-					{Name: "asset-id", Description: "Asset ID", Required: true, Type: "int"},
+					{Name: "asset-guid", Description: "Public asset GUID", Required: true, Type: "string"},
 				},
 			},
 			{
@@ -32,7 +32,7 @@ func init() {
 				Description: "Get condition assessment history for an asset",
 				ToolName:    "UteamupConditionHistory",
 				Flags: append(paginationFlags(),
-					FlagDef{Name: "asset-id", Description: "Asset ID", Required: true, Type: "int"},
+					FlagDef{Name: "asset-guid", Description: "Public asset GUID", Required: true, Type: "string"},
 				),
 			},
 			{
@@ -40,7 +40,7 @@ func init() {
 				Description: "Get the condition heat map",
 				ToolName:    "UteamupConditionHeatMap",
 				Flags: []FlagDef{
-					{Name: "location-id", Description: "Filter by location ID", Type: "int"},
+					{Name: "location-guid", Description: "Filter by public location GUID", Type: "string"},
 					{Name: "max-grade", Description: "Maximum grade to include", Type: "int"},
 				},
 			},
