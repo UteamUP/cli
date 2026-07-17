@@ -59,11 +59,11 @@ type DetectedLocation struct {
 	ZipCode          string  `json:"zip_code"`
 	PostalCode       string  `json:"postal_code"`
 	Country          string  `json:"country"`
-	GooglePlaceId    string  `json:"google_place_id"`
+	GooglePlaceID    string  `json:"google_place_id"`
 	FormattedAddress string  `json:"formatted_address"`
 	Latitude         float64 `json:"latitude"`
 	Longitude        float64 `json:"longitude"`
-	GoogleMapsUrl    string  `json:"google_maps_url"`
+	GoogleMapsURL    string  `json:"google_maps_url"`
 	HasGPS           bool    `json:"has_gps"`
 	Source           string  `json:"source"` // "gps_exif", "gps_video_metadata", "ai_suggested"
 	// Linking info

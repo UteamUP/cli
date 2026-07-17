@@ -51,13 +51,13 @@ func TestWholesalerActionsWired(t *testing.T) {
 	guidActions := []string{"get", "catalog"}
 	for _, name := range guidActions {
 		a := actions[name]
-		hasGuid := false
+		hasGUID := false
 		for _, f := range a.Flags {
 			if f.Name == "guid" && f.Required && f.Type == "string" {
-				hasGuid = true
+				hasGUID = true
 			}
 		}
-		if !hasGuid {
+		if !hasGUID {
 			t.Errorf("action %q must take a required string --guid flag", name)
 		}
 	}

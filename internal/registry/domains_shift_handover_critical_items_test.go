@@ -18,7 +18,7 @@ func TestShiftHandoverCriticalItemActionsMirrorGuidContracts(t *testing.T) {
 		{"section-critical-acknowledge", "UteamupShiftHandoverAcknowledgeCriticalSection", "by-guid/{handoverGuid}/sections/{sectionGuid}/acknowledge-critical", "sectionGuid", "22222222-2222-4222-8222-222222222222"},
 		{"carryover-critical-acknowledge", "UteamupShiftHandoverAcknowledgeCriticalCarryOver", "by-guid/{handoverGuid}/carryovers/{carryOverGuid}/acknowledge-critical", "carryOverGuid", "33333333-3333-4333-8333-333333333333"},
 	}
-	handoverGuid := "11111111-1111-4111-8111-111111111111"
+	handoverGUID := "11111111-1111-4111-8111-111111111111"
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -30,10 +30,10 @@ func TestShiftHandoverCriticalItemActionsMirrorGuidContracts(t *testing.T) {
 				t.Fatalf("args must be two GUIDs: %+v", action.Args)
 			}
 			path, consumed := buildRESTPath(domain, *action, map[string]any{
-				"handoverGuid": handoverGuid,
+				"handoverGuid": handoverGUID,
 				test.itemArg:   test.itemValue,
 			})
-			if path != "/api/shifthandover/"+replaceGuidPlaceholders(test.path, handoverGuid, test.itemValue) {
+			if path != "/api/shifthandover/"+replaceGUIDPlaceholders(test.path, handoverGUID, test.itemValue) {
 				t.Fatalf("path = %q", path)
 			}
 			if !reflect.DeepEqual(consumed, []string{"handoverGuid", test.itemArg}) {
@@ -45,11 +45,11 @@ func TestShiftHandoverCriticalItemActionsMirrorGuidContracts(t *testing.T) {
 	}
 }
 
-func replaceGuidPlaceholders(path, handoverGuid, itemGuid string) string {
+func replaceGUIDPlaceholders(path, handoverGUID, itemGUID string) string {
 	result := path
-	result = strings.ReplaceAll(result, "{handoverGuid}", handoverGuid)
-	result = strings.ReplaceAll(result, "{sectionGuid}", itemGuid)
-	return strings.ReplaceAll(result, "{carryOverGuid}", itemGuid)
+	result = strings.ReplaceAll(result, "{handoverGuid}", handoverGUID)
+	result = strings.ReplaceAll(result, "{sectionGuid}", itemGUID)
+	return strings.ReplaceAll(result, "{carryOverGuid}", itemGUID)
 }
 
 func assertCriticalItemFlag(

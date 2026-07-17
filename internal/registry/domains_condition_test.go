@@ -23,13 +23,13 @@ func TestConditionDomainIsUniqueAndGuidFirst(t *testing.T) {
 		}
 	}
 
-	assertGuidFlag(t, domain, "assess", "asset-guid", true)
-	assertGuidFlag(t, domain, "get", "asset-guid", true)
-	assertGuidFlag(t, domain, "history", "asset-guid", true)
-	assertGuidFlag(t, domain, "heat-map", "location-guid", false)
+	assertGUIDFlag(t, domain, "assess", "asset-guid", true)
+	assertGUIDFlag(t, domain, "get", "asset-guid", true)
+	assertGUIDFlag(t, domain, "history", "asset-guid", true)
+	assertGUIDFlag(t, domain, "heat-map", "location-guid", false)
 }
 
-func assertGuidFlag(
+func assertGUIDFlag(
 	t *testing.T,
 	domain *Domain,
 	actionName string,

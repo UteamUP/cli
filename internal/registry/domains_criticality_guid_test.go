@@ -23,9 +23,9 @@ func TestCriticalityDomainIsUniqueAndGuidFirst(t *testing.T) {
 		}
 	}
 
-	assertGuidFlag(t, domain, "assess", "asset-guid", true)
-	assertGuidFlag(t, domain, "get", "asset-guid", true)
-	assertGuidFlag(t, domain, "history", "asset-guid", true)
-	assertGuidFlag(t, domain, "matrix", "location-guid", false)
-	assertGuidFlag(t, domain, "matrix", "asset-type-guid", false)
+	assertGUIDFlag(t, domain, "assess", "asset-guid", true)
+	assertGUIDFlag(t, domain, "get", "asset-guid", true)
+	assertGUIDFlag(t, domain, "history", "asset-guid", true)
+	assertGUIDFlag(t, domain, "matrix", "location-guid", false)
+	assertGUIDFlag(t, domain, "matrix", "asset-type-guid", false)
 }

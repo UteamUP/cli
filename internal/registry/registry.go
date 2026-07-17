@@ -494,16 +494,16 @@ func buildRESTPath(domain *Domain, action Action, args map[string]any) (string, 
 	// declare their required arg as `externalGuid` per the GUID-first rule.
 	// Accept both so every domain routes correctly without needing RESTPath
 	// overrides or API-key handlers that special-case each verb.
-	idValue, hasId := args["id"]
+	idValue, hasID := args["id"]
 	idArgName := "id"
-	if !hasId {
-		idValue, hasId = args["externalGuid"]
+	if !hasID {
+		idValue, hasID = args["externalGuid"]
 		idArgName = "externalGuid"
 	}
 
 	switch action.Name {
 	case "get", "update", "delete":
-		if hasId {
+		if hasID {
 			return fmt.Sprintf("%s/%v", basePath, idValue), []string{idArgName}
 		}
 	case "update-status":
@@ -511,7 +511,7 @@ func buildRESTPath(domain *Domain, action Action, args map[string]any) (string, 
 		// BugsAndFeaturesController.UpdateStatus — status-only transitions
 		// get their own sub-route so they can't be conflated with a full
 		// update (PUT /<id>). Domains that reuse this verb must match.
-		if hasId {
+		if hasID {
 			return fmt.Sprintf("%s/%v/status", basePath, idValue), []string{idArgName}
 		}
 	case "search":
@@ -523,7 +523,7 @@ func buildRESTPath(domain *Domain, action Action, args map[string]any) (string, 
 		// PATCH `{basePath}/{id}/notes`. Mirrors the `update-status` pattern
 		// so new sub-route PATCH endpoints route correctly without per-verb
 		// case statements here.
-		if hasId && strings.HasPrefix(action.Name, "update-") {
+		if hasID && strings.HasPrefix(action.Name, "update-") {
 			suffix := strings.TrimPrefix(action.Name, "update-")
 			if suffix != "" {
 				return fmt.Sprintf("%s/%v/%s", basePath, idValue, suffix), []string{idArgName}

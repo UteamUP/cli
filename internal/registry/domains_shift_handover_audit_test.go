@@ -50,7 +50,7 @@ func TestShiftHandoverAuditActionsMirrorGuidFirstMcpTools(t *testing.T) {
 
 func TestShiftHandoverAuditRoutesResolveAndConsumeGuid(t *testing.T) {
 	domain := findRegisteredDomain(t, "shift-handover")
-	handoverGuid := "11111111-2222-4333-8444-555555555555"
+	handoverGUID := "11111111-2222-4333-8444-555555555555"
 
 	for _, name := range []string{"history", "signature-create", "audit-export"} {
 		t.Run(name, func(t *testing.T) {
@@ -58,12 +58,12 @@ func TestShiftHandoverAuditRoutesResolveAndConsumeGuid(t *testing.T) {
 			path, consumed := buildRESTPath(
 				domain,
 				*action,
-				map[string]any{"handoverGuid": handoverGuid},
+				map[string]any{"handoverGuid": handoverGUID},
 			)
 			wantPath := "/api/shifthandover/" + strings.ReplaceAll(
 				action.RESTPath,
 				"{handoverGuid}",
-				handoverGuid,
+				handoverGUID,
 			)
 			if path != wantPath {
 				t.Errorf("path = %q, want %q", path, wantPath)

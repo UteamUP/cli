@@ -26,7 +26,7 @@ func TestPlanAuditDomainRegistered(t *testing.T) {
 	}
 }
 
-func assertPlanGuidArg(t *testing.T, action *Action) {
+func assertPlanGUIDArg(t *testing.T, action *Action) {
 	t.Helper()
 	// The positional arg name must literally be `planGuid` or expandPathTemplate
 	// leaves the `{planGuid}` token unresolved in the URL.
@@ -58,6 +58,6 @@ func TestPlanAuditActionRouteTemplates(t *testing.T) {
 			t.Errorf("plan-audit %s: want tool=%s method=%q path=%s, got tool=%s method=%q path=%s",
 				c.action, c.tool, "", c.restPath, a.ToolName, a.HTTPMethod, a.RESTPath)
 		}
-		assertPlanGuidArg(t, a)
+		assertPlanGUIDArg(t, a)
 	}
 }

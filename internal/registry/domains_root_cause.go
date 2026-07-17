@@ -10,7 +10,7 @@ func init() {
 			{Name: "list", Description: "List root cause analyses", ToolName: "UteamupRcaList"},
 			{
 				Name: "get", Description: "Get a root cause analysis by public GUID",
-				ToolName: "UteamupRcaGet", RESTPath: "{rcaGuid}", Args: []ArgDef{rcaGuidArg()},
+				ToolName: "UteamupRcaGet", RESTPath: "{rcaGuid}", Args: []ArgDef{rcaGUIDArg()},
 			},
 			{
 				Name: "by-status", Description: "List root cause analyses by status",
@@ -36,29 +36,29 @@ func init() {
 			},
 			{
 				Name: "update", Description: "Update a root cause analysis by public GUID",
-				ToolName: "UteamupRcaUpdate", RESTPath: "{rcaGuid}", Args: []ArgDef{rcaGuidArg()},
+				ToolName: "UteamupRcaUpdate", RESTPath: "{rcaGuid}", Args: []ArgDef{rcaGUIDArg()},
 				Flags: []FlagDef{jsonFlag()},
 			},
 			{
 				Name: "complete", Description: "Complete a root cause analysis by public GUID",
 				ToolName: "UteamupRcaComplete", HTTPMethod: "POST", RESTPath: "{rcaGuid}/complete",
-				Args: []ArgDef{rcaGuidArg()}, Flags: []FlagDef{jsonFlag()},
+				Args: []ArgDef{rcaGUIDArg()}, Flags: []FlagDef{jsonFlag()},
 			},
 			{
 				Name: "delete", Description: "Delete a root cause analysis by public GUID",
-				ToolName: "UteamupRcaDelete", RESTPath: "{rcaGuid}", Args: []ArgDef{rcaGuidArg()},
+				ToolName: "UteamupRcaDelete", RESTPath: "{rcaGuid}", Args: []ArgDef{rcaGUIDArg()},
 			},
 			{
 				Name: "step-add", Description: "Add an investigation step",
 				ToolName: "UteamupRcaAddStep", HTTPMethod: "POST", RESTPath: "{rcaGuid}/steps",
-				Args: []ArgDef{rcaGuidArg()}, Flags: []FlagDef{jsonFlag()},
+				Args: []ArgDef{rcaGUIDArg()}, Flags: []FlagDef{jsonFlag()},
 			},
 			{
 				Name: "step-update", Description: "Update an investigation step by public GUID",
 				ToolName: "UteamupRcaUpdateStep", HTTPMethod: "PUT",
 				RESTPath: "{rcaGuid}/steps/{stepGuid}",
 				Args: []ArgDef{
-					rcaGuidArg(),
+					rcaGUIDArg(),
 					{Name: "stepGuid", Description: "RCA step public GUID", Required: true, Type: "uuid"},
 				},
 				Flags: []FlagDef{jsonFlag()},
@@ -68,20 +68,20 @@ func init() {
 				ToolName: "UteamupRcaDeleteStep", HTTPMethod: "DELETE",
 				RESTPath: "{rcaGuid}/steps/{stepGuid}",
 				Args: []ArgDef{
-					rcaGuidArg(),
+					rcaGUIDArg(),
 					{Name: "stepGuid", Description: "RCA step public GUID", Required: true, Type: "uuid"},
 				},
 			},
 			{
 				Name: "steps-reorder", Description: "Reorder investigation steps by public GUID",
 				ToolName: "UteamupRcaReorderSteps", HTTPMethod: "PUT",
-				RESTPath: "{rcaGuid}/steps/reorder", Args: []ArgDef{rcaGuidArg()},
+				RESTPath: "{rcaGuid}/steps/reorder", Args: []ArgDef{rcaGUIDArg()},
 				Flags: []FlagDef{jsonFlag()},
 			},
 			{
 				Name: "action-add", Description: "Add a corrective action",
 				ToolName: "UteamupRcaAddAction", HTTPMethod: "POST", RESTPath: "{rcaGuid}/actions",
-				Args: []ArgDef{rcaGuidArg()}, Flags: []FlagDef{jsonFlag()},
+				Args: []ArgDef{rcaGUIDArg()}, Flags: []FlagDef{jsonFlag()},
 			},
 			rcaActionMutation("action-update", "PUT", ""),
 			rcaActionMutation("action-delete", "DELETE", ""),
@@ -98,7 +98,7 @@ func init() {
 	})
 }
 
-func rcaGuidArg() ArgDef {
+func rcaGUIDArg() ArgDef {
 	return ArgDef{
 		Name: "rcaGuid", Description: "Root cause analysis public GUID", Required: true, Type: "uuid",
 	}
@@ -114,20 +114,20 @@ func rcaActionMutation(name, method, suffix string) Action {
 		ToolName: "UteamupRca" + titleWord(name), HTTPMethod: method,
 		RESTPath: "{rcaGuid}/actions/by-guid/{actionGuid}" + suffix,
 		Args: []ArgDef{
-			rcaGuidArg(),
+			rcaGUIDArg(),
 			{Name: "actionGuid", Description: "RCA action public GUID", Required: true, Type: "uuid"},
 		},
 		Flags: flags,
 	}
 }
 
-func rcaLinkMutation(name, method, resource, childGuid string, body bool) Action {
+func rcaLinkMutation(name, method, resource, childGUID string, body bool) Action {
 	path := "{rcaGuid}/" + resource
-	args := []ArgDef{rcaGuidArg()}
-	if childGuid != "" {
-		path += "/{" + childGuid + "}"
+	args := []ArgDef{rcaGUIDArg()}
+	if childGUID != "" {
+		path += "/{" + childGUID + "}"
 		args = append(args, ArgDef{
-			Name: childGuid, Description: "Linked entity public GUID", Required: true, Type: "uuid",
+			Name: childGUID, Description: "Linked entity public GUID", Required: true, Type: "uuid",
 		})
 	}
 	flags := []FlagDef(nil)

@@ -38,15 +38,15 @@ func TestShiftHandoverOperationalBatonMirrorsGuidFirstMcpTool(t *testing.T) {
 func TestShiftHandoverOperationalBatonRouteResolvesAndConsumesGuid(t *testing.T) {
 	domain := findRegisteredDomain(t, "shift-handover")
 	action := findShiftHandoverAction(t, domain, "operational-baton")
-	handoverGuid := "11111111-2222-4333-8444-555555555555"
+	handoverGUID := "11111111-2222-4333-8444-555555555555"
 
 	path, consumed := buildRESTPath(
 		domain,
 		*action,
-		map[string]any{"handoverGuid": handoverGuid},
+		map[string]any{"handoverGuid": handoverGUID},
 	)
 	wantPath := "/api/shifthandover/by-guid/" +
-		handoverGuid +
+		handoverGUID +
 		"/operational-baton"
 
 	if path != wantPath {

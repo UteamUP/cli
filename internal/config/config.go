@@ -36,11 +36,11 @@ type Profile struct {
 	ExportJSON     bool   `json:"exportJson"`
 	ExportDir      string `json:"exportDir,omitempty"`
 	// Tenant override — use a specific tenant instead of the logged-in default
-	TenantGuid string `json:"tenantGuid,omitempty"`
+	TenantGUID string `json:"tenantGuid,omitempty"`
 }
 
-// ConfigDir returns ~/.uteamup.
-func ConfigDir() (string, error) {
+// Dir returns ~/.uteamup.
+func Dir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("cannot determine home directory: %w", err)
@@ -48,9 +48,9 @@ func ConfigDir() (string, error) {
 	return filepath.Join(home, configDirName), nil
 }
 
-// ConfigPath returns ~/.uteamup/config.json.
-func ConfigPath() (string, error) {
-	dir, err := ConfigDir()
+// Path returns ~/.uteamup/config.json.
+func Path() (string, error) {
+	dir, err := Dir()
 	if err != nil {
 		return "", err
 	}
@@ -59,7 +59,7 @@ func ConfigPath() (string, error) {
 
 // Load reads and validates the config file.
 func Load() (*Config, error) {
-	path, err := ConfigPath()
+	path, err := Path()
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func Load() (*Config, error) {
 
 // Save writes the config to disk.
 func Save(cfg *Config) error {
-	dir, err := ConfigDir()
+	dir, err := Dir()
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func applyEnvOverrides(cfg *Config) {
 		p.LogLevel = v
 	}
 	if v := os.Getenv("UTEAMUP_TENANT_GUID"); v != "" {
-		p.TenantGuid = v
+		p.TenantGUID = v
 	}
 	cfg.Profiles[cfg.ActiveProfile] = p
 }
@@ -212,9 +212,9 @@ func (c *Config) RedactedSummary() string {
 		exportDir = "~/.uteamup/exports"
 	}
 
-	tenantGuid := p.TenantGuid
-	if tenantGuid == "" {
-		tenantGuid = "(default from login)"
+	tenantGUID := p.TenantGUID
+	if tenantGUID == "" {
+		tenantGUID = "(default from login)"
 	}
 
 	return fmt.Sprintf(`Active Profile: %s (%s)
@@ -229,7 +229,7 @@ func (c *Config) RedactedSummary() string {
   Export Dir:      %s`,
 		c.ActiveProfile, p.Name,
 		p.BaseURL, apiKey, secret,
-		tenantGuid,
+		tenantGUID,
 		p.LogLevel, p.RequestTimeout, p.MaxRetries,
 		p.ExportJSON, exportDir)
 }

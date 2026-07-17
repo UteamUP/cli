@@ -36,7 +36,7 @@ func init() {
 					{Name: "team-guid", Description: "Optional tenant-scoped team GUID", Type: "string"},
 				},
 			},
-			Action{
+			{
 				Name:        "workorder-options",
 				Description: "Rank qualified and available technicians for a workorder window",
 				ToolName:    "UteamupScheduleAssignmentGetWorkorderOptions",
@@ -48,7 +48,7 @@ func init() {
 					{Name: "planned-end-utc", Description: "Planned UTC end", Required: true, Type: "string"},
 				},
 			},
-			Action{
+			{
 				Name:        "create-by-guid",
 				Description: "Create a revalidated GUID-based workorder assignment",
 				ToolName:    "UteamupScheduleAssignmentCreateByGuid",
@@ -110,8 +110,8 @@ func init() {
 			{Name: "list", Description: "List shifts", ToolName: "UteamupShiftList", Flags: paginationFlags()},
 			{Name: "get", Description: "Get a shift by GUID", ToolName: "UteamupShiftGetByGuid", Args: []ArgDef{{Name: "shiftGuid", Description: "Shift GUID", Required: true, Type: "uuid"}}, RESTPath: "by-guid/{shiftGuid}"},
 			{Name: "create", Description: "Create a shift", ToolName: "UteamupShiftCreate", Flags: []FlagDef{jsonFlag()}},
-			{Name: "update", Description: "Update a shift by GUID", ToolName: "UteamupShiftUpdate", Args: externalGuidArg(), RESTPath: "by-guid/{externalGuid}", Flags: []FlagDef{jsonFlag()}},
-			{Name: "delete", Description: "Delete a shift by GUID", ToolName: "UteamupShiftDelete", Args: externalGuidArg(), RESTPath: "by-guid/{externalGuid}"},
+			{Name: "update", Description: "Update a shift by GUID", ToolName: "UteamupShiftUpdate", Args: externalGUIDArg(), RESTPath: "by-guid/{externalGuid}", Flags: []FlagDef{jsonFlag()}},
+			{Name: "delete", Description: "Delete a shift by GUID", ToolName: "UteamupShiftDelete", Args: externalGUIDArg(), RESTPath: "by-guid/{externalGuid}"},
 			{Name: "pattern-list", Description: "List shift patterns by shift GUID", ToolName: "UteamupShiftPatternListByShift", HTTPMethod: "GET", RESTPath: "by-guid/{shiftGuid}/patterns", Args: []ArgDef{{Name: "shiftGuid", Description: "Shift GUID", Required: true, Type: "string"}}},
 			{Name: "pattern-get", Description: "Get a shift pattern by GUID", ToolName: "UteamupShiftPatternGet", HTTPMethod: "GET", RESTPath: "patterns/by-guid/{patternGuid}", Args: []ArgDef{{Name: "patternGuid", Description: "Shift pattern GUID", Required: true, Type: "string"}}},
 			{Name: "pattern-update", Description: "Update a shift pattern by GUID", ToolName: "UteamupShiftPatternUpdate", HTTPMethod: "PUT", RESTPath: "patterns/by-guid/{patternGuid}", Args: []ArgDef{{Name: "patternGuid", Description: "Shift pattern GUID", Required: true, Type: "string"}}, Flags: []FlagDef{jsonFlag()}},

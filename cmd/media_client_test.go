@@ -13,23 +13,23 @@ func validMediaToken() *auth.TokenData {
 	return &auth.TokenData{
 		AccessToken: "token",
 		ExpiresAt:   time.Now().Add(time.Hour),
-		TenantGuid:  "b966b8c7-04a4-45d4-aa51-519ecf2ef13a",
+		TenantGUID:  "b966b8c7-04a4-45d4-aa51-519ecf2ef13a",
 	}
 }
 
 func TestValidateMediaTenantRequiresMatchingGUID(t *testing.T) {
-	profile := &config.Profile{TenantGuid: "b966b8c7-04a4-45d4-aa51-519ecf2ef13a"}
+	profile := &config.Profile{TenantGUID: "b966b8c7-04a4-45d4-aa51-519ecf2ef13a"}
 	if err := validateMediaTenant(profile, validMediaToken()); err != nil {
 		t.Fatal(err)
 	}
 
 	token := validMediaToken()
-	token.TenantGuid = "not-a-guid"
-	if err := validateMediaTenant(profile, token); err == nil || strings.Contains(err.Error(), token.TenantGuid) {
+	token.TenantGUID = "not-a-guid"
+	if err := validateMediaTenant(profile, token); err == nil || strings.Contains(err.Error(), token.TenantGUID) {
 		t.Fatalf("invalid tenant GUID should be rejected without echoing it: %v", err)
 	}
 
-	profile.TenantGuid = "d647e60a-e756-4eea-b72c-7bc801911517"
+	profile.TenantGUID = "d647e60a-e756-4eea-b72c-7bc801911517"
 	if err := validateMediaTenant(profile, validMediaToken()); err == nil {
 		t.Fatal("expected tenant mismatch to be rejected")
 	}

@@ -37,7 +37,7 @@ func assertShiftHandoverAction(
 	name string,
 	httpMethod string,
 	restPath string,
-	requiresGuid bool,
+	requiresGUID bool,
 ) {
 	t.Helper()
 	for _, action := range domain.Actions {
@@ -47,7 +47,7 @@ func assertShiftHandoverAction(
 		if action.HTTPMethod != httpMethod || action.RESTPath != restPath {
 			t.Fatalf("unexpected %s contract: %#v", name, action)
 		}
-		if !requiresGuid {
+		if !requiresGUID {
 			return
 		}
 		if len(action.Args) != 1 || action.Args[0].Name != "handoverGuid" || action.Args[0].Type != "uuid" {

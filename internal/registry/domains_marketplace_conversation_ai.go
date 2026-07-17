@@ -1,7 +1,7 @@
 package registry
 
 func init() {
-	conversationGuid := []ArgDef{{
+	conversationGUID := []ArgDef{{
 		Name:        "conversationGuid",
 		Description: "Participant-scoped marketplace conversation GUID",
 		Required:    true,
@@ -19,7 +19,7 @@ func init() {
 				ToolName:    "UteamupMarketplaceConversationAiSummaryCost",
 				RESTPath:    "{conversationGuid}/ai-summary/cost",
 				HTTPMethod:  "GET",
-				Args:        conversationGuid,
+				Args:        conversationGUID,
 			},
 			{
 				Name:        "summarize",
@@ -27,7 +27,7 @@ func init() {
 				ToolName:    "UteamupMarketplaceConversationAiSummary",
 				RESTPath:    "{conversationGuid}/ai-summary",
 				HTTPMethod:  "POST",
-				Args:        conversationGuid,
+				Args:        conversationGUID,
 				Flags: []FlagDef{
 					{Name: "language", Description: "Output language", Type: "string", Default: "English"},
 				},

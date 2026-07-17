@@ -20,7 +20,7 @@ func TestCallRESTUploadLimitedUsesAuthenticatedGuidScopedMultipart(t *testing.T)
 		AccessToken: "secret-access-token",
 		ExpiresAt:   time.Now().Add(time.Hour),
 		TenantID:    42,
-		TenantGuid:  "b966b8c7-04a4-45d4-aa51-519ecf2ef13a",
+		TenantGUID:  "b966b8c7-04a4-45d4-aa51-519ecf2ef13a",
 	}); err != nil {
 		t.Fatal(err)
 	}

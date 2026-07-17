@@ -50,11 +50,11 @@ func validateMediaTenant(profile *config.Profile, token *auth.TokenData) error {
 	if token == nil || !token.IsValid() {
 		return fmt.Errorf("not authenticated; run \"uteamup login\" first")
 	}
-	tokenTenantGUID := strings.TrimSpace(token.TenantGuid)
+	tokenTenantGUID := strings.TrimSpace(token.TenantGUID)
 	if !tenantGUIDPattern.MatchString(tokenTenantGUID) {
 		return fmt.Errorf("the authenticated session has no tenant GUID; sign in to a tenant")
 	}
-	profileTenantGUID := strings.TrimSpace(profile.TenantGuid)
+	profileTenantGUID := strings.TrimSpace(profile.TenantGUID)
 	if profileTenantGUID != "" && !tenantGUIDPattern.MatchString(profileTenantGUID) {
 		return fmt.Errorf("the active profile contains an invalid tenant GUID")
 	}

@@ -97,7 +97,7 @@ Examples:
 		}
 
 		// Build config options from CLI flags.
-		var opts []vaconfig.ConfigOption
+		var opts []vaconfig.Option
 		opts = append(opts, vaconfig.WithFolderOverride(absVideoPath))
 		opts = append(opts, vaconfig.WithOutputOverride(absOutputDir))
 		opts = append(opts, vaconfig.WithDryRun(videoDryRun))

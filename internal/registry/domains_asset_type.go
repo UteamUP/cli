@@ -11,10 +11,10 @@ func init() {
 		APIPath: "/api/asset-type",
 		Actions: []Action{
 			{Name: "list", Description: "List asset types", ToolName: "UteamupAssetTypeList", Flags: paginationFlags()},
-			{Name: "get", Description: "Get asset type by GUID", ToolName: "UteamupAssetTypeGet", Args: externalGuidArg()},
+			{Name: "get", Description: "Get asset type by GUID", ToolName: "UteamupAssetTypeGet", Args: externalGUIDArg()},
 			{Name: "create", Description: "Create an asset type", ToolName: "UteamupAssetTypeCreate", Flags: []FlagDef{{Name: "name", Description: "Asset type name", Required: true, Type: "string"}, jsonFlag()}},
-			{Name: "update", Description: "Update an asset type", ToolName: "UteamupAssetTypeUpdate", Args: externalGuidArg(), Flags: []FlagDef{{Name: "name", Description: "New name", Type: "string"}, jsonFlag()}},
-			{Name: "delete", Description: "Delete an asset type", ToolName: "UteamupAssetTypeDelete", Args: externalGuidArg()},
+			{Name: "update", Description: "Update an asset type", ToolName: "UteamupAssetTypeUpdate", Args: externalGUIDArg(), Flags: []FlagDef{{Name: "name", Description: "New name", Type: "string"}, jsonFlag()}},
+			{Name: "delete", Description: "Delete an asset type", ToolName: "UteamupAssetTypeDelete", Args: externalGUIDArg()},
 			// --- Reseller catalog: reverse fitment lookup (stock-reseller-catalog §12) ---
 			{
 				Name:        "compatible-parts",

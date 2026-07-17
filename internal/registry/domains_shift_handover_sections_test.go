@@ -52,8 +52,8 @@ func TestShiftHandoverSectionActionsUseGuidFirstContracts(t *testing.T) {
 
 func TestShiftHandoverSectionRoutesResolveAndConsumeGuidArguments(t *testing.T) {
 	domain := findRegisteredDomain(t, "shift-handover")
-	handoverGuid := "11111111-2222-3333-4444-555555555555"
-	sectionGuid := "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+	handoverGUID := "11111111-2222-3333-4444-555555555555"
+	sectionGUID := "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
 	tests := []struct {
 		name         string
@@ -61,11 +61,11 @@ func TestShiftHandoverSectionRoutesResolveAndConsumeGuidArguments(t *testing.T) 
 		wantPath     string
 		wantConsumed []string
 	}{
-		{"sections", map[string]any{"handoverGuid": handoverGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/sections", []string{"handoverGuid"}},
-		{"section-create", map[string]any{"handoverGuid": handoverGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/sections", []string{"handoverGuid"}},
-		{"section-update", map[string]any{"handoverGuid": handoverGuid, "sectionGuid": sectionGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/sections/" + sectionGuid, []string{"handoverGuid", "sectionGuid"}},
-		{"section-delete", map[string]any{"handoverGuid": handoverGuid, "sectionGuid": sectionGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/sections/" + sectionGuid, []string{"handoverGuid", "sectionGuid"}},
-		{"sections-reorder", map[string]any{"handoverGuid": handoverGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/sections/reorder", []string{"handoverGuid"}},
+		{"sections", map[string]any{"handoverGuid": handoverGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/sections", []string{"handoverGuid"}},
+		{"section-create", map[string]any{"handoverGuid": handoverGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/sections", []string{"handoverGuid"}},
+		{"section-update", map[string]any{"handoverGuid": handoverGUID, "sectionGuid": sectionGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/sections/" + sectionGUID, []string{"handoverGuid", "sectionGuid"}},
+		{"section-delete", map[string]any{"handoverGuid": handoverGUID, "sectionGuid": sectionGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/sections/" + sectionGUID, []string{"handoverGuid", "sectionGuid"}},
+		{"sections-reorder", map[string]any{"handoverGuid": handoverGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/sections/reorder", []string{"handoverGuid"}},
 	}
 
 	for _, test := range tests {

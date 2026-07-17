@@ -167,21 +167,21 @@ func TestStockAlertsActionWired(t *testing.T) {
 
 	// stockGuid arrives via a required flag whose camelCase body name feeds the
 	// {stockGuid} path placeholder.
-	var stockGuid *FlagDef
+	var stockGUID *FlagDef
 	for i := range action.Flags {
 		if action.Flags[i].Name == "stock-guid" {
-			stockGuid = &action.Flags[i]
+			stockGUID = &action.Flags[i]
 			break
 		}
 	}
-	if stockGuid == nil {
+	if stockGUID == nil {
 		t.Fatal("alerts action must expose a `stock-guid` flag")
 	}
-	if !stockGuid.Required {
+	if !stockGUID.Required {
 		t.Error("stock-guid flag must be Required (it fills the path placeholder)")
 	}
-	if stockGuid.Type != "string" {
-		t.Errorf("stock-guid flag type = %q, want string (Guids are strings)", stockGuid.Type)
+	if stockGUID.Type != "string" {
+		t.Errorf("stock-guid flag type = %q, want string (Guids are strings)", stockGUID.Type)
 	}
 }
 
@@ -211,7 +211,7 @@ func TestStockPurchaseOrderActionsWired(t *testing.T) {
 		toolName   string
 		httpMethod string
 		restPath   string
-		wantGuid   bool
+		wantGUID   bool
 	}{
 		{"po-list", "UteamupStockListPurchaseOrders", "", "purchase-orders", false},
 		{"po-get", "UteamupStockGetPurchaseOrder", "", "purchase-orders/{guid}", true},
@@ -231,7 +231,7 @@ func TestStockPurchaseOrderActionsWired(t *testing.T) {
 		if action.RESTPath != tc.restPath {
 			t.Errorf("%s RESTPath = %q, want %q", tc.name, action.RESTPath, tc.restPath)
 		}
-		if tc.wantGuid {
+		if tc.wantGUID {
 			if len(action.Args) != 1 || action.Args[0].Name != "guid" || !action.Args[0].Required || action.Args[0].Type != "string" {
 				t.Errorf("%s expected single required string positional arg 'guid', got %+v", tc.name, action.Args)
 			}

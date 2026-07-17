@@ -1,7 +1,7 @@
 package registry
 
 func init() {
-	conversationGuid := ArgDef{
+	conversationGUID := ArgDef{
 		Name:        "conversationGuid",
 		Description: "Participant-scoped marketplace conversation GUID",
 		Required:    true,
@@ -19,7 +19,7 @@ func init() {
 				ToolName:    "UteamupMarketplaceConversationMessageSend",
 				RESTPath:    "{conversationGuid}/messages",
 				HTTPMethod:  "POST",
-				Args:        []ArgDef{conversationGuid},
+				Args:        []ArgDef{conversationGUID},
 				Flags: []FlagDef{
 					{Name: "body", Description: "Message body", Type: "string", Required: true},
 					{Name: "parent-message-guid", BodyName: "parentMessageGuid", Description: "Optional visible parent message GUID", Type: "string"},
@@ -33,7 +33,7 @@ func init() {
 				ToolName:    "UteamupMarketplaceConversationMessagesSearch",
 				RESTPath:    "{conversationGuid}/messages/search",
 				HTTPMethod:  "GET",
-				Args:        []ArgDef{conversationGuid},
+				Args:        []ArgDef{conversationGUID},
 				Flags: []FlagDef{
 					{Name: "query", Description: "Search text, 2 to 200 characters", Type: "string", Required: true},
 				},
@@ -44,7 +44,7 @@ func init() {
 				ToolName:    "UteamupMarketplaceConversationPreferencesUpdate",
 				RESTPath:    "{conversationGuid}/preferences",
 				HTTPMethod:  "PATCH",
-				Args:        []ArgDef{conversationGuid},
+				Args:        []ArgDef{conversationGUID},
 				Flags: []FlagDef{
 					{Name: "muted", BodyName: "isMuted", Description: "True to mute; false to unmute", Type: "bool", Required: true},
 				},
@@ -56,7 +56,7 @@ func init() {
 				RESTPath:    "{conversationGuid}/messages/{messageGuid}/pin",
 				HTTPMethod:  "PATCH",
 				Args: []ArgDef{
-					conversationGuid,
+					conversationGUID,
 					{Name: "messageGuid", Description: "Visible marketplace conversation message GUID", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
@@ -69,7 +69,7 @@ func init() {
 				ToolName:    "UteamupMarketplaceConversationMeetingCreate",
 				RESTPath:    "{conversationGuid}/messages/meeting-proposals",
 				HTTPMethod:  "POST",
-				Args:        []ArgDef{conversationGuid},
+				Args:        []ArgDef{conversationGUID},
 				Flags: []FlagDef{
 					{Name: "subject", Description: "Meeting subject", Type: "string", Required: true},
 					{Name: "start-utc", BodyName: "scheduledStartUtc", Description: "Future ISO-8601 meeting start in UTC", Type: "string", Required: true},
@@ -86,7 +86,7 @@ func init() {
 				RESTPath:    "{conversationGuid}/messages/{messageGuid}/meeting-response",
 				HTTPMethod:  "PATCH",
 				Args: []ArgDef{
-					conversationGuid,
+					conversationGUID,
 					{Name: "messageGuid", Description: "Meeting proposal message GUID", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
@@ -99,7 +99,7 @@ func init() {
 				ToolName:    "UteamupMarketplaceConversationOfferCardCreate",
 				RESTPath:    "{conversationGuid}/messages/offer-cards",
 				HTTPMethod:  "POST",
-				Args:        []ArgDef{conversationGuid},
+				Args:        []ArgDef{conversationGUID},
 				Flags: []FlagDef{
 					{Name: "offer-revision-guid", BodyName: "offerRevisionGuid", Description: "Authoritative labour offer revision GUID", Type: "string", Required: true},
 				},
@@ -110,7 +110,7 @@ func init() {
 				ToolName:    "UteamupMarketplaceConversationContactCardCreate",
 				RESTPath:    "{conversationGuid}/messages/contact-cards",
 				HTTPMethod:  "POST",
-				Args:        []ArgDef{conversationGuid},
+				Args:        []ArgDef{conversationGUID},
 				Flags: []FlagDef{
 					{Name: "email", BodyName: "includeEmail", Description: "Share the authenticated account email when available", Type: "bool"},
 					{Name: "phone", BodyName: "includePhone", Description: "Share the authenticated work or mobile phone when available", Type: "bool"},

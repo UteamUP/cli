@@ -79,10 +79,10 @@ Examples:
 		for _, t := range tenants {
 			// Mark current tenant.
 			marker := " "
-			if t.Guid == token.TenantGuid {
+			if t.GUID == token.TenantGUID {
 				marker = "*"
 			}
-			if profile.TenantGuid != "" && t.Guid == profile.TenantGuid {
+			if profile.TenantGUID != "" && t.GUID == profile.TenantGUID {
 				marker = "^"
 			}
 
@@ -96,13 +96,13 @@ Examples:
 				status = "active"
 			}
 
-			fmt.Fprintf(w, "%s \t%s\t%s\t%s\t%s\n", marker, t.Name, t.Guid, plan, status)
+			fmt.Fprintf(w, "%s \t%s\t%s\t%s\t%s\n", marker, t.Name, t.GUID, plan, status)
 		}
 		w.Flush()
 
 		fmt.Println()
 		fmt.Println("  * = currently logged-in tenant")
-		if profile.TenantGuid != "" {
+		if profile.TenantGUID != "" {
 			fmt.Println("  ^ = tenant set in config profile")
 		}
 		fmt.Println()
@@ -158,7 +158,7 @@ Examples:
 		fmt.Printf("\nSelect a tenant for %s:\n\n", token.Email)
 		for i, t := range tenants {
 			current := " "
-			if t.Guid == token.TenantGuid {
+			if t.GUID == token.TenantGUID {
 				current = "*"
 			}
 			plan := "(no plan)"
@@ -183,7 +183,7 @@ Examples:
 
 		// Save tenant GUID to config profile.
 		p := cfg.Profiles[cfg.ActiveProfile]
-		p.TenantGuid = selected.Guid
+		p.TenantGUID = selected.GUID
 		cfg.Profiles[cfg.ActiveProfile] = p
 
 		if err := config.Save(cfg); err != nil {
@@ -192,13 +192,13 @@ Examples:
 
 		// Update the cached token so `ut auth status` reflects the active tenant.
 		token.TenantID = selected.ID
-		token.TenantGuid = selected.Guid
+		token.TenantGUID = selected.GUID
 		token.TenantName = selected.Name
 		if err := auth.SaveToken(token); err != nil {
 			return fmt.Errorf("updating token: %w", err)
 		}
 
-		fmt.Printf("\nActive tenant set to: %s (%s)\n", selected.Name, selected.Guid)
+		fmt.Printf("\nActive tenant set to: %s (%s)\n", selected.Name, selected.GUID)
 		fmt.Printf("Saved to profile: %s\n", cfg.ActiveProfile)
 
 		return nil

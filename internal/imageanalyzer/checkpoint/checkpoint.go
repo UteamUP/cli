@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-// CheckpointStatus holds summary information about the checkpoint state.
-type CheckpointStatus struct {
+// Status holds summary information about the checkpoint state.
+type Status struct {
 	ProcessedCount int            `json:"processed_count"`
 	StartedAt      string         `json:"started_at"`
 	LastUpdated    string         `json:"last_updated"`
@@ -165,7 +165,7 @@ func (cp *Checkpoint) Delete() error {
 }
 
 // GetStatus returns summary information about the checkpoint state.
-func (cp *Checkpoint) GetStatus() CheckpointStatus {
+func (cp *Checkpoint) GetStatus() Status {
 	cp.mu.Lock()
 	defer cp.mu.Unlock()
 
@@ -189,7 +189,7 @@ func (cp *Checkpoint) GetStatus() CheckpointStatus {
 		}
 	}
 
-	return CheckpointStatus{
+	return Status{
 		ProcessedCount: len(cp.processed),
 		StartedAt:      cp.startedAt,
 		LastUpdated:    cp.lastUpdated,

@@ -52,8 +52,8 @@ func TestShiftHandoverCarryOverActionsUseGuidFirstContracts(t *testing.T) {
 
 func TestShiftHandoverCarryOverRoutesConsumeGuidArguments(t *testing.T) {
 	domain := findRegisteredDomain(t, "shift-handover")
-	handoverGuid := "11111111-2222-3333-4444-555555555555"
-	carryOverGuid := "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+	handoverGUID := "11111111-2222-3333-4444-555555555555"
+	carryOverGUID := "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
 	tests := []struct {
 		name         string
@@ -61,11 +61,11 @@ func TestShiftHandoverCarryOverRoutesConsumeGuidArguments(t *testing.T) {
 		wantPath     string
 		wantConsumed []string
 	}{
-		{"carryovers", map[string]any{"handoverGuid": handoverGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/carryovers", []string{"handoverGuid"}},
-		{"carryover-create", map[string]any{"handoverGuid": handoverGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/carryovers", []string{"handoverGuid"}},
-		{"carryover-update", map[string]any{"handoverGuid": handoverGuid, "carryOverGuid": carryOverGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/carryovers/" + carryOverGuid, []string{"handoverGuid", "carryOverGuid"}},
-		{"carryover-delete", map[string]any{"handoverGuid": handoverGuid, "carryOverGuid": carryOverGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/carryovers/" + carryOverGuid, []string{"handoverGuid", "carryOverGuid"}},
-		{"carryover-convert", map[string]any{"handoverGuid": handoverGuid, "carryOverGuid": carryOverGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/carryovers/" + carryOverGuid + "/convert-to-workorder", []string{"handoverGuid", "carryOverGuid"}},
+		{"carryovers", map[string]any{"handoverGuid": handoverGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/carryovers", []string{"handoverGuid"}},
+		{"carryover-create", map[string]any{"handoverGuid": handoverGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/carryovers", []string{"handoverGuid"}},
+		{"carryover-update", map[string]any{"handoverGuid": handoverGUID, "carryOverGuid": carryOverGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/carryovers/" + carryOverGUID, []string{"handoverGuid", "carryOverGuid"}},
+		{"carryover-delete", map[string]any{"handoverGuid": handoverGUID, "carryOverGuid": carryOverGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/carryovers/" + carryOverGUID, []string{"handoverGuid", "carryOverGuid"}},
+		{"carryover-convert", map[string]any{"handoverGuid": handoverGUID, "carryOverGuid": carryOverGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/carryovers/" + carryOverGUID + "/convert-to-workorder", []string{"handoverGuid", "carryOverGuid"}},
 	}
 
 	for _, test := range tests {

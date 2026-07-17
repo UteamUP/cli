@@ -21,7 +21,7 @@ type TokenData struct {
 	Email        string    `json:"email,omitempty"`
 	Profile      string    `json:"profile"`
 	TenantID     int       `json:"tenantId,omitempty"`
-	TenantGuid   string    `json:"tenantGuid,omitempty"`
+	TenantGUID   string    `json:"tenantGuid,omitempty"`
 	TenantName   string    `json:"tenantName,omitempty"`
 }
 
@@ -35,7 +35,7 @@ func (t *TokenData) IsValid() bool {
 
 // tokenPath returns ~/.uteamup/token.json.
 func tokenPath() (string, error) {
-	dir, err := config.ConfigDir()
+	dir, err := config.Dir()
 	if err != nil {
 		return "", err
 	}
@@ -67,7 +67,7 @@ func LoadToken() (*TokenData, error) {
 
 // SaveToken writes the token to disk with 0600 permissions.
 func SaveToken(token *TokenData) error {
-	dir, err := config.ConfigDir()
+	dir, err := config.Dir()
 	if err != nil {
 		return err
 	}

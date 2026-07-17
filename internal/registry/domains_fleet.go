@@ -25,33 +25,33 @@ func init() {
 		},
 	})
 
-	assignmentGuidArg := []ArgDef{{Name: "assignmentGuid", Description: "Public driver-assignment GUID", Required: true, Type: "string"}}
+	assignmentGUIDArg := []ArgDef{{Name: "assignmentGuid", Description: "Public driver-assignment GUID", Required: true, Type: "string"}}
 	Register(&Domain{
 		Name: "driver-assignment", Aliases: []string{"da"}, Description: "Manage GUID-first driver assignments",
 		Actions: []Action{
 			{Name: "list", Description: "List driver assignments", ToolName: "UteamupDriverAssignmentList", Flags: paginationFlags()},
-			{Name: "get", Description: "Get a driver assignment by GUID", ToolName: "UteamupDriverAssignmentGet", Args: assignmentGuidArg, RESTPath: "by-guid/{assignmentGuid}"},
+			{Name: "get", Description: "Get a driver assignment by GUID", ToolName: "UteamupDriverAssignmentGet", Args: assignmentGUIDArg, RESTPath: "by-guid/{assignmentGuid}"},
 			{Name: "create", Description: "Create a driver assignment", ToolName: "UteamupDriverAssignmentCreate", Flags: []FlagDef{jsonFlag()}},
-			{Name: "update", Description: "Update a driver assignment by GUID", ToolName: "UteamupDriverAssignmentUpdate", Args: assignmentGuidArg, RESTPath: "by-guid/{assignmentGuid}", Flags: []FlagDef{jsonFlag()}},
-			{Name: "delete", Description: "Delete a driver assignment by GUID", ToolName: "UteamupDriverAssignmentDelete", Args: assignmentGuidArg, RESTPath: "by-guid/{assignmentGuid}"},
-			{Name: "end", Description: "End a driver assignment by GUID", ToolName: "UteamupDriverAssignmentEnd", HTTPMethod: "PUT", Args: assignmentGuidArg, RESTPath: "by-guid/{assignmentGuid}/end"},
+			{Name: "update", Description: "Update a driver assignment by GUID", ToolName: "UteamupDriverAssignmentUpdate", Args: assignmentGUIDArg, RESTPath: "by-guid/{assignmentGuid}", Flags: []FlagDef{jsonFlag()}},
+			{Name: "delete", Description: "Delete a driver assignment by GUID", ToolName: "UteamupDriverAssignmentDelete", Args: assignmentGUIDArg, RESTPath: "by-guid/{assignmentGuid}"},
+			{Name: "end", Description: "End a driver assignment by GUID", ToolName: "UteamupDriverAssignmentEnd", HTTPMethod: "PUT", Args: assignmentGUIDArg, RESTPath: "by-guid/{assignmentGuid}/end"},
 			{Name: "current", Description: "Get the current driver assignment for an asset", ToolName: "UteamupDriverAssignmentGetCurrentDriver", Args: []ArgDef{{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "string"}}, RESTPath: "asset/by-guid/{assetGuid}/current"},
 		},
 	})
-	inspectionGuidArg := []ArgDef{{Name: "inspectionGuid", Description: "Public vehicle inspection GUID", Required: true, Type: "string"}}
+	inspectionGUIDArg := []ArgDef{{Name: "inspectionGuid", Description: "Public vehicle inspection GUID", Required: true, Type: "string"}}
 	vehicleInspectionActions := []Action{
 		{Name: "list", Description: "List vehicle inspections", ToolName: "UteamupVehicleInspectionList", Flags: append(paginationFlags(), FlagDef{Name: "asset-guid", Description: "Filter by public asset GUID", Type: "string"})},
-		{Name: "get", Description: "Get a vehicle inspection by GUID", ToolName: "UteamupVehicleInspectionGet", Args: inspectionGuidArg, RESTPath: "by-guid/{inspectionGuid}"},
+		{Name: "get", Description: "Get a vehicle inspection by GUID", ToolName: "UteamupVehicleInspectionGet", Args: inspectionGUIDArg, RESTPath: "by-guid/{inspectionGuid}"},
 		{Name: "create", Description: "Create a vehicle inspection", ToolName: "UteamupVehicleInspectionCreate", Flags: []FlagDef{jsonFlag()}},
-		{Name: "update", Description: "Update a vehicle inspection by GUID", ToolName: "UteamupVehicleInspectionUpdate", Args: inspectionGuidArg, RESTPath: "by-guid/{inspectionGuid}", Flags: []FlagDef{jsonFlag()}},
-		{Name: "delete", Description: "Delete a vehicle inspection by GUID", ToolName: "UteamupVehicleInspectionDelete", Args: inspectionGuidArg, RESTPath: "by-guid/{inspectionGuid}"},
-		{Name: "submit-items", Description: "Submit vehicle inspection results by GUID", ToolName: "UteamupVehicleInspectionSubmitItems", HTTPMethod: "POST", Args: inspectionGuidArg, RESTPath: "by-guid/{inspectionGuid}/items", Flags: []FlagDef{jsonFlag()}},
+		{Name: "update", Description: "Update a vehicle inspection by GUID", ToolName: "UteamupVehicleInspectionUpdate", Args: inspectionGUIDArg, RESTPath: "by-guid/{inspectionGuid}", Flags: []FlagDef{jsonFlag()}},
+		{Name: "delete", Description: "Delete a vehicle inspection by GUID", ToolName: "UteamupVehicleInspectionDelete", Args: inspectionGUIDArg, RESTPath: "by-guid/{inspectionGuid}"},
+		{Name: "submit-items", Description: "Submit vehicle inspection results by GUID", ToolName: "UteamupVehicleInspectionSubmitItems", HTTPMethod: "POST", Args: inspectionGUIDArg, RESTPath: "by-guid/{inspectionGuid}/items", Flags: []FlagDef{jsonFlag()}},
 		{
 			Name:        "complete",
 			Description: "Complete a vehicle inspection by GUID",
 			ToolName:    "UteamupVehicleInspectionComplete",
 			HTTPMethod:  "POST",
-			Args:        inspectionGuidArg,
+			Args:        inspectionGUIDArg,
 			RESTPath:    "by-guid/{inspectionGuid}/complete",
 			Flags: []FlagDef{
 				jsonFlag(),

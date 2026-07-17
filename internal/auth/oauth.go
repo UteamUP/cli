@@ -37,7 +37,7 @@ type LoginResponse struct {
 // Maps to TenantResponseModel in C# backend.
 type TenantInfo struct {
 	ID       int    `json:"id"`
-	Guid     string `json:"guid"`
+	GUID     string `json:"guid"`
 	Name     string `json:"name"`
 	IsActive bool   `json:"isActive"`
 	PlanID   int    `json:"planId"`
@@ -50,9 +50,9 @@ func (t *TenantInfo) HasPlan() bool {
 }
 
 // FetchTenantInfo calls the my-tenants endpoint and returns tenant info for the
-// given tenant GUID. If tenantGuid is empty, returns the default/first tenant.
+// given tenant GUID. If tenantGUID is empty, returns the default/first tenant.
 // Requires a valid access token and the backend base URL.
-func FetchTenantInfo(accessToken, baseURL, tenantGuid string) (*TenantInfo, error) {
+func FetchTenantInfo(accessToken, baseURL, tenantGUID string) (*TenantInfo, error) {
 	req, err := http.NewRequest("GET", strings.TrimRight(baseURL, "/")+"/api/tenant/my-tenants", nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
@@ -87,13 +87,13 @@ func FetchTenantInfo(accessToken, baseURL, tenantGuid string) (*TenantInfo, erro
 	}
 
 	// If a specific tenant GUID is requested, find it.
-	if tenantGuid != "" {
+	if tenantGUID != "" {
 		for _, t := range tenants {
-			if strings.EqualFold(t.Guid, tenantGuid) {
+			if strings.EqualFold(t.GUID, tenantGUID) {
 				return &t, nil
 			}
 		}
-		return nil, fmt.Errorf("tenant with GUID %q not found — you may not have access to this tenant", tenantGuid)
+		return nil, fmt.Errorf("tenant with GUID %q not found — you may not have access to this tenant", tenantGUID)
 	}
 
 	// Default: return first tenant.
@@ -135,19 +135,19 @@ func FetchAllTenants(accessToken, baseURL string) ([]TenantInfo, error) {
 	return tenants, nil
 }
 
-// AuthClient handles authentication flows.
-type AuthClient struct {
+// Client handles authentication flows.
+type Client struct {
 	baseURL  string
 	insecure bool
 	logger   *logging.Logger
 }
 
-// NewAuthClient creates an AuthClient.
-func NewAuthClient(baseURL string, insecure bool, logger *logging.Logger) *AuthClient {
-	return &AuthClient{baseURL: strings.TrimRight(baseURL, "/"), insecure: insecure, logger: logger}
+// NewClient creates an authentication client.
+func NewClient(baseURL string, insecure bool, logger *logging.Logger) *Client {
+	return &Client{baseURL: strings.TrimRight(baseURL, "/"), insecure: insecure, logger: logger}
 }
 
-func (a *AuthClient) httpClient() *http.Client {
+func (a *Client) httpClient() *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	if a.insecure {
 		transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true} //nolint:gosec // user-requested for dev
@@ -156,7 +156,7 @@ func (a *AuthClient) httpClient() *http.Client {
 }
 
 // LoginWithCredentials authenticates with email/password and returns a token.
-func (a *AuthClient) LoginWithCredentials(email, password string) (*TokenData, error) {
+func (a *Client) LoginWithCredentials(email, password string) (*TokenData, error) {
 	a.logger.Debug("attempting login for %s", email)
 
 	body := fmt.Sprintf(`{"email":%q,"password":%q}`, email, password)
@@ -214,9 +214,9 @@ func (a *AuthClient) LoginWithCredentials(email, password string) (*TokenData, e
 			}
 		}
 		token.TenantID = selected.ID
-		token.TenantGuid = selected.Guid
+		token.TenantGUID = selected.GUID
 		token.TenantName = selected.Name
-		a.logger.Info("selected tenant: %s (%s)", selected.Name, selected.Guid)
+		a.logger.Info("selected tenant: %s (%s)", selected.Name, selected.GUID)
 	}
 
 	a.logger.Info("login successful for %s", email)
@@ -224,7 +224,7 @@ func (a *AuthClient) LoginWithCredentials(email, password string) (*TokenData, e
 }
 
 // fetchMyTenants calls GET /api/tenant/my-tenants with the access token.
-func (a *AuthClient) fetchMyTenants(accessToken string) ([]TenantInfo, error) {
+func (a *Client) fetchMyTenants(accessToken string) ([]TenantInfo, error) {
 	req, err := http.NewRequest("GET", a.baseURL+"/api/tenant/my-tenants", nil)
 	if err != nil {
 		return nil, err
@@ -252,7 +252,7 @@ func (a *AuthClient) fetchMyTenants(accessToken string) ([]TenantInfo, error) {
 }
 
 // LoginWithAPIKey authenticates using OAuth 2.0 + PKCE with an API key.
-func (a *AuthClient) LoginWithAPIKey(apiKey, secret string) (*TokenData, error) {
+func (a *Client) LoginWithAPIKey(apiKey, secret string) (*TokenData, error) {
 	a.logger.Debug("attempting API key auth")
 
 	if len(apiKey) != 32 {

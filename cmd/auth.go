@@ -42,8 +42,8 @@ token expiry, and the associated config profile.`,
 		if token.TenantName != "" {
 			fmt.Printf("  Tenant:      %s\n", token.TenantName)
 		}
-		if token.TenantGuid != "" {
-			fmt.Printf("  Tenant GUID: %s\n", token.TenantGuid)
+		if token.TenantGUID != "" {
+			fmt.Printf("  Tenant GUID: %s\n", token.TenantGUID)
 		}
 		fmt.Printf("  Expires:     %s\n", token.ExpiresAt.Format("2006-01-02 15:04:05 UTC"))
 

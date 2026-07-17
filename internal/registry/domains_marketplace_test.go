@@ -155,20 +155,20 @@ func TestMarketplaceSellerScorecardFlags(t *testing.T) {
 	if scorecard == nil {
 		t.Fatal("missing marketplace action \"seller-scorecard\"")
 	}
-	var sellerGuid *FlagDef
+	var sellerGUID *FlagDef
 	for i := range scorecard.Flags {
 		if scorecard.Flags[i].Name == "seller-guid" {
-			sellerGuid = &scorecard.Flags[i]
+			sellerGUID = &scorecard.Flags[i]
 		}
 	}
-	if sellerGuid == nil {
+	if sellerGUID == nil {
 		t.Fatal("seller-scorecard must define the \"seller-guid\" flag")
 	}
-	if !sellerGuid.Required {
+	if !sellerGUID.Required {
 		t.Error("seller-scorecard must require the \"seller-guid\" flag")
 	}
-	if sellerGuid.Type != "string" {
-		t.Errorf("seller-scorecard \"seller-guid\" flag type is %q, want \"string\"", sellerGuid.Type)
+	if sellerGUID.Type != "string" {
+		t.Errorf("seller-scorecard \"seller-guid\" flag type is %q, want \"string\"", sellerGUID.Type)
 	}
 }
 

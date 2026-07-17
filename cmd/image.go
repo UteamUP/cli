@@ -100,7 +100,7 @@ Examples:
 		}
 
 		// Build config options from CLI flags.
-		var opts []iaconfig.ConfigOption
+		var opts []iaconfig.Option
 		opts = append(opts, iaconfig.WithFolderOverride(absImagePath))
 		opts = append(opts, iaconfig.WithOutputOverride(absOutputDir))
 		opts = append(opts, iaconfig.WithDryRun(imageDryRun))

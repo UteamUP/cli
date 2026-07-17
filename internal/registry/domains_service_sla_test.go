@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func serviceSlaAction(t *testing.T, name string) (*Domain, Action) {
+func serviceSLAAction(t *testing.T, name string) (*Domain, Action) {
 	t.Helper()
 	domain := findDomain("service-sla")
 	if domain == nil {
@@ -35,7 +35,7 @@ func TestServiceSlaRoutesAndArgumentsAreGuidOnly(t *testing.T) {
 	}
 	for actionName, test := range tests {
 		t.Run(actionName, func(t *testing.T) {
-			domain, action := serviceSlaAction(t, actionName)
+			domain, action := serviceSLAAction(t, actionName)
 			path, consumed := buildRESTPath(domain, action, map[string]any{test.argName: strings.ReplaceAll(test.argName, "Guid", "-guid")})
 			if path != test.path {
 				t.Fatalf("path = %q, want %q", path, test.path)
@@ -63,7 +63,7 @@ func TestServiceSlaActionsMirrorBackendToolsAndEvidence(t *testing.T) {
 		"reconcile":  "UteamupServiceSlaMilestoneReconcile",
 	}
 	for actionName, toolName := range expectedTools {
-		_, action := serviceSlaAction(t, actionName)
+		_, action := serviceSLAAction(t, actionName)
 		if action.ToolName != toolName {
 			t.Fatalf("%s tool = %q, want %q", actionName, action.ToolName, toolName)
 		}
@@ -76,27 +76,27 @@ func TestServiceSlaActionsMirrorBackendToolsAndEvidence(t *testing.T) {
 	}
 
 	for _, actionName := range []string{"initialize", "pause", "resume", "complete", "cancel", "reconcile"} {
-		_, action := serviceSlaAction(t, actionName)
-		assertServiceSlaFlag(t, action, "idempotency-key", "idempotencyKey", true)
+		_, action := serviceSLAAction(t, actionName)
+		assertServiceSLAFlag(t, action, "idempotency-key", "idempotencyKey", true)
 	}
 	for _, actionName := range []string{"pause", "resume", "complete", "cancel"} {
-		_, action := serviceSlaAction(t, actionName)
-		assertServiceSlaFlag(t, action, "expected-updated-at", "expectedUpdatedAt", true)
+		_, action := serviceSLAAction(t, actionName)
+		assertServiceSLAFlag(t, action, "expected-updated-at", "expectedUpdatedAt", true)
 	}
 	for _, actionName := range []string{"pause", "cancel"} {
-		_, action := serviceSlaAction(t, actionName)
-		assertServiceSlaFlag(t, action, "reason", "reason", true)
+		_, action := serviceSLAAction(t, actionName)
+		assertServiceSLAFlag(t, action, "reason", "reason", true)
 	}
-	_, list := serviceSlaAction(t, "list")
-	assertServiceSlaFlag(t, list, "workorder-guid", "workorderGuid", false)
-	assertServiceSlaFlag(t, list, "agreement-guid", "agreementGuid", false)
-	assertServiceSlaFlag(t, list, "as-of", "asOf", false)
-	_, reconcile := serviceSlaAction(t, "reconcile")
-	assertServiceSlaFlag(t, reconcile, "workorder-guid", "workorderGuid", true)
-	assertServiceSlaFlag(t, reconcile, "as-of", "asOf", true)
+	_, list := serviceSLAAction(t, "list")
+	assertServiceSLAFlag(t, list, "workorder-guid", "workorderGuid", false)
+	assertServiceSLAFlag(t, list, "agreement-guid", "agreementGuid", false)
+	assertServiceSLAFlag(t, list, "as-of", "asOf", false)
+	_, reconcile := serviceSLAAction(t, "reconcile")
+	assertServiceSLAFlag(t, reconcile, "workorder-guid", "workorderGuid", true)
+	assertServiceSLAFlag(t, reconcile, "as-of", "asOf", true)
 }
 
-func assertServiceSlaFlag(t *testing.T, action Action, name, bodyName string, required bool) {
+func assertServiceSLAFlag(t *testing.T, action Action, name, bodyName string, required bool) {
 	t.Helper()
 	for _, flag := range action.Flags {
 		if flag.Name == name {

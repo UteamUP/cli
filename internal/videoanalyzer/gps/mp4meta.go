@@ -9,8 +9,8 @@ import (
 	"strings"
 )
 
-// GPSData holds extracted GPS coordinates from video metadata.
-type GPSData struct {
+// Data holds extracted GPS coordinates from video metadata.
+type Data struct {
 	Latitude  float64
 	Longitude float64
 }
@@ -21,22 +21,22 @@ type GPSData struct {
 //   - Android/Generic: ©xyz atom (e.g., "+37.7749-122.4194/")
 //
 // Returns the GPS data, whether GPS was found, and any error.
-func ExtractGPS(path string) (data GPSData, found bool, err error) {
+func ExtractGPS(path string) (data Data, found bool, err error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return GPSData{}, false, fmt.Errorf("opening file: %w", err)
+		return Data{}, false, fmt.Errorf("opening file: %w", err)
 	}
 	defer f.Close()
 
 	info, err := f.Stat()
 	if err != nil {
-		return GPSData{}, false, fmt.Errorf("stat file: %w", err)
+		return Data{}, false, fmt.Errorf("stat file: %w", err)
 	}
 
 	// Try structured approach: parse moov -> udta -> ©xyz
 	data, found, err = parseBoxes(f, info.Size(), []string{"moov"})
 	if err != nil {
-		return GPSData{}, false, err
+		return Data{}, false, err
 	}
 	if found {
 		return data, true, nil
@@ -45,7 +45,7 @@ func ExtractGPS(path string) (data GPSData, found bool, err error) {
 	// Fallback: scan raw bytes for GPS patterns
 	data, found, err = scanForGPS(f, info.Size())
 	if err != nil {
-		return GPSData{}, false, err
+		return Data{}, false, err
 	}
 	return data, found, nil
 }
@@ -73,24 +73,16 @@ func readBoxHeader(r io.Reader) (size int64, boxType string, err error) {
 	return int64(sz), btype, nil
 }
 
-// headerSize returns the header size for a box given its declared size.
-func headerSize(sz int64) int64 {
-	if sz == 1 {
-		return 16 // 8 (standard) + 8 (extended)
-	}
-	return 8
-}
-
 // xyzBoxType is the ©xyz atom type bytes: 0xA9 followed by 'x', 'y', 'z'.
 var xyzBoxType = string([]byte{0xA9, 'x', 'y', 'z'})
 
 // parseBoxes iterates over boxes within the region [current_pos, end) of the ReadSeeker.
 // path tracks which container boxes we're looking for (e.g., ["moov"] means we need to find moov first).
-func parseBoxes(r io.ReadSeeker, end int64, path []string) (GPSData, bool, error) {
+func parseBoxes(r io.ReadSeeker, end int64, path []string) (Data, bool, error) {
 	for {
 		pos, err := r.Seek(0, io.SeekCurrent)
 		if err != nil {
-			return GPSData{}, false, err
+			return Data{}, false, err
 		}
 		if pos >= end {
 			break
@@ -101,21 +93,16 @@ func parseBoxes(r io.ReadSeeker, end int64, path []string) (GPSData, bool, error
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
 				break
 			}
-			return GPSData{}, false, err
+			return Data{}, false, err
 		}
 
-		// Determine actual header size consumed
-		hdrSize := int64(8)
-		if size > 0 && binary.BigEndian.Uint32([]byte{
-			byte(size >> 56), byte(size >> 48), byte(size >> 40), byte(size >> 32),
-		}) > 0 || size == 0 {
-			// This was a standard read; hdrSize is 8
+		// readBoxHeader consumes either 8 bytes for a standard box or 16 bytes
+		// for an extended-size box. Derive the header size from the stream.
+		currentPos, err := r.Seek(0, io.SeekCurrent)
+		if err != nil {
+			return Data{}, false, err
 		}
-		// Re-check: if original 4-byte size was 1, we read 16 bytes total
-		// We need to check the raw value. Since readBoxHeader already consumed
-		// the right number of bytes, we compute based on current position.
-		currentPos, _ := r.Seek(0, io.SeekCurrent)
-		hdrSize = currentPos - pos
+		hdrSize := currentPos - pos
 
 		// Handle size == 0 (extends to end of file/container)
 		if size == 0 {
@@ -138,20 +125,20 @@ func parseBoxes(r io.ReadSeeker, end int64, path []string) (GPSData, bool, error
 		// Skip this box
 		if contentSize > 0 {
 			if _, err := r.Seek(boxEnd, io.SeekStart); err != nil {
-				return GPSData{}, false, err
+				return Data{}, false, err
 			}
 		}
 	}
-	return GPSData{}, false, nil
+	return Data{}, false, nil
 }
 
 // findGPSInContainer searches within a container (moov) for GPS data.
 // It looks for udta -> ©xyz and also meta -> keys+ilst patterns.
-func findGPSInContainer(r io.ReadSeeker, end int64) (GPSData, bool, error) {
+func findGPSInContainer(r io.ReadSeeker, end int64) (Data, bool, error) {
 	for {
 		pos, err := r.Seek(0, io.SeekCurrent)
 		if err != nil {
-			return GPSData{}, false, err
+			return Data{}, false, err
 		}
 		if pos >= end {
 			break
@@ -162,7 +149,7 @@ func findGPSInContainer(r io.ReadSeeker, end int64) (GPSData, bool, error) {
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
 				break
 			}
-			return GPSData{}, false, err
+			return Data{}, false, err
 		}
 
 		currentPos, _ := r.Seek(0, io.SeekCurrent)
@@ -180,7 +167,7 @@ func findGPSInContainer(r io.ReadSeeker, end int64) (GPSData, bool, error) {
 			// Search inside udta for ©xyz
 			data, found, err := findXYZInUDTA(r, boxEnd)
 			if err != nil {
-				return GPSData{}, false, err
+				return Data{}, false, err
 			}
 			if found {
 				return data, true, nil
@@ -191,7 +178,7 @@ func findGPSInContainer(r io.ReadSeeker, end int64) (GPSData, bool, error) {
 			if _, err := io.ReadFull(r, versionFlags[:]); err == nil {
 				data, found, err := findGPSInMeta(r, boxEnd)
 				if err != nil {
-					return GPSData{}, false, err
+					return Data{}, false, err
 				}
 				if found {
 					return data, true, nil
@@ -201,18 +188,18 @@ func findGPSInContainer(r io.ReadSeeker, end int64) (GPSData, bool, error) {
 
 		// Skip to next box
 		if _, err := r.Seek(boxEnd, io.SeekStart); err != nil {
-			return GPSData{}, false, err
+			return Data{}, false, err
 		}
 	}
-	return GPSData{}, false, nil
+	return Data{}, false, nil
 }
 
 // findXYZInUDTA searches within a udta box for the ©xyz atom.
-func findXYZInUDTA(r io.ReadSeeker, end int64) (GPSData, bool, error) {
+func findXYZInUDTA(r io.ReadSeeker, end int64) (Data, bool, error) {
 	for {
 		pos, err := r.Seek(0, io.SeekCurrent)
 		if err != nil {
-			return GPSData{}, false, err
+			return Data{}, false, err
 		}
 		if pos >= end {
 			break
@@ -223,7 +210,7 @@ func findXYZInUDTA(r io.ReadSeeker, end int64) (GPSData, bool, error) {
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
 				break
 			}
-			return GPSData{}, false, err
+			return Data{}, false, err
 		}
 
 		currentPos, _ := r.Seek(0, io.SeekCurrent)
@@ -245,7 +232,7 @@ func findXYZInUDTA(r io.ReadSeeker, end int64) (GPSData, bool, error) {
 			// Read the content
 			content := make([]byte, contentSize)
 			if _, err := io.ReadFull(r, content); err != nil {
-				return GPSData{}, false, err
+				return Data{}, false, err
 			}
 
 			// Skip 2-byte length + 2-byte language code
@@ -254,21 +241,21 @@ func findXYZInUDTA(r io.ReadSeeker, end int64) (GPSData, bool, error) {
 
 			lat, lng, err := parseISO6709(gpsStr)
 			if err != nil {
-				return GPSData{}, false, err
+				return Data{}, false, err
 			}
-			return GPSData{Latitude: lat, Longitude: lng}, true, nil
+			return Data{Latitude: lat, Longitude: lng}, true, nil
 		}
 
 		// Skip to next box
 		if _, err := r.Seek(boxEnd, io.SeekStart); err != nil {
-			return GPSData{}, false, err
+			return Data{}, false, err
 		}
 	}
-	return GPSData{}, false, nil
+	return Data{}, false, nil
 }
 
 // findGPSInMeta searches within a meta box for keys+ilst pattern with ISO6709 GPS.
-func findGPSInMeta(r io.ReadSeeker, end int64) (GPSData, bool, error) {
+func findGPSInMeta(r io.ReadSeeker, end int64) (Data, bool, error) {
 	var keys []string
 	var ilstPos int64
 	var ilstSize int64
@@ -277,7 +264,7 @@ func findGPSInMeta(r io.ReadSeeker, end int64) (GPSData, bool, error) {
 	for {
 		pos, err := r.Seek(0, io.SeekCurrent)
 		if err != nil {
-			return GPSData{}, false, err
+			return Data{}, false, err
 		}
 		if pos >= end {
 			break
@@ -288,7 +275,7 @@ func findGPSInMeta(r io.ReadSeeker, end int64) (GPSData, bool, error) {
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
 				break
 			}
-			return GPSData{}, false, err
+			return Data{}, false, err
 		}
 
 		currentPos, _ := r.Seek(0, io.SeekCurrent)
@@ -315,7 +302,7 @@ func findGPSInMeta(r io.ReadSeeker, end int64) (GPSData, bool, error) {
 		}
 
 		if _, err := r.Seek(boxEnd, io.SeekStart); err != nil {
-			return GPSData{}, false, err
+			return Data{}, false, err
 		}
 	}
 
@@ -329,12 +316,12 @@ func findGPSInMeta(r io.ReadSeeker, end int64) (GPSData, bool, error) {
 	}
 
 	if gpsKeyIndex < 0 || ilstSize <= 0 {
-		return GPSData{}, false, nil
+		return Data{}, false, nil
 	}
 
 	// Read ilst to get the value at the GPS key index
 	if _, err := r.Seek(ilstPos, io.SeekStart); err != nil {
-		return GPSData{}, false, err
+		return Data{}, false, err
 	}
 
 	ilstEnd := ilstPos + ilstSize
@@ -370,7 +357,7 @@ func findGPSInMeta(r io.ReadSeeker, end int64) (GPSData, bool, error) {
 					if gpsStr != "" {
 						lat, lng, err := parseISO6709(gpsStr)
 						if err == nil {
-							return GPSData{Latitude: lat, Longitude: lng}, true, nil
+							return Data{Latitude: lat, Longitude: lng}, true, nil
 						}
 					}
 				}
@@ -383,7 +370,7 @@ func findGPSInMeta(r io.ReadSeeker, end int64) (GPSData, bool, error) {
 		}
 	}
 
-	return GPSData{}, false, nil
+	return Data{}, false, nil
 }
 
 // parseKeysAtom parses the content of a keys atom.
@@ -430,9 +417,9 @@ func extractILSTValue(content []byte) string {
 }
 
 // scanForGPS scans the first 10MB of the file for GPS coordinate patterns.
-func scanForGPS(r io.ReadSeeker, fileSize int64) (GPSData, bool, error) {
+func scanForGPS(r io.ReadSeeker, fileSize int64) (Data, bool, error) {
 	if _, err := r.Seek(0, io.SeekStart); err != nil {
-		return GPSData{}, false, err
+		return Data{}, false, err
 	}
 
 	scanSize := fileSize
@@ -444,7 +431,7 @@ func scanForGPS(r io.ReadSeeker, fileSize int64) (GPSData, bool, error) {
 	buf := make([]byte, scanSize)
 	n, err := io.ReadFull(r, buf)
 	if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
-		return GPSData{}, false, err
+		return Data{}, false, err
 	}
 	buf = buf[:n]
 	content := string(buf)
@@ -456,7 +443,7 @@ func scanForGPS(r io.ReadSeeker, fileSize int64) (GPSData, bool, error) {
 		remaining := content[idx+len(iso6709Key):]
 		lat, lng, err := findISO6709InString(remaining)
 		if err == nil {
-			return GPSData{Latitude: lat, Longitude: lng}, true, nil
+			return Data{Latitude: lat, Longitude: lng}, true, nil
 		}
 	}
 
@@ -469,12 +456,12 @@ func scanForGPS(r io.ReadSeeker, fileSize int64) (GPSData, bool, error) {
 			remaining = remaining[4:]
 			lat, lng, err := findISO6709InString(remaining)
 			if err == nil {
-				return GPSData{Latitude: lat, Longitude: lng}, true, nil
+				return Data{Latitude: lat, Longitude: lng}, true, nil
 			}
 		}
 	}
 
-	return GPSData{}, false, nil
+	return Data{}, false, nil
 }
 
 // findISO6709InString searches for an ISO 6709 coordinate pattern in a string.

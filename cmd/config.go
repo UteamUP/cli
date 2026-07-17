@@ -26,7 +26,7 @@ You will be prompted for:
   - API base URL (default: https://api.uteamup.com)
   - API key and secret (optional, can be set later)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		path, err := config.ConfigPath()
+		path, err := config.Path()
 		if err != nil {
 			return err
 		}
@@ -168,9 +168,13 @@ Examples:
 		case "logLevel", "loglevel":
 			profile.LogLevel = strings.ToUpper(value)
 		case "requestTimeout":
-			fmt.Sscanf(value, "%d", &profile.RequestTimeout)
+			if _, err := fmt.Sscanf(value, "%d", &profile.RequestTimeout); err != nil {
+				return fmt.Errorf("requestTimeout must be an integer: %w", err)
+			}
 		case "maxRetries":
-			fmt.Sscanf(value, "%d", &profile.MaxRetries)
+			if _, err := fmt.Sscanf(value, "%d", &profile.MaxRetries); err != nil {
+				return fmt.Errorf("maxRetries must be an integer: %w", err)
+			}
 		case "name":
 			profile.Name = value
 		case "exportJson", "exportjson":

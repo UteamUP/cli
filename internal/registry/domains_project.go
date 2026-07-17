@@ -12,10 +12,10 @@ func init() {
 		// §id→guid — GUIDs In, Integer IDs Out).
 		Actions: []Action{
 			{Name: "list", Description: "List projects", ToolName: "UteamupProjectList", Flags: paginationFlags()},
-			{Name: "get", Description: "Get a project by GUID", ToolName: "UteamupProjectGet", Args: externalGuidArg()},
+			{Name: "get", Description: "Get a project by GUID", ToolName: "UteamupProjectGet", Args: externalGUIDArg()},
 			{Name: "create", Description: "Create a project", ToolName: "UteamupProjectCreate", Flags: []FlagDef{jsonFlag()}},
-			{Name: "update", Description: "Update a project by GUID", ToolName: "UteamupProjectUpdate", Args: externalGuidArg(), Flags: []FlagDef{jsonFlag()}},
-			{Name: "delete", Description: "Delete a project by GUID", ToolName: "UteamupProjectDelete", Args: externalGuidArg()},
+			{Name: "update", Description: "Update a project by GUID", ToolName: "UteamupProjectUpdate", Args: externalGUIDArg(), Flags: []FlagDef{jsonFlag()}},
+			{Name: "delete", Description: "Delete a project by GUID", ToolName: "UteamupProjectDelete", Args: externalGUIDArg()},
 			{Name: "search", Description: "Search projects", ToolName: "UteamupProjectSearch", Args: queryArg(), Flags: paginationFlags()},
 			// my-projects mirrors GET /api/project/my-projects — lists projects
 			// containing workorders assigned to the authenticated user.

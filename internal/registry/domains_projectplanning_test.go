@@ -34,10 +34,10 @@ func findFlag(action *Action, name string) *FlagDef {
 // projectGuid (+ optional subGuid), all required strings — the names must
 // literally match the RESTPath placeholders or expandPathTemplate leaves the
 // raw token in the URL.
-func assertProjectGuidArgs(t *testing.T, action *Action, subGuid string) {
+func assertProjectGUIDArgs(t *testing.T, action *Action, subGUID string) {
 	t.Helper()
 	want := 1
-	if subGuid != "" {
+	if subGUID != "" {
 		want = 2
 	}
 	if len(action.Args) != want {
@@ -46,8 +46,8 @@ func assertProjectGuidArgs(t *testing.T, action *Action, subGuid string) {
 	if action.Args[0].Name != "projectGuid" || !action.Args[0].Required || action.Args[0].Type != "string" {
 		t.Errorf("%s first arg must be required string 'projectGuid', got %+v", action.Name, action.Args[0])
 	}
-	if subGuid != "" && (action.Args[1].Name != subGuid || !action.Args[1].Required || action.Args[1].Type != "string") {
-		t.Errorf("%s second arg must be required string %q, got %+v", action.Name, subGuid, action.Args[1])
+	if subGUID != "" && (action.Args[1].Name != subGUID || !action.Args[1].Required || action.Args[1].Type != "string") {
+		t.Errorf("%s second arg must be required string %q, got %+v", action.Name, subGUID, action.Args[1])
 	}
 }
 
@@ -80,7 +80,7 @@ func TestProjectStageActionRouteTemplates(t *testing.T) {
 		tool     string
 		method   string
 		restPath string
-		subGuid  string
+		subGUID  string
 	}{
 		{"list", "UteamupProjectStageList", "", "{projectGuid}/stages", ""},
 		{"get", "UteamupProjectStageGet", "", "{projectGuid}/stages/{stageGuid}", "stageGuid"},
@@ -97,7 +97,7 @@ func TestProjectStageActionRouteTemplates(t *testing.T) {
 			t.Errorf("project-stage %s: want tool=%s method=%q path=%s, got tool=%s method=%q path=%s",
 				c.action, c.tool, c.method, c.restPath, a.ToolName, a.HTTPMethod, a.RESTPath)
 		}
-		assertProjectGuidArgs(t, a, c.subGuid)
+		assertProjectGUIDArgs(t, a, c.subGUID)
 	}
 }
 
@@ -178,7 +178,7 @@ func TestProjectOutputActionRouteTemplates(t *testing.T) {
 		tool     string
 		method   string
 		restPath string
-		subGuid  string
+		subGUID  string
 	}{
 		{"list", "UteamupProjectOutputItemList", "", "{projectGuid}/outputitems", ""},
 		{"get", "UteamupProjectOutputItemGet", "", "{projectGuid}/outputitems/{itemGuid}", "itemGuid"},
@@ -193,7 +193,7 @@ func TestProjectOutputActionRouteTemplates(t *testing.T) {
 			t.Errorf("project-output %s: want tool=%s method=%q path=%s, got tool=%s method=%q path=%s",
 				c.action, c.tool, c.method, c.restPath, a.ToolName, a.HTTPMethod, a.RESTPath)
 		}
-		assertProjectGuidArgs(t, a, c.subGuid)
+		assertProjectGUIDArgs(t, a, c.subGUID)
 	}
 }
 
@@ -273,7 +273,7 @@ func TestProjectBudgetGetActionWired(t *testing.T) {
 	if a.ToolName != "UteamupProjectBudgetGet" || a.HTTPMethod != "" || a.RESTPath != "{projectGuid}/budget" {
 		t.Errorf("budget get must be GET {projectGuid}/budget, got %+v", a)
 	}
-	assertProjectGuidArgs(t, a, "")
+	assertProjectGUIDArgs(t, a, "")
 	if len(a.Flags) != 0 {
 		t.Errorf("budget get should take no flags, got %d", len(a.Flags))
 	}
@@ -306,7 +306,7 @@ func TestProjectRiskActionRouteTemplates(t *testing.T) {
 		tool     string
 		method   string
 		restPath string
-		subGuid  string
+		subGUID  string
 	}{
 		{"list", "UteamupProjectRiskList", "", "{projectGuid}/risks", ""},
 		{"get", "UteamupProjectRiskGet", "", "{projectGuid}/risks/{riskGuid}", "riskGuid"},
@@ -321,7 +321,7 @@ func TestProjectRiskActionRouteTemplates(t *testing.T) {
 			t.Errorf("project-risk %s: want tool=%s method=%q path=%s, got tool=%s method=%q path=%s",
 				c.action, c.tool, c.method, c.restPath, a.ToolName, a.HTTPMethod, a.RESTPath)
 		}
-		assertProjectGuidArgs(t, a, c.subGuid)
+		assertProjectGUIDArgs(t, a, c.subGUID)
 	}
 }
 
@@ -406,7 +406,7 @@ func TestProjectInsightsConflictsActionWired(t *testing.T) {
 	if a.ToolName != "UteamupProjectGetConflicts" || a.HTTPMethod != "" || a.RESTPath != "{projectGuid}/conflicts" {
 		t.Errorf("conflicts must be GET {projectGuid}/conflicts, got %+v", a)
 	}
-	assertProjectGuidArgs(t, a, "")
+	assertProjectGUIDArgs(t, a, "")
 	if len(a.Flags) != 0 {
 		t.Errorf("conflicts should take no flags, got %d", len(a.Flags))
 	}
@@ -460,7 +460,7 @@ func TestCostBudgetThresholdActionRouteTemplates(t *testing.T) {
 		action   string
 		tool     string
 		restPath string
-		hasGuid  bool
+		hasGUID  bool
 	}{
 		{"list", "UteamupCostBudgetThresholdList", "", false},
 		{"create", "UteamupCostBudgetThresholdCreate", "", false},
@@ -474,7 +474,7 @@ func TestCostBudgetThresholdActionRouteTemplates(t *testing.T) {
 			t.Errorf("cost-budget-threshold %s: want tool=%s method=%q path=%q, got tool=%s method=%q path=%q",
 				c.action, c.tool, "", c.restPath, a.ToolName, a.HTTPMethod, a.RESTPath)
 		}
-		if !c.hasGuid {
+		if !c.hasGUID {
 			if len(a.Args) != 0 {
 				t.Errorf("%s should take no positional args, got %+v", c.action, a.Args)
 			}
@@ -513,7 +513,7 @@ func TestProjectBomActionRouteTemplates(t *testing.T) {
 		tool     string
 		method   string
 		restPath string
-		subGuid  string
+		subGUID  string
 	}{
 		{"list", "UteamupProjectBomList", "", "{projectGuid}/bom", ""},
 		{"get", "UteamupProjectBomGet", "", "{projectGuid}/bom/{itemGuid}", "itemGuid"},
@@ -527,7 +527,7 @@ func TestProjectBomActionRouteTemplates(t *testing.T) {
 			t.Errorf("project-bom %s: want tool=%s method=%q path=%s, got tool=%s method=%q path=%s",
 				c.action, c.tool, c.method, c.restPath, a.ToolName, a.HTTPMethod, a.RESTPath)
 		}
-		assertProjectGuidArgs(t, a, c.subGuid)
+		assertProjectGUIDArgs(t, a, c.subGUID)
 	}
 }
 
@@ -537,9 +537,9 @@ func TestProjectBomCreateFlags(t *testing.T) {
 	if itemType == nil || !itemType.Required || itemType.Type != "string" {
 		t.Errorf("create must have a required string `item-type` flag, got %+v", itemType)
 	}
-	itemGuid := findFlag(a, "item-guid")
-	if itemGuid == nil || !itemGuid.Required || itemGuid.Type != "string" {
-		t.Errorf("create must have a required string `item-guid` flag, got %+v", itemGuid)
+	itemGUID := findFlag(a, "item-guid")
+	if itemGUID == nil || !itemGUID.Required || itemGUID.Type != "string" {
+		t.Errorf("create must have a required string `item-guid` flag, got %+v", itemGUID)
 	}
 	qty := findFlag(a, "quantity-required")
 	if qty == nil || !qty.Required || qty.Type != "float" {

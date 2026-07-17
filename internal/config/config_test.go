@@ -156,7 +156,7 @@ func TestEnvOverrides(t *testing.T) {
 
 func TestLoadRemovesDeprecatedDirectProviderSettings(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
-	configPath, err := ConfigPath()
+	configPath, err := Path()
 	if err != nil {
 		t.Fatal(err)
 	}

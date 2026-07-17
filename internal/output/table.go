@@ -130,7 +130,7 @@ func printObjectTable(obj map[string]any) error {
 		printAdditionalNotesBlock(v)
 	}
 	if v, ok := obj["recentApiCalls"]; ok {
-		printRecentApiCallsBlock(v)
+		printRecentAPICallsBlock(v)
 	}
 	if v, ok := obj["recentStoreActions"]; ok {
 		printRecentStoreActionsBlock(v)
@@ -241,11 +241,11 @@ func printAdditionalNotesBlock(v any) {
 	}
 }
 
-// printRecentApiCallsBlock renders the API trail as one line per call:
+// printRecentAPICallsBlock renders the API trail as one line per call:
 // "<status> <method> <endpoint>  <duration>ms  (called from <file>)".
 // Failed calls (status >= 400) are prefixed with "!" so they jump out in a
 // scan. Skipped when null or empty.
-func printRecentApiCallsBlock(v any) {
+func printRecentAPICallsBlock(v any) {
 	entries, ok := v.([]any)
 	if !ok || len(entries) == 0 {
 		return

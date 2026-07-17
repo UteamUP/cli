@@ -65,7 +65,7 @@ type Result struct {
 }
 
 type UsageReceipt struct {
-	RequestGuid      string   `json:"requestGuid"`
+	RequestGUID      string   `json:"requestGuid"`
 	CredentialSource string   `json:"credentialSource"`
 	ProviderAlias    string   `json:"providerAlias"`
 	ModelAlias       string   `json:"modelAlias"`
@@ -170,7 +170,7 @@ func (a *Analyzer) analyze(
 	if response.ErrorCode != "" || response.QuotaBlockedReason != "" {
 		return Result{}, safeBusinessError(response.ErrorCode, response.QuotaBlockedReason)
 	}
-	if !guidPattern.MatchString(response.UsageReceipt.RequestGuid) {
+	if !guidPattern.MatchString(response.UsageReceipt.RequestGUID) {
 		return Result{}, fmt.Errorf("backend media analysis response is missing a valid request GUID")
 	}
 	receipt, err := normalizeReceipt(response.UsageReceipt)

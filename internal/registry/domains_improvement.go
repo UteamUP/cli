@@ -18,7 +18,7 @@ func init() {
 				Description: "Get an improvement project by public GUID",
 				ToolName:    "UteamupImprovementProjectGet",
 				RESTPath:    "by-guid/{projectGuid}",
-				Args:        []ArgDef{improvementProjectGuidArg()},
+				Args:        []ArgDef{improvementProjectGUIDArg()},
 			},
 			{
 				Name:        "create",
@@ -31,7 +31,7 @@ func init() {
 				Description: "Update an improvement project by public GUID",
 				ToolName:    "UteamupImprovementProjectUpdate",
 				RESTPath:    "by-guid/{projectGuid}",
-				Args:        []ArgDef{improvementProjectGuidArg()},
+				Args:        []ArgDef{improvementProjectGUIDArg()},
 				Flags:       []FlagDef{jsonFlag()},
 			},
 			{
@@ -39,7 +39,7 @@ func init() {
 				Description: "Delete an improvement project by public GUID",
 				ToolName:    "UteamupImprovementProjectDelete",
 				RESTPath:    "by-guid/{projectGuid}",
-				Args:        []ArgDef{improvementProjectGuidArg()},
+				Args:        []ArgDef{improvementProjectGUIDArg()},
 			},
 			improvementProjectTransitionAction("approve", "Approve an improvement project"),
 			improvementProjectTransitionAction("start", "Start an improvement project"),
@@ -50,7 +50,7 @@ func init() {
 				ToolName:    "UteamupImprovementProjectCancel",
 				HTTPMethod:  "POST",
 				RESTPath:    "by-guid/{projectGuid}/cancel",
-				Args:        []ArgDef{improvementProjectGuidArg()},
+				Args:        []ArgDef{improvementProjectGUIDArg()},
 				Flags:       []FlagDef{jsonFlag()},
 			},
 			improvementProjectTransitionAction("hold", "Put an improvement project on hold"),
@@ -60,7 +60,7 @@ func init() {
 				ToolName:    "UteamupImprovementProjectCreateWorkOrder",
 				HTTPMethod:  "POST",
 				RESTPath:    "by-guid/{projectGuid}/create-workorder",
-				Args:        []ArgDef{improvementProjectGuidArg()},
+				Args:        []ArgDef{improvementProjectGUIDArg()},
 			},
 			{
 				Name:        "linked-workorders",
@@ -68,7 +68,7 @@ func init() {
 				ToolName:    "UteamupImprovementProjectLinkedWorkOrders",
 				HTTPMethod:  "GET",
 				RESTPath:    "by-guid/{projectGuid}/linked-workorders",
-				Args:        []ArgDef{improvementProjectGuidArg()},
+				Args:        []ArgDef{improvementProjectGUIDArg()},
 			},
 			{
 				Name:        "actions",
@@ -76,7 +76,7 @@ func init() {
 				ToolName:    "UteamupImprovementProjectActions",
 				HTTPMethod:  "GET",
 				RESTPath:    "by-guid/{projectGuid}/actions",
-				Args:        []ArgDef{improvementProjectGuidArg()},
+				Args:        []ArgDef{improvementProjectGUIDArg()},
 			},
 			{
 				Name:        "action-create",
@@ -84,7 +84,7 @@ func init() {
 				ToolName:    "UteamupImprovementProjectActionCreate",
 				HTTPMethod:  "POST",
 				RESTPath:    "by-guid/{projectGuid}/actions",
-				Args:        []ArgDef{improvementProjectGuidArg()},
+				Args:        []ArgDef{improvementProjectGUIDArg()},
 				Flags:       []FlagDef{jsonFlag()},
 			},
 			improvementActionMutation("action-update", "PUT", "Update an improvement action"),
@@ -96,7 +96,7 @@ func init() {
 				ToolName:    "UteamupImprovementProjectPdca",
 				HTTPMethod:  "GET",
 				RESTPath:    "by-guid/{projectGuid}/pdca",
-				Args:        []ArgDef{improvementProjectGuidArg()},
+				Args:        []ArgDef{improvementProjectGUIDArg()},
 			},
 			{
 				Name:        "pdca-add",
@@ -104,7 +104,7 @@ func init() {
 				ToolName:    "UteamupImprovementProjectPdcaAdd",
 				HTTPMethod:  "POST",
 				RESTPath:    "by-guid/{projectGuid}/pdca",
-				Args:        []ArgDef{improvementProjectGuidArg()},
+				Args:        []ArgDef{improvementProjectGUIDArg()},
 				Flags:       []FlagDef{jsonFlag()},
 			},
 			{
@@ -114,7 +114,7 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "by-guid/{projectGuid}/pdca/by-guid/{entryGuid}/complete",
 				Args: []ArgDef{
-					improvementProjectGuidArg(),
+					improvementProjectGUIDArg(),
 					{Name: "entryGuid", Description: "PDCA entry public GUID", Required: true, Type: "uuid"},
 				},
 				Flags: []FlagDef{jsonFlag()},
@@ -129,13 +129,13 @@ func init() {
 		APIPath:     "/api/kaizen",
 		Actions: []Action{
 			{Name: "board", Description: "Get the kaizen board", ToolName: "UteamupKaizenGetBoard", HTTPMethod: "GET", RESTPath: "board"},
-			{Name: "get", Description: "Get a kaizen card by public GUID", ToolName: "UteamupKaizenGet", RESTPath: "by-guid/{cardGuid}", Args: []ArgDef{kaizenCardGuidArg()}},
+			{Name: "get", Description: "Get a kaizen card by public GUID", ToolName: "UteamupKaizenGet", RESTPath: "by-guid/{cardGuid}", Args: []ArgDef{kaizenCardGUIDArg()}},
 			{Name: "create", Description: "Create a kaizen card", ToolName: "UteamupKaizenCreate", Flags: []FlagDef{jsonFlag()}},
-			{Name: "update", Description: "Update a kaizen card by public GUID", ToolName: "UteamupKaizenUpdate", RESTPath: "by-guid/{cardGuid}", Args: []ArgDef{kaizenCardGuidArg()}, Flags: []FlagDef{jsonFlag()}},
-			{Name: "delete", Description: "Delete a kaizen card by public GUID", ToolName: "UteamupKaizenDelete", RESTPath: "by-guid/{cardGuid}", Args: []ArgDef{kaizenCardGuidArg()}},
-			{Name: "move", Description: "Move a kaizen card by public GUID", ToolName: "UteamupKaizenMove", HTTPMethod: "PUT", RESTPath: "by-guid/{cardGuid}/move", Args: []ArgDef{kaizenCardGuidArg()}, Flags: []FlagDef{jsonFlag()}},
-			{Name: "escalate", Description: "Escalate a kaizen card to a project", ToolName: "UteamupKaizenEscalate", HTTPMethod: "POST", RESTPath: "by-guid/{cardGuid}/escalate", Args: []ArgDef{kaizenCardGuidArg()}},
-			{Name: "create-suggestion", Description: "Create a suggestion from a kaizen card", ToolName: "UteamupKaizenCreateSuggestion", HTTPMethod: "POST", RESTPath: "by-guid/{cardGuid}/create-suggestion", Args: []ArgDef{kaizenCardGuidArg()}},
+			{Name: "update", Description: "Update a kaizen card by public GUID", ToolName: "UteamupKaizenUpdate", RESTPath: "by-guid/{cardGuid}", Args: []ArgDef{kaizenCardGUIDArg()}, Flags: []FlagDef{jsonFlag()}},
+			{Name: "delete", Description: "Delete a kaizen card by public GUID", ToolName: "UteamupKaizenDelete", RESTPath: "by-guid/{cardGuid}", Args: []ArgDef{kaizenCardGUIDArg()}},
+			{Name: "move", Description: "Move a kaizen card by public GUID", ToolName: "UteamupKaizenMove", HTTPMethod: "PUT", RESTPath: "by-guid/{cardGuid}/move", Args: []ArgDef{kaizenCardGUIDArg()}, Flags: []FlagDef{jsonFlag()}},
+			{Name: "escalate", Description: "Escalate a kaizen card to a project", ToolName: "UteamupKaizenEscalate", HTTPMethod: "POST", RESTPath: "by-guid/{cardGuid}/escalate", Args: []ArgDef{kaizenCardGUIDArg()}},
+			{Name: "create-suggestion", Description: "Create a suggestion from a kaizen card", ToolName: "UteamupKaizenCreateSuggestion", HTTPMethod: "POST", RESTPath: "by-guid/{cardGuid}/create-suggestion", Args: []ArgDef{kaizenCardGUIDArg()}},
 		},
 	})
 
@@ -146,17 +146,17 @@ func init() {
 		APIPath:     "/api/improvementsuggestion",
 		Actions: []Action{
 			{Name: "list", Description: "List improvement suggestions", ToolName: "UteamupImprovementSuggestionList", Flags: paginationFlags()},
-			{Name: "get", Description: "Get an improvement suggestion by public GUID", ToolName: "UteamupImprovementSuggestionGet", RESTPath: "by-guid/{suggestionGuid}", Args: []ArgDef{improvementSuggestionGuidArg()}},
+			{Name: "get", Description: "Get an improvement suggestion by public GUID", ToolName: "UteamupImprovementSuggestionGet", RESTPath: "by-guid/{suggestionGuid}", Args: []ArgDef{improvementSuggestionGUIDArg()}},
 			{Name: "create", Description: "Create an improvement suggestion", ToolName: "UteamupImprovementSuggestionCreate", Flags: []FlagDef{jsonFlag()}},
-			{Name: "review", Description: "Review an improvement suggestion", ToolName: "UteamupImprovementSuggestionReview", HTTPMethod: "POST", RESTPath: "by-guid/{suggestionGuid}/review", Args: []ArgDef{improvementSuggestionGuidArg()}, Flags: []FlagDef{jsonFlag()}},
-			{Name: "convert", Description: "Convert an improvement suggestion to a project", ToolName: "UteamupImprovementSuggestionConvert", HTTPMethod: "POST", RESTPath: "by-guid/{suggestionGuid}/convert", Args: []ArgDef{improvementSuggestionGuidArg()}},
-			{Name: "create-workorder", Description: "Create a linked work order", ToolName: "UteamupImprovementSuggestionCreateWorkOrder", HTTPMethod: "POST", RESTPath: "by-guid/{suggestionGuid}/create-workorder", Args: []ArgDef{improvementSuggestionGuidArg()}},
-			{Name: "linked-workorders", Description: "List linked work orders", ToolName: "UteamupImprovementSuggestionLinkedWorkOrders", HTTPMethod: "GET", RESTPath: "by-guid/{suggestionGuid}/linked-workorders", Args: []ArgDef{improvementSuggestionGuidArg()}},
+			{Name: "review", Description: "Review an improvement suggestion", ToolName: "UteamupImprovementSuggestionReview", HTTPMethod: "POST", RESTPath: "by-guid/{suggestionGuid}/review", Args: []ArgDef{improvementSuggestionGUIDArg()}, Flags: []FlagDef{jsonFlag()}},
+			{Name: "convert", Description: "Convert an improvement suggestion to a project", ToolName: "UteamupImprovementSuggestionConvert", HTTPMethod: "POST", RESTPath: "by-guid/{suggestionGuid}/convert", Args: []ArgDef{improvementSuggestionGUIDArg()}},
+			{Name: "create-workorder", Description: "Create a linked work order", ToolName: "UteamupImprovementSuggestionCreateWorkOrder", HTTPMethod: "POST", RESTPath: "by-guid/{suggestionGuid}/create-workorder", Args: []ArgDef{improvementSuggestionGUIDArg()}},
+			{Name: "linked-workorders", Description: "List linked work orders", ToolName: "UteamupImprovementSuggestionLinkedWorkOrders", HTTPMethod: "GET", RESTPath: "by-guid/{suggestionGuid}/linked-workorders", Args: []ArgDef{improvementSuggestionGUIDArg()}},
 		},
 	})
 }
 
-func kaizenCardGuidArg() ArgDef {
+func kaizenCardGUIDArg() ArgDef {
 	return ArgDef{
 		Name:        "cardGuid",
 		Description: "Kaizen card public GUID",
@@ -165,7 +165,7 @@ func kaizenCardGuidArg() ArgDef {
 	}
 }
 
-func improvementSuggestionGuidArg() ArgDef {
+func improvementSuggestionGUIDArg() ArgDef {
 	return ArgDef{
 		Name:        "suggestionGuid",
 		Description: "Improvement suggestion public GUID",
@@ -174,7 +174,7 @@ func improvementSuggestionGuidArg() ArgDef {
 	}
 }
 
-func improvementProjectGuidArg() ArgDef {
+func improvementProjectGUIDArg() ArgDef {
 	return ArgDef{
 		Name:        "projectGuid",
 		Description: "Improvement project public GUID",
@@ -190,7 +190,7 @@ func improvementProjectTransitionAction(name, description string) Action {
 		ToolName:    "UteamupImprovementProject" + titleWord(name),
 		HTTPMethod:  "POST",
 		RESTPath:    "by-guid/{projectGuid}/" + name,
-		Args:        []ArgDef{improvementProjectGuidArg()},
+		Args:        []ArgDef{improvementProjectGUIDArg()},
 	}
 }
 
@@ -206,7 +206,7 @@ func improvementActionMutation(name, method, description string) Action {
 		HTTPMethod:  method,
 		RESTPath:    "by-guid/{projectGuid}/actions/by-guid/{actionGuid}" + actionCompleteSuffix(name),
 		Args: []ArgDef{
-			improvementProjectGuidArg(),
+			improvementProjectGUIDArg(),
 			{Name: "actionGuid", Description: "Improvement action public GUID", Required: true, Type: "uuid"},
 		},
 		Flags: flags,

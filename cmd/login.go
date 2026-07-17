@@ -61,7 +61,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	authClient := auth.NewAuthClient(baseURL, insecure, logger)
+	authClient := auth.NewClient(baseURL, insecure, logger)
 
 	var token *auth.TokenData
 
@@ -121,8 +121,8 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	if token.TenantName != "" {
 		// Print the GUID, not the int Id — internal database keys must not leak to
 		// user-facing CLI output per the GUIDs-at-boundary rule.
-		if token.TenantGuid != "" {
-			fmt.Printf("Tenant: %s (%s)\n", token.TenantName, token.TenantGuid)
+		if token.TenantGUID != "" {
+			fmt.Printf("Tenant: %s (%s)\n", token.TenantName, token.TenantGUID)
 		} else {
 			fmt.Printf("Tenant: %s\n", token.TenantName)
 		}

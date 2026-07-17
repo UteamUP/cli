@@ -85,7 +85,7 @@ func (c *Catalog) parseController(path, content, root string) {
 	controller := m[1] // class name minus the "Controller" suffix, matching ControllerActionDescriptor.ControllerName
 	rel := relPath(root, path)
 
-	pendingHttp := false
+	pendingHTTP := false
 	skipNext := false
 	for _, line := range strings.Split(content, "\n") {
 		trimmed := strings.TrimSpace(line)
@@ -97,18 +97,18 @@ func (c *Catalog) parseController(path, content, root string) {
 			continue
 		}
 		if strings.Contains(trimmed, "[Http") {
-			pendingHttp = true
+			pendingHTTP = true
 			continue
 		}
 		// An action method declaration: a public member with a parameter list, not the class line.
 		isMethod := strings.HasPrefix(trimmed, "public ") && !strings.Contains(trimmed, " class ") && strings.Contains(trimmed, "(")
 		if isMethod {
-			if pendingHttp && !skipNext {
+			if pendingHTTP && !skipNext {
 				if name := firstCall(csMethodRe, trimmed); name != "" {
 					c.add(TypeBackendEndpoint, controller+"."+name, rel, true)
 				}
 			}
-			pendingHttp = false
+			pendingHTTP = false
 			skipNext = false
 		}
 	}

@@ -2,7 +2,7 @@ package registry
 
 import "testing"
 
-func findApiKeyDomain(t *testing.T) *Domain {
+func findAPIKeyDomain(t *testing.T) *Domain {
 	t.Helper()
 	for _, d := range DefaultRegistry.Domains() {
 		if d.Name == "apikey" {
@@ -13,9 +13,9 @@ func findApiKeyDomain(t *testing.T) *Domain {
 	return nil
 }
 
-func findApiKeyAction(t *testing.T, name string) *Action {
+func findAPIKeyAction(t *testing.T, name string) *Action {
 	t.Helper()
-	d := findApiKeyDomain(t)
+	d := findAPIKeyDomain(t)
 	for i := range d.Actions {
 		if d.Actions[i].Name == name {
 			return &d.Actions[i]
@@ -26,7 +26,7 @@ func findApiKeyAction(t *testing.T, name string) *Action {
 }
 
 func TestApiKeyDomainRegistered(t *testing.T) {
-	d := findApiKeyDomain(t)
+	d := findAPIKeyDomain(t)
 	if d.Description == "" {
 		t.Error("apikey domain must have a Description")
 	}
@@ -46,7 +46,7 @@ func TestApiKeyDomainRegistered(t *testing.T) {
 }
 
 func TestApiKeyActionsWired(t *testing.T) {
-	d := findApiKeyDomain(t)
+	d := findAPIKeyDomain(t)
 	expected := map[string]string{
 		"create": "UteamupTenantApiKeyCreate",
 		"list":   "UteamupTenantApiKeyList",
@@ -70,7 +70,7 @@ func TestApiKeyActionsWired(t *testing.T) {
 // create → POST /api/tenant-api-keys (no path id). Verb falls out of the
 // action-name default map; no RESTPath/HTTPMethod override needed.
 func TestApiKeyCreateAction(t *testing.T) {
-	action := findApiKeyAction(t, "create")
+	action := findAPIKeyAction(t, "create")
 
 	if action.RESTPath != "" {
 		t.Errorf("create RESTPath = %q, want empty (POST to base path)", action.RESTPath)
@@ -125,7 +125,7 @@ func TestApiKeyCreateAction(t *testing.T) {
 
 // list → GET /api/tenant-api-keys (no path id, no RESTPath).
 func TestApiKeyListAction(t *testing.T) {
-	action := findApiKeyAction(t, "list")
+	action := findAPIKeyAction(t, "list")
 
 	if action.RESTPath != "" {
 		t.Errorf("list RESTPath = %q, want empty (GET base path)", action.RESTPath)
@@ -144,7 +144,7 @@ func TestApiKeyListAction(t *testing.T) {
 // get → GET /api/tenant-api-keys/by-guid/{guid}. Needs an explicit RESTPath so
 // the GUID lands under by-guid/ (default get routing would emit {base}/{guid}).
 func TestApiKeyGetAction(t *testing.T) {
-	action := findApiKeyAction(t, "get")
+	action := findAPIKeyAction(t, "get")
 
 	if action.RESTPath != "by-guid/{guid}" {
 		t.Errorf("get RESTPath = %q, want %q", action.RESTPath, "by-guid/{guid}")
@@ -166,7 +166,7 @@ func TestApiKeyGetAction(t *testing.T) {
 // revoke → POST /api/tenant-api-keys/by-guid/{guid}/revoke. POST is not the
 // name-default for an unknown verb, so HTTPMethod must be set explicitly.
 func TestApiKeyRevokeAction(t *testing.T) {
-	action := findApiKeyAction(t, "revoke")
+	action := findAPIKeyAction(t, "revoke")
 
 	if action.HTTPMethod != "POST" {
 		t.Errorf("revoke HTTPMethod = %q, want POST", action.HTTPMethod)

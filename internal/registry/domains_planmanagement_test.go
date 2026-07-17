@@ -27,7 +27,7 @@ func assertDomainAPIPath(t *testing.T, name, apiPath string) *Domain {
 	return d
 }
 
-func assertSingleGuidArg(t *testing.T, action *Action, argName string) {
+func assertSingleGUIDArg(t *testing.T, action *Action, argName string) {
 	t.Helper()
 	if len(action.Args) != 1 {
 		t.Fatalf("%s expected 1 positional arg, got %+v", action.Name, action.Args)
@@ -46,7 +46,7 @@ func TestPlanLimitDomainRegistered(t *testing.T) {
 	if a.HTTPMethod != "PUT" || a.RESTPath != "by-plan/{planGuid}" {
 		t.Errorf("plan-limit upsert: want method=PUT path=by-plan/{planGuid}, got method=%q path=%s", a.HTTPMethod, a.RESTPath)
 	}
-	assertSingleGuidArg(t, a, "planGuid")
+	assertSingleGUIDArg(t, a, "planGuid")
 	dim := findFlag(a, "dimension")
 	if dim == nil || !dim.Required || dim.Type != "int" {
 		t.Errorf("plan-limit upsert --dimension must be a required int flag, got %+v", dim)
@@ -79,11 +79,11 @@ func TestPricingRuleDomainRegistered(t *testing.T) {
 
 	// get/update/delete all address the rule via by-guid/{guid}.
 	for _, actionName := range []string{"get", "update", "delete"} {
-		byGuid := findDomainAction(t, "pricing-rule", actionName)
-		if byGuid.RESTPath != "by-guid/{guid}" {
-			t.Errorf("pricing-rule %s RESTPath = %q, want by-guid/{guid}", actionName, byGuid.RESTPath)
+		byGUID := findDomainAction(t, "pricing-rule", actionName)
+		if byGUID.RESTPath != "by-guid/{guid}" {
+			t.Errorf("pricing-rule %s RESTPath = %q, want by-guid/{guid}", actionName, byGUID.RESTPath)
 		}
-		assertSingleGuidArg(t, byGuid, "guid")
+		assertSingleGUIDArg(t, byGUID, "guid")
 	}
 }
 
@@ -96,7 +96,7 @@ func TestTenantFeatureOverrideDomainRegistered(t *testing.T) {
 	if a.HTTPMethod != "PUT" || a.RESTPath != "by-tenant/{tenantGuid}" {
 		t.Errorf("tenant-feature-override upsert: want method=PUT path=by-tenant/{tenantGuid}, got method=%q path=%s", a.HTTPMethod, a.RESTPath)
 	}
-	assertSingleGuidArg(t, a, "tenantGuid")
+	assertSingleGUIDArg(t, a, "tenantGuid")
 	mode := findFlag(a, "mode")
 	if mode == nil || !mode.Required || mode.Type != "int" {
 		t.Errorf("tenant-feature-override upsert --mode must be a required int flag, got %+v", mode)
@@ -119,7 +119,7 @@ func TestPlanImpactDomainRegistered(t *testing.T) {
 	if a.HTTPMethod != "POST" || a.RESTPath != "by-plan/{planGuid}/preview" {
 		t.Errorf("plan-impact preview: want method=POST path=by-plan/{planGuid}/preview, got method=%q path=%s", a.HTTPMethod, a.RESTPath)
 	}
-	assertSingleGuidArg(t, a, "planGuid")
+	assertSingleGUIDArg(t, a, "planGuid")
 	// Both proposed prices are decimal DTO fields → required float flags.
 	for _, flagName := range []string{"proposed-price-per-license-isk", "proposed-price-per-helpdesk-license-isk"} {
 		f := findFlag(a, flagName)
@@ -167,7 +167,7 @@ func TestPlanApprovalDomainRegistered(t *testing.T) {
 		if a.HTTPMethod != "POST" || a.RESTPath != restPath {
 			t.Errorf("plan-approval %s: want method=POST path=%s, got method=%q path=%s", actionName, restPath, a.HTTPMethod, a.RESTPath)
 		}
-		assertSingleGuidArg(t, a, "requestGuid")
+		assertSingleGUIDArg(t, a, "requestGuid")
 	}
 }
 
@@ -212,7 +212,7 @@ func TestSubscriptionLifecycleDomainRegistered(t *testing.T) {
 		if a.HTTPMethod != "POST" || a.RESTPath != restPath {
 			t.Errorf("subscription-lifecycle %s: want method=POST path=%s, got method=%q path=%s", actionName, restPath, a.HTTPMethod, a.RESTPath)
 		}
-		assertSingleGuidArg(t, a, "guid")
+		assertSingleGUIDArg(t, a, "guid")
 	}
 
 	// cancel deliberately has NO --reason flag: the backend binds

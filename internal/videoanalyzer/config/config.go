@@ -33,8 +33,8 @@ type AppConfig struct {
 	Processing ProcessingConfig `yaml:"processing"`
 }
 
-// ConfigOption is a functional option for overriding config values.
-type ConfigOption func(*AppConfig)
+// Option overrides video-analysis configuration values.
+type Option func(*AppConfig)
 
 // DefaultConfig returns an AppConfig populated with sensible defaults.
 func DefaultConfig() *AppConfig {
@@ -53,7 +53,7 @@ func DefaultConfig() *AppConfig {
 }
 
 // WithFolderOverride overrides the video folder path.
-func WithFolderOverride(path string) ConfigOption {
+func WithFolderOverride(path string) Option {
 	return func(c *AppConfig) {
 		if path != "" {
 			c.Scan.VideoFolder = path
@@ -62,7 +62,7 @@ func WithFolderOverride(path string) ConfigOption {
 }
 
 // WithOutputOverride overrides the output folder path.
-func WithOutputOverride(path string) ConfigOption {
+func WithOutputOverride(path string) Option {
 	return func(c *AppConfig) {
 		if path != "" {
 			c.Scan.OutputFolder = path
@@ -71,7 +71,7 @@ func WithOutputOverride(path string) ConfigOption {
 }
 
 // WithDryRun sets the dry run mode.
-func WithDryRun(dryRun bool) ConfigOption {
+func WithDryRun(dryRun bool) Option {
 	return func(c *AppConfig) {
 		c.Processing.DryRun = dryRun
 	}
@@ -80,7 +80,7 @@ func WithDryRun(dryRun bool) ConfigOption {
 // LoadConfig reads a YAML config file, applies environment variable overrides,
 // and then applies any functional option overrides. If the config file does not
 // exist, defaults are used.
-func LoadConfig(configPath string, opts ...ConfigOption) (*AppConfig, error) {
+func LoadConfig(configPath string, opts ...Option) (*AppConfig, error) {
 	cfg := DefaultConfig()
 
 	// Read YAML file if it exists.

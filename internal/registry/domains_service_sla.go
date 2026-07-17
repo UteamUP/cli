@@ -1,6 +1,6 @@
 package registry
 
-func serviceSlaTransitionFlags(reasonRequired bool) []FlagDef {
+func serviceSLATransitionFlags(reasonRequired bool) []FlagDef {
 	return []FlagDef{
 		{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Tenant-scoped transition idempotency UUID", Required: true, Type: "string"},
 		{Name: "expected-updated-at", BodyName: "expectedUpdatedAt", Description: "Exact reviewed UpdatedAt timestamp", Required: true, Type: "string"},
@@ -64,7 +64,7 @@ func init() {
 				Args: []ArgDef{
 					{Name: "milestoneGuid", Description: "SLA milestone external GUID", Required: true, Type: "uuid"},
 				},
-				Flags: serviceSlaTransitionFlags(true),
+				Flags: serviceSLATransitionFlags(true),
 			},
 			{
 				Name:        "resume",
@@ -75,7 +75,7 @@ func init() {
 				Args: []ArgDef{
 					{Name: "milestoneGuid", Description: "SLA milestone external GUID", Required: true, Type: "uuid"},
 				},
-				Flags: serviceSlaTransitionFlags(false),
+				Flags: serviceSLATransitionFlags(false),
 			},
 			{
 				Name:        "complete",
@@ -86,7 +86,7 @@ func init() {
 				Args: []ArgDef{
 					{Name: "milestoneGuid", Description: "SLA milestone external GUID", Required: true, Type: "uuid"},
 				},
-				Flags: serviceSlaTransitionFlags(false),
+				Flags: serviceSLATransitionFlags(false),
 			},
 			{
 				Name:        "cancel",
@@ -97,7 +97,7 @@ func init() {
 				Args: []ArgDef{
 					{Name: "milestoneGuid", Description: "SLA milestone external GUID", Required: true, Type: "uuid"},
 				},
-				Flags: serviceSlaTransitionFlags(true),
+				Flags: serviceSLATransitionFlags(true),
 			},
 			{
 				Name:        "reconcile",

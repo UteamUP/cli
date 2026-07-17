@@ -50,22 +50,22 @@ func TestShiftHandoverItemLinkActionsUseGuidFirstContracts(t *testing.T) {
 
 func TestShiftHandoverItemLinkRoutesConsumeEveryGuidArgument(t *testing.T) {
 	domain := findRegisteredDomain(t, "shift-handover")
-	handoverGuid := "11111111-2222-4333-8444-555555555555"
-	sectionGuid := "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
-	carryOverGuid := "99999999-8888-4777-8666-555555555555"
-	linkGuid := "12345678-1234-4123-8123-123456789abc"
+	handoverGUID := "11111111-2222-4333-8444-555555555555"
+	sectionGUID := "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+	carryOverGUID := "99999999-8888-4777-8666-555555555555"
+	linkGUID := "12345678-1234-4123-8123-123456789abc"
 	tests := []struct {
 		name         string
 		args         map[string]any
 		wantPath     string
 		wantConsumed []string
 	}{
-		{"section-links", map[string]any{"handoverGuid": handoverGuid, "sectionGuid": sectionGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/sections/" + sectionGuid + "/links", []string{"handoverGuid", "sectionGuid"}},
-		{"section-link-create", map[string]any{"handoverGuid": handoverGuid, "sectionGuid": sectionGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/sections/" + sectionGuid + "/links", []string{"handoverGuid", "sectionGuid"}},
-		{"section-link-delete", map[string]any{"handoverGuid": handoverGuid, "sectionGuid": sectionGuid, "linkGuid": linkGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/sections/" + sectionGuid + "/links/" + linkGuid, []string{"handoverGuid", "sectionGuid", "linkGuid"}},
-		{"carryover-links", map[string]any{"handoverGuid": handoverGuid, "carryOverGuid": carryOverGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/carryovers/" + carryOverGuid + "/links", []string{"handoverGuid", "carryOverGuid"}},
-		{"carryover-link-create", map[string]any{"handoverGuid": handoverGuid, "carryOverGuid": carryOverGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/carryovers/" + carryOverGuid + "/links", []string{"handoverGuid", "carryOverGuid"}},
-		{"carryover-link-delete", map[string]any{"handoverGuid": handoverGuid, "carryOverGuid": carryOverGuid, "linkGuid": linkGuid}, "/api/shifthandover/by-guid/" + handoverGuid + "/carryovers/" + carryOverGuid + "/links/" + linkGuid, []string{"handoverGuid", "carryOverGuid", "linkGuid"}},
+		{"section-links", map[string]any{"handoverGuid": handoverGUID, "sectionGuid": sectionGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/sections/" + sectionGUID + "/links", []string{"handoverGuid", "sectionGuid"}},
+		{"section-link-create", map[string]any{"handoverGuid": handoverGUID, "sectionGuid": sectionGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/sections/" + sectionGUID + "/links", []string{"handoverGuid", "sectionGuid"}},
+		{"section-link-delete", map[string]any{"handoverGuid": handoverGUID, "sectionGuid": sectionGUID, "linkGuid": linkGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/sections/" + sectionGUID + "/links/" + linkGUID, []string{"handoverGuid", "sectionGuid", "linkGuid"}},
+		{"carryover-links", map[string]any{"handoverGuid": handoverGUID, "carryOverGuid": carryOverGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/carryovers/" + carryOverGUID + "/links", []string{"handoverGuid", "carryOverGuid"}},
+		{"carryover-link-create", map[string]any{"handoverGuid": handoverGUID, "carryOverGuid": carryOverGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/carryovers/" + carryOverGUID + "/links", []string{"handoverGuid", "carryOverGuid"}},
+		{"carryover-link-delete", map[string]any{"handoverGuid": handoverGUID, "carryOverGuid": carryOverGUID, "linkGuid": linkGUID}, "/api/shifthandover/by-guid/" + handoverGUID + "/carryovers/" + carryOverGUID + "/links/" + linkGUID, []string{"handoverGuid", "carryOverGuid", "linkGuid"}},
 	}
 
 	for _, test := range tests {

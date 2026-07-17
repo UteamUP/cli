@@ -50,15 +50,15 @@ func (e *CSVExporter) GenerateSummaryReport(
 
 	var b strings.Builder
 	b.WriteString("# Image Analysis Summary Report\n\n")
-	b.WriteString(fmt.Sprintf("**Date:** %s\n\n", time.Now().Format("2006-01-02 15:04:05")))
+	fmt.Fprintf(&b, "**Date:** %s\n\n", time.Now().Format("2006-01-02 15:04:05"))
 	b.WriteString("## Overview\n\n")
 	b.WriteString("| Metric | Value |\n")
 	b.WriteString("|--------|-------|\n")
-	b.WriteString(fmt.Sprintf("| Total images processed | %d |\n", totalImages))
-	b.WriteString(fmt.Sprintf("| Groups formed | %d |\n", len(groups)))
-	b.WriteString(fmt.Sprintf("| Flagged for review | %d |\n", flagged))
-	b.WriteString(fmt.Sprintf("| Duplicates found | %d |\n", duplicatesFound))
-	b.WriteString(fmt.Sprintf("| Processing duration | %.1f min (%.0fs) |\n", minutes, durationSeconds))
+	fmt.Fprintf(&b, "| Total images processed | %d |\n", totalImages)
+	fmt.Fprintf(&b, "| Groups formed | %d |\n", len(groups))
+	fmt.Fprintf(&b, "| Flagged for review | %d |\n", flagged)
+	fmt.Fprintf(&b, "| Duplicates found | %d |\n", duplicatesFound)
+	fmt.Fprintf(&b, "| Processing duration | %.1f min (%.0fs) |\n", minutes, durationSeconds)
 	b.WriteString("\n## Results by Type\n\n")
 	b.WriteString("| Entity Type | Count |\n")
 	b.WriteString("|-------------|-------|\n")
@@ -70,7 +70,7 @@ func (e *CSVExporter) GenerateSummaryReport(
 	}
 	sort.Strings(sortedTypes)
 	for _, t := range sortedTypes {
-		b.WriteString(fmt.Sprintf("| %s | %d |\n", t, typeCounts[t]))
+		fmt.Fprintf(&b, "| %s | %d |\n", t, typeCounts[t])
 	}
 
 	b.WriteString("\n---\n")

@@ -72,11 +72,11 @@ func DefaultConfig() *AppConfig {
 	}
 }
 
-// ConfigOption is a functional option for overriding config values.
-type ConfigOption func(*AppConfig)
+// Option overrides image-analysis configuration values.
+type Option func(*AppConfig)
 
 // WithFolderOverride overrides the image folder path.
-func WithFolderOverride(folder string) ConfigOption {
+func WithFolderOverride(folder string) Option {
 	return func(c *AppConfig) {
 		if folder != "" {
 			c.Scan.ImageFolder = folder
@@ -85,7 +85,7 @@ func WithFolderOverride(folder string) ConfigOption {
 }
 
 // WithOutputOverride overrides the output folder path.
-func WithOutputOverride(output string) ConfigOption {
+func WithOutputOverride(output string) Option {
 	return func(c *AppConfig) {
 		if output != "" {
 			c.Scan.OutputFolder = output
@@ -94,14 +94,14 @@ func WithOutputOverride(output string) ConfigOption {
 }
 
 // WithDryRun sets the dry run mode.
-func WithDryRun(dryRun bool) ConfigOption {
+func WithDryRun(dryRun bool) Option {
 	return func(c *AppConfig) {
 		c.Processing.DryRun = dryRun
 	}
 }
 
 // WithNoRename disables image renaming when true.
-func WithNoRename(noRename bool) ConfigOption {
+func WithNoRename(noRename bool) Option {
 	return func(c *AppConfig) {
 		if noRename {
 			c.Processing.RenameImages = false
@@ -112,7 +112,7 @@ func WithNoRename(noRename bool) ConfigOption {
 // LoadConfig reads a YAML config file, applies environment variable overrides,
 // and then applies any functional option overrides. If the config file does not
 // exist, defaults are used.
-func LoadConfig(configPath string, opts ...ConfigOption) (*AppConfig, error) {
+func LoadConfig(configPath string, opts ...Option) (*AppConfig, error) {
 	cfg := DefaultConfig()
 
 	// Read YAML file if it exists.

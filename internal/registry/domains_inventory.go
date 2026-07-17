@@ -1074,10 +1074,10 @@ func init() {
 		Description: "Manage chemicals",
 		Actions: []Action{
 			{Name: "list", Description: "List chemicals", ToolName: "UteamupChemicalList", Flags: paginationFlags()},
-			{Name: "get", Description: "Get chemical by GUID", ToolName: "UteamupChemicalGet", Args: externalGuidArg(), RESTPath: "by-guid/{externalGuid}"},
+			{Name: "get", Description: "Get chemical by GUID", ToolName: "UteamupChemicalGet", Args: externalGUIDArg(), RESTPath: "by-guid/{externalGuid}"},
 			{Name: "create", Description: "Create a chemical", ToolName: "UteamupChemicalCreate", Flags: []FlagDef{jsonFlag()}},
-			{Name: "update", Description: "Update a chemical by GUID", ToolName: "UteamupChemicalUpdate", Args: externalGuidArg(), RESTPath: "by-guid/{externalGuid}", Flags: []FlagDef{jsonFlag()}},
-			{Name: "delete", Description: "Delete a chemical by GUID", ToolName: "UteamupChemicalDelete", Args: externalGuidArg(), RESTPath: "by-guid/{externalGuid}"},
+			{Name: "update", Description: "Update a chemical by GUID", ToolName: "UteamupChemicalUpdate", Args: externalGUIDArg(), RESTPath: "by-guid/{externalGuid}", Flags: []FlagDef{jsonFlag()}},
+			{Name: "delete", Description: "Delete a chemical by GUID", ToolName: "UteamupChemicalDelete", Args: externalGUIDArg(), RESTPath: "by-guid/{externalGuid}"},
 		},
 	})
 	Register(&Domain{Name: "tool", Aliases: []string{"tools"}, Description: "Manage tools/equipment", Actions: crudActions("Tool")})

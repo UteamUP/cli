@@ -117,8 +117,8 @@ func (c *APIClient) CallTool(ctx context.Context, toolName string, args map[stri
 		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 
 		// Send tenant context headers (required by backend)
-		if token.TenantGuid != "" {
-			req.Header.Set("X-Tenant-Guid", token.TenantGuid)
+		if token.TenantGUID != "" {
+			req.Header.Set("X-Tenant-Guid", token.TenantGUID)
 		}
 
 		c.logger.Debug("POST %s/mcp tool=%s tenant=%d", c.baseURL, toolName, token.TenantID)
@@ -230,8 +230,8 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 		if token.TenantID > 0 {
 			req.Header.Set("X-Tenant-ID", fmt.Sprintf("%d", token.TenantID))
 		}
-		if token.TenantGuid != "" {
-			req.Header.Set("X-Tenant-Guid", token.TenantGuid)
+		if token.TenantGUID != "" {
+			req.Header.Set("X-Tenant-Guid", token.TenantGUID)
 		}
 
 		// Caller-supplied headers (e.g. `Idempotency-Key` from a `HeaderName`
@@ -316,8 +316,8 @@ func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField,
 		if token.TenantID > 0 {
 			req.Header.Set("X-Tenant-ID", fmt.Sprintf("%d", token.TenantID))
 		}
-		if token.TenantGuid != "" {
-			req.Header.Set("X-Tenant-Guid", token.TenantGuid)
+		if token.TenantGUID != "" {
+			req.Header.Set("X-Tenant-Guid", token.TenantGUID)
 		}
 
 		for k, v := range extraHeaders {
@@ -406,8 +406,8 @@ func (c *APIClient) CallRESTUploadLimited(
 		// Security-scoping headers always win over caller-supplied metadata.
 		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 		req.Header.Set("X-Requested-With", "XMLHttpRequest")
-		if token.TenantGuid != "" {
-			req.Header.Set("X-Tenant-Guid", token.TenantGuid)
+		if token.TenantGUID != "" {
+			req.Header.Set("X-Tenant-Guid", token.TenantGUID)
 		}
 
 		c.logger.Debug("%s %s multipart upload", method, c.baseURL+path)
