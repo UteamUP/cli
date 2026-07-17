@@ -6,6 +6,16 @@ func init() {
 		Description: "Manage asset calibration records",
 		Actions: []Action{
 			{
+				Name:        "due-soon",
+				Description: "List calibrations due within a planning window",
+				ToolName:    "UteamupAssetcalibrationGetDueSoon",
+				HTTPMethod:  "GET",
+				RESTPath:    "due-soon",
+				Flags: []FlagDef{
+					{Name: "days", Description: "Planning window in days (1-365)", Type: "int", Default: 30},
+				},
+			},
+			{
 				Name:        "overdue",
 				Description: "List overdue tenant asset calibrations",
 				ToolName:    "UteamupAssetcalibrationGetOverdue",
