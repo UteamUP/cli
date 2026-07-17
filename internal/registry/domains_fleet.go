@@ -25,7 +25,47 @@ func init() {
 		Description: "Manage vehicle inspections",
 		Actions:     vehicleInspectionActions,
 	})
-	Register(&Domain{Name: "fuel-transaction", Aliases: []string{"fuel"}, Description: "Manage fuel transactions", Actions: crudActions("FuelTransaction")})
+	Register(&Domain{
+		Name:        "fuel-transaction",
+		Aliases:     []string{"fuel"},
+		Description: "Manage GUID-first fuel transactions",
+		Actions: []Action{
+			{
+				Name: "list", Description: "List fuel transactions", ToolName: "UteamupFuelTransactionList",
+				Flags: append(paginationFlags(),
+					FlagDef{Name: "asset-guid", Description: "Filter by public asset GUID", Type: "string"},
+					FlagDef{Name: "date-from", Description: "Optional UTC period start", Type: "string"},
+					FlagDef{Name: "date-to", Description: "Optional UTC period end", Type: "string"},
+				),
+			},
+			{
+				Name: "get", Description: "Get a fuel transaction by GUID", ToolName: "UteamupFuelTransactionGet",
+				Args: []ArgDef{{Name: "transactionGuid", Description: "Public fuel transaction GUID", Required: true, Type: "string"}},
+			},
+			{Name: "create", Description: "Create a fuel transaction", ToolName: "UteamupFuelTransactionCreate", Flags: []FlagDef{jsonFlag()}},
+			{
+				Name: "update", Description: "Update a fuel transaction by GUID", ToolName: "UteamupFuelTransactionUpdate",
+				Args:  []ArgDef{{Name: "transactionGuid", Description: "Public fuel transaction GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{jsonFlag()},
+			},
+			{
+				Name: "delete", Description: "Delete a fuel transaction by GUID", ToolName: "UteamupFuelTransactionDelete",
+				Args: []ArgDef{{Name: "transactionGuid", Description: "Public fuel transaction GUID", Required: true, Type: "string"}},
+			},
+			{
+				Name: "summary", Description: "Summarize fuel usage for an asset", ToolName: "UteamupFuelTransactionGetSummary",
+				Args: []ArgDef{{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "date-from", Description: "Optional UTC period start", Type: "string"},
+					{Name: "date-to", Description: "Optional UTC period end", Type: "string"},
+				},
+			},
+			{
+				Name: "efficiency", Description: "Calculate fuel efficiency for an asset", ToolName: "UteamupFuelTransactionGetEfficiency",
+				Args: []ArgDef{{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "string"}},
+			},
+		},
+	})
 	Register(&Domain{Name: "fleet-dashboard", Description: "View fleet dashboard data", Actions: []Action{
 		{Name: "get", Description: "Get the fleet dashboard summary", ToolName: "UteamupFleetDashboardGet"},
 		{Name: "propose-maintenance", Description: "Prepare a governed maintenance proposal from fleet evidence", ToolName: "UteamupFleetMaintenancePropose", RESTBasePath: "/api/upmateassistant/fleet", RESTPath: "maintenance-proposals", HTTPMethod: "POST", Flags: []FlagDef{

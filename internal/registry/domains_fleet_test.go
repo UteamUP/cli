@@ -118,3 +118,37 @@ func TestVehicleInspectionOverdueActionMirrorsAssistantSafeMCPRead(t *testing.T)
 		t.Fatalf("vehicle-inspection overdue action unexpectedly accepts identifiers: %+v", action)
 	}
 }
+
+func TestFuelTransactionDomainUsesGuidArguments(t *testing.T) {
+	domain, ok := Get("fuel-transaction")
+	if !ok {
+		t.Fatal("fuel-transaction domain not registered")
+	}
+
+	actions := make(map[string]Action, len(domain.Actions))
+	for _, action := range domain.Actions {
+		actions[action.Name] = action
+	}
+
+	for _, name := range []string{"get", "update", "delete"} {
+		action := actions[name]
+		if len(action.Args) != 1 || action.Args[0].Name != "transactionGuid" || action.Args[0].Type != "string" {
+			t.Fatalf("%s must require one string transactionGuid argument, got %+v", name, action.Args)
+		}
+	}
+
+	for _, name := range []string{"summary", "efficiency"} {
+		action := actions[name]
+		if len(action.Args) != 1 || action.Args[0].Name != "assetGuid" || action.Args[0].Type != "string" {
+			t.Fatalf("%s must require one string assetGuid argument, got %+v", name, action.Args)
+		}
+	}
+
+	for _, action := range domain.Actions {
+		for _, arg := range action.Args {
+			if arg.Name == "id" || arg.Type == "int" {
+				t.Fatalf("fuel action %s leaks an integer identifier argument: %+v", action.Name, arg)
+			}
+		}
+	}
+}
