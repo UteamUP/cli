@@ -5,6 +5,20 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.85.1](https://github.com/UteamUP/cli/compare/1.85.0...1.85.1) (2026-07-17)
+
+
+### Bug Fixes
+
+* **cli:** align kaizen and suggestion GUID routes ([580322d](https://github.com/UteamUP/cli/commit/580322ddb25e0ebd562b8bb50db1a732756d4142))
+* **cli:** expose RCA GUID workflows ([a36b043](https://github.com/UteamUP/cli/commit/a36b043020c4902d651912b798a6ad25e36da2ec))
+* **meters:** expose GUID asset filter on compliance summary ([118ca98](https://github.com/UteamUP/cli/commit/118ca98a8b9ce769a7ae51c25c34db8a42592d68))
+
+
+### Documentation
+
+* **meters:** clarify GUID-only schedule routes ([b048467](https://github.com/UteamUP/cli/commit/b0484672dac40cb8b345975096561e418a0898a4))
+
 ## [1.85.0](https://github.com/UteamUP/cli/compare/1.84.0...1.85.0) (2026-07-17)
 
 
