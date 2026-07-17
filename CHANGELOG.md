@@ -5,6 +5,17 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.82.0](https://github.com/UteamUP/cli/compare/1.81.0...1.82.0) (2026-07-17)
+
+
+### Features
+
+* **asset-calibration:** expose due-soon reads ([c1b06e8](https://github.com/UteamUP/cli/commit/c1b06e868fd6f4195b6fd13f5b5746ecaeadecb6))
+* **asset-calibration:** expose overdue reads ([b18c93a](https://github.com/UteamUP/cli/commit/b18c93aade7b7f8407214372afbe293f8b59756e))
+* **asset-certification:** expose status reads ([49f723a](https://github.com/UteamUP/cli/commit/49f723a0965f1316e3a0a5b6a75ec74247458317))
+* **asset-failure:** expose open failure reads ([01fd21c](https://github.com/UteamUP/cli/commit/01fd21cfba9382a9c6b3a5d42c7e74db3b785547))
+* **asset-lifecycle:** expose filtered reads ([4e8cc7c](https://github.com/UteamUP/cli/commit/4e8cc7c3473b0e09c657268c2012fac4c5c2dd97))
+
 ## [1.81.0](https://github.com/UteamUP/cli/compare/1.80.1...1.81.0) (2026-07-17)
 
 
