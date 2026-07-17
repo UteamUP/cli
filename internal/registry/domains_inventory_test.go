@@ -1397,6 +1397,25 @@ func TestStockOptimizationProposalActionWired(t *testing.T) {
 	}
 }
 
+func TestStockOptimizationPrepareActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "optimization-prepare", "UteamupStockPrepareOptimizationRun", "", "")
+	item := stockFlagByName(action, "stock-item-guid")
+	if item == nil || !item.Required || item.BodyName != "stockItemGuid" || item.Type != "string" {
+		t.Fatalf("optimization-prepare stock-item-guid must be required and GUID-first, got %+v", item)
+	}
+	idempotency := stockFlagByName(action, "idempotency-guid")
+	if idempotency == nil || !idempotency.Required || idempotency.BodyName != "idempotencyGuid" {
+		t.Fatalf("optimization-prepare idempotency-guid must be required, got %+v", idempotency)
+	}
+	if objective := stockFlagByName(action, "objective"); objective == nil ||
+		objective.Default != "availability" || objective.BodyName != "objectiveKey" {
+		t.Errorf("optimization-prepare objective miswired: %+v", objective)
+	}
+	if action.RESTPath != "" {
+		t.Fatalf("optimization-prepare must use the nested MCP contract, got REST path %q", action.RESTPath)
+	}
+}
+
 func TestStockTcoActionWired(t *testing.T) {
 	action := assertStockActionRoute(t, "tco", "UteamupStockItemTco", "", "items/{guid}/tco")
 	if len(action.Args) != 1 || action.Args[0].Name != "guid" {
