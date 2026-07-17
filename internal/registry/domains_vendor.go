@@ -19,11 +19,79 @@ func init() {
 	})
 
 	Register(&Domain{Name: "vendor-portal", Description: "Manage vendor portal", Actions: crudActions("VendorPortal")})
-	Register(&Domain{Name: "vendor-performance", Description: "View vendor performance", Actions: listGetActions("VendorPerformance")})
+	Register(&Domain{
+		Name:        "vendor-performance",
+		Aliases:     []string{"vendor-scorecard"},
+		Description: "View GUID-first vendor scorecards, trends, events, rankings, and configuration",
+		APIPath:     "/api/v1/vendorperformance",
+		Actions: []Action{
+			{
+				Name:        "scorecard",
+				Description: "Get a vendor scorecard by public GUID",
+				ToolName:    "UteamupVendorScorecardGet",
+				RESTPath:    "by-guid/{vendorGuid}/scorecard",
+				HTTPMethod:  "GET",
+				Args:        []ArgDef{{Name: "vendorGuid", Description: "Vendor GUID", Required: true, Type: "uuid"}},
+			},
+			{
+				Name:        "events",
+				Description: "List vendor performance events by public GUID",
+				RESTPath:    "by-guid/{vendorGuid}/events",
+				HTTPMethod:  "GET",
+				Args:        []ArgDef{{Name: "vendorGuid", Description: "Vendor GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "from", Description: "Optional ISO start date", Type: "string"},
+					{Name: "to", Description: "Optional ISO end date", Type: "string"},
+				},
+			},
+			{
+				Name:        "trends",
+				Description: "Get vendor performance trend snapshots by public GUID",
+				RESTPath:    "by-guid/{vendorGuid}/trends",
+				HTTPMethod:  "GET",
+				Args:        []ArgDef{{Name: "vendorGuid", Description: "Vendor GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "period", Description: "Snapshot period", Type: "string"},
+					{Name: "from", Description: "Optional ISO start date", Type: "string"},
+					{Name: "to", Description: "Optional ISO end date", Type: "string"},
+				},
+			},
+			{
+				Name:        "rankings",
+				Description: "List tenant vendor performance rankings",
+				RESTPath:    "rankings",
+				HTTPMethod:  "GET",
+				Flags: []FlagDef{
+					{Name: "sort-by", Description: "overall, speed, quality, price, or engagement", Type: "string"},
+					{Name: "page", Description: "Page number", Type: "int", Default: 1},
+					{Name: "page-size", Description: "Page size", Type: "int", Default: 25},
+				},
+			},
+			{
+				Name:        "dashboard",
+				Description: "Get the tenant vendor-performance dashboard",
+				RESTPath:    "dashboard",
+				HTTPMethod:  "GET",
+			},
+			{
+				Name:        "recalculate",
+				Description: "Recalculate a vendor scorecard by public GUID",
+				RESTPath:    "by-guid/{vendorGuid}/recalculate",
+				HTTPMethod:  "POST",
+				Args:        []ArgDef{{Name: "vendorGuid", Description: "Vendor GUID", Required: true, Type: "uuid"}},
+			},
+			{
+				Name:         "config",
+				Description:  "Get tenant vendor-scoring configuration",
+				ToolName:     "UteamupVendorScorecardConfigGet",
+				RESTBasePath: "/api/v1/scoringconfiguration",
+				HTTPMethod:   "GET",
+			},
+		},
+	})
 	Register(&Domain{Name: "vendor-analytics", Description: "View vendor analytics", Actions: listGetActions("VendorAnalytics")})
 	Register(&Domain{Name: "vendor-compliance", Description: "Manage vendor compliance", Actions: crudActions("VendorCompliance")})
 	Register(&Domain{Name: "vendor-match", Description: "Find matching vendors", Actions: listGetActions("VendorMatch")})
 	Register(&Domain{Name: "vendor-message", Description: "Manage vendor messages", Actions: crudActions("VendorMessage")})
 	Register(&Domain{Name: "vendor-rating", Description: "Manage vendor ratings", Actions: crudActions("VendorRating")})
-	Register(&Domain{Name: "vendor-scorecard", Description: "View vendor scorecards", Actions: listGetActions("VendorScorecard")})
 }
