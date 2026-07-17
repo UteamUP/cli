@@ -50,3 +50,35 @@ func TestAssetFailureSeverityActionAcceptsOnlySeverityFilter(t *testing.T) {
 		t.Fatalf("unexpected asset-failure severity action: %+v", action)
 	}
 }
+
+func TestAssetFailureIdentityActionsUsePublicGUIDs(t *testing.T) {
+	domain := findDomain("asset-failure")
+	if domain == nil {
+		t.Fatal("asset-failure domain is not registered")
+	}
+
+	expected := map[string]string{
+		"by-asset":   "assetGuid",
+		"statistics": "assetGuid",
+		"get":        "failureGuid",
+		"update":     "failureGuid",
+		"delete":     "failureGuid",
+		"classify":   "failureGuid",
+	}
+	for actionName, argumentName := range expected {
+		var action *Action
+		for index := range domain.Actions {
+			if domain.Actions[index].Name == actionName {
+				action = &domain.Actions[index]
+				break
+			}
+		}
+		if action == nil {
+			t.Fatalf("asset-failure %s action is not registered", actionName)
+		}
+		if len(action.Args) != 1 || action.Args[0].Name != argumentName ||
+			action.Args[0].Type != "uuid" || !action.Args[0].Required {
+			t.Fatalf("asset-failure %s must use required %s UUID: %+v", actionName, argumentName, action.Args)
+		}
+	}
+}

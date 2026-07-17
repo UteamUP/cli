@@ -22,10 +22,61 @@ func init() {
 				HTTPMethod:  "GET",
 				RESTPath:    "open",
 			},
-			{Name: "list", Description: "List failure records", ToolName: "UteamupAssetFailureList", Flags: append(paginationFlags(), FlagDef{Name: "asset-id", Description: "Asset ID", Type: "int"})},
-			{Name: "get", Description: "Get failure record by ID", ToolName: "UteamupAssetFailureGet", Args: idArg()},
-			{Name: "create", Description: "Create a failure record", ToolName: "UteamupAssetFailureCreate", Flags: []FlagDef{jsonFlag()}},
-			{Name: "delete", Description: "Delete a failure record", ToolName: "UteamupAssetFailureDelete", Args: idArg()},
+			{
+				Name:        "by-asset",
+				Description: "List failure records for an asset GUID",
+				ToolName:    "UteamupAssetfailureGetByAsset",
+				Args: []ArgDef{{
+					Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "uuid",
+				}},
+			},
+			{
+				Name:        "statistics",
+				Description: "Get failure statistics for an asset GUID",
+				ToolName:    "UteamupAssetfailureGetStatistics",
+				Args: []ArgDef{{
+					Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "uuid",
+				}},
+			},
+			{
+				Name:        "get",
+				Description: "Get a failure record by GUID",
+				ToolName:    "UteamupAssetfailureGet",
+				Args: []ArgDef{{
+					Name: "failureGuid", Description: "Public failure GUID", Required: true, Type: "uuid",
+				}},
+			},
+			{Name: "create", Description: "Create a failure record", ToolName: "UteamupAssetfailureCreate", Flags: []FlagDef{jsonFlag()}},
+			{
+				Name:        "update",
+				Description: "Update a failure record by GUID",
+				ToolName:    "UteamupAssetfailureUpdate",
+				Args: []ArgDef{{
+					Name: "failureGuid", Description: "Public failure GUID", Required: true, Type: "uuid",
+				}},
+				Flags: []FlagDef{jsonFlag()},
+			},
+			{Name: "resolve", Description: "Resolve a failure record", ToolName: "UteamupAssetfailureResolve", Flags: []FlagDef{jsonFlag()}},
+			{
+				Name:        "delete",
+				Description: "Delete a failure record by GUID",
+				ToolName:    "UteamupAssetfailureDelete",
+				Args: []ArgDef{{
+					Name: "failureGuid", Description: "Public failure GUID", Required: true, Type: "uuid",
+				}},
+			},
+			{
+				Name:        "classify",
+				Description: "Classify a failure record by GUID",
+				ToolName:    "UteamupAssetfailureClassify",
+				Args: []ArgDef{{
+					Name: "failureGuid", Description: "Public failure GUID", Required: true, Type: "uuid",
+				}},
+				Flags: []FlagDef{{
+					Name: "failure-classification", BodyName: "failureClassification",
+					Description: "EN 13306 failure classification", Required: true, Type: "string",
+				}},
+			},
 		},
 	})
 }
