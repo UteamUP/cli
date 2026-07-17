@@ -1,7 +1,25 @@
 package registry
 
 func init() {
-	Register(&Domain{Name: "schedule", Aliases: []string{"schedules"}, Description: "Manage schedules", Actions: crudActions("Schedule")})
+	scheduleActions := crudActions("Schedule")
+	scheduleActions = append(scheduleActions, Action{
+		Name:        "my",
+		Description: "Read the authenticated user's schedule for a bounded date range",
+		ToolName:    "UteamupScheduleGetMySchedule",
+		HTTPMethod:  "GET",
+		RESTPath:    "me",
+		Flags: []FlagDef{
+			{Name: "start-date", BodyName: "startDate", Description: "Inclusive start date (YYYY-MM-DD)", Required: true, Type: "string"},
+			{Name: "end-date", BodyName: "endDate", Description: "Inclusive end date (YYYY-MM-DD)", Required: true, Type: "string"},
+		},
+	})
+	Register(&Domain{
+		Name:        "schedule",
+		Aliases:     []string{"schedules"},
+		Description: "Manage schedules",
+		APIPath:     "/api/schedule",
+		Actions:     scheduleActions,
+	})
 	Register(&Domain{
 		Name:        "schedule-assignment",
 		Description: "Manage schedule assignments",
