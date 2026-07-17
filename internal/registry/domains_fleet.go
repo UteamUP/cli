@@ -46,7 +46,18 @@ func init() {
 		{Name: "update", Description: "Update a vehicle inspection by GUID", ToolName: "UteamupVehicleInspectionUpdate", Args: inspectionGuidArg, RESTPath: "by-guid/{inspectionGuid}", Flags: []FlagDef{jsonFlag()}},
 		{Name: "delete", Description: "Delete a vehicle inspection by GUID", ToolName: "UteamupVehicleInspectionDelete", Args: inspectionGuidArg, RESTPath: "by-guid/{inspectionGuid}"},
 		{Name: "submit-items", Description: "Submit vehicle inspection results by GUID", ToolName: "UteamupVehicleInspectionSubmitItems", HTTPMethod: "POST", Args: inspectionGuidArg, RESTPath: "by-guid/{inspectionGuid}/items", Flags: []FlagDef{jsonFlag()}},
-		{Name: "complete", Description: "Complete a vehicle inspection by GUID", ToolName: "UteamupVehicleInspectionComplete", HTTPMethod: "POST", Args: inspectionGuidArg, RESTPath: "by-guid/{inspectionGuid}/complete", Flags: []FlagDef{jsonFlag()}},
+		{
+			Name:        "complete",
+			Description: "Complete a vehicle inspection by GUID",
+			ToolName:    "UteamupVehicleInspectionComplete",
+			HTTPMethod:  "POST",
+			Args:        inspectionGuidArg,
+			RESTPath:    "by-guid/{inspectionGuid}/complete",
+			Flags: []FlagDef{
+				jsonFlag(),
+				{Name: "create-corrective-workorder", BodyName: "createCorrectiveWorkorder", Description: "Explicitly create one corrective work order for failed items", Type: "bool"},
+			},
+		},
 		{
 			Name:        "overdue",
 			Description: "List tenant vehicles with overdue daily inspections",

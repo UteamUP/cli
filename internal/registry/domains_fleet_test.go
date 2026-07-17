@@ -176,6 +176,16 @@ func TestVehicleInspectionDomainUsesGuidArguments(t *testing.T) {
 	if actions["complete"].RESTPath != "by-guid/{inspectionGuid}/complete" || actions["complete"].HTTPMethod != "POST" {
 		t.Fatalf("complete route mismatch: %+v", actions["complete"])
 	}
+	var correctiveFlag *FlagDef
+	for index := range actions["complete"].Flags {
+		if actions["complete"].Flags[index].Name == "create-corrective-workorder" {
+			correctiveFlag = &actions["complete"].Flags[index]
+			break
+		}
+	}
+	if correctiveFlag == nil || correctiveFlag.BodyName != "createCorrectiveWorkorder" || correctiveFlag.Type != "bool" {
+		t.Fatalf("complete must expose explicit corrective-workorder confirmation: %+v", actions["complete"].Flags)
+	}
 	for _, action := range domain.Actions {
 		for _, arg := range action.Args {
 			if arg.Name == "id" || arg.Type == "int" {
