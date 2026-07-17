@@ -11,7 +11,20 @@ func init() {
 	})
 
 	Register(&Domain{Name: "driver-assignment", Aliases: []string{"da"}, Description: "Manage driver assignments", Actions: crudActions("DriverAssignment")})
-	Register(&Domain{Name: "vehicle-inspection", Aliases: []string{"vi"}, Description: "Manage vehicle inspections", Actions: crudActions("VehicleInspection")})
+	vehicleInspectionActions := crudActions("VehicleInspection")
+	vehicleInspectionActions = append(vehicleInspectionActions, Action{
+		Name:        "overdue",
+		Description: "List tenant vehicles with overdue daily inspections",
+		ToolName:    "UteamupVehicleInspectionGetOverdue",
+		HTTPMethod:  "GET",
+		RESTPath:    "overdue",
+	})
+	Register(&Domain{
+		Name:        "vehicle-inspection",
+		Aliases:     []string{"vi"},
+		Description: "Manage vehicle inspections",
+		Actions:     vehicleInspectionActions,
+	})
 	Register(&Domain{Name: "fuel-transaction", Aliases: []string{"fuel"}, Description: "Manage fuel transactions", Actions: crudActions("FuelTransaction")})
 	Register(&Domain{Name: "fleet-dashboard", Description: "View fleet dashboard data", Actions: []Action{
 		{Name: "get", Description: "Get the fleet dashboard summary", ToolName: "UteamupFleetDashboardGet"},

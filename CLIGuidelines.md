@@ -443,9 +443,14 @@ var commandsExemptFromAuth = map[string]bool{
 
 ### Pre-commit Checklist
 
+Do not run `go test` from hooks or after turns, tasks, phases, sections, todos, commits,
+or subagents. Only the primary agent, after the entire user goal and all subagents are
+complete, may run one appropriately scoped Go test invocation with
+`UTEAMUP_FINAL_GOAL_GATE=1`. `go vet` and builds remain available during implementation.
+
 ```bash
 go vet ./...            # No vet errors
-go test ./... -race     # All tests pass
+UTEAMUP_FINAL_GOAL_GATE=1 go test ./... -race # Final whole-goal test gate
 make build              # Build succeeds
 ```
 

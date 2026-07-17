@@ -4,12 +4,12 @@ func init() {
 	Register(&Domain{
 		Name:        "schedule-emergency-insertion",
 		Aliases:     []string{"emergency-insertion", "schedule-emergency"},
-		Description: "Preview the least-disruptive emergency workorder insertion without changing the schedule",
+		Description: "Preview a least-disruptive, legal-working-time-checked emergency workorder insertion",
 		APIPath:     "/api/schedule/emergency-insertions",
 		Actions: []Action{
 			{
 				Name:        "preview",
-				Description: "Preview GUID-only displacement, travel, competency, and blocking evidence",
+				Description: "Preview GUID-only displacement, working-time, travel, competency, and blocking evidence",
 				ToolName:    "UteamupScheduleEmergencyInsertionPreview",
 				HTTPMethod:  "POST",
 				RESTPath:    "preview",
