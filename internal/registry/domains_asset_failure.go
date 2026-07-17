@@ -6,6 +6,16 @@ func init() {
 		Description: "Manage asset failure records",
 		Actions: []Action{
 			{
+				Name:        "by-severity",
+				Description: "List tenant asset failures by severity",
+				ToolName:    "UteamupAssetfailureGetBySeverity",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-severity",
+				Flags: []FlagDef{
+					{Name: "severity", Description: "Critical, High, Medium, or Low", Type: "string", Required: true},
+				},
+			},
+			{
 				Name:        "open",
 				Description: "List unresolved tenant asset failures",
 				ToolName:    "UteamupAssetfailureGetOpen",
