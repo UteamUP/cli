@@ -2,6 +2,24 @@ package registry
 
 import "testing"
 
+func TestFleetDashboardExposesGuidFirstReadParity(t *testing.T) {
+	domain := findDomain("fleet-dashboard")
+	if domain == nil {
+		t.Fatal("expected fleet-dashboard domain")
+	}
+
+	actions := make(map[string]Action, len(domain.Actions))
+	for _, action := range domain.Actions {
+		actions[action.Name] = action
+	}
+	if actions["utilization"].ToolName != "UteamupFleetDashboardGetUtilization" {
+		t.Fatalf("utilization action = %+v", actions["utilization"])
+	}
+	if actions["compliance"].ToolName != "UteamupFleetDashboardGetCompliance" {
+		t.Fatalf("compliance action = %+v", actions["compliance"])
+	}
+}
+
 func TestFleetMaintenanceProposalUsesGovernedIdempotentRoute(t *testing.T) {
 	domain := findDomain("fleet-dashboard")
 	if domain == nil {
