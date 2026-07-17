@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.84.0](https://github.com/UteamUP/cli/compare/1.83.0...1.84.0) (2026-07-17)
+
+
+### Features
+
+* **asset-rental:** expose available reads ([11de7dc](https://github.com/UteamUP/cli/commit/11de7dc3f5f8bedc3a9237f0e65eaa0558ab5d2a))
+
 ## [1.83.0](https://github.com/UteamUP/cli/compare/1.82.0...1.83.0) (2026-07-17)
 
 
