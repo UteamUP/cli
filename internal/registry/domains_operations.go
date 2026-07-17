@@ -7,6 +7,12 @@ func init() {
 		Description: "Manage operational routes",
 		Actions: append(crudActions("OperationalRoute"),
 			Action{Name: "search", Description: "Search routes", ToolName: "UteamupOperationalRouteSearch", Args: queryArg(), Flags: paginationFlags()},
+			Action{
+				Name:        "optimize",
+				Description: "Get a deterministic review-only route optimization by public GUID",
+				ToolName:    "UteamupOperationalRouteOptimize",
+				Args:        []ArgDef{{Name: "routeGuid", Description: "Public operational route GUID", Required: true, Type: "string"}},
+			},
 		),
 	})
 
