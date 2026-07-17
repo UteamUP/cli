@@ -152,3 +152,35 @@ func TestFuelTransactionDomainUsesGuidArguments(t *testing.T) {
 		}
 	}
 }
+
+func TestVehicleInspectionDomainUsesGuidArguments(t *testing.T) {
+	domain, ok := Get("vehicle-inspection")
+	if !ok {
+		t.Fatal("vehicle-inspection domain not registered")
+	}
+
+	actions := make(map[string]Action, len(domain.Actions))
+	for _, action := range domain.Actions {
+		actions[action.Name] = action
+	}
+
+	for _, name := range []string{"get", "update", "delete", "submit-items", "complete"} {
+		action := actions[name]
+		if len(action.Args) != 1 || action.Args[0].Name != "inspectionGuid" || action.Args[0].Type != "string" {
+			t.Fatalf("%s must require one string inspectionGuid argument, got %+v", name, action.Args)
+		}
+	}
+	if actions["submit-items"].RESTPath != "by-guid/{inspectionGuid}/items" || actions["submit-items"].HTTPMethod != "POST" {
+		t.Fatalf("submit-items route mismatch: %+v", actions["submit-items"])
+	}
+	if actions["complete"].RESTPath != "by-guid/{inspectionGuid}/complete" || actions["complete"].HTTPMethod != "POST" {
+		t.Fatalf("complete route mismatch: %+v", actions["complete"])
+	}
+	for _, action := range domain.Actions {
+		for _, arg := range action.Args {
+			if arg.Name == "id" || arg.Type == "int" {
+				t.Fatalf("vehicle inspection action %s leaks integer identifiers: %+v", action.Name, arg)
+			}
+		}
+	}
+}

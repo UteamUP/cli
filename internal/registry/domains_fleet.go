@@ -11,14 +11,23 @@ func init() {
 	})
 
 	Register(&Domain{Name: "driver-assignment", Aliases: []string{"da"}, Description: "Manage driver assignments", Actions: crudActions("DriverAssignment")})
-	vehicleInspectionActions := crudActions("VehicleInspection")
-	vehicleInspectionActions = append(vehicleInspectionActions, Action{
-		Name:        "overdue",
-		Description: "List tenant vehicles with overdue daily inspections",
-		ToolName:    "UteamupVehicleInspectionGetOverdue",
-		HTTPMethod:  "GET",
-		RESTPath:    "overdue",
-	})
+	inspectionGuidArg := []ArgDef{{Name: "inspectionGuid", Description: "Public vehicle inspection GUID", Required: true, Type: "string"}}
+	vehicleInspectionActions := []Action{
+		{Name: "list", Description: "List vehicle inspections", ToolName: "UteamupVehicleInspectionList", Flags: append(paginationFlags(), FlagDef{Name: "asset-guid", Description: "Filter by public asset GUID", Type: "string"})},
+		{Name: "get", Description: "Get a vehicle inspection by GUID", ToolName: "UteamupVehicleInspectionGet", Args: inspectionGuidArg, RESTPath: "by-guid/{inspectionGuid}"},
+		{Name: "create", Description: "Create a vehicle inspection", ToolName: "UteamupVehicleInspectionCreate", Flags: []FlagDef{jsonFlag()}},
+		{Name: "update", Description: "Update a vehicle inspection by GUID", ToolName: "UteamupVehicleInspectionUpdate", Args: inspectionGuidArg, RESTPath: "by-guid/{inspectionGuid}", Flags: []FlagDef{jsonFlag()}},
+		{Name: "delete", Description: "Delete a vehicle inspection by GUID", ToolName: "UteamupVehicleInspectionDelete", Args: inspectionGuidArg, RESTPath: "by-guid/{inspectionGuid}"},
+		{Name: "submit-items", Description: "Submit vehicle inspection results by GUID", ToolName: "UteamupVehicleInspectionSubmitItems", HTTPMethod: "POST", Args: inspectionGuidArg, RESTPath: "by-guid/{inspectionGuid}/items", Flags: []FlagDef{jsonFlag()}},
+		{Name: "complete", Description: "Complete a vehicle inspection by GUID", ToolName: "UteamupVehicleInspectionComplete", HTTPMethod: "POST", Args: inspectionGuidArg, RESTPath: "by-guid/{inspectionGuid}/complete", Flags: []FlagDef{jsonFlag()}},
+		{
+			Name:        "overdue",
+			Description: "List tenant vehicles with overdue daily inspections",
+			ToolName:    "UteamupVehicleInspectionGetOverdue",
+			HTTPMethod:  "GET",
+			RESTPath:    "overdue",
+		},
+	}
 	Register(&Domain{
 		Name:        "vehicle-inspection",
 		Aliases:     []string{"vi"},
