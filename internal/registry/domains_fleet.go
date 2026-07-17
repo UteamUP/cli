@@ -4,10 +4,25 @@ func init() {
 	Register(&Domain{
 		Name:        "driver",
 		Aliases:     []string{"drivers"},
-		Description: "Manage drivers",
-		Actions: append(crudActions("Driver"), Action{
-			Name: "search", Description: "Search drivers", ToolName: "UteamupDriverSearch", Args: queryArg(), Flags: paginationFlags(),
-		}),
+		Description: "Manage GUID-first drivers and licenses",
+		Actions: []Action{
+			{Name: "list", Description: "List drivers", ToolName: "UteamupDriverList", Flags: append(paginationFlags(),
+				FlagDef{Name: "name-filter", Description: "Filter by driver name", Type: "string"},
+				FlagDef{Name: "sort-by", Description: "Sort field", Type: "string"},
+				FlagDef{Name: "sort-order", Description: "Sort order", Type: "string"},
+				FlagDef{Name: "include-archived", Description: "Include archived drivers", Type: "bool"},
+			)},
+			{Name: "get", Description: "Get a driver by GUID", ToolName: "UteamupDriverGet", Args: []ArgDef{{Name: "driverGuid", Description: "Public driver GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{driverGuid}"},
+			{Name: "create", Description: "Create a driver", ToolName: "UteamupDriverCreate", Flags: []FlagDef{jsonFlag()}},
+			{Name: "update", Description: "Update a driver by GUID", ToolName: "UteamupDriverUpdate", Args: []ArgDef{{Name: "driverGuid", Description: "Public driver GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{driverGuid}", Flags: []FlagDef{jsonFlag()}},
+			{Name: "delete", Description: "Delete a driver by GUID", ToolName: "UteamupDriverDelete", Args: []ArgDef{{Name: "driverGuid", Description: "Public driver GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{driverGuid}"},
+			{Name: "archive", Description: "Archive a driver by GUID", ToolName: "UteamupDriverArchive", HTTPMethod: "POST", Args: []ArgDef{{Name: "driverGuid", Description: "Public driver GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{driverGuid}/archive"},
+			{Name: "licenses", Description: "List driver licenses", ToolName: "UteamupDriverGetLicenses", Args: []ArgDef{{Name: "driverGuid", Description: "Public driver GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{driverGuid}/licenses"},
+			{Name: "license-add", Description: "Add a driver license", ToolName: "UteamupDriverAddLicense", Args: []ArgDef{{Name: "driverGuid", Description: "Public driver GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{driverGuid}/licenses", Flags: []FlagDef{jsonFlag()}},
+			{Name: "license-update", Description: "Update a driver license", ToolName: "UteamupDriverUpdateLicense", Args: []ArgDef{{Name: "driverGuid", Description: "Public driver GUID", Required: true, Type: "string"}, {Name: "licenseGuid", Description: "Public license GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{driverGuid}/licenses/{licenseGuid}", Flags: []FlagDef{jsonFlag()}},
+			{Name: "license-delete", Description: "Delete a driver license", ToolName: "UteamupDriverDeleteLicense", Args: []ArgDef{{Name: "driverGuid", Description: "Public driver GUID", Required: true, Type: "string"}, {Name: "licenseGuid", Description: "Public license GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{driverGuid}/licenses/{licenseGuid}"},
+			{Name: "licenses-expiring", Description: "List expiring driver licenses", ToolName: "UteamupDriverGetExpiringLicenses", RESTPath: "licenses/expiring", Flags: []FlagDef{{Name: "days-from-now", Description: "Days from now", Type: "int"}}},
+		},
 	})
 
 	assignmentGuidArg := []ArgDef{{Name: "assignmentGuid", Description: "Public driver-assignment GUID", Required: true, Type: "string"}}

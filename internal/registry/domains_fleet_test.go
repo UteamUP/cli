@@ -212,3 +212,18 @@ func TestDriverAssignmentDomainUsesGuidArguments(t *testing.T) {
 		}
 	}
 }
+
+func TestDriverDomainUsesGuidArguments(t *testing.T) {
+	domain, ok := Get("driver")
+	if !ok {
+		t.Fatal("driver domain not registered")
+	}
+
+	for _, action := range domain.Actions {
+		for _, arg := range action.Args {
+			if arg.Name == "id" || arg.Name == "driverId" || arg.Name == "licenseId" || arg.Type == "int" {
+				t.Fatalf("driver action %s leaks an integer identifier: %+v", action.Name, arg)
+			}
+		}
+	}
+}
