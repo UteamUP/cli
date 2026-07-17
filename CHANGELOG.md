@@ -5,6 +5,15 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.81.0](https://github.com/UteamUP/cli/compare/1.80.1...1.81.0) (2026-07-17)
+
+
+### Features
+
+* add service SLA milestone commands ([6c48f75](https://github.com/UteamUP/cli/commit/6c48f75a0ac6038dcfc40a88d95a8393f1fae0c5))
+* **fleet:** expose overdue inspection reads ([33c8642](https://github.com/UteamUP/cli/commit/33c86429d62188c0d2543f4be96b2cbad8d15221))
+* **schedule:** expose personal schedule reads ([220fa69](https://github.com/UteamUP/cli/commit/220fa69714f0a72cd6c4c026de61a18a99074edf))
+
 ## [1.80.1](https://github.com/UteamUP/cli/compare/1.80.0...1.80.1) (2026-07-16)
 
 
