@@ -138,8 +138,8 @@ func TestVehicleInspectionOverdueActionMirrorsAssistantSafeMCPRead(t *testing.T)
 }
 
 func TestFuelTransactionDomainUsesGuidArguments(t *testing.T) {
-	domain, ok := Get("fuel-transaction")
-	if !ok {
+	domain := findDomain("fuel-transaction")
+	if domain == nil {
 		t.Fatal("fuel-transaction domain not registered")
 	}
 
@@ -172,8 +172,8 @@ func TestFuelTransactionDomainUsesGuidArguments(t *testing.T) {
 }
 
 func TestVehicleInspectionDomainUsesGuidArguments(t *testing.T) {
-	domain, ok := Get("vehicle-inspection")
-	if !ok {
+	domain := findDomain("vehicle-inspection")
+	if domain == nil {
 		t.Fatal("vehicle-inspection domain not registered")
 	}
 
@@ -214,8 +214,8 @@ func TestVehicleInspectionDomainUsesGuidArguments(t *testing.T) {
 }
 
 func TestDriverAssignmentDomainUsesGuidArguments(t *testing.T) {
-	domain, ok := Get("driver-assignment")
-	if !ok {
+	domain := findDomain("driver-assignment")
+	if domain == nil {
 		t.Fatal("driver-assignment domain not registered")
 	}
 	actions := make(map[string]Action, len(domain.Actions))
@@ -242,8 +242,8 @@ func TestDriverAssignmentDomainUsesGuidArguments(t *testing.T) {
 }
 
 func TestDriverDomainUsesGuidArguments(t *testing.T) {
-	domain, ok := Get("driver")
-	if !ok {
+	domain := findDomain("driver")
+	if domain == nil {
 		t.Fatal("driver domain not registered")
 	}
 
