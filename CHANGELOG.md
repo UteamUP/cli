@@ -5,6 +5,37 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.85.0](https://github.com/UteamUP/cli/compare/1.84.0...1.85.0) (2026-07-17)
+
+
+### Features
+
+* **asset-rental:** expose active rental reads ([61b90db](https://github.com/UteamUP/cli/commit/61b90db61aede6f081ed35071e72dfba469e7501))
+* **asset-rental:** expose revenue reads ([8070851](https://github.com/UteamUP/cli/commit/8070851c0226fde2641feed7e44742ed7dd36934))
+* **fleet:** add dashboard read parity ([b02a6da](https://github.com/UteamUP/cli/commit/b02a6daed5e130281caff4613ea8745e37c19e0d))
+* **fleet:** expose corrective inspection confirmation ([11e7507](https://github.com/UteamUP/cli/commit/11e75071f8daaebd54cfb8f5fcfcaf85856263ed))
+* **fleet:** expose guid driver assignment commands ([efc5518](https://github.com/UteamUP/cli/commit/efc5518f5d4e9c6592060b8ac91beff14f412b8d))
+* **fleet:** expose guid driver commands ([f021913](https://github.com/UteamUP/cli/commit/f021913c7fc2dcacb8fcfe08df071ef0080be970))
+* **fleet:** expose guid inspection commands ([5deb267](https://github.com/UteamUP/cli/commit/5deb2678f185b362e23a98ff2b3d746033915974))
+* **fleet:** expose route optimization evidence ([8e5399e](https://github.com/UteamUP/cli/commit/8e5399ecedc41ec4406acae7739bbb5256cb873a))
+* **fleet:** make fuel commands guid-first ([8848123](https://github.com/UteamUP/cli/commit/88481230204add0e7f583580272d68118a1dcd6c))
+* **reliability:** expose risk intelligence in cli ([e7cab13](https://github.com/UteamUP/cli/commit/e7cab13d3c070a6433d3e59ced5d51014e25c946))
+* **reliability:** expose strategy proposals in cli ([80b986c](https://github.com/UteamUP/cli/commit/80b986ce232dcb3e7f143de59423955b34753558))
+* **service-billing:** expose operational billing commands ([c093185](https://github.com/UteamUP/cli/commit/c0931851b5094655843fef47c1743902afd7b680))
+* **vendors:** add guid-first performance commands ([8d35f70](https://github.com/UteamUP/cli/commit/8d35f70313318fc2958bbd92914d47afdd7af102))
+
+
+### Bug Fixes
+
+* **cli:** expose condition assessment GUID flags ([5bda29c](https://github.com/UteamUP/cli/commit/5bda29cfae0995c0594a31ec5bd42cf4f6992f73))
+* **cli:** expose criticality GUID flags ([9e230f0](https://github.com/UteamUP/cli/commit/9e230f0baafbe75df19bc8beaf141c39547e9a3a))
+* **cli:** identify vendor performance actions ([17c77f0](https://github.com/UteamUP/cli/commit/17c77f07909eebb312235ff45f71c7eab4ae836a))
+* **cli:** make improvement workflows GUID-first ([c9de6e6](https://github.com/UteamUP/cli/commit/c9de6e634eec7abbb902ddba62782e8c2978d9ab))
+* **failures:** make CLI actions GUID-first ([b9a9a0a](https://github.com/UteamUP/cli/commit/b9a9a0a8f2c391b9df0f3d5714e4b76c01cd4257))
+* **fleet:** repair registry contract tests ([0595797](https://github.com/UteamUP/cli/commit/0595797af63ab047e36b019d259928dd84bd0787))
+* **meters:** use GUID workorder reading flags ([c82ed41](https://github.com/UteamUP/cli/commit/c82ed4174bb423ca21926339813f88056c5255c5))
+* **route:** expose guid operational actions ([c111d99](https://github.com/UteamUP/cli/commit/c111d99eb68d9e173d29568a5f7da7062d89862c))
+
 ## [1.84.0](https://github.com/UteamUP/cli/compare/1.83.0...1.84.0) (2026-07-17)
 
 
