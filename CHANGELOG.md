@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.86.0](https://github.com/UteamUP/cli/compare/1.85.1...1.86.0) (2026-07-17)
+
+
+### Features
+
+* **cli:** manage location access schedules ([30beec9](https://github.com/UteamUP/cli/commit/30beec97f966e80fda438297ea26df9560c2cdde))
+
+
+### Bug Fixes
+
+* **cli:** validate schedule team GUID ([7c63ef2](https://github.com/UteamUP/cli/commit/7c63ef2c043d9cc658e77ad2afb5162ec53518bc))
+
 ## [1.85.1](https://github.com/UteamUP/cli/compare/1.85.0...1.85.1) (2026-07-17)
 
 
