@@ -926,6 +926,17 @@ func init() {
 				},
 			},
 
+			// --- Procurement intelligence ---
+			Action{
+				Name:        "procurement-intelligence",
+				Description: "Review deterministic duplicate-part, spend-anomaly, purchase-variance and data-readiness evidence (read-only; never merges parts)",
+				ToolName:    "UteamupPartGetProcurementIntelligence",
+				RESTPath:    "procurement-intelligence",
+				Flags: []FlagDef{
+					{Name: "lookback-days", Description: "History window in days (30-730)", Default: 365, Type: "int"},
+				},
+			},
+
 			// --- Reseller catalog: vendor catalog (stock-reseller-catalog §6) ---
 			Action{
 				Name:        "vendor-catalog-list",

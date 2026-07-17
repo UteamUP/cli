@@ -87,6 +87,22 @@ func TestPartVendorCatalogActionsWired(t *testing.T) {
 	}
 }
 
+func TestPartProcurementIntelligenceActionWired(t *testing.T) {
+	action := findDomainAction(t, "part", "procurement-intelligence")
+	if action.ToolName != "UteamupPartGetProcurementIntelligence" ||
+		action.RESTPath != "procurement-intelligence" ||
+		action.HTTPMethod != "" {
+		t.Errorf("procurement-intelligence miswired: %+v", action)
+	}
+	if len(action.Args) != 0 {
+		t.Errorf("procurement-intelligence must not expose positional identifiers: %+v", action.Args)
+	}
+	flag := actionFlagByName(t, action, "lookback-days")
+	if flag.Type != "int" || flag.Default != 365 || flag.Required {
+		t.Errorf("lookback-days must be an optional int defaulting to 365: %+v", flag)
+	}
+}
+
 func TestPartKitActionsWired(t *testing.T) {
 	cases := []struct {
 		name, tool, method, rest string
