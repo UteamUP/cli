@@ -5,6 +5,19 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.87.0](https://github.com/UteamUP/cli/compare/1.86.0...1.87.0) (2026-07-17)
+
+
+### Features
+
+* **cli:** manage accounting exports ([b2ea77b](https://github.com/UteamUP/cli/commit/b2ea77b70c2237571e43c3edba4ef89ab5945892))
+* **stock:** add optimization run preparation command ([d77720b](https://github.com/UteamUP/cli/commit/d77720bb01384dee471b192e09a88eb905a44022))
+
+
+### Miscellaneous
+
+* **cli:** migrate lint config and clear quality debt ([e06a9a4](https://github.com/UteamUP/cli/commit/e06a9a49a48cf3e6c866ab97b8c87eeb5f852a91))
+
 ## [1.86.0](https://github.com/UteamUP/cli/compare/1.85.1...1.86.0) (2026-07-17)
 
 
