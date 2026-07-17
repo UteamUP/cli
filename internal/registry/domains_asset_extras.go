@@ -56,6 +56,17 @@ func init() {
 					{Name: "days", Description: "Planning window in days (1-365)", Type: "int", Default: 30},
 				},
 			},
+			Action{
+				Name:        "revenue",
+				Description: "Read rental revenue for a bounded date range",
+				ToolName:    "UteamupAssetrentalRevenueSummary",
+				HTTPMethod:  "GET",
+				RESTPath:    "revenue-summary",
+				Flags: []FlagDef{
+					{Name: "start-date", BodyName: "startDate", Description: "Inclusive ISO-8601 start date", Type: "string", Required: true},
+					{Name: "end-date", BodyName: "endDate", Description: "Inclusive ISO-8601 end date", Type: "string", Required: true},
+				},
+			},
 		),
 	})
 	Register(&Domain{Name: "asset-replacement-plan", Description: "Manage asset replacement plans", Actions: crudActions("AssetReplacementPlan")})

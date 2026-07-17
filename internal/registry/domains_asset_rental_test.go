@@ -43,3 +43,23 @@ func TestAssetRentalActiveAndExpiringActionsUseNoIdentifierBoundary(t *testing.T
 		t.Fatalf("unexpected expiring-rental action: %+v", expiring)
 	}
 }
+
+func TestAssetRentalRevenueActionUsesOnlyDateRange(t *testing.T) {
+	domain := findDomain("asset-rental")
+	if domain == nil {
+		t.Fatal("asset-rental domain is not registered")
+	}
+	for index := range domain.Actions {
+		action := &domain.Actions[index]
+		if action.Name != "revenue" {
+			continue
+		}
+		if action.ToolName != "UteamupAssetrentalRevenueSummary" ||
+			len(action.Args) != 0 || len(action.Flags) != 2 ||
+			action.Flags[0].Name != "start-date" || action.Flags[1].Name != "end-date" {
+			t.Fatalf("unexpected rental revenue action: %+v", action)
+		}
+		return
+	}
+	t.Fatal("asset-rental revenue action is not registered")
+}
