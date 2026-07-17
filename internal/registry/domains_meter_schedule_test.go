@@ -291,8 +291,8 @@ func TestMeterScheduleRecordWorkorderAction(t *testing.T) {
 	if wg, ok := flags["workorder-guid"]; !ok || wg.Type != "string" || !wg.Required {
 		t.Error("record-workorder must expose a required string `workorder-guid` flag (Guid-first)")
 	}
-	if ad, ok := flags["attribute-definition-id"]; !ok || ad.Type != "int" {
-		t.Error("record-workorder must expose an int `attribute-definition-id` flag")
+	if ad, ok := flags["attribute-definition-guid"]; !ok || ad.Type != "string" || !ad.Required {
+		t.Error("record-workorder must expose a required string `attribute-definition-guid` flag")
 	}
 	if rv, ok := flags["reading-value"]; !ok || rv.Type != "float" {
 		t.Error("record-workorder must expose a float `reading-value` flag")
@@ -300,5 +300,8 @@ func TestMeterScheduleRecordWorkorderAction(t *testing.T) {
 	// Regression guard: must NOT carry a legacy int workorder identifier.
 	if _, present := flags["workorder-id"]; present {
 		t.Error("record-workorder must not expose a legacy int `workorder-id` flag — Guid-first only")
+	}
+	if _, present := flags["attribute-definition-id"]; present {
+		t.Error("record-workorder must not expose a legacy int `attribute-definition-id` flag")
 	}
 }

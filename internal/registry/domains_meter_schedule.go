@@ -161,7 +161,7 @@ func init() {
 				ToolName:    "UteamupMeterscheduleRecordWorkorder",
 				Flags: []FlagDef{
 					{Name: "workorder-guid", Description: "Workorder external Guid to record the reading against", Required: true, Type: "string"},
-					{Name: "attribute-definition-id", Description: "Attribute definition ID for the meter being read", Required: true, Type: "int"},
+					{Name: "attribute-definition-guid", Description: "Attribute definition external Guid for the meter being read", Required: true, Type: "string"},
 					{Name: "reading-value", Description: "The meter reading value", Required: true, Type: "float"},
 					{Name: "notes", Description: "Optional notes about the reading", Type: "string"},
 				},
