@@ -305,3 +305,28 @@ func TestMeterScheduleRecordWorkorderAction(t *testing.T) {
 		t.Error("record-workorder must not expose a legacy int `attribute-definition-id` flag")
 	}
 }
+
+func TestMeterScheduleComplianceSummaryUsesGuidFilter(t *testing.T) {
+	d := findMeterScheduleDomain(t)
+	var action *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "compliance-summary" {
+			action = &d.Actions[i]
+			break
+		}
+	}
+	if action == nil {
+		t.Fatal("expected `compliance-summary` action on meter-schedule domain")
+	}
+
+	flags := make(map[string]FlagDef)
+	for _, flag := range action.Flags {
+		flags[flag.Name] = flag
+	}
+	if asset, ok := flags["asset-guid"]; !ok || asset.Type != "string" {
+		t.Error("compliance-summary must expose an optional string `asset-guid` filter")
+	}
+	if _, present := flags["asset-id"]; present {
+		t.Error("compliance-summary must not expose a legacy int `asset-id` filter")
+	}
+}

@@ -108,6 +108,7 @@ func init() {
 				HTTPMethod:  "GET",
 				RESTPath:    "compliance/summary",
 				Flags: append(paginationFlags(),
+					FlagDef{Name: "asset-guid", Description: "Filter by asset external Guid", Type: "string"},
 					FlagDef{Name: "overdue-only", Description: "Include only overdue schedules", Type: "bool"},
 				),
 			},
