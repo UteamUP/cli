@@ -10,7 +10,19 @@ func init() {
 		}),
 	})
 
-	Register(&Domain{Name: "driver-assignment", Aliases: []string{"da"}, Description: "Manage driver assignments", Actions: crudActions("DriverAssignment")})
+	assignmentGuidArg := []ArgDef{{Name: "assignmentGuid", Description: "Public driver-assignment GUID", Required: true, Type: "string"}}
+	Register(&Domain{
+		Name: "driver-assignment", Aliases: []string{"da"}, Description: "Manage GUID-first driver assignments",
+		Actions: []Action{
+			{Name: "list", Description: "List driver assignments", ToolName: "UteamupDriverAssignmentList", Flags: paginationFlags()},
+			{Name: "get", Description: "Get a driver assignment by GUID", ToolName: "UteamupDriverAssignmentGet", Args: assignmentGuidArg, RESTPath: "by-guid/{assignmentGuid}"},
+			{Name: "create", Description: "Create a driver assignment", ToolName: "UteamupDriverAssignmentCreate", Flags: []FlagDef{jsonFlag()}},
+			{Name: "update", Description: "Update a driver assignment by GUID", ToolName: "UteamupDriverAssignmentUpdate", Args: assignmentGuidArg, RESTPath: "by-guid/{assignmentGuid}", Flags: []FlagDef{jsonFlag()}},
+			{Name: "delete", Description: "Delete a driver assignment by GUID", ToolName: "UteamupDriverAssignmentDelete", Args: assignmentGuidArg, RESTPath: "by-guid/{assignmentGuid}"},
+			{Name: "end", Description: "End a driver assignment by GUID", ToolName: "UteamupDriverAssignmentEnd", HTTPMethod: "PUT", Args: assignmentGuidArg, RESTPath: "by-guid/{assignmentGuid}/end"},
+			{Name: "current", Description: "Get the current driver assignment for an asset", ToolName: "UteamupDriverAssignmentGetCurrentDriver", Args: []ArgDef{{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "string"}}, RESTPath: "asset/by-guid/{assetGuid}/current"},
+		},
+	})
 	inspectionGuidArg := []ArgDef{{Name: "inspectionGuid", Description: "Public vehicle inspection GUID", Required: true, Type: "string"}}
 	vehicleInspectionActions := []Action{
 		{Name: "list", Description: "List vehicle inspections", ToolName: "UteamupVehicleInspectionList", Flags: append(paginationFlags(), FlagDef{Name: "asset-guid", Description: "Filter by public asset GUID", Type: "string"})},

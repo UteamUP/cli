@@ -184,3 +184,31 @@ func TestVehicleInspectionDomainUsesGuidArguments(t *testing.T) {
 		}
 	}
 }
+
+func TestDriverAssignmentDomainUsesGuidArguments(t *testing.T) {
+	domain, ok := Get("driver-assignment")
+	if !ok {
+		t.Fatal("driver-assignment domain not registered")
+	}
+	actions := make(map[string]Action, len(domain.Actions))
+	for _, action := range domain.Actions {
+		actions[action.Name] = action
+	}
+	for _, name := range []string{"get", "update", "delete", "end"} {
+		action := actions[name]
+		if len(action.Args) != 1 || action.Args[0].Name != "assignmentGuid" || action.Args[0].Type != "string" {
+			t.Fatalf("%s must require one string assignmentGuid argument, got %+v", name, action.Args)
+		}
+	}
+	current := actions["current"]
+	if len(current.Args) != 1 || current.Args[0].Name != "assetGuid" || current.Args[0].Type != "string" {
+		t.Fatalf("current must require one string assetGuid argument, got %+v", current.Args)
+	}
+	for _, action := range domain.Actions {
+		for _, arg := range action.Args {
+			if arg.Name == "id" || arg.Type == "int" {
+				t.Fatalf("driver assignment action %s leaks integer identifiers: %+v", action.Name, arg)
+			}
+		}
+	}
+}
