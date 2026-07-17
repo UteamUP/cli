@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.88.0](https://github.com/UteamUP/cli/compare/1.87.0...1.88.0) (2026-07-17)
+
+
+### Features
+
+* **cli:** expose procurement intelligence evidence ([54137d2](https://github.com/UteamUP/cli/commit/54137d28cc5b3d93cf9e9ea498ae88d93ac0350e))
+* **cli:** read project field context ([223e986](https://github.com/UteamUP/cli/commit/223e986caf0fc6799002922fe00ecb93ee2394cb))
+
 ## [1.87.0](https://github.com/UteamUP/cli/compare/1.86.0...1.87.0) (2026-07-17)
 
 
