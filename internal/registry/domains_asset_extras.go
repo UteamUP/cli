@@ -107,5 +107,4 @@ func init() {
 			},
 		},
 	})
-	Register(&Domain{Name: "asset-criticality", Description: "Manage asset criticality assessments", Actions: crudActions("AssetCriticalityAssessment")})
 }
