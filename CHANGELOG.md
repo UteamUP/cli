@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.83.0](https://github.com/UteamUP/cli/compare/1.82.0...1.83.0) (2026-07-17)
+
+
+### Features
+
+* **asset-failure:** expose filtered reads by severity ([b4a870e](https://github.com/UteamUP/cli/commit/b4a870e3c0ffdb08537d990c9c739fa7ab6d91c3))
+
 ## [1.82.0](https://github.com/UteamUP/cli/compare/1.81.0...1.82.0) (2026-07-17)
 
 
