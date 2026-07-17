@@ -23,6 +23,7 @@ func TestEnabledUpmateCapabilitiesHaveCLIRegistrations(t *testing.T) {
 		"UteamupProjectGet",
 		"UteamupProjectGetHealth",
 		"UteamupProjectBudgetGet",
+		"UteamupReliabilityRiskGet",
 		"UteamupScheduleAssignmentGetWorkorderOptions",
 		"UteamupScheduleAssignmentCreateByGuid",
 		"UteamupShiftList",
