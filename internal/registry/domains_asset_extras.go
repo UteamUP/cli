@@ -1,7 +1,33 @@
 package registry
 
 func init() {
-	Register(&Domain{Name: "asset-lifecycle", Description: "Manage asset lifecycle events", Actions: crudActions("AssetLifecycleEvent")})
+	Register(&Domain{
+		Name:        "asset-lifecycle",
+		Description: "Manage asset lifecycle events",
+		Actions: append(crudActions("AssetLifecycleEvent"),
+			Action{
+				Name:        "by-type",
+				Description: "List lifecycle events by event type",
+				ToolName:    "UteamupAssetlifecycleGetByType",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-type",
+				Flags: []FlagDef{
+					{Name: "event-type", BodyName: "eventType", Description: "Lifecycle event type", Type: "string", Required: true},
+				},
+			},
+			Action{
+				Name:        "by-date",
+				Description: "List lifecycle events within a date range",
+				ToolName:    "UteamupAssetlifecycleGetByDateRange",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-date-range",
+				Flags: []FlagDef{
+					{Name: "start-date", BodyName: "startDate", Description: "Inclusive ISO-8601 start date", Type: "string", Required: true},
+					{Name: "end-date", BodyName: "endDate", Description: "Inclusive ISO-8601 end date", Type: "string", Required: true},
+				},
+			},
+		),
+	})
 	Register(&Domain{Name: "asset-rental", Description: "Manage asset rentals", Actions: crudActions("AssetRental")})
 	Register(&Domain{Name: "asset-replacement-plan", Description: "Manage asset replacement plans", Actions: crudActions("AssetReplacementPlan")})
 	Register(&Domain{Name: "asset-scan-log", Description: "View asset scan logs", Actions: listGetActions("AssetScanLog")})
