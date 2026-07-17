@@ -36,6 +36,7 @@ func init() {
 			{
 				Name:        "events",
 				Description: "List vendor performance events by public GUID",
+				ToolName:    "UteamupVendorPerformanceEventsList",
 				RESTPath:    "by-guid/{vendorGuid}/events",
 				HTTPMethod:  "GET",
 				Args:        []ArgDef{{Name: "vendorGuid", Description: "Vendor GUID", Required: true, Type: "uuid"}},
@@ -47,6 +48,7 @@ func init() {
 			{
 				Name:        "trends",
 				Description: "Get vendor performance trend snapshots by public GUID",
+				ToolName:    "UteamupVendorPerformanceTrendsGet",
 				RESTPath:    "by-guid/{vendorGuid}/trends",
 				HTTPMethod:  "GET",
 				Args:        []ArgDef{{Name: "vendorGuid", Description: "Vendor GUID", Required: true, Type: "uuid"}},
@@ -59,6 +61,7 @@ func init() {
 			{
 				Name:        "rankings",
 				Description: "List tenant vendor performance rankings",
+				ToolName:    "UteamupVendorPerformanceRankingsList",
 				RESTPath:    "rankings",
 				HTTPMethod:  "GET",
 				Flags: []FlagDef{
@@ -70,12 +73,14 @@ func init() {
 			{
 				Name:        "dashboard",
 				Description: "Get the tenant vendor-performance dashboard",
+				ToolName:    "UteamupVendorPerformanceDashboardGet",
 				RESTPath:    "dashboard",
 				HTTPMethod:  "GET",
 			},
 			{
 				Name:        "recalculate",
 				Description: "Recalculate a vendor scorecard by public GUID",
+				ToolName:    "UteamupVendorScorecardRecalculate",
 				RESTPath:    "by-guid/{vendorGuid}/recalculate",
 				HTTPMethod:  "POST",
 				Args:        []ArgDef{{Name: "vendorGuid", Description: "Vendor GUID", Required: true, Type: "uuid"}},

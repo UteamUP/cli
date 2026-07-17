@@ -29,6 +29,18 @@ func TestVendorPerformanceDomainUsesGuidFirstScorecardRoutes(t *testing.T) {
 	if actions["scorecard"].ToolName != "UteamupVendorScorecardGet" {
 		t.Fatalf("scorecard tool = %q", actions["scorecard"].ToolName)
 	}
+	expectedToolNames := map[string]string{
+		"events":      "UteamupVendorPerformanceEventsList",
+		"trends":      "UteamupVendorPerformanceTrendsGet",
+		"rankings":    "UteamupVendorPerformanceRankingsList",
+		"dashboard":   "UteamupVendorPerformanceDashboardGet",
+		"recalculate": "UteamupVendorScorecardRecalculate",
+	}
+	for actionName, toolName := range expectedToolNames {
+		if actions[actionName].ToolName != toolName {
+			t.Fatalf("%s tool = %q, want %q", actionName, actions[actionName].ToolName, toolName)
+		}
+	}
 	if actions["config"].ToolName != "UteamupVendorScorecardConfigGet" ||
 		len(actions["config"].Args) != 0 {
 		t.Fatalf("config action must be tenant-scoped without identifiers: %+v", actions["config"])
