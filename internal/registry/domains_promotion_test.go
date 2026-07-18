@@ -110,6 +110,30 @@ func TestPromotionGrantWiring(t *testing.T) {
 	}
 }
 
+func TestPromotionDurationAndCurrencyFlags(t *testing.T) {
+	for _, actionName := range []string{"create", "update", "grant-adhoc"} {
+		action := findPromotionAction(t, actionName)
+		flags := map[string]FlagDef{}
+		for _, flag := range action.Flags {
+			flags[flag.Name] = flag
+		}
+
+		duration, ok := flags["duration-kind"]
+		if !ok {
+			t.Errorf("%s must expose --duration-kind so one-time discounts are explicit", actionName)
+		} else if duration.Type != "int" {
+			t.Errorf("%s --duration-kind type = %q, want int", actionName, duration.Type)
+		}
+
+		currency, ok := flags["currency"]
+		if !ok {
+			t.Errorf("%s must expose --currency for fixed-amount discounts", actionName)
+		} else if currency.Type != "string" {
+			t.Errorf("%s --currency type = %q, want string", actionName, currency.Type)
+		}
+	}
+}
+
 func TestPlanGetMigratedToGuid(t *testing.T) {
 	var planDomain *Domain
 	for _, d := range DefaultRegistry.Domains() {
