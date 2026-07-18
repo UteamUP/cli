@@ -527,7 +527,33 @@ func init() {
 		},
 	)
 	Register(&Domain{Name: "shift-handover", Description: "Manage shift handovers", Actions: shiftHandoverActions})
-	Register(&Domain{Name: "time-entry", Aliases: []string{"time", "timesheet"}, Description: "Manage time entries", Actions: crudActions("TimeEntry")})
+	// The `timesheet` alias covers generic TimeEntry CRUD plus the timesheet
+	// read tools below. The weekly grid and approval queue are served by
+	// TimesheetController (`/api/timesheet`), not TimeEntryController, so
+	// those actions override the base path via RESTBasePath.
+	timeEntryActions := crudActions("TimeEntry")
+	timeEntryActions = append(timeEntryActions,
+		Action{
+			Name:         "weekly-mine",
+			Description:  "Read the authenticated user's weekly timesheet grid",
+			ToolName:     "UteamupTimesheetWeeklyMine",
+			HTTPMethod:   "GET",
+			RESTBasePath: "/api/timesheet",
+			RESTPath:     "weekly/me",
+			Flags: []FlagDef{
+				{Name: "week-start", BodyName: "weekStart", Description: "ISO week start date (YYYY-MM-DD)", Required: true, Type: "string"},
+			},
+		},
+		Action{
+			Name:         "pending-approvals",
+			Description:  "List timesheets pending approval in the active tenant",
+			ToolName:     "UteamupTimesheetPendingApprovals",
+			HTTPMethod:   "GET",
+			RESTBasePath: "/api/timesheet",
+			RESTPath:     "pending-approval",
+		},
+	)
+	Register(&Domain{Name: "time-entry", Aliases: []string{"time", "timesheet"}, Description: "Manage time entries and timesheets", Actions: timeEntryActions})
 }
 
 func handoverConcurrencyFlag() FlagDef {

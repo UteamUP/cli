@@ -123,6 +123,37 @@ func TestOnCallCalloutSummaryActionWired(t *testing.T) {
 	}
 }
 
+func TestOnCallActiveCalloutsActionWired(t *testing.T) {
+	d := findOnCallDomain(t)
+	var callouts *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "callouts" {
+			callouts = &d.Actions[i]
+		}
+	}
+	if callouts == nil {
+		t.Fatal("expected 'callouts' action")
+	}
+	if callouts.ToolName != "UteamupOncallActiveCallouts" {
+		t.Errorf("callouts ToolName = %q, want %q", callouts.ToolName, "UteamupOncallActiveCallouts")
+	}
+	if callouts.HTTPMethod != "GET" || callouts.RESTPath != "callouts" {
+		t.Errorf("callouts = %s %q, want GET \"callouts\"", callouts.HTTPMethod, callouts.RESTPath)
+	}
+	if len(callouts.Args) != 0 {
+		t.Errorf("callouts should not need args, got %+v", callouts.Args)
+	}
+	var includeClosed *FlagDef
+	for i := range callouts.Flags {
+		if callouts.Flags[i].Name == "include-closed" {
+			includeClosed = &callouts.Flags[i]
+		}
+	}
+	if includeClosed == nil || includeClosed.Type != "bool" || includeClosed.Required {
+		t.Errorf("callouts must expose an optional bool 'include-closed' flag, got %+v", callouts.Flags)
+	}
+}
+
 func TestOnCallCalendarActionWired(t *testing.T) {
 	d := findOnCallDomain(t)
 	var calendar *Action

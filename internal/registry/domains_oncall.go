@@ -35,6 +35,19 @@ func init() {
 				RESTPath:    "callouts/summary",
 			},
 			{
+				// ToolName casing follows the backend-registered tool name for
+				// this action ("Oncall"), which predates the "OnCall" casing
+				// used by the older tools in this file.
+				Name:        "callouts",
+				Description: "List tenant callouts needing on-call attention (defaults to open/escalated only)",
+				ToolName:    "UteamupOncallActiveCallouts",
+				HTTPMethod:  "GET",
+				RESTPath:    "callouts",
+				Flags: []FlagDef{
+					{Name: "include-closed", Description: "Include closed callouts as well", Type: "bool"},
+				},
+			},
+			{
 				Name:        "calendar",
 				Description: "Download an authenticated iCalendar feed for an on-call schedule",
 				ToolName:    "UteamupOnCallCalendar",
