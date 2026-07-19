@@ -205,6 +205,56 @@ func TestStockAckAlertActionWired(t *testing.T) {
 	}
 }
 
+func TestStockApprovedReadCapabilityRoutes(t *testing.T) {
+	tests := []struct {
+		name     string
+		tool     string
+		path     string
+		arg      string
+		hasPages bool
+	}{
+		{"locations", "UteamupStockListLocations", "locations", "", true},
+		{"location-items", "UteamupStockGetItemsByLocation", "locations/{stockGuid}/items", "stockGuid", true},
+		{"item-transactions", "UteamupStockGetTransactions", "items/{stockItemGuid}/transactions", "stockItemGuid", false},
+		{"workorder-stock", "UteamupStockGetWorkorderStock", "workorder/{workorderGuid}/stock-take-items", "workorderGuid", false},
+		{"alert-summary", "UteamupStockGetTenantAlertSummary", "alerts/summary", "", false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			action := findStockAction(t, test.name)
+			if action.ToolName != test.tool {
+				t.Errorf("ToolName = %q, want %q", action.ToolName, test.tool)
+			}
+			if action.RESTPath != test.path {
+				t.Errorf("RESTPath = %q, want %q", action.RESTPath, test.path)
+			}
+			if action.HTTPMethod != "" {
+				t.Errorf("HTTPMethod = %q, want derived GET", action.HTTPMethod)
+			}
+			if test.arg == "" {
+				if len(action.Args) != 0 {
+					t.Errorf("expected no positional args, got %+v", action.Args)
+				}
+			} else if len(action.Args) != 1 ||
+				action.Args[0].Name != test.arg ||
+				action.Args[0].Type != "uuid" ||
+				!action.Args[0].Required {
+				t.Errorf("expected one required UUID arg %q, got %+v", test.arg, action.Args)
+			}
+			hasPage := false
+			hasPageSize := false
+			for _, flag := range action.Flags {
+				hasPage = hasPage || flag.Name == "page"
+				hasPageSize = hasPageSize || flag.Name == "page-size"
+			}
+			if hasPage != test.hasPages || hasPageSize != test.hasPages {
+				t.Errorf("pagination flags page=%v page-size=%v, want %v", hasPage, hasPageSize, test.hasPages)
+			}
+		})
+	}
+}
+
 func TestStockPurchaseOrderActionsWired(t *testing.T) {
 	cases := []struct {
 		name       string

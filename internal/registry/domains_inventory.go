@@ -42,6 +42,53 @@ func init() {
 				},
 			},
 			Action{
+				Name:        "locations",
+				Description: "List tenant stock locations and current inventory totals",
+				ToolName:    "UteamupStockListLocations",
+				RESTPath:    "locations",
+				Flags: []FlagDef{
+					{Name: "page", Description: "Page number", Default: 1, Type: "int"},
+					{Name: "page-size", Description: "Page size", Default: 100, Type: "int"},
+				},
+			},
+			Action{
+				Name:        "location-items",
+				Description: "List live stock items held at one stock location",
+				ToolName:    "UteamupStockGetItemsByLocation",
+				RESTPath:    "locations/{stockGuid}/items",
+				Args: []ArgDef{
+					{Name: "stockGuid", Description: "Stock location GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "page", Description: "Page number", Default: 1, Type: "int"},
+					{Name: "page-size", Description: "Page size", Default: 100, Type: "int"},
+				},
+			},
+			Action{
+				Name:        "item-transactions",
+				Description: "Read transaction history for one stock item",
+				ToolName:    "UteamupStockGetTransactions",
+				RESTPath:    "items/{stockItemGuid}/transactions",
+				Args: []ArgDef{
+					{Name: "stockItemGuid", Description: "Stock item GUID", Required: true, Type: "uuid"},
+				},
+			},
+			Action{
+				Name:        "workorder-stock",
+				Description: "Read stock quantities taken and returned for one workorder",
+				ToolName:    "UteamupStockGetWorkorderStock",
+				RESTPath:    "workorder/{workorderGuid}/stock-take-items",
+				Args: []ArgDef{
+					{Name: "workorderGuid", Description: "Workorder GUID", Required: true, Type: "uuid"},
+				},
+			},
+			Action{
+				Name:        "alert-summary",
+				Description: "Read tenant-wide active stock alert totals",
+				ToolName:    "UteamupStockGetTenantAlertSummary",
+				RESTPath:    "alerts/summary",
+			},
+			Action{
 				Name:        "ack-alert",
 				Description: "Acknowledge a stock alert",
 				ToolName:    "UteamupStockAcknowledgeAlert",
