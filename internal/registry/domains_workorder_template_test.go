@@ -62,3 +62,39 @@ func TestWorkorderTemplateDomainHasWotAlias(t *testing.T) {
 		t.Errorf("workorder-template domain must keep the 'wot' alias; got %v", d.Aliases)
 	}
 }
+
+func TestWorkorderTemplateDomainHasApprovedActiveRead(t *testing.T) {
+	d := findDomain("workorder-template")
+	if d == nil {
+		t.Fatal("expected workorder-template domain to be registered")
+	}
+
+	var action *Action
+	for index := range d.Actions {
+		if d.Actions[index].Name == "active" {
+			action = &d.Actions[index]
+			break
+		}
+	}
+	if action == nil {
+		t.Fatal("expected active action on workorder-template domain")
+	}
+	if action.ToolName != "UteamupWorkorderTemplateGetActive" {
+		t.Errorf("ToolName = %q, want UteamupWorkorderTemplateGetActive", action.ToolName)
+	}
+	if action.HTTPMethod != "GET" || action.RESTPath != "" || len(action.Args) != 0 {
+		t.Errorf("active route = method %q path %q args %+v, want bounded GET base route",
+			action.HTTPMethod, action.RESTPath, action.Args)
+	}
+
+	flags := make(map[string]FlagDef, len(action.Flags))
+	for _, flag := range action.Flags {
+		flags[flag.Name] = flag
+	}
+	if flag, ok := flags["is-active"]; !ok || flag.Default != true || flag.Type != "bool" {
+		t.Errorf("is-active = %+v, want bool default true", flag)
+	}
+	if flag, ok := flags["page-size"]; !ok || flag.Default != 20 || flag.Type != "int" {
+		t.Errorf("page-size = %+v, want int default 20", flag)
+	}
+}

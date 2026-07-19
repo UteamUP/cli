@@ -3,6 +3,19 @@ package registry
 func init() {
 	Register(&Domain{Name: "workorder-template", Aliases: []string{"wot"}, Description: "Manage work order templates", Actions: append(crudActions("WorkorderTemplate"),
 		Action{
+			Name:        "active",
+			Description: "List bounded active tenant workorder templates",
+			ToolName:    "UteamupWorkorderTemplateGetActive",
+			HTTPMethod:  "GET",
+			Flags: []FlagDef{
+				{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
+				{Name: "page-size", Short: "s", Description: "Items per page (max 100)", Default: 20, Type: "int"},
+				{Name: "is-active", Description: "Only return active templates", Default: true, Type: "bool"},
+				{Name: "sort-by", Description: "Sort field", Default: "Name", Type: "string"},
+				{Name: "sort-order", Description: "Sort order: asc or desc", Default: "asc", Type: "string"},
+			},
+		},
+		Action{
 			Name:        "create-workorder",
 			Description: "Create an open work order from a template, identified by the template's public GUID. No asset or resolution note required.",
 			ToolName:    "UteamupWorkorderTemplateCreateFromTemplateByGuid",
