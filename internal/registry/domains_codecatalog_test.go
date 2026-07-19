@@ -17,6 +17,86 @@ func TestCodecatalogDomainRegistered(t *testing.T) {
 	}
 }
 
+func TestCodecatalogApprovedCodeReadsWired(t *testing.T) {
+	var domain *Domain
+	for _, candidate := range DefaultRegistry.Domains() {
+		if candidate.Name == "codecatalog" {
+			domain = candidate
+			break
+		}
+	}
+	if domain == nil {
+		t.Fatal("expected codecatalog domain to be registered")
+	}
+
+	expected := map[string]struct {
+		tool string
+		path string
+		arg  string
+	}{
+		"codes-list":  {tool: "UteamupCodeList"},
+		"code-get":    {tool: "UteamupCodeGet", path: "by-guid/{codeGuid}", arg: "codeGuid"},
+		"asset-codes": {tool: "UteamupCodeGetByAsset", path: "asset/by-guid/{assetGuid}", arg: "assetGuid"},
+	}
+
+	for name, want := range expected {
+		t.Run(name, func(t *testing.T) {
+			var action *Action
+			for index := range domain.Actions {
+				if domain.Actions[index].Name == name {
+					action = &domain.Actions[index]
+					break
+				}
+			}
+			if action == nil {
+				t.Fatalf("expected %q action", name)
+			}
+			if action.ToolName != want.tool {
+				t.Errorf("ToolName = %q, want %q", action.ToolName, want.tool)
+			}
+			if action.RESTBasePath != "/api/codes" || action.HTTPMethod != "GET" || action.RESTPath != want.path {
+				t.Errorf("route = %s %s%s, want GET /api/codes/%s",
+					action.HTTPMethod, action.RESTBasePath, action.RESTPath, want.path)
+			}
+			if want.arg == "" {
+				if len(action.Args) != 0 {
+					t.Fatalf("expected no positional args, got %+v", action.Args)
+				}
+				return
+			}
+			if len(action.Args) != 1 || action.Args[0].Name != want.arg ||
+				action.Args[0].Type != "string" || !action.Args[0].Required {
+				t.Errorf("GUID arg = %+v, want one required string %q", action.Args, want.arg)
+			}
+		})
+	}
+
+	var list *Action
+	for index := range domain.Actions {
+		if domain.Actions[index].Name == "codes-list" {
+			list = &domain.Actions[index]
+			break
+		}
+	}
+	if list == nil {
+		t.Fatal("expected codes-list action")
+	}
+	flags := make(map[string]FlagDef, len(list.Flags))
+	for _, flag := range list.Flags {
+		flags[flag.Name] = flag
+	}
+	for _, name := range []string{
+		"page", "page-size", "name-filter", "type-filter", "is-assigned", "sort-by", "sort-order",
+	} {
+		if _, ok := flags[name]; !ok {
+			t.Errorf("codes-list missing %q flag", name)
+		}
+	}
+	if flags["page-size"].Default != 20 {
+		t.Errorf("page-size Default = %v, want 20", flags["page-size"].Default)
+	}
+}
+
 func TestCodecatalogHistoryActionWired(t *testing.T) {
 	var d *Domain
 	for _, dom := range DefaultRegistry.Domains() {

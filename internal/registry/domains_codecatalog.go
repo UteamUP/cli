@@ -8,6 +8,44 @@ func init() {
 		APIPath:     "/api/codecatalog",
 		Actions: []Action{
 			{
+				Name:         "codes-list",
+				Description:  "List bounded tenant asset codes with filtering and assignment status",
+				ToolName:     "UteamupCodeList",
+				RESTBasePath: "/api/codes",
+				HTTPMethod:   "GET",
+				Flags: []FlagDef{
+					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
+					{Name: "page-size", Short: "s", Description: "Items per page (max 100)", Default: 20, Type: "int"},
+					{Name: "name-filter", Description: "Filter by code or description", Type: "string"},
+					{Name: "type-filter", Description: "Filter by code type", Type: "string"},
+					{Name: "is-assigned", Description: "Filter by assignment status", Type: "bool"},
+					{Name: "sort-by", Description: "Sort field", Default: "CreatedAt", Type: "string"},
+					{Name: "sort-order", Description: "Sort order: asc or desc", Default: "desc", Type: "string"},
+				},
+			},
+			{
+				Name:         "code-get",
+				Description:  "Get one tenant asset code by public GUID",
+				ToolName:     "UteamupCodeGet",
+				RESTBasePath: "/api/codes",
+				HTTPMethod:   "GET",
+				RESTPath:     "by-guid/{codeGuid}",
+				Args: []ArgDef{
+					{Name: "codeGuid", Description: "Public code GUID", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:         "asset-codes",
+				Description:  "List tenant codes assigned to an asset by public GUID",
+				ToolName:     "UteamupCodeGetByAsset",
+				RESTBasePath: "/api/codes",
+				HTTPMethod:   "GET",
+				RESTPath:     "asset/by-guid/{assetGuid}",
+				Args: []ArgDef{
+					{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "string"},
+				},
+			},
+			{
 				Name:        "search",
 				Description: "Search industry codes by text (mention search)",
 				ToolName:    "UteamupCodeCatalogSearch",
