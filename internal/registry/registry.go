@@ -53,6 +53,11 @@ type FlagDef struct {
 	// the flag is excluded from the body and applied as a header on the
 	// outgoing request.
 	HeaderName string
+	// MirrorHeaderInBody also writes the same header value into BodyName
+	// (default camelCase(Name)). This is limited to compatibility contracts
+	// where the backend requires an Idempotency-Key header and temporarily
+	// accepts a legacy body key only when both values are equal.
+	MirrorHeaderInBody bool
 	// JSONFile marks a string flag whose value is a local path to a JSON file.
 	// The file is read and parsed at execution time and the parsed value is
 	// sent under BodyName (default camelCase(Name)) in the request body — the
@@ -270,15 +275,25 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 	var uploadField, uploadPath string
 	for _, flag := range action.Flags {
 		if flag.HeaderName != "" {
+			var headerValue string
 			if cmd.Flags().Changed(flag.Name) {
 				v, _ := cmd.Flags().GetString(flag.Name)
 				if v != "" {
 					headers[flag.HeaderName] = v
+					headerValue = v
 				}
 			} else if flag.Default != nil {
 				if dv, ok := flag.Default.(string); ok && dv != "" {
 					headers[flag.HeaderName] = dv
+					headerValue = dv
 				}
+			}
+			if flag.MirrorHeaderInBody && headerValue != "" {
+				fieldName := flag.BodyName
+				if fieldName == "" {
+					fieldName = toCamelCase(flag.Name)
+				}
+				toolArgs[fieldName] = headerValue
 			}
 			continue
 		}
