@@ -5,6 +5,43 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.89.0](https://github.com/UteamUP/cli/compare/1.88.0...1.89.0) (2026-07-19)
+
+
+### Features
+
+* add retry-safe field service CLI actions ([559f4c3](https://github.com/UteamUP/cli/commit/559f4c3d0518952ddc9d1db2023d70fc317fc548))
+* **cli:** add approved active template read ([93bbb1f](https://github.com/UteamUP/cli/commit/93bbb1f1e487933c6b7c61befc8807774b7bcad5))
+* **cli:** add return case lifecycle commands ([ef10684](https://github.com/UteamUP/cli/commit/ef10684e106a2b5affd66a065ffa26230b160ac5))
+* **cli:** manage bookable scheduling resources ([e0fea4c](https://github.com/UteamUP/cli/commit/e0fea4c18339b81b2210d1508e541baa37f89b91))
+* **cli:** mirror approved stock reads ([f68f307](https://github.com/UteamUP/cli/commit/f68f3079b6281f2307cb7a84c79dfce8549f7373))
+* **codecatalog:** update code-catalog registry domain ([e55ef82](https://github.com/UteamUP/cli/commit/e55ef826da9c7d4d476fcf3afe31f1da589b51c3))
+* **fleet:** add intelligence CLI domain ([636d42e](https://github.com/UteamUP/cli/commit/636d42e998e2172d8eca8b4667a948cd8fc11b90))
+* **operations:** add governed planning commands ([a5b593a](https://github.com/UteamUP/cli/commit/a5b593a80e0f50d3d2f5b0b68acdcef39036e2d7))
+* **procurement:** add supplier invoice and report CLI domains ([2df96a8](https://github.com/UteamUP/cli/commit/2df96a8d82bd5ac295e98d9c0bb7784662e6c6d8))
+* **registry:** add duration-kind and currency flags to promotion actions ([7935a9f](https://github.com/UteamUP/cli/commit/7935a9fc22e3fcef8271685c0d8cc4d128b55d39))
+* **registry:** attendance-station domain, timesheet actions, planning + oncall parity ([9ee2b40](https://github.com/UteamUP/cli/commit/9ee2b4048b9f3cb65882c5ea41219e69627de184))
+* **reliability:** add evidence CLI commands ([d83db37](https://github.com/UteamUP/cli/commit/d83db37ee2c1ed637e48cc1ec9739de951ea379f))
+* **schedule:** add publication and capacity commands ([27fb314](https://github.com/UteamUP/cli/commit/27fb3143f917a72dd484bf23f660f0adc09b1c47))
+* **schedule:** add supporting resource commands ([9a3697e](https://github.com/UteamUP/cli/commit/9a3697e3400a9c0cd68d129a300e20ecd6adc197))
+
+
+### Bug Fixes
+
+* **auth:** fall back to visible input when stdin is not a console ([db993aa](https://github.com/UteamUP/cli/commit/db993aad2f46df9389999f2b52ea137a8ce194c5))
+* **checkpoint:** correct process liveness check on Windows ([0e57dd7](https://github.com/UteamUP/cli/commit/0e57dd7f0bd29a87cc28a0162cca6c49941c78b2))
+* **cli:** route approved report analytics ([8f6e9fa](https://github.com/UteamUP/cli/commit/8f6e9fa12d2142eef04c68037c001677b9ba9375))
+
+
+### Documentation
+
+* **cli:** record the Windows build and install path ([ea68869](https://github.com/UteamUP/cli/commit/ea68869505059b8f7766068b1c0e432a1b50d293))
+
+
+### Tests
+
+* **cli:** isolate Windows filesystem contracts ([1693c58](https://github.com/UteamUP/cli/commit/1693c58e372123befc842045a2c78262cb1b00c3))
+
 ## [1.88.0](https://github.com/UteamUP/cli/compare/1.87.0...1.88.0) (2026-07-17)
 
 
