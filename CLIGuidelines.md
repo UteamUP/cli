@@ -43,6 +43,28 @@ var (
 
 `make build` uses `git describe --tags --always --dirty` for the version string.
 
+### Windows (measured on Windows 11, not inferred)
+
+The `Makefile` is Unix-only — `install` uses `sudo`, `/usr/local/bin`, and `.zshrc`, and `make` is typically absent on a Windows dev box. Build and install directly instead:
+
+```bash
+VERSION=$(git describe --tags --always --dirty)
+COMMIT=$(git rev-parse --short HEAD)
+DATE=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+go build -ldflags "-s -w -X main.version=$VERSION -X main.commit=$COMMIT -X main.date=$DATE" -o bin/uteamup.exe .
+cp bin/uteamup.exe "$(go env GOPATH)/bin/uteamup.exe"
+cp bin/uteamup.exe "$(go env GOPATH)/bin/ut.exe"   # symlinks need admin on Windows; copy instead
+```
+
+Four things that are not obvious and cost real time to discover:
+
+- **`go build -o bin/uteamup` does NOT append `.exe`.** It writes a extension-less file Windows will not run as a command. Always pass `.exe` explicitly in `-o`.
+- **`$(go env GOPATH)/bin` is usually already on the user PATH**, so no PATH edit is needed — verify with `Get-Command uteamup` before adding one.
+- **A PowerShell spawned from Git Bash inherits Git Bash's PATH**, not the registry PATH. To test resolution as a real shell sees it: `powershell -NoProfile -Command "$env:Path=[Environment]::GetEnvironmentVariable('Path','Machine')+';'+[Environment]::GetEnvironmentVariable('Path','User'); Get-Command uteamup"`.
+- **`go test -race` requires cgo**, which needs a C toolchain. Without gcc/clang installed, `-race` fails outright; drop it and note the gap rather than skipping the tests.
+
+Git Bash also rewrites `/c` into `C:/` in arguments (MSYS path conversion), which silently breaks `cmd.exe /c ...`. Prefix with `MSYS_NO_PATHCONV=1` when invoking native Windows tools.
+
 ---
 
 ## Configuration
