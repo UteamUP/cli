@@ -15,7 +15,9 @@ import (
 )
 
 func TestCallRESTUploadLimitedUsesAuthenticatedGuidScopedMultipart(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	if err := auth.SaveToken(&auth.TokenData{
 		AccessToken: "secret-access-token",
 		ExpiresAt:   time.Now().Add(time.Hour),

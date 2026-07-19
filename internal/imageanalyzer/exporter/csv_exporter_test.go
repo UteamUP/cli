@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -115,7 +116,7 @@ func TestExportCSVsNeutralizesSpreadsheetFormulasAndUsesPrivatePermissions(t *te
 	if err != nil {
 		t.Fatal(err)
 	}
-	if info.Mode().Perm() != 0o600 {
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		t.Fatalf("CSV permissions = %o, want 600", info.Mode().Perm())
 	}
 	if got := sanitizeCSVCell("-21.8954"); got != "-21.8954" {
