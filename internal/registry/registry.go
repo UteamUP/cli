@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -53,6 +54,10 @@ type FlagDef struct {
 	// the flag is excluded from the body and applied as a header on the
 	// outgoing request.
 	HeaderName string
+	// QueryName routes the flag to an explicit query-string field even for
+	// POST/PUT/PATCH requests. Use it for concurrency tokens bound with
+	// [FromQuery], while keeping the reviewed mutation model in the JSON body.
+	QueryName string
 	// MirrorHeaderInBody also writes the same header value into BodyName
 	// (default camelCase(Name)). This is limited to compatibility contracts
 	// where the backend requires an Idempotency-Key header and temporarily
@@ -272,8 +277,35 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 	// re-introduce the `Idempotency-Key`-as-body-field bug fixed by adding
 	// HeaderName in the first place).
 	headers := make(map[string]string)
+	queryParams := make(map[string]any)
 	var uploadField, uploadPath string
 	for _, flag := range action.Flags {
+		if flag.QueryName != "" {
+			if !cmd.Flags().Changed(flag.Name) {
+				if flag.Default != nil {
+					queryParams[flag.QueryName] = flag.Default
+				}
+				continue
+			}
+			switch flag.Type {
+			case "int":
+				v, _ := cmd.Flags().GetInt(flag.Name)
+				queryParams[flag.QueryName] = v
+			case "bool":
+				v, _ := cmd.Flags().GetBool(flag.Name)
+				queryParams[flag.QueryName] = v
+			case "float":
+				v, _ := cmd.Flags().GetFloat64(flag.Name)
+				queryParams[flag.QueryName] = v
+			case "stringSlice":
+				v, _ := cmd.Flags().GetStringSlice(flag.Name)
+				queryParams[flag.QueryName] = v
+			default:
+				v, _ := cmd.Flags().GetString(flag.Name)
+				queryParams[flag.QueryName] = v
+			}
+			continue
+		}
 		if flag.HeaderName != "" {
 			var headerValue string
 			if cmd.Flags().Changed(flag.Name) {
@@ -351,6 +383,7 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 	// consumed during substitution are stripped from the body so they don't double-
 	// leak as JSON fields on POST/PUT/PATCH.
 	restPath, consumed := buildRESTPath(domain, action, toolArgs)
+	restPath = appendQueryParameters(restPath, queryParams)
 	for _, name := range consumed {
 		delete(toolArgs, name)
 	}
@@ -392,6 +425,32 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 
 	format := output.ParseFormat(*outputFormat)
 	return output.Print(format, result)
+}
+
+func appendQueryParameters(path string, params map[string]any) string {
+	if len(params) == 0 {
+		return path
+	}
+	values := url.Values{}
+	for key, value := range params {
+		switch typed := value.(type) {
+		case []string:
+			for _, item := range typed {
+				values.Add(key, item)
+			}
+		default:
+			values.Set(key, fmt.Sprint(value))
+		}
+	}
+	encoded := values.Encode()
+	if encoded == "" {
+		return path
+	}
+	separator := "?"
+	if strings.Contains(path, "?") {
+		separator = "&"
+	}
+	return path + separator + encoded
 }
 
 // redactSensitiveActionValues returns diagnostic-only copies with values from
