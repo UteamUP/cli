@@ -527,12 +527,81 @@ func init() {
 		},
 	)
 	Register(&Domain{Name: "shift-handover", Description: "Manage shift handovers", Actions: shiftHandoverActions})
-	// The `timesheet` alias covers generic TimeEntry CRUD plus the timesheet
-	// read tools below. The weekly grid and approval queue are served by
+	// The `timesheet` alias covers the GUID-first TimeEntry tools plus the
+	// timesheet read tools below. The weekly grid and approval queue are served by
 	// TimesheetController (`/api/timesheet`), not TimeEntryController, so
 	// those actions override the base path via RESTBasePath.
-	timeEntryActions := crudActions("TimeEntry")
-	timeEntryActions = append(timeEntryActions,
+	timeEntryActions := []Action{
+		Action{
+			Name:         "start-timer",
+			Description:  "Start a retry-safe timer for the authenticated user",
+			ToolName:     "UteamupTimeEntryStartTimer",
+			HTTPMethod:   "POST",
+			RESTBasePath: "/api/timeentry",
+			RESTPath:     "start-timer",
+			Flags: []FlagDef{
+				timeEntryIdempotencyFlag(),
+				{Name: "description", BodyName: "description", Description: "Work description", Type: "string"},
+				{Name: "workorder-guid", BodyName: "workorderGuid", Description: "Related workorder GUID", Type: "string"},
+				{Name: "project-guid", BodyName: "projectGuid", Description: "Related project GUID", Type: "string"},
+				{Name: "entry-type", BodyName: "entryType", Description: "Work, Travel, Break, or Admin", Default: "Work", Type: "string"},
+			},
+		},
+		Action{
+			Name:         "stop-timer",
+			Description:  "Stop the exact reviewed timer version once",
+			ToolName:     "UteamupTimeEntryStopTimer",
+			HTTPMethod:   "POST",
+			RESTBasePath: "/api/timeentry",
+			RESTPath:     "stop-timer/by-guid/{externalGuid}",
+			Args: []ArgDef{
+				{Name: "externalGuid", Description: "Time-entry public GUID", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{
+				timeEntryIdempotencyFlag(),
+				{Name: "expected-updated-at", BodyName: "expectedUpdatedAt", Description: "Exact reviewed UpdatedAt timestamp", Required: true, Type: "string"},
+			},
+		},
+		Action{
+			Name:         "log-time",
+			Description:  "Create one retry-safe manual time entry",
+			ToolName:     "UteamupTimeEntryLogTime",
+			HTTPMethod:   "POST",
+			RESTBasePath: "/api/timeentry",
+			Flags: []FlagDef{
+				timeEntryIdempotencyFlag(),
+				{Name: "description", BodyName: "description", Description: "Work description", Required: true, Type: "string"},
+				{Name: "start-time", BodyName: "startTime", Description: "ISO-8601 start time", Required: true, Type: "string"},
+				{Name: "end-time", BodyName: "endTime", Description: "ISO-8601 end time", Required: true, Type: "string"},
+				{Name: "workorder-guid", BodyName: "workorderGuid", Description: "Related workorder GUID", Type: "string"},
+				{Name: "project-guid", BodyName: "projectGuid", Description: "Related project GUID", Type: "string"},
+				{Name: "billable", BodyName: "isBillable", Description: "Mark the entry billable", Type: "bool"},
+				{Name: "entry-type", BodyName: "entryType", Description: "Time-entry type", Default: "Work", Type: "string"},
+			},
+		},
+		Action{
+			Name:         "active-timer",
+			Description:  "Read the authenticated user's active timer",
+			ToolName:     "UteamupTimeEntryGetActiveTimer",
+			HTTPMethod:   "GET",
+			RESTBasePath: "/api/timeentry",
+			RESTPath:     "active-timer",
+		},
+		Action{
+			Name:         "summary",
+			Description:  "Read a time-entry summary for a date range",
+			ToolName:     "UteamupTimeEntryGetSummary",
+			HTTPMethod:   "GET",
+			RESTBasePath: "/api/timeentry",
+			RESTPath:     "summary/{userId}",
+			Args: []ArgDef{
+				{Name: "userId", Description: "User identifier accepted by the existing summary route", Required: true, Type: "string"},
+			},
+			Flags: []FlagDef{
+				{Name: "start-date", BodyName: "startDate", Description: "ISO-8601 range start", Required: true, Type: "string"},
+				{Name: "end-date", BodyName: "endDate", Description: "ISO-8601 range end", Required: true, Type: "string"},
+			},
+		},
 		Action{
 			Name:         "weekly-mine",
 			Description:  "Read the authenticated user's weekly timesheet grid",
@@ -552,8 +621,20 @@ func init() {
 			RESTBasePath: "/api/timesheet",
 			RESTPath:     "pending-approval",
 		},
-	)
+	}
 	Register(&Domain{Name: "time-entry", Aliases: []string{"time", "timesheet"}, Description: "Manage time entries and timesheets", Actions: timeEntryActions})
+}
+
+func timeEntryIdempotencyFlag() FlagDef {
+	return FlagDef{
+		Name:               "idempotency-key",
+		BodyName:           "idempotencyKey",
+		HeaderName:         "Idempotency-Key",
+		MirrorHeaderInBody: true,
+		Description:        "Stable retry UUID sent identically in the header and body",
+		Required:           true,
+		Type:               "string",
+	}
 }
 
 func handoverConcurrencyFlag() FlagDef {

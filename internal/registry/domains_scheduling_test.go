@@ -113,3 +113,41 @@ func TestScheduleAssignmentCreateByGuidPostsBackendModelFieldNames(t *testing.T)
 		t.Errorf("missing create-by-guid flags: %v", wantBodyNames)
 	}
 }
+
+func TestTimeEntryWritesRequireRetryKeyAndObservedTimerVersion(t *testing.T) {
+	for _, name := range []string{"start-timer", "stop-timer", "log-time"} {
+		action := findDomainAction(t, "time-entry", name)
+		if action.HTTPMethod != "POST" || action.RESTBasePath != "/api/timeentry" {
+			t.Errorf("%s route = %s %s, want POST /api/timeentry", name, action.HTTPMethod, action.RESTBasePath)
+		}
+
+		flags := make(map[string]FlagDef, len(action.Flags))
+		for _, flag := range action.Flags {
+			flags[flag.Name] = flag
+		}
+		idempotency := flags["idempotency-key"]
+		if !idempotency.Required ||
+			idempotency.HeaderName != "Idempotency-Key" ||
+			!idempotency.MirrorHeaderInBody ||
+			idempotency.BodyName != "idempotencyKey" {
+			t.Errorf("%s idempotency flag = %+v, want required mirrored header/body key", name, idempotency)
+		}
+		if name == "stop-timer" && !flags["expected-updated-at"].Required {
+			t.Error("stop-timer must require --expected-updated-at")
+		}
+	}
+}
+
+func TestTimeEntryDomainDoesNotPublishLegacyIntegerCrud(t *testing.T) {
+	domain := findDomain("time-entry")
+	if domain == nil {
+		t.Fatal("expected time-entry domain")
+	}
+	for _, action := range domain.Actions {
+		for _, argument := range action.Args {
+			if argument.Type == "int" {
+				t.Errorf("%s exposes legacy integer argument %+v", action.Name, argument)
+			}
+		}
+	}
+}

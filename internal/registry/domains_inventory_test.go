@@ -155,6 +155,44 @@ func TestStockActivityActionWired(t *testing.T) {
 	}
 }
 
+func TestStockRemoveMirrorsRetryKeyAndRequiresObservedVersion(t *testing.T) {
+	action := findStockAction(t, "remove")
+	if action.ToolName != "UteamupStockRemove" ||
+		action.HTTPMethod != "POST" ||
+		action.RESTPath != "transactions/remove" {
+		t.Fatalf(
+			"remove action = %s %s (%s), want POST transactions/remove through UteamupStockRemove",
+			action.HTTPMethod,
+			action.RESTPath,
+			action.ToolName,
+		)
+	}
+
+	flags := make(map[string]FlagDef, len(action.Flags))
+	for _, flag := range action.Flags {
+		flags[flag.Name] = flag
+	}
+	for _, name := range []string{
+		"stock-guid",
+		"stock-item-guid",
+		"quantity",
+		"reason",
+		"expected-updated-at",
+		"idempotency-key",
+	} {
+		if !flags[name].Required {
+			t.Errorf("--%s must be required", name)
+		}
+	}
+
+	idempotency := flags["idempotency-key"]
+	if idempotency.HeaderName != "Idempotency-Key" ||
+		!idempotency.MirrorHeaderInBody ||
+		idempotency.BodyName != "idempotencyKey" {
+		t.Errorf("idempotency flag = %+v, want identical header/body delivery", idempotency)
+	}
+}
+
 func TestStockAlertsActionWired(t *testing.T) {
 	action := findStockAction(t, "alerts")
 
