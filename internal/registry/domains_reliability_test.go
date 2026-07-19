@@ -10,8 +10,8 @@ func TestReliabilityRiskUsesGuidFirstEvidenceRoute(t *testing.T) {
 	if domain.APIPath != "/api/analytics/reliability" {
 		t.Fatalf("API path = %q", domain.APIPath)
 	}
-	if len(domain.Actions) != 2 {
-		t.Fatalf("actions = %d, want 2", len(domain.Actions))
+	if len(domain.Actions) != 6 {
+		t.Fatalf("actions = %d, want 6", len(domain.Actions))
 	}
 
 	action := domain.Actions[0]
@@ -43,6 +43,68 @@ func TestReliabilityRiskUsesGuidFirstEvidenceRoute(t *testing.T) {
 	}
 	if flags["limit"].Default != 20 || flags["limit"].Type != "int" {
 		t.Fatalf("limit flag = %+v", flags["limit"])
+	}
+}
+
+func TestReliabilityEvidenceAndRunActionsStayGuidFirst(t *testing.T) {
+	domain := findDomain("reliability")
+	if domain == nil {
+		t.Fatal("expected reliability domain")
+	}
+
+	expected := map[string]struct {
+		tool   string
+		method string
+		path   string
+	}{
+		"assessments":       {"UteamupReliabilityAssessmentsList", "GET", "assessments"},
+		"assessment-create": {"UteamupReliabilityAssessmentCreate", "POST", "assessments"},
+		"assessment-approve": {
+			"UteamupReliabilityAssessmentApprove",
+			"POST",
+			"assessments/{versionGuid}/approve",
+		},
+		"prepare-run": {
+			"UteamupReliabilityStrategyPrepareRun",
+			"POST",
+			"strategies/prepare-run",
+		},
+	}
+
+	for name, want := range expected {
+		var action *Action
+		for index := range domain.Actions {
+			if domain.Actions[index].Name == name {
+				action = &domain.Actions[index]
+				break
+			}
+		}
+		if action == nil {
+			t.Fatalf("expected action %q", name)
+		}
+		if action.ToolName != want.tool ||
+			action.HTTPMethod != want.method ||
+			action.RESTPath != want.path {
+			t.Fatalf("action %q = %+v", name, action)
+		}
+		for _, arg := range action.Args {
+			if arg.Type != "uuid" {
+				t.Fatalf("action %q identity arg = %+v", name, arg)
+			}
+		}
+		for _, flag := range action.Flags {
+			if flag.Name == "asset-guid" ||
+				flag.Name == "request-guid" ||
+				flag.Name == "run-request-guid" ||
+				flag.Name == "failure-code-guid" {
+				if flag.Type != "uuid" {
+					t.Fatalf("action %q GUID flag = %+v", name, flag)
+				}
+			}
+			if flag.Name == "id" || flag.Name == "asset-id" {
+				t.Fatalf("action %q exposes integer-style identity flag", name)
+			}
+		}
 	}
 }
 
