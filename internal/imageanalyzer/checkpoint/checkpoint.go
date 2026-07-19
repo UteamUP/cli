@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -90,12 +89,8 @@ func (cp *Checkpoint) AcquireLock() error {
 		if readErr == nil {
 			var lf lockFile
 			if json.Unmarshal(data, &lf) == nil && lf.PID > 0 {
-				proc, findErr := os.FindProcess(lf.PID)
-				if findErr == nil {
-					// Signal 0 checks if process exists without sending a signal.
-					if err := proc.Signal(syscall.Signal(0)); err == nil {
-						return fmt.Errorf("another process (PID %d) is using this checkpoint; delete %s if the process is not running", lf.PID, cp.lockPath)
-					}
+				if processAlive(lf.PID) {
+					return fmt.Errorf("another process (PID %d) is using this checkpoint; delete %s if the process is not running", lf.PID, cp.lockPath)
 				}
 				log.Printf("checkpoint: stale lock file found (PID %d), removing", lf.PID)
 			} else {
