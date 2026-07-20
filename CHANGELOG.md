@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.90.0](https://github.com/UteamUP/cli/compare/1.89.0...1.90.0) (2026-07-20)
+
+
+### Features
+
+* **cli:** add governed IoT command workflows ([cd9b758](https://github.com/UteamUP/cli/commit/cd9b7585afe1892dfd71388ab0398b79b8eff145))
+* **cli:** add UPMate field service tools ([574ab97](https://github.com/UteamUP/cli/commit/574ab975ccc80594bd6df0454b887ee423365514))
+
 ## [1.89.0](https://github.com/UteamUP/cli/compare/1.88.0...1.89.0) (2026-07-19)
 
 
