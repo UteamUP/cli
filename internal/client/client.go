@@ -40,6 +40,18 @@ type ToolCallParams struct {
 	Arguments map[string]any `json:"arguments,omitempty"`
 }
 
+// ToolCallContent is one content item returned by an MCP tools/call result.
+type ToolCallContent struct {
+	Type string `json:"type"`
+	Text string `json:"text,omitempty"`
+}
+
+// ToolCallResult is the protocol result envelope returned by MCP tools/call.
+type ToolCallResult struct {
+	Content []ToolCallContent `json:"content"`
+	IsError bool              `json:"isError,omitempty"`
+}
+
 // JSONRPCResponse represents a JSON-RPC 2.0 response.
 type JSONRPCResponse struct {
 	JSONRPC string          `json:"jsonrpc"`
@@ -164,7 +176,74 @@ func (c *APIClient) CallTool(ctx context.Context, toolName string, args map[stri
 		return nil
 	})
 
-	return result, err
+	if err != nil {
+		return nil, err
+	}
+	return NormalizeToolResult(result)
+}
+
+// NormalizeToolResult unwraps the first JSON text item from an MCP tools/call
+// response so CLI output matches direct REST output. It accepts both a plain
+// tool result and a full JSON-RPC envelope because backends may deliver either
+// shape over SSE.
+func NormalizeToolResult(payload json.RawMessage) (json.RawMessage, error) {
+	if len(payload) == 0 {
+		return nil, nil
+	}
+
+	var rpcResponse JSONRPCResponse
+	if json.Unmarshal(payload, &rpcResponse) == nil && rpcResponse.JSONRPC == "2.0" {
+		if rpcResponse.Error != nil {
+			return nil, clierrors.NewAPIError(
+				rpcResponse.Error.Code,
+				"JSON-RPC Error",
+				rpcResponse.Error.Message,
+			)
+		}
+		payload = rpcResponse.Result
+	}
+
+	var toolResult ToolCallResult
+	if json.Unmarshal(payload, &toolResult) != nil || len(toolResult.Content) == 0 {
+		return payload, nil
+	}
+
+	var firstText string
+	for _, item := range toolResult.Content {
+		if item.Type != "text" {
+			continue
+		}
+		if firstText == "" {
+			firstText = item.Text
+		}
+		if json.Valid([]byte(item.Text)) {
+			if toolResult.IsError {
+				return nil, fmt.Errorf("tool returned an error: %s", boundedToolError(item.Text))
+			}
+			return json.RawMessage(item.Text), nil
+		}
+	}
+
+	if toolResult.IsError {
+		return nil, fmt.Errorf("tool returned an error: %s", boundedToolError(firstText))
+	}
+	if firstText == "" {
+		return payload, nil
+	}
+	encoded, err := json.Marshal(firstText)
+	if err != nil {
+		return nil, fmt.Errorf("encoding tool response: %w", err)
+	}
+	return encoded, nil
+}
+
+func boundedToolError(value string) string {
+	const maxRunes = 2000
+	runes := []rune(strings.TrimSpace(value))
+	if len(runes) > maxRunes {
+		return string(runes[:maxRunes])
+	}
+	return string(runes)
 }
 
 // CallREST sends a direct REST API request (used with email/password login auth).

@@ -99,6 +99,10 @@ type Action struct {
 	Name        string
 	Description string
 	ToolName    string // MCP tool name, e.g. "UteamupAssetList"
+	// MCPOnly routes the action through the authenticated JSON-RPC tools/call
+	// transport. Use it only when the backend intentionally exposes no REST
+	// adapter for the governed tool.
+	MCPOnly bool
 	// RESTBasePath overrides the domain API path for a single action. Use it
 	// when one domain action is intentionally served by a cross-domain adapter.
 	RESTBasePath string
@@ -379,41 +383,52 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	// Build REST endpoint path from domain and action. Path-template placeholders
-	// consumed during substitution are stripped from the body so they don't double-
-	// leak as JSON fields on POST/PUT/PATCH.
-	restPath, consumed := buildRESTPath(domain, action, toolArgs)
-	restPath = appendQueryParameters(restPath, queryParams)
-	for _, name := range consumed {
-		delete(toolArgs, name)
-	}
-
-	// Action.HTTPMethod wins over the action-name-based default. The static map
-	// covers the standard CRUD verbs; the `update-<sub>` rule is the fallback.
-	httpMethod := action.HTTPMethod
-	if httpMethod == "" {
-		httpMethod = HTTPMethod[action.Name]
-	}
-	if httpMethod == "" {
-		if strings.HasPrefix(action.Name, "update-") {
-			httpMethod = "PATCH"
-		} else {
-			httpMethod = "GET"
-		}
-	}
-
-	loggedArgs, loggedHeaders := redactSensitiveActionValues(action, toolArgs, headers)
-	logger.Debug("calling %s %s (tool: %s) with args %v headers %v", httpMethod, restPath, action.ToolName, loggedArgs, loggedHeaders)
-
 	var result json.RawMessage
 	var err error
-	if uploadPath != "" {
-		result, err = apiClient.CallRESTUpload(ctx, httpMethod, restPath, uploadField, uploadPath, toolArgs, headers, action.Name)
+	if action.MCPOnly {
+		if len(headers) > 0 || len(queryParams) > 0 || uploadPath != "" {
+			return fmt.Errorf("MCP-only action %s cannot use REST headers, query flags, or uploads", action.Name)
+		}
+		logger.Debug("calling MCP tool %s with args %v", action.ToolName, loggedArgsForAction(action, toolArgs))
+		result, err = apiClient.CallTool(ctx, action.ToolName, toolArgs)
+		if err != nil {
+			return err
+		}
 	} else {
-		result, err = apiClient.CallREST(ctx, httpMethod, restPath, toolArgs, headers, action.Name)
-	}
-	if err != nil {
-		return err
+		// Build REST endpoint path from domain and action. Path-template placeholders
+		// consumed during substitution are stripped from the body so they don't double-
+		// leak as JSON fields on POST/PUT/PATCH.
+		restPath, consumed := buildRESTPath(domain, action, toolArgs)
+		restPath = appendQueryParameters(restPath, queryParams)
+		for _, name := range consumed {
+			delete(toolArgs, name)
+		}
+
+		// Action.HTTPMethod wins over the action-name-based default. The static map
+		// covers the standard CRUD verbs; the `update-<sub>` rule is the fallback.
+		httpMethod := action.HTTPMethod
+		if httpMethod == "" {
+			httpMethod = HTTPMethod[action.Name]
+		}
+		if httpMethod == "" {
+			if strings.HasPrefix(action.Name, "update-") {
+				httpMethod = "PATCH"
+			} else {
+				httpMethod = "GET"
+			}
+		}
+
+		loggedArgs, loggedHeaders := redactSensitiveActionValues(action, toolArgs, headers)
+		logger.Debug("calling %s %s (tool: %s) with args %v headers %v", httpMethod, restPath, action.ToolName, loggedArgs, loggedHeaders)
+
+		if uploadPath != "" {
+			result, err = apiClient.CallRESTUpload(ctx, httpMethod, restPath, uploadField, uploadPath, toolArgs, headers, action.Name)
+		} else {
+			result, err = apiClient.CallREST(ctx, httpMethod, restPath, toolArgs, headers, action.Name)
+		}
+		if err != nil {
+			return err
+		}
 	}
 
 	// Export JSON to file if enabled
@@ -425,6 +440,11 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 
 	format := output.ParseFormat(*outputFormat)
 	return output.Print(format, result)
+}
+
+func loggedArgsForAction(action Action, args map[string]any) map[string]any {
+	logged, _ := redactSensitiveActionValues(action, args, nil)
+	return logged
 }
 
 func appendQueryParameters(path string, params map[string]any) string {
