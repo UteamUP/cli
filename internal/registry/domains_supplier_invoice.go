@@ -14,7 +14,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "page", BodyName: "page", Description: "One-based page number", Default: 1, Type: "int"},
 					{Name: "page-size", BodyName: "pageSize", Description: "Results per page, maximum 200", Default: 50, Type: "int"},
-					{Name: "match-status", BodyName: "matchStatus", Description: "Optional Unmatched, NeedsReview, or Matched filter", Type: "string"},
+					{Name: "match-status", BodyName: "matchStatus", Description: "Optional PendingReview or Confirmed filter", Type: "string"},
 				},
 			},
 			{

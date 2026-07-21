@@ -73,6 +73,20 @@ func TestSupplierInvoiceActionsMirrorBackendToolsAndGovernance(t *testing.T) {
 		}
 	}
 
+	_, list := supplierInvoiceAction(t, "list")
+	for _, flag := range list.Flags {
+		if flag.Name != "match-status" {
+			continue
+		}
+		if !strings.Contains(flag.Description, "PendingReview") ||
+			!strings.Contains(flag.Description, "Confirmed") {
+			t.Fatalf("match-status must document the backend statuses PendingReview and Confirmed: %q", flag.Description)
+		}
+		if strings.Contains(flag.Description, "Unmatched") || strings.Contains(flag.Description, "NeedsReview") {
+			t.Fatalf("match-status documents statuses the backend never stores: %q", flag.Description)
+		}
+	}
+
 	_, preview := supplierInvoiceAction(t, "match-preview")
 	if preview.HTTPMethod != "" {
 		t.Fatalf("match preview must remain GET/read-only: %+v", preview)
