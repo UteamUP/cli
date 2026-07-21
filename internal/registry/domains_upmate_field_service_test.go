@@ -11,13 +11,14 @@ func TestUpmateFieldServiceDomainMirrorsExactMCPTools(t *testing.T) {
 		t.Fatal("expected upmate-field-service domain to be registered")
 	}
 	expected := map[string]string{
-		"schedule-preview":        "UteamupUpmateScheduleOptimizationPreview",
-		"schedule-explain":        "UteamupUpmateScheduleOptimizationExplain",
-		"maintenance-suggest":     "UteamupUpmateMaintenancePlanSuggest",
-		"maintenance-due-explain": "UteamupUpmateMaintenanceDueExplain",
-		"fieldnote-transcribe":    "UteamupUpmateFieldnoteTranscribe",
-		"portal-request-classify": "UteamupUpmatePortalRequestClassify",
-		"service-billing-review":  "UteamupUpmateServiceBillingReview",
+		"schedule-preview":             "UteamupUpmateScheduleOptimizationPreview",
+		"schedule-explain":             "UteamupUpmateScheduleOptimizationExplain",
+		"maintenance-suggest":          "UteamupUpmateMaintenancePlanSuggest",
+		"maintenance-due-explain":      "UteamupUpmateMaintenanceDueExplain",
+		"fieldnote-transcribe":         "UteamupUpmateFieldnoteTranscribe",
+		"portal-request-classify-cost": "UteamupUpmatePortalRequestClassifyCost",
+		"portal-request-classify":      "UteamupUpmatePortalRequestClassify",
+		"service-billing-review":       "UteamupUpmateServiceBillingReview",
 	}
 
 	for _, action := range domain.Actions {
@@ -85,6 +86,16 @@ func TestUpmateFieldServiceBoundedCollectionsAndObjectiveDefaults(t *testing.T) 
 		if flags[name].Type != "float" || flags[name].Default != 1.0 {
 			t.Errorf("%s default = %v, want 1.0", name, flags[name].Default)
 		}
+	}
+}
+
+func TestUpmateFieldServiceCostPreviewTakesNoInputsAndDisclosesBeforeCharge(t *testing.T) {
+	cost := findUpmateFieldServiceAction(t, "portal-request-classify-cost")
+	if len(cost.Args) != 0 || len(cost.Flags) != 0 {
+		t.Errorf("cost preview must be tenant/actor scoped via the MCP context, not inputs")
+	}
+	if !strings.Contains(strings.ToLower(cost.Description), "cost") {
+		t.Errorf("cost preview description must state it discloses the credit cost: %q", cost.Description)
 	}
 }
 

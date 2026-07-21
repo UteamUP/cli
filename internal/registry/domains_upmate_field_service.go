@@ -65,6 +65,12 @@ func init() {
 				Args:        upmateFieldServiceGUIDArg("audioFileGuid", "Stored tenant audio-file GUID"),
 			},
 			{
+				Name:        "portal-request-classify-cost",
+				Description: "Preview the authoritative AI-credit cost before charged classification, without charging",
+				ToolName:    "UteamupUpmatePortalRequestClassifyCost",
+				MCPOnly:     true,
+			},
+			{
 				Name:        "portal-request-classify",
 				Description: "Draft an expiring classification that is never saved or auto-dispatched",
 				ToolName:    "UteamupUpmatePortalRequestClassify",
