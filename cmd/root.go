@@ -37,6 +37,7 @@ var commandsExemptFromAuth = map[string]bool{
 	"login":      true,
 	"logout":     true,
 	"version":    true,
+	"auth":       true,
 	"completion": true,
 	"config":     true,
 	"help":       true,
@@ -104,53 +105,89 @@ func init() {
 }
 
 func registerDomainCommands() {
-	logLevel := logging.LevelInfo
-	if verbose {
-		logLevel = logging.LevelDebug
-	}
-	logger := logging.New(logLevel)
-
-	// Load config for API client (best-effort — domains register even without config)
-	cfg, err := config.Load()
-	var apiClient *client.APIClient
-	if err == nil {
-		profile, profErr := cfg.ActiveProfileConfig()
-		if profErr == nil {
-			timeout := time.Duration(profile.RequestTimeout) * time.Millisecond
-			retryOpts := client.RetryOptions{
-				MaxRetries: profile.MaxRetries,
-				BaseDelay:  1 * time.Second,
-				MaxDelay:   10 * time.Second,
-			}
-			apiClient = client.NewAPIClient(profile.BaseURL, timeout, insecure, retryOpts, logger)
-		}
-	}
-
-	if apiClient == nil {
-		// No config file (or unusable) — still respect UTEAMUP_API_BASE_URL so a
-		// user / tooling can point the CLI at a non-production backend via env
-		// alone (common for CI, local dev, and the uteamup-debug skill). The
-		// fallback to the hardcoded prod URL only kicks in when the env var
-		// is also empty.
-		fallbackBaseURL := os.Getenv("UTEAMUP_API_BASE_URL")
-		if fallbackBaseURL == "" {
-			fallbackBaseURL = "https://api.uteamup.com"
-		}
-		apiClient = client.NewAPIClient(fallbackBaseURL, 30*time.Second, false, client.DefaultRetryOptions(), logger)
-	}
-
-	// Build export config from active profile
+	logger := logging.New(logging.LevelInfo)
 	exportCfg := &registry.ExportConfig{}
-	if cfg != nil {
-		if profile, profErr := cfg.ActiveProfileConfig(); profErr == nil {
-			exportCfg.Enabled = profile.ExportJSON
-			exportCfg.Dir = profile.ExportDir
-		}
-	}
 
-	for _, cmd := range registry.DefaultRegistry.BuildCommands(apiClient, logger, &outputFormat, exportCfg) {
+	for _, cmd := range registry.DefaultRegistry.BuildCommands(func() (*client.APIClient, error) {
+		return newDomainAPIClient(logger, exportCfg)
+	}, logger, &outputFormat, exportCfg) {
 		rootCmd.AddCommand(cmd)
 	}
+}
+
+func selectedProfileConfig(cfg *config.Config, requested string) (*config.Profile, string, error) {
+	name := requested
+	if name == "" {
+		name = cfg.ActiveProfile
+	}
+
+	profile, ok := cfg.Profiles[name]
+	if !ok {
+		return nil, "", fmt.Errorf("config profile %q not found", name)
+	}
+
+	// Environment values override whichever profile was selected, including a
+	// non-active profile chosen with --profile.
+	if value := os.Getenv("UTEAMUP_API_BASE_URL"); value != "" {
+		profile.BaseURL = value
+	}
+	if value := os.Getenv("UTEAMUP_LOG_LEVEL"); value != "" {
+		profile.LogLevel = value
+	}
+
+	return &profile, name, nil
+}
+
+func newDomainAPIClient(logger *logging.Logger, exportCfg *registry.ExportConfig) (*client.APIClient, error) {
+	cfg, err := config.Load()
+	if err != nil {
+		if profileName != "" {
+			return nil, fmt.Errorf("loading config profile %q: %w", profileName, err)
+		}
+
+		baseURL := os.Getenv("UTEAMUP_API_BASE_URL")
+		if baseURL == "" {
+			baseURL = "https://api.uteamup.com"
+		}
+		level := logging.LevelInfo
+		if verbose {
+			level = logging.LevelDebug
+		}
+		logger.SetLevel(level)
+		exportCfg.Enabled = false
+		exportCfg.Dir = ""
+		return client.NewAPIClient(
+			baseURL,
+			30*time.Second,
+			insecure,
+			client.DefaultRetryOptions(),
+			logger,
+		), nil
+	}
+
+	profile, _, err := selectedProfileConfig(cfg, profileName)
+	if err != nil {
+		return nil, err
+	}
+
+	level := logging.ParseLevel(profile.LogLevel)
+	if verbose {
+		level = logging.LevelDebug
+	}
+	logger.SetLevel(level)
+	exportCfg.Enabled = profile.ExportJSON
+	exportCfg.Dir = profile.ExportDir
+
+	timeout := time.Duration(profile.RequestTimeout) * time.Millisecond
+	if timeout <= 0 {
+		timeout = 30 * time.Second
+	}
+	retryOpts := client.RetryOptions{
+		MaxRetries: profile.MaxRetries,
+		BaseDelay:  time.Second,
+		MaxDelay:   10 * time.Second,
+	}
+	return client.NewAPIClient(profile.BaseURL, timeout, insecure, retryOpts, logger), nil
 }
 
 // Execute runs the root command.

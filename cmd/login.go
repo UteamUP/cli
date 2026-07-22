@@ -45,20 +45,25 @@ func runLogin(cmd *cobra.Command, args []string) error {
 		logger.SetLevel(logging.LevelDebug)
 	}
 
-	// Determine base URL. Prefer an explicit UTEAMUP_API_BASE_URL env var
-	// (so the uteamup-debug skill and CI can point the CLI at a non-prod
-	// backend without needing `uteamup config init` first), then an active
-	// config profile's BaseURL, and only fall back to the hardcoded prod URL
-	// when neither is set.
-	baseURL := os.Getenv("UTEAMUP_API_BASE_URL")
-	if baseURL == "" {
-		baseURL = "https://api.uteamup.com"
-	}
+	// Determine the target after Cobra has parsed persistent flags. This keeps
+	// login on the same profile and backend as subsequent domain commands.
+	baseURL := "https://api.uteamup.com"
+	selectedProfile := ""
 	cfg, err := config.Load()
 	if err == nil {
-		if profile, profErr := cfg.ActiveProfileConfig(); profErr == nil && profile.BaseURL != "" {
+		profile, name, profErr := selectedProfileConfig(cfg, profileName)
+		if profErr != nil {
+			return profErr
+		}
+		selectedProfile = name
+		if profile.BaseURL != "" {
 			baseURL = profile.BaseURL
 		}
+	} else if profileName != "" {
+		return fmt.Errorf("loading config profile %q: %w", profileName, err)
+	}
+	if envBaseURL := os.Getenv("UTEAMUP_API_BASE_URL"); envBaseURL != "" {
+		baseURL = envBaseURL
 	}
 
 	authClient := auth.NewClient(baseURL, insecure, logger)
@@ -102,8 +107,8 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	}
 
 	// Save active profile name to token
-	if cfg != nil {
-		token.Profile = cfg.ActiveProfile
+	if selectedProfile != "" {
+		token.Profile = selectedProfile
 	}
 
 	if err := auth.SaveToken(token); err != nil {

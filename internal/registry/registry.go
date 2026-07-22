@@ -141,6 +141,12 @@ type Registry struct {
 	domains []*Domain
 }
 
+// APIClientFactory creates the API client when an action executes. Cobra parses
+// persistent flags after commands are registered, so constructing the client
+// during package initialization would ignore runtime flags such as --insecure
+// and --profile.
+type APIClientFactory func() (*client.APIClient, error)
+
 // DefaultRegistry is the global domain registry.
 var DefaultRegistry = &Registry{}
 
@@ -155,15 +161,15 @@ func Register(d *Domain) {
 }
 
 // BuildCommands generates Cobra commands for all registered domains.
-func (r *Registry) BuildCommands(apiClient *client.APIClient, logger *logging.Logger, outputFormat *string, export *ExportConfig) []*cobra.Command {
+func (r *Registry) BuildCommands(apiClientFactory APIClientFactory, logger *logging.Logger, outputFormat *string, export *ExportConfig) []*cobra.Command {
 	var commands []*cobra.Command
 	for _, domain := range r.domains {
-		commands = append(commands, buildDomainCommand(domain, apiClient, logger, outputFormat, export))
+		commands = append(commands, buildDomainCommand(domain, apiClientFactory, logger, outputFormat, export))
 	}
 	return commands
 }
 
-func buildDomainCommand(domain *Domain, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string, export *ExportConfig) *cobra.Command {
+func buildDomainCommand(domain *Domain, apiClientFactory APIClientFactory, logger *logging.Logger, outputFormat *string, export *ExportConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     domain.Name,
 		Aliases: domain.Aliases,
@@ -171,13 +177,13 @@ func buildDomainCommand(domain *Domain, apiClient *client.APIClient, logger *log
 	}
 
 	for _, action := range domain.Actions {
-		cmd.AddCommand(buildActionCommand(domain, action, apiClient, logger, outputFormat, export))
+		cmd.AddCommand(buildActionCommand(domain, action, apiClientFactory, logger, outputFormat, export))
 	}
 
 	return cmd
 }
 
-func buildActionCommand(domain *Domain, action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string, export *ExportConfig) *cobra.Command {
+func buildActionCommand(domain *Domain, action Action, apiClientFactory APIClientFactory, logger *logging.Logger, outputFormat *string, export *ExportConfig) *cobra.Command {
 	// Build usage string with positional args
 	use := action.Name
 	for _, arg := range action.Args {
@@ -192,6 +198,10 @@ func buildActionCommand(domain *Domain, action Action, apiClient *client.APIClie
 		Use:   use,
 		Short: action.Description,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			apiClient, err := apiClientFactory()
+			if err != nil {
+				return err
+			}
 			return executeAction(cmd, args, domain, action, apiClient, logger, outputFormat, export)
 		},
 	}
