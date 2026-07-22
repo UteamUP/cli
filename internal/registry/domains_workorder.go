@@ -22,9 +22,10 @@ func init() {
 			},
 			{
 				Name:        "get",
-				Description: "Get work order details by ID",
+				Description: "Get work order details by GUID",
 				ToolName:    "UteamupWorkOrderGet",
-				Args:        []ArgDef{{Name: "id", Description: "Work order ID", Required: true, Type: "int"}},
+				RESTPath:    "{workorderGuid}",
+				Args:        []ArgDef{{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "uuid"}},
 			},
 			{
 				Name:        "create",
@@ -109,7 +110,8 @@ func init() {
 				Name:        "by-code",
 				Description: "List work orders by coding system code branch prefix",
 				ToolName:    "UteamupCodingsystemWorkorders",
-				Args:        []ArgDef{{Name: "prefix", Description: "Code branch prefix (e.g., '1-HLA')", Required: true, Type: "string"}},
+				RESTPath:    "by-code/{codeBranch}",
+				Args:        []ArgDef{{Name: "codeBranch", Description: "Code branch prefix (e.g., '1-HLA')", Required: true, Type: "string"}},
 			},
 			{
 				Name:        "quick-close",

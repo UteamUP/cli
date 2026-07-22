@@ -1,8 +1,64 @@
 package registry
 
 import (
+	"reflect"
 	"testing"
 )
+
+func TestWorkorderGuidAndLookupRoutes(t *testing.T) {
+	d := findDomain("workorder")
+	if d == nil {
+		t.Fatal("expected workorder domain to be registered")
+	}
+
+	tests := []struct {
+		action string
+		args   map[string]any
+		want   string
+		used   []string
+	}{
+		{
+			action: "get",
+			args:   map[string]any{"workorderGuid": "11111111-1111-4111-8111-111111111111"},
+			want:   "/api/workorder/11111111-1111-4111-8111-111111111111",
+			used:   []string{"workorderGuid"},
+		},
+		{
+			action: "search",
+			args:   map[string]any{"query": "pump"},
+			want:   "/api/workorder/search",
+		},
+		{
+			action: "by-code",
+			args:   map[string]any{"codeBranch": "1-HLA"},
+			want:   "/api/workorder/by-code/1-HLA",
+			used:   []string{"codeBranch"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.action, func(t *testing.T) {
+			var action *Action
+			for index := range d.Actions {
+				if d.Actions[index].Name == test.action {
+					action = &d.Actions[index]
+					break
+				}
+			}
+			if action == nil {
+				t.Fatalf("expected %s action", test.action)
+			}
+
+			path, consumed := buildRESTPath(d, *action, test.args)
+			if path != test.want {
+				t.Fatalf("path = %q, want %q", path, test.want)
+			}
+			if !reflect.DeepEqual(consumed, test.used) {
+				t.Fatalf("consumed = %v, want %v", consumed, test.used)
+			}
+		})
+	}
+}
 
 // --- Workorder Quick Close action ---
 
