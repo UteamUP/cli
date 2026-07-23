@@ -31,6 +31,7 @@ func TestServiceBillingRoutesAndArgumentsAreGuidOnly(t *testing.T) {
 		{"service-billing", "get", "runGuid", "/api/service-billing-runs/run-guid"},
 		{"service-billing", "approve", "runGuid", "/api/service-billing-runs/run-guid/approve"},
 		{"service-billing", "cancel", "runGuid", "/api/service-billing-runs/run-guid/cancel"},
+		{"service-billing", "recollect", "runGuid", "/api/service-billing-runs/run-guid/recollect"},
 		{"service-invoice", "get", "invoiceGuid", "/api/service-invoices/invoice-guid"},
 		{"service-invoice", "issue", "invoiceGuid", "/api/service-invoices/invoice-guid/issue"},
 		{"service-invoice", "send", "invoiceGuid", "/api/service-invoices/invoice-guid/send"},
@@ -65,7 +66,7 @@ func TestServiceBillingActionsMirrorBackendToolsAndReviewedEvidence(t *testing.T
 		"service-billing": {
 			"list": "UteamupServiceBillingRunList", "get": "UteamupServiceBillingRunGet",
 			"create": "UteamupServiceBillingRunCreate", "approve": "UteamupServiceBillingRunApprove",
-			"cancel": "UteamupServiceBillingRunCancel",
+			"cancel": "UteamupServiceBillingRunCancel", "recollect": "UteamupServiceBillingRunRecollect",
 		},
 		"service-invoice": {
 			"list": "UteamupServiceInvoiceList", "get": "UteamupServiceInvoiceGet",
@@ -94,10 +95,13 @@ func TestServiceBillingActionsMirrorBackendToolsAndReviewedEvidence(t *testing.T
 		}
 	}
 
-	for _, actionName := range []string{"create", "approve", "cancel"} {
+	for _, actionName := range []string{"create", "approve", "cancel", "recollect"} {
 		_, action := serviceBillingAction(t, "service-billing", actionName)
 		assertServiceBillingFlag(t, action, "idempotency-key", "idempotencyKey", true)
 	}
+	_, recollect := serviceBillingAction(t, "service-billing", "recollect")
+	assertServiceBillingFlag(t, recollect, "expected-updated-at", "expectedUpdatedAt", true)
+	assertServiceBillingFlag(t, recollect, "reason", "reason", false)
 	for _, actionName := range []string{"issue", "send", "paid", "void", "credit"} {
 		_, action := serviceBillingAction(t, "service-invoice", actionName)
 		assertServiceBillingFlag(t, action, "idempotency-key", "idempotencyKey", true)
@@ -110,6 +114,23 @@ func TestServiceBillingActionsMirrorBackendToolsAndReviewedEvidence(t *testing.T
 		_, action := serviceBillingAction(t, "service-invoice", actionName)
 		assertServiceBillingFlag(t, action, "reason", "reason", true)
 	}
+
+	// Delivery and settlement evidence is conditionally required by the backend, so the
+	// CLI exposes the flags as optional and lets the API reject an incomplete transition.
+	_, send := serviceBillingAction(t, "service-invoice", "send")
+	assertServiceBillingFlag(t, send, "sent-channel", "sentChannel", false)
+	assertServiceBillingFlag(t, send, "sent-reference", "sentReference", false)
+
+	_, paid := serviceBillingAction(t, "service-invoice", "paid")
+	paidAmount := assertServiceBillingFlag(t, paid, "paid-amount", "paidAmount", false)
+	if paidAmount.Type != "float" {
+		t.Fatalf("paid-amount type = %q, want %q", paidAmount.Type, "float")
+	}
+	assertServiceBillingFlag(t, paid, "paid-method", "paidMethod", false)
+	assertServiceBillingFlag(t, paid, "paid-reference", "paidReference", false)
+
+	_, credit := serviceBillingAction(t, "service-invoice", "credit")
+	assertServiceBillingFlag(t, credit, "credit-note-number", "creditNoteNumber", false)
 
 	_, accountingExport := serviceBillingAction(t, "service-invoice", "accounting-export")
 	assertServiceBillingFlag(
@@ -199,15 +220,16 @@ func TestServiceAccountingExportRoutesUseOnlyGuidArguments(t *testing.T) {
 	}
 }
 
-func assertServiceBillingFlag(t *testing.T, action Action, name, bodyName string, required bool) {
+func assertServiceBillingFlag(t *testing.T, action Action, name, bodyName string, required bool) FlagDef {
 	t.Helper()
 	for _, flag := range action.Flags {
 		if flag.Name == name {
 			if flag.BodyName != bodyName || flag.Required != required {
 				t.Fatalf("%s flag = %+v, want body=%q required=%t", name, flag, bodyName, required)
 			}
-			return
+			return flag
 		}
 	}
 	t.Fatalf("%s flag is missing from %s", name, action.Name)
+	return FlagDef{}
 }
