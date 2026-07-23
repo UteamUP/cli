@@ -18,6 +18,8 @@ func init() {
 					{Name: "item-type", Description: "Part | Tool | Chemical | Asset | Labor", Type: "string"},
 					{Name: "condition", Description: "New | LikeNew | Good | Fair | ForParts", Type: "string"},
 					{Name: "source-kind", Description: "TenantListing | WholesalerCatalog", Type: "string"},
+					{Name: "seller-tenant-guid", Description: "Show only this tenant seller's listings", Type: "string"},
+					{Name: "wholesaler-guid", Description: "Show only this wholesaler's catalogue rows", Type: "string"},
 					{Name: "near-latitude", Description: "Latitude for a 'tenants near me' sort (pass with --near-longitude)", Type: "float"},
 					{Name: "near-longitude", Description: "Longitude for a 'tenants near me' sort (pass with --near-latitude)", Type: "float"},
 					{Name: "page", Description: "Page number", Type: "float", Default: 1.0},
