@@ -1157,5 +1157,23 @@ func init() {
 		},
 	})
 	Register(&Domain{Name: "tool", Aliases: []string{"tools"}, Description: "Manage tools/equipment", Actions: crudActions("Tool")})
-	Register(&Domain{Name: "inventory", Description: "Manage inventory", Actions: crudActions("Inventory")})
+	Register(&Domain{
+		Name:        "inventory",
+		Description: "Manage inventory",
+		Actions: append(crudActions("Inventory"),
+			Action{
+				Name: "bulk-delete",
+				Description: "Delete several inventory items at once, with the server enforcing the type scope you declare. " +
+					"Run with --dry-run first: any item outside --scope refuses the WHOLE batch.",
+				ToolName:   "UteamupInventoryBulkDelete",
+				HTTPMethod: "POST",
+				RESTPath:   "bulk-delete",
+				Flags: []FlagDef{
+					{Name: "scope", BodyName: "scope", Description: "Types you intend to delete — repeatable or comma-separated (asset, part, tool, chemical). Each needs its own delete permission", Required: true, Type: "stringSlice"},
+					{Name: "guids", BodyName: "guids", Description: "GUIDs of the items to delete — repeatable or comma-separated (max 500)", Required: true, Type: "stringSlice"},
+					{Name: "dry-run", BodyName: "dryRun", Description: "Report what would be deleted without deleting it", Type: "bool"},
+				},
+			},
+		),
+	})
 }

@@ -1696,3 +1696,59 @@ func TestStockAiCountCreateActionAbsent(t *testing.T) {
 		}
 	}
 }
+
+// IND-001 (industry-failures.md): a QA run selected 355 rows across every
+// inventory type while the Asset filter was active and destroyed 23
+// Parts/Tools/Chemicals. The CLI already exposes single-item deletes with no
+// scope check, so the scope-enforced bulk endpoint is the SAFER primitive and
+// must stay reachable — and must keep carrying the scope the server checks.
+func TestInventoryBulkDeleteActionWired(t *testing.T) {
+	var domain *Domain
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name == "inventory" {
+			domain = d
+			break
+		}
+	}
+	if domain == nil {
+		t.Fatal("inventory domain not registered")
+	}
+
+	var action *Action
+	for i := range domain.Actions {
+		if domain.Actions[i].Name == "bulk-delete" {
+			action = &domain.Actions[i]
+			break
+		}
+	}
+	if action == nil {
+		t.Fatal("inventory bulk-delete action not registered")
+	}
+
+	if action.HTTPMethod != "POST" || action.RESTPath != "bulk-delete" {
+		t.Errorf("bulk-delete must POST to bulk-delete, got %s %s", action.HTTPMethod, action.RESTPath)
+	}
+
+	flagByName := func(name string) *FlagDef {
+		for i := range action.Flags {
+			if action.Flags[i].Name == name {
+				return &action.Flags[i]
+			}
+		}
+		return nil
+	}
+
+	// Scope is what the server checks each row's REAL type against. Without it
+	// the request cannot be authorised or bounded, so it must be required.
+	if f := flagByName("scope"); f == nil || f.BodyName != "scope" || !f.Required || f.Type != "stringSlice" {
+		t.Errorf("scope must be a required stringSlice bound to `scope`, got %+v", f)
+	}
+	if f := flagByName("guids"); f == nil || f.BodyName != "guids" || !f.Required || f.Type != "stringSlice" {
+		t.Errorf("guids must be a required stringSlice bound to `guids`, got %+v", f)
+	}
+	// Dry run must stay available: it is how an operator (or an agent) confirms
+	// the impact before destroying anything.
+	if f := flagByName("dry-run"); f == nil || f.BodyName != "dryRun" || f.Type != "bool" {
+		t.Errorf("dry-run must be an optional bool bound to `dryRun`, got %+v", f)
+	}
+}
