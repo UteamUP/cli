@@ -60,6 +60,25 @@ func TestWorkorderGuidAndLookupRoutes(t *testing.T) {
 	}
 }
 
+func TestWorkorderSearchUsesBackendQueryParameter(t *testing.T) {
+	d := findDomain("workorder")
+	if d == nil {
+		t.Fatal("expected workorder domain to be registered")
+	}
+
+	for _, action := range d.Actions {
+		if action.Name != "search" {
+			continue
+		}
+		if len(action.Args) != 1 || action.Args[0].QueryName != "query" {
+			t.Fatalf("search query mapping = %+v, want positional query -> query string field query", action.Args)
+		}
+		return
+	}
+
+	t.Fatal("expected workorder search action")
+}
+
 // --- Workorder Quick Close action ---
 
 func TestWorkorderDomainHasQuickCloseAction(t *testing.T) {

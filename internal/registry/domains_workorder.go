@@ -100,7 +100,7 @@ func init() {
 				Name:        "search",
 				Description: "Search work orders by title or description",
 				ToolName:    "UteamupWorkOrderSearch",
-				Args:        []ArgDef{{Name: "query", Description: "Search term", Required: true, Type: "string"}},
+				Args:        []ArgDef{{Name: "query", Description: "Search term", Required: true, Type: "string", QueryName: "query"}},
 				Flags: []FlagDef{
 					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
 					{Name: "page-size", Short: "s", Description: "Items per page", Default: 25, Type: "int"},

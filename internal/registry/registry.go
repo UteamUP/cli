@@ -30,6 +30,10 @@ type ArgDef struct {
 	Description string
 	Required    bool
 	Type        string // "string", "int", "uuid"
+	// QueryName routes a positional argument directly to the named query-string
+	// field. This is useful when a GET endpoint's parameter name differs from
+	// the CLI client's legacy search aliases.
+	QueryName string
 }
 
 // FlagDef defines a named flag.
@@ -274,6 +278,7 @@ func buildActionCommand(domain *Domain, action Action, apiClientFactory APIClien
 
 func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string, export *ExportConfig) error {
 	toolArgs := make(map[string]any)
+	queryParams := make(map[string]any)
 
 	// Positional args
 	for i, argDef := range action.Args {
@@ -283,7 +288,12 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 			}
 			continue
 		}
-		toolArgs[argDef.Name] = convertArg(args[i], argDef.Type)
+		value := convertArg(args[i], argDef.Type)
+		if argDef.QueryName != "" {
+			queryParams[argDef.QueryName] = value
+			continue
+		}
+		toolArgs[argDef.Name] = value
 	}
 
 	// Flags. HeaderName routes a flag to an HTTP header instead of the body /
@@ -291,7 +301,6 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 	// re-introduce the `Idempotency-Key`-as-body-field bug fixed by adding
 	// HeaderName in the first place).
 	headers := make(map[string]string)
-	queryParams := make(map[string]any)
 	var uploadField, uploadPath string
 	for _, flag := range action.Flags {
 		if flag.QueryName != "" {
