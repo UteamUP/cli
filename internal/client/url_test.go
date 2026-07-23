@@ -26,3 +26,24 @@ func TestValidateBaseURL(t *testing.T) {
 		})
 	}
 }
+
+func TestAppendQueryString(t *testing.T) {
+	tests := []struct {
+		name  string
+		url   string
+		query string
+		want  string
+	}{
+		{name: "first query", url: "https://api.uteamup.com/api/workorder/search", query: "page=1", want: "https://api.uteamup.com/api/workorder/search?page=1"},
+		{name: "existing query", url: "https://api.uteamup.com/api/workorder/search?query=pump", query: "page=1&pageSize=25", want: "https://api.uteamup.com/api/workorder/search?query=pump&page=1&pageSize=25"},
+		{name: "empty query", url: "https://api.uteamup.com/api/workorder/search?query=pump", want: "https://api.uteamup.com/api/workorder/search?query=pump"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := appendQueryString(test.url, test.query); got != test.want {
+				t.Fatalf("appendQueryString(%q, %q) = %q, want %q", test.url, test.query, got, test.want)
+			}
+		})
+	}
+}

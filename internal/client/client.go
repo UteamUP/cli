@@ -268,9 +268,7 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 
 	if method == "GET" || method == "DELETE" {
 		query := buildQueryString(params, actionName)
-		if query != "" {
-			fullURL += "?" + query
-		}
+		fullURL = appendQueryString(fullURL, query)
 	} else {
 		// Remove positional args (id) from body — already in the URL
 		bodyParams := make(map[string]any)
@@ -377,9 +375,7 @@ func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField,
 	}
 
 	fullURL := c.baseURL + path
-	if query := buildQueryString(params, actionName); query != "" {
-		fullURL += "?" + query
-	}
+	fullURL = appendQueryString(fullURL, buildQueryString(params, actionName))
 
 	var result json.RawMessage
 
@@ -630,4 +626,17 @@ func buildQueryString(params map[string]any, actionName string) string {
 		}
 	}
 	return strings.Join(parts, "&")
+}
+
+func appendQueryString(rawURL, query string) string {
+	if query == "" {
+		return rawURL
+	}
+	if strings.HasSuffix(rawURL, "?") || strings.HasSuffix(rawURL, "&") {
+		return rawURL + query
+	}
+	if strings.Contains(rawURL, "?") {
+		return rawURL + "&" + query
+	}
+	return rawURL + "?" + query
 }
