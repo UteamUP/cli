@@ -5,6 +5,32 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.91.0](https://github.com/UteamUP/cli/compare/1.90.0...1.91.0) (2026-07-23)
+
+
+### Features
+
+* **cli:** expose run recollection and the new invoice evidence flags ([ec4c5a2](https://github.com/UteamUP/cli/commit/ec4c5a24a83206d9a1d08479f965eca1113d0bc1))
+* **inventory:** expose the scope-enforced bulk delete on the CLI ([d410622](https://github.com/UteamUP/cli/commit/d41062260372576ad7d49c1da50729cc11021493))
+* **upmate:** portal-request-classify-cost action for authoritative cost disclosure ([4b6c48e](https://github.com/UteamUP/cli/commit/4b6c48ee621a431b2d6e2ddfb38d75a8819b8a43))
+
+
+### Bug Fixes
+
+* avoid attachment output flag collision ([e8a2b40](https://github.com/UteamUP/cli/commit/e8a2b40426c177b454c47366468e1cddde8b51e1))
+* compose REST query strings safely ([d1cdfc4](https://github.com/UteamUP/cli/commit/d1cdfc430ee7a11aa88f9e79c6216d6443572324))
+* honor runtime connection flags on Windows ([d57045d](https://github.com/UteamUP/cli/commit/d57045dddd56bfb92f9a7d0b2bb7e4b9e4c56c56))
+* **registry:** correct supplier-invoice match-status docs ([b5b7f90](https://github.com/UteamUP/cli/commit/b5b7f9074af8674732d3be418e1396934203a896))
+* route workorder commands through GUID endpoints ([f523a03](https://github.com/UteamUP/cli/commit/f523a03f805972032ce10546756f6cdef0232260))
+* send attachment upload media types ([03fd848](https://github.com/UteamUP/cli/commit/03fd848f42011c9c271aa4a3ed8dea52b37c9858))
+* send workorder searches as query parameters ([de1f9b2](https://github.com/UteamUP/cli/commit/de1f9b2d5d9acd445845214e84030b838048d001))
+* stream bug attachments to Windows files ([daf9c12](https://github.com/UteamUP/cli/commit/daf9c12687b5e47a01ed98574f25270ea346eb9d))
+
+
+### Tests
+
+* **billing:** cover the run recollect action and invoice evidence flags ([c5f35cc](https://github.com/UteamUP/cli/commit/c5f35cc3406f489264938428ccfc097e706680be))
+
 ## [1.90.0](https://github.com/UteamUP/cli/compare/1.89.0...1.90.0) (2026-07-20)
 
 
