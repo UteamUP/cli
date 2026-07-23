@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
@@ -430,7 +431,10 @@ func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField,
 
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
-	part, err := writer.CreateFormFile(fileField, filepath.Base(filePath))
+	header := make(textproto.MIMEHeader)
+	header.Set("Content-Disposition", fmt.Sprintf(`form-data; name=%q; filename=%q`, fileField, filepath.Base(filePath)))
+	header.Set("Content-Type", uploadContentType(filePath))
+	part, err := writer.CreatePart(header)
 	if err != nil {
 		return nil, fmt.Errorf("building multipart body: %w", err)
 	}
@@ -488,6 +492,42 @@ func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField,
 	})
 
 	return result, err
+}
+
+func uploadContentType(filePath string) string {
+	extension := strings.ToLower(filepath.Ext(filePath))
+	known := map[string]string{
+		".png":  "image/png",
+		".jpg":  "image/jpeg",
+		".jpeg": "image/jpeg",
+		".gif":  "image/gif",
+		".webp": "image/webp",
+		".svg":  "image/svg+xml",
+		".pdf":  "application/pdf",
+		".doc":  "application/msword",
+		".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		".xls":  "application/vnd.ms-excel",
+		".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+		".ppt":  "application/vnd.ms-powerpoint",
+		".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+		".txt":  "text/plain",
+		".md":   "text/markdown",
+		".csv":  "text/csv",
+		".rtf":  "application/rtf",
+		".json": "application/json",
+		".xml":  "application/xml",
+		".mp4":  "video/mp4",
+		".mov":  "video/quicktime",
+		".webm": "video/webm",
+		".mkv":  "video/x-matroska",
+	}
+	if contentType, ok := known[extension]; ok {
+		return contentType
+	}
+	if contentType := mime.TypeByExtension(extension); contentType != "" {
+		return contentType
+	}
+	return "application/octet-stream"
 }
 
 // CallRESTUploadLimited uploads one local file without buffering the complete

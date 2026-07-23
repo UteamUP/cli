@@ -14,6 +14,23 @@ import (
 	"github.com/uteamup/cli/internal/logging"
 )
 
+func TestUploadContentTypeUsesSupportedAttachmentMediaTypes(t *testing.T) {
+	tests := map[string]string{
+		"report.txt":  "text/plain",
+		"codes.csv":   "text/csv",
+		"manual.pdf":  "application/pdf",
+		"photo.webp":  "image/webp",
+		"video.webm":  "video/webm",
+		"unknown.bin": "application/octet-stream",
+	}
+
+	for name, want := range tests {
+		if got := uploadContentType(name); got != want {
+			t.Errorf("uploadContentType(%q) = %q, want %q", name, got, want)
+		}
+	}
+}
+
 func TestCallRESTUploadLimitedUsesAuthenticatedGuidScopedMultipart(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
