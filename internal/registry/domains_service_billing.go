@@ -22,6 +22,11 @@ func serviceInvoiceTransitionFlags() []FlagDef {
 		{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Tenant-scoped transition idempotency UUID", Required: true, Type: "string"},
 		{Name: "expected-updated-at", BodyName: "expectedUpdatedAt", Description: "Exact reviewed UpdatedAt timestamp", Required: true, Type: "string"},
 		{Name: "occurred-at", BodyName: "occurredAt", Description: "Optional ISO-8601 transition timestamp", Type: "string"},
+		{Name: "sent-channel", BodyName: "sentChannel", Description: "How the document was delivered; required when marking an invoice sent", Type: "string"},
+		{Name: "sent-reference", BodyName: "sentReference", Description: "Delivery reference; required when marking an invoice sent", Type: "string"},
+		{Name: "paid-amount", BodyName: "paidAmount", Description: "Settled amount; required when recording a payment", Type: "float"},
+		{Name: "paid-method", BodyName: "paidMethod", Description: "Payment method; required when recording a payment", Type: "string"},
+		{Name: "paid-reference", BodyName: "paidReference", Description: "Payment reference; required when recording a payment", Type: "string"},
 	}
 }
 
@@ -35,9 +40,16 @@ func serviceInvoiceIssueFlags() []FlagDef {
 }
 
 func serviceInvoiceCorrectionFlags() []FlagDef {
-	return append(serviceInvoiceTransitionFlags(), FlagDef{
-		Name: "reason", BodyName: "reason", Description: "Explicit correction reason", Required: true, Type: "string",
-	})
+	return append(serviceInvoiceTransitionFlags(),
+		FlagDef{
+			Name: "reason", BodyName: "reason", Description: "Explicit correction reason", Required: true, Type: "string",
+		},
+		FlagDef{
+			Name: "credit-note-number", BodyName: "creditNoteNumber",
+			Description: "Document number for the reversing credit note; required when crediting",
+			Type:        "string",
+		},
+	)
 }
 
 func serviceAccountingExportCreateFlags() []FlagDef {
@@ -112,6 +124,17 @@ func init() {
 					{Name: "runGuid", Description: "Service billing run external GUID", Required: true, Type: "uuid"},
 				},
 				Flags: serviceBillingTransitionFlags(true),
+			},
+			{
+				Name:        "recollect",
+				Description: "Rebuild a draft run's evidence from current sources and pricing",
+				ToolName:    "UteamupServiceBillingRunRecollect",
+				HTTPMethod:  "POST",
+				RESTPath:    "{runGuid}/recollect",
+				Args: []ArgDef{
+					{Name: "runGuid", Description: "Service billing run external GUID", Required: true, Type: "uuid"},
+				},
+				Flags: serviceBillingTransitionFlags(false),
 			},
 		},
 	})
