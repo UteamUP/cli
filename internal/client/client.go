@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,6 +25,7 @@ import (
 const (
 	maxUploadResponseBytes = 4 * 1024 * 1024
 	maxUploadErrorBytes    = 64 * 1024
+	maxDownloadBytes       = 100 * 1024 * 1024
 )
 
 // JSONRPCRequest represents a JSON-RPC 2.0 request.
@@ -340,6 +342,71 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 	})
 
 	return result, err
+}
+
+// DownloadFile streams a backend-issued HTTPS download URL to a new local
+// file. Existing files are never overwritten, and partial downloads are
+// removed when the request fails or exceeds the attachment size limit.
+func (c *APIClient) DownloadFile(ctx context.Context, rawURL, outputPath string) (int64, error) {
+	parsed, err := url.Parse(rawURL)
+	if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil {
+		return 0, fmt.Errorf("download URL must be an absolute HTTPS URL")
+	}
+	if strings.TrimSpace(outputPath) == "" {
+		return 0, fmt.Errorf("download output path is required")
+	}
+	if _, err := os.Stat(outputPath); err == nil {
+		return 0, fmt.Errorf("download output already exists: %s", outputPath)
+	} else if !os.IsNotExist(err) {
+		return 0, fmt.Errorf("checking download output: %w", err)
+	}
+
+	dir := filepath.Dir(outputPath)
+	temporary, err := os.CreateTemp(dir, ".uteamup-download-*.part")
+	if err != nil {
+		return 0, fmt.Errorf("creating temporary download: %w", err)
+	}
+	temporaryPath := temporary.Name()
+	keepTemporary := false
+	defer func() {
+		_ = temporary.Close()
+		if !keepTemporary {
+			_ = os.Remove(temporaryPath)
+		}
+	}()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
+	if err != nil {
+		return 0, fmt.Errorf("creating download request: %w", err)
+	}
+	resp, err := c.httpClient().Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("downloading attachment: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= http.StatusBadRequest {
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, maxUploadErrorBytes))
+		return 0, fmt.Errorf("downloading attachment: %s", resp.Status)
+	}
+	if resp.ContentLength > maxDownloadBytes {
+		return 0, fmt.Errorf("download exceeds the %d byte limit", maxDownloadBytes)
+	}
+
+	written, err := io.Copy(temporary, io.LimitReader(resp.Body, maxDownloadBytes+1))
+	if err != nil {
+		return 0, fmt.Errorf("writing attachment: %w", err)
+	}
+	if written > maxDownloadBytes {
+		return 0, fmt.Errorf("download exceeds the %d byte limit", maxDownloadBytes)
+	}
+	if err := temporary.Close(); err != nil {
+		return 0, fmt.Errorf("closing attachment: %w", err)
+	}
+	if err := os.Rename(temporaryPath, outputPath); err != nil {
+		return 0, fmt.Errorf("finalizing attachment: %w", err)
+	}
+	keepTemporary = true
+	return written, nil
 }
 
 // CallRESTUpload sends a multipart/form-data request with one local file as

@@ -533,3 +533,24 @@ func TestActionFlagsDoNotReusePersistentShorthands(t *testing.T) {
 		}
 	}
 }
+
+func TestBugAttachmentDownloadStreamsTheSignedURL(t *testing.T) {
+	domain := findDomain("bugsandfeatures")
+	if domain == nil {
+		t.Fatal("bugsandfeatures domain not found")
+	}
+
+	for _, action := range domain.Actions {
+		if action.Name != "attachments-download" {
+			continue
+		}
+		if action.RESTPath != "{bugExternalGuid}/attachments/{attachmentExternalGuid}/url" ||
+			action.DownloadURLField != "sasUrl" || action.DownloadOutputFlag != "out" ||
+			action.DownloadDefaultArg != "attachmentExternalGuid" || !action.DisableResponseExport {
+			t.Fatalf("attachment download action is not safely wired: %+v", action)
+		}
+		return
+	}
+
+	t.Fatal("attachments-download action not found")
+}

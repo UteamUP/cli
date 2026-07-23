@@ -188,6 +188,8 @@ func init() {
 				Name:        "attachments-download",
 				Description: "Download a single attachment via the SAS URL endpoint. Works for images, documents, and videos alike. Writes to ./<attachmentGuid>.<ext> by default; --out overrides. The server reuses the original extension for the output filename when known so the downloaded file opens in the right app.",
 				ToolName:    "UteamupBugsAndFeaturesAttachmentsDownload",
+				HTTPMethod:  "GET",
+				RESTPath:    "{bugExternalGuid}/attachments/{attachmentExternalGuid}/url",
 				Args: []ArgDef{
 					{Name: "bugExternalGuid", Description: "Bug ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
 					{Name: "attachmentExternalGuid", Description: "Attachment ExternalGuid", Required: true, Type: "string"},
@@ -195,6 +197,10 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "out", Description: "Output file path. If omitted, writes to ./<attachmentGuid>.<ext> in the current directory.", Type: "string"},
 				},
+				DownloadURLField:      "sasUrl",
+				DownloadOutputFlag:    "out",
+				DownloadDefaultArg:    "attachmentExternalGuid",
+				DisableResponseExport: true,
 			},
 			{
 				Name:        "attachments-delete",

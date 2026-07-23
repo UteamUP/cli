@@ -126,6 +126,12 @@ type Action struct {
 	HTTPMethod string
 	Args       []ArgDef
 	Flags      []FlagDef
+	// DownloadURLField turns the REST response into a streamed local download.
+	// DownloadOutputFlag names the local-only output flag, while
+	// DownloadDefaultArg supplies the default filename stem.
+	DownloadURLField   string
+	DownloadOutputFlag string
+	DownloadDefaultArg string
 	// DisableResponseExport prevents the profile-level JSON export feature
 	// from persisting secret-bearing responses such as transfer challenges.
 	DisableResponseExport bool
@@ -279,6 +285,8 @@ func buildActionCommand(domain *Domain, action Action, apiClientFactory APIClien
 func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string, export *ExportConfig) error {
 	toolArgs := make(map[string]any)
 	queryParams := make(map[string]any)
+	downloadOutputPath := ""
+	downloadDefaultBase := ""
 
 	// Positional args
 	for i, argDef := range action.Args {
@@ -289,6 +297,9 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 			continue
 		}
 		value := convertArg(args[i], argDef.Type)
+		if argDef.Name == action.DownloadDefaultArg {
+			downloadDefaultBase = fmt.Sprint(value)
+		}
 		if argDef.QueryName != "" {
 			queryParams[argDef.QueryName] = value
 			continue
@@ -303,6 +314,12 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 	headers := make(map[string]string)
 	var uploadField, uploadPath string
 	for _, flag := range action.Flags {
+		if flag.Name == action.DownloadOutputFlag {
+			if cmd.Flags().Changed(flag.Name) {
+				downloadOutputPath, _ = cmd.Flags().GetString(flag.Name)
+			}
+			continue
+		}
 		if flag.QueryName != "" {
 			if !cmd.Flags().Changed(flag.Name) {
 				if flag.Default != nil {
@@ -450,6 +467,28 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		}
 	}
 
+	if action.DownloadURLField != "" {
+		var payload map[string]any
+		if err := json.Unmarshal(result, &payload); err != nil {
+			return fmt.Errorf("reading download response: %w", err)
+		}
+		downloadURL, ok := payload[action.DownloadURLField].(string)
+		if !ok || strings.TrimSpace(downloadURL) == "" {
+			return fmt.Errorf("download response is missing %s", action.DownloadURLField)
+		}
+		if downloadOutputPath == "" {
+			downloadOutputPath = defaultDownloadPath(downloadDefaultBase, downloadURL)
+		}
+		written, err := apiClient.DownloadFile(ctx, downloadURL, downloadOutputPath)
+		if err != nil {
+			return err
+		}
+		result, err = json.Marshal(map[string]any{"path": downloadOutputPath, "bytes": written})
+		if err != nil {
+			return fmt.Errorf("formatting download result: %w", err)
+		}
+	}
+
 	// Export JSON to file if enabled
 	if export != nil && export.Enabled && result != nil && !action.DisableResponseExport {
 		if exportErr := exportJSON(export, domain.Name, action.Name, result, logger); exportErr != nil {
@@ -459,6 +498,19 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 
 	format := output.ParseFormat(*outputFormat)
 	return output.Print(format, result)
+}
+
+func defaultDownloadPath(base, rawURL string) string {
+	extension := ".bin"
+	if parsed, err := url.Parse(rawURL); err == nil {
+		if candidate := filepath.Ext(parsed.Path); candidate != "" && len(candidate) <= 10 {
+			extension = candidate
+		}
+	}
+	if strings.TrimSpace(base) == "" {
+		base = "uteamup-download"
+	}
+	return base + extension
 }
 
 func loggedArgsForAction(action Action, args map[string]any) map[string]any {
