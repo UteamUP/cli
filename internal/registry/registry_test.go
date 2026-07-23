@@ -508,3 +508,28 @@ func TestDomainToolNames(t *testing.T) {
 		}
 	}
 }
+
+func TestActionFlagsDoNotReusePersistentShorthands(t *testing.T) {
+	reserved := map[string]string{
+		"o": "output",
+		"P": "profile",
+		"v": "verbose",
+	}
+
+	for _, domain := range DefaultRegistry.Domains() {
+		for _, action := range domain.Actions {
+			for _, flag := range action.Flags {
+				if persistentName, conflict := reserved[flag.Short]; conflict {
+					t.Errorf(
+						"domain %s action %s flag %s reuses -%s reserved by --%s",
+						domain.Name,
+						action.Name,
+						flag.Name,
+						flag.Short,
+						persistentName,
+					)
+				}
+			}
+		}
+	}
+}

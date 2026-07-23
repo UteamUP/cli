@@ -193,7 +193,7 @@ func init() {
 					{Name: "attachmentExternalGuid", Description: "Attachment ExternalGuid", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
-					{Name: "out", Short: "o", Description: "Output file path. If omitted, writes to ./<attachmentGuid>.<ext> in the current directory.", Type: "string"},
+					{Name: "out", Description: "Output file path. If omitted, writes to ./<attachmentGuid>.<ext> in the current directory.", Type: "string"},
 				},
 			},
 			{
