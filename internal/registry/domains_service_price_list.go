@@ -34,6 +34,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "active-only", BodyName: "activeOnly", Description: "Return only versions effective at the requested time", Type: "bool"},
 					{Name: "as-of", BodyName: "asOf", Description: "Optional ISO-8601 effective-state timestamp", Type: "string"},
+					{Name: "include-archived", BodyName: "includeArchived", Description: "Include archived historical versions, which are hidden by default", Type: "bool"},
 				},
 			},
 			{
@@ -78,6 +79,59 @@ func init() {
 					{Name: "priceListGuid", Description: "External GUID of the version being replaced", Required: true, Type: "uuid"},
 				},
 				Flags: createFlags,
+			},
+			{
+				// Refused with named reasons when the version still carries a linked agreement,
+				// version lineage, or billing evidence.
+				Name:        "delete",
+				Description: "Permanently delete a price-list version that carries no evidence",
+				ToolName:    "UteamupServicePriceListDelete",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "{priceListGuid}",
+				Args: []ArgDef{
+					{Name: "priceListGuid", Description: "Service price-list external GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:        "archive",
+				Description: "Archive an inactive price-list version into history",
+				ToolName:    "UteamupServicePriceListArchive",
+				HTTPMethod:  "POST",
+				RESTPath:    "{priceListGuid}/archive",
+				Args: []ArgDef{
+					{Name: "priceListGuid", Description: "Service price-list external GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:        "restore",
+				Description: "Return an archived price-list version to the working list",
+				ToolName:    "UteamupServicePriceListRestore",
+				HTTPMethod:  "POST",
+				RESTPath:    "{priceListGuid}/restore",
+				Args: []ArgDef{
+					{Name: "priceListGuid", Description: "Service price-list external GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				// Read-only: runs the same rule selection a billing run uses, but records no run,
+				// invoice, or billing evidence.
+				Name:        "preview-rules",
+				Description: "Show which price rules would apply to hypothetical evidence",
+				ToolName:    "UteamupServicePriceListPreviewRules",
+				HTTPMethod:  "POST",
+				RESTPath:    "{priceListGuid}/rule-preview",
+				Args: []ArgDef{
+					{Name: "priceListGuid", Description: "Service price-list external GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "work-type-guid", BodyName: "workTypeGuid", Description: "Optional work-type external GUID the labour was booked against", Type: "string"},
+					{Name: "stock-item-guid", BodyName: "stockItemGuid", Description: "Optional stock-item external GUID the material came from", Type: "string"},
+					{Name: "labour-hours", BodyName: "labourHours", Description: "Hypothetical approved labour hours", Default: 0.0, Type: "float"},
+					{Name: "travel-hours", BodyName: "travelHours", Description: "Hypothetical approved travel hours", Default: 0.0, Type: "float"},
+					{Name: "material-quantity", BodyName: "materialQuantity", Description: "Hypothetical material quantity", Default: 0.0, Type: "float"},
+					{Name: "period-start", BodyName: "periodStart", Description: "Billing period start in ISO-8601 UTC", Required: true, Type: "string"},
+					{Name: "period-end", BodyName: "periodEnd", Description: "Billing period end in ISO-8601 UTC", Required: true, Type: "string"},
+				},
 			},
 		},
 	})

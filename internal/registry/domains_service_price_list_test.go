@@ -46,11 +46,15 @@ func TestServicePriceListRoutesAndArgumentsAreGuidOnly(t *testing.T) {
 func TestServicePriceListActionsMirrorBackendToolsAndEvidence(t *testing.T) {
 	t.Parallel()
 	expectedTools := map[string]string{
-		"list":        "UteamupServicePriceListList",
-		"get":         "UteamupServicePriceListGet",
-		"create":      "UteamupServicePriceListCreate",
-		"update":      "UteamupServicePriceListUpdate",
-		"replacement": "UteamupServicePriceListCreateReplacement",
+		"list":          "UteamupServicePriceListList",
+		"get":           "UteamupServicePriceListGet",
+		"create":        "UteamupServicePriceListCreate",
+		"update":        "UteamupServicePriceListUpdate",
+		"replacement":   "UteamupServicePriceListCreateReplacement",
+		"delete":        "UteamupServicePriceListDelete",
+		"archive":       "UteamupServicePriceListArchive",
+		"restore":       "UteamupServicePriceListRestore",
+		"preview-rules": "UteamupServicePriceListPreviewRules",
 	}
 	for actionName, toolName := range expectedTools {
 		_, action := servicePriceListAction(t, actionName)
@@ -79,6 +83,57 @@ func TestServicePriceListActionsMirrorBackendToolsAndEvidence(t *testing.T) {
 	_, list := servicePriceListAction(t, "list")
 	assertServicePriceListFlag(t, list, "active-only", "activeOnly", false)
 	assertServicePriceListFlag(t, list, "as-of", "asOf", false)
+	assertServicePriceListFlag(t, list, "include-archived", "includeArchived", false)
+}
+
+// The lifecycle actions exist because deactivation was the only way to clear an unused draft.
+// Delete must be a real DELETE, and archive/restore must not be reachable by the same verb.
+func TestServicePriceListLifecycleUsesDistinctVerbsAndRoutes(t *testing.T) {
+	t.Parallel()
+	_, del := servicePriceListAction(t, "delete")
+	if del.HTTPMethod != "DELETE" {
+		t.Fatalf("delete method = %q, want DELETE", del.HTTPMethod)
+	}
+	if del.RESTPath != "{priceListGuid}" {
+		t.Fatalf("delete path = %q, want the version route", del.RESTPath)
+	}
+	for name, wantPath := range map[string]string{
+		"archive": "{priceListGuid}/archive",
+		"restore": "{priceListGuid}/restore",
+	} {
+		_, action := servicePriceListAction(t, name)
+		if action.HTTPMethod != "POST" {
+			t.Fatalf("%s method = %q, want POST", name, action.HTTPMethod)
+		}
+		if action.RESTPath != wantPath {
+			t.Fatalf("%s path = %q, want %q", name, action.RESTPath, wantPath)
+		}
+	}
+}
+
+// The preview is read-only evidence: it must carry no idempotency key, because a key would imply
+// it writes something the server has to de-duplicate.
+func TestServicePriceListPreviewIsReadOnlyAndFloatTyped(t *testing.T) {
+	t.Parallel()
+	_, action := servicePriceListAction(t, "preview-rules")
+	if action.RESTPath != "{priceListGuid}/rule-preview" {
+		t.Fatalf("preview path = %q, want the version-scoped preview route", action.RESTPath)
+	}
+	if findServicePriceListFlag(action, "idempotency-key") != nil {
+		t.Fatal("a read-only preview must not take a write idempotency key")
+	}
+	// Go stores an untyped 0 as int, which panics in the registry's float type assertion.
+	for _, name := range []string{"labour-hours", "travel-hours", "material-quantity"} {
+		flag := findServicePriceListFlag(action, name)
+		if flag == nil {
+			t.Fatalf("%s flag is missing", name)
+		}
+		if _, ok := flag.Default.(float64); !ok {
+			t.Fatalf("%s default = %T, want a float literal", name, flag.Default)
+		}
+	}
+	assertServicePriceListFlag(t, action, "period-start", "periodStart", true)
+	assertServicePriceListFlag(t, action, "period-end", "periodEnd", true)
 }
 
 // Replacement must POST to the predecessor-scoped route. Reusing the plain create route leaves
