@@ -24,6 +24,7 @@ func init() {
 					{Name: "workorder-guid", BodyName: "workorderGuid", Description: "Optional workorder external GUID", Type: "string"},
 					{Name: "agreement-guid", BodyName: "agreementGuid", Description: "Optional service agreement external GUID", Type: "string"},
 					{Name: "status", BodyName: "status", Description: "Optional derived SLA status", Type: "string"},
+					{Name: "search", BodyName: "search", Description: "Optional free-text filter over workorder name or ticket, customer, or agreement title", Type: "string"},
 					{Name: "as-of", BodyName: "asOf", Description: "Optional ISO-8601 status evaluation timestamp", Type: "string"},
 					{Name: "page", BodyName: "page", Description: "One-based page number", Default: 1, Type: "int"},
 					{Name: "page-size", BodyName: "pageSize", Description: "Results per page, maximum 200", Default: 50, Type: "int"},

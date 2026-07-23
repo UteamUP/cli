@@ -80,6 +80,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Tenant-scoped write idempotency UUID", Required: true, Type: "string"},
 					{Name: "expected-updated-at", BodyName: "expectedUpdatedAt", Description: "Exact reviewed UpdatedAt timestamp", Required: true, Type: "string"},
+					{Name: "acknowledge-overlap", BodyName: "acknowledgeOverlap", Description: "Approve even though another approved agreement already covers this customer over the same window", Default: false, Type: "bool"},
 				},
 			},
 		},

@@ -91,6 +91,9 @@ func TestServiceSlaActionsMirrorBackendToolsAndEvidence(t *testing.T) {
 	assertServiceSLAFlag(t, list, "workorder-guid", "workorderGuid", false)
 	assertServiceSLAFlag(t, list, "agreement-guid", "agreementGuid", false)
 	assertServiceSLAFlag(t, list, "as-of", "asOf", false)
+	// Filtering runs on the server so it covers every milestone in the tenant, not just the
+	// page a caller already fetched.
+	assertServiceSLAFlag(t, list, "search", "search", false)
 	_, reconcile := serviceSLAAction(t, "reconcile")
 	assertServiceSLAFlag(t, reconcile, "workorder-guid", "workorderGuid", true)
 	assertServiceSLAFlag(t, reconcile, "as-of", "asOf", true)

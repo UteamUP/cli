@@ -56,6 +56,10 @@ func TestServiceAgreementWritesCarryIdempotencyAndReviewedVersion(t *testing.T) 
 		_, action := serviceAgreementAction(t, actionName)
 		assertServiceAgreementFlag(t, action, "expected-updated-at", "expectedUpdatedAt", true)
 	}
+	// Optional on purpose: the server refuses an overlapping approval unless the caller opts in,
+	// so requiring the flag would force every approval to answer a question most never face.
+	_, approve := serviceAgreementAction(t, "approve")
+	assertServiceAgreementFlag(t, approve, "acknowledge-overlap", "acknowledgeOverlap", false)
 	_, create := serviceAgreementAction(t, "create")
 	assertServiceAgreementFlag(t, create, "contract-guid", "contractGuid", true)
 	assertServiceAgreementFlag(t, create, "customer-guid", "customerGuid", true)
