@@ -46,10 +46,11 @@ func TestServicePriceListRoutesAndArgumentsAreGuidOnly(t *testing.T) {
 func TestServicePriceListActionsMirrorBackendToolsAndEvidence(t *testing.T) {
 	t.Parallel()
 	expectedTools := map[string]string{
-		"list":   "UteamupServicePriceListList",
-		"get":    "UteamupServicePriceListGet",
-		"create": "UteamupServicePriceListCreate",
-		"update": "UteamupServicePriceListUpdate",
+		"list":        "UteamupServicePriceListList",
+		"get":         "UteamupServicePriceListGet",
+		"create":      "UteamupServicePriceListCreate",
+		"update":      "UteamupServicePriceListUpdate",
+		"replacement": "UteamupServicePriceListCreateReplacement",
 	}
 	for actionName, toolName := range expectedTools {
 		_, action := servicePriceListAction(t, actionName)
@@ -58,7 +59,7 @@ func TestServicePriceListActionsMirrorBackendToolsAndEvidence(t *testing.T) {
 		}
 	}
 
-	for _, actionName := range []string{"create", "update"} {
+	for _, actionName := range []string{"create", "update", "replacement"} {
 		_, action := servicePriceListAction(t, actionName)
 		assertServicePriceListFlag(t, action, "idempotency-key", "idempotencyKey", true)
 		assertServicePriceListFlag(t, action, "items-json", "items", true)
@@ -78,6 +79,33 @@ func TestServicePriceListActionsMirrorBackendToolsAndEvidence(t *testing.T) {
 	_, list := servicePriceListAction(t, "list")
 	assertServicePriceListFlag(t, list, "active-only", "activeOnly", false)
 	assertServicePriceListFlag(t, list, "as-of", "asOf", false)
+}
+
+// Replacement must POST to the predecessor-scoped route. Reusing the plain create route leaves
+// an unlinked clone overlapping the still-active original, which is the defect the server-side
+// replacement transaction exists to prevent.
+func TestServicePriceListReplacementPostsToThePredecessorRoute(t *testing.T) {
+	t.Parallel()
+	domain, action := servicePriceListAction(t, "replacement")
+	if action.HTTPMethod != "POST" {
+		t.Fatalf("replacement method = %q, want POST", action.HTTPMethod)
+	}
+	path, consumed := buildRESTPath(
+		domain,
+		action,
+		map[string]any{"priceListGuid": "predecessor-guid"},
+	)
+	if path != "/api/service-price-lists/predecessor-guid/replacement" {
+		t.Fatalf("path = %q, want the predecessor-scoped replacement route", path)
+	}
+	if len(consumed) != 1 {
+		t.Fatalf("replacement consumed %v, want only the predecessor GUID", consumed)
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "priceListGuid" || action.Args[0].Type != "uuid" {
+		t.Fatalf("predecessor identity is not a UUID argument: %+v", action.Args)
+	}
+	// effectiveFrom carries the retirement date, so it stays mandatory.
+	assertServicePriceListFlag(t, action, "effective-from", "effectiveFrom", true)
 }
 
 func assertServicePriceListFlag(t *testing.T, action Action, name, bodyName string, required bool) {

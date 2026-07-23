@@ -66,6 +66,19 @@ func init() {
 				},
 				Flags: updateFlags,
 			},
+			{
+				// Distinct from create: the server links the versions, retires the predecessor,
+				// and moves its agreements onto the new rates in one transaction.
+				Name:        "replacement",
+				Description: "Create a future-effective replacement that retires the version it replaces",
+				ToolName:    "UteamupServicePriceListCreateReplacement",
+				HTTPMethod:  "POST",
+				RESTPath:    "{priceListGuid}/replacement",
+				Args: []ArgDef{
+					{Name: "priceListGuid", Description: "External GUID of the version being replaced", Required: true, Type: "uuid"},
+				},
+				Flags: createFlags,
+			},
 		},
 	})
 }
