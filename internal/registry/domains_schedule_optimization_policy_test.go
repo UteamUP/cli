@@ -33,6 +33,7 @@ func TestScheduleOptimizationPolicyRoutesUseGuidIdentity(t *testing.T) {
 		{name: "create", args: map[string]any{}, path: "/api/schedule/optimization-policies"},
 		{name: "update", args: map[string]any{"policyGuid": "policy-guid"}, path: "/api/schedule/optimization-policies/policy-guid", consumed: []string{"policyGuid"}},
 		{name: "delete", args: map[string]any{"policyGuid": "policy-guid"}, path: "/api/schedule/optimization-policies/policy-guid", consumed: []string{"policyGuid"}},
+		{name: "restore", args: map[string]any{"policyGuid": "policy-guid"}, path: "/api/schedule/optimization-policies/policy-guid/restore", consumed: []string{"policyGuid"}},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {

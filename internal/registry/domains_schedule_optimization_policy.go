@@ -24,6 +24,9 @@ func init() {
 				Description: "List recurring review-only schedule optimization policies",
 				ToolName:    "UteamupScheduleOptimizationPolicyList",
 				HTTPMethod:  "GET",
+				Flags: []FlagDef{
+					{Name: "include-archived", BodyName: "includeArchived", Description: "Include archived policies alongside the active ones", Type: "bool", Default: false},
+				},
 			},
 			{
 				Name:        "get",
@@ -64,6 +67,16 @@ func init() {
 				},
 				Flags: []FlagDef{
 					{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Caller-generated GUID reused only when retrying the same deletion", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "restore",
+				Description: "Restore an archived policy as a disabled draft",
+				ToolName:    "UteamupScheduleOptimizationPolicyRestore",
+				HTTPMethod:  "POST",
+				RESTPath:    "{policyGuid}/restore",
+				Args: []ArgDef{
+					{Name: "policyGuid", Description: "Schedule optimization policy GUID", Required: true, Type: "uuid"},
 				},
 			},
 		},
