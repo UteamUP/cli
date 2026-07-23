@@ -69,5 +69,15 @@ func TestScheduleOptimizationPolicyMutationsMirrorBackendContract(t *testing.T) 
 		if want[flag.Name] != flag.BodyName {
 			t.Fatalf("flag %q body = %q, want %q", flag.Name, flag.BodyName, want[flag.Name])
 		}
+		// The API serializes the frequency enum as a camelCase string; an int flag sent 0/1 and
+		// could never express the contract the other clients read back (audit OP-003).
+		if flag.Name == "frequency" {
+			if flag.Type != "string" {
+				t.Fatalf("frequency flag type = %q, want %q", flag.Type, "string")
+			}
+			if flag.Default != "daily" {
+				t.Fatalf("frequency flag default = %v, want %q", flag.Default, "daily")
+			}
+		}
 	}
 }

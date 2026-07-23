@@ -5,7 +5,7 @@ func init() {
 		{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Caller-generated GUID reused only when retrying the same mutation", Required: true, Type: "string"},
 		{Name: "name", BodyName: "name", Description: "Plain-language policy name", Required: true, Type: "string"},
 		{Name: "enabled", BodyName: "isEnabled", Description: "Allow the policy to queue review-only proposals", Type: "bool", Default: true},
-		{Name: "frequency", BodyName: "frequency", Description: "0=Daily, 1=Weekly", Type: "int", Default: 0},
+		{Name: "frequency", BodyName: "frequency", Description: "daily (every selected day) or weekly (one selected day per week)", Type: "string", Default: "daily"},
 		{Name: "time-zone", BodyName: "timeZoneId", Description: "IANA or system time zone identifier", Type: "string", Default: "UTC"},
 		{Name: "days-mask", BodyName: "daysOfWeekMask", Description: "Sun=1 through Sat=64 selected-day bit mask", Type: "int", Default: 127},
 		{Name: "local-time", BodyName: "localExecutionTime", Description: "Local execution time using HH:mm", Type: "string", Default: "06:00"},
