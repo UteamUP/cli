@@ -5,6 +5,28 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.92.0](https://github.com/UteamUP/cli/compare/1.91.0...1.92.0) (2026-07-24)
+
+
+### Features
+
+* **marketplace:** add the seller browse filters to the CLI registry ([cd2f89c](https://github.com/UteamUP/cli/commit/cd2f89c8abfe5620b24a831f90cd11a765c7101c))
+* **registry:** add workforce capacity readiness + scenario CLI domains ([fc8769e](https://github.com/UteamUP/cli/commit/fc8769e9391e630bd536ae26680d3526faf0ebc0))
+* **registry:** expose SLA milestone search and overlap acknowledgement ([0a9d626](https://github.com/UteamUP/cli/commit/0a9d6266d925c8fdbb66ecf52143050ac334ded8))
+* **schedule:** add policy restore and the archive listing flag ([5ab1165](https://github.com/UteamUP/cli/commit/5ab11656c25f877fb797325297f7eecb9ac4f2c0))
+* **service-price-list:** expose the lifecycle and rule preview from the CLI ([2ca3df4](https://github.com/UteamUP/cli/commit/2ca3df4704c7394dcd32fda95b4ea372b3eef6be))
+* **service-price-list:** expose the replacement route as a CLI action ([e99274f](https://github.com/UteamUP/cli/commit/e99274f7e95a27bd9eb004d5303fa7f02624bcf9))
+
+
+### Bug Fixes
+
+* **schedule:** send the optimization policy frequency as a string ([a5079bd](https://github.com/UteamUP/cli/commit/a5079bd3afa0bd65f6913226e44f235794cb650b))
+
+
+### Documentation
+
+* **operations-brain:** mark site-guids as not yet supported ([5de05a8](https://github.com/UteamUP/cli/commit/5de05a8a39dc794021bb29ce6bf02f5c00e6db79))
+
 ## [1.91.0](https://github.com/UteamUP/cli/compare/1.90.0...1.91.0) (2026-07-23)
 
 
