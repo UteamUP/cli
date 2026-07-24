@@ -33,7 +33,7 @@ func init() {
 					{Name: "success-measure", BodyName: "successMeasure", Description: "Optional measurable success criterion", Type: "string"},
 					{Name: "domains", BodyName: "domains", Description: "Evidence domains, maximum nine", Required: true, Type: "stringSlice"},
 					{Name: "affected-entity-guids", BodyName: "affectedEntityGuids", Description: "Optional affected entity GUIDs", Type: "stringSlice"},
-					{Name: "site-guids", BodyName: "siteGuids", Description: "Optional site GUIDs", Type: "stringSlice"},
+					{Name: "site-guids", BodyName: "siteGuids", Description: "Reserved site GUIDs (site scoping is not supported yet — the API rejects non-empty values)", Type: "stringSlice"},
 					{Name: "evidence-max-age-minutes", BodyName: "evidenceMaxAgeMinutes", Description: "Accepted evidence age in minutes, 5-10080", Type: "int", Default: 1440},
 				},
 			},
