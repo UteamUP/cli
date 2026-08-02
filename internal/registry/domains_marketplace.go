@@ -2,17 +2,35 @@ package registry
 
 // Marketplace CLI surface — mirrors the Marketplace MCP tools (read-oriented plus
 // offer submission via the portal tools; identity comes from the Bearer token).
+//
+// Every action needs an explicit route. With no APIPath and no RESTPath the builder
+// derives "/api/" + domain name and appends nothing, so all 20 actions collapsed onto
+// GET /api/marketplace — which no controller serves, and the whole domain 404'd.
+//
+// The surface spans four controllers, hence the per-action RESTBasePath:
+//
+//	MarketplaceController             /api/marketplace                (listings, facets, settings, transactions)
+//	MarketplaceRequirementController  /api/marketplace/requirements
+//	MarketplaceMessageController      /api/marketplace/messages
+//	MarketplaceSavedSearchController  /api/marketplace/saved-searches
+const (
+	mpRequirementsPath  = "/api/marketplace/requirements"
+	mpMessagesPath      = "/api/marketplace/messages"
+	mpSavedSearchesPath = "/api/marketplace/saved-searches"
+)
 
 func init() {
 	Register(&Domain{
 		Name:        "marketplace",
 		Aliases:     []string{"mp"},
+		APIPath:     "/api/marketplace",
 		Description: "Browse the cross-tenant marketplace: listings, requirements, offers, transactions",
 		Actions: []Action{
 			{
 				Name:        "browse",
 				Description: "Browse cross-tenant listings (tenant listings + wholesaler catalogs)",
 				ToolName:    "UteamupMarketplaceBrowse",
+				RESTPath:    "listings",
 				Flags: []FlagDef{
 					{Name: "search", Description: "Search term", Type: "string"},
 					{Name: "item-type", Description: "Part | Tool | Chemical | Asset | Labor", Type: "string"},
@@ -30,6 +48,7 @@ func init() {
 				Name:        "listing-get",
 				Description: "Get one cross-tenant listing by GUID",
 				ToolName:    "UteamupMarketplaceListingGet",
+				RESTPath:    "listings/{guid}",
 				Flags: []FlagDef{
 					{Name: "guid", Short: "g", Description: "Listing GUID", Required: true, Type: "string"},
 				},
@@ -38,6 +57,8 @@ func init() {
 				Name:        "listing-report",
 				Description: "Report a listing for moderation review",
 				ToolName:    "UteamupMarketplaceListingReport",
+				RESTPath:    "listings/{guid}/report",
+				HTTPMethod:  "POST",
 				Flags: []FlagDef{
 					{Name: "guid", Short: "g", Description: "Listing GUID", Required: true, Type: "string"},
 					{Name: "reason", Short: "r", Description: "Illegal | Prohibited | Misleading | Offensive | WrongCategory | Other", Required: true, Type: "string"},
@@ -48,6 +69,9 @@ func init() {
 				Name:        "messages-list",
 				Description: "List buyer↔seller message threads on a listing or a transaction",
 				ToolName:    "UteamupMarketplaceMessagesList",
+				// REST splits this across messages/listing/{guid} and messages/transaction/{guid};
+				// a single RESTPath template cannot express the either/or, so route via the tool.
+				MCPOnly: true,
 				Flags: []FlagDef{
 					{Name: "listing-guid", Description: "Listing GUID (pass this OR --transaction-guid)", Type: "string"},
 					{Name: "transaction-guid", Description: "Transaction GUID (pass this OR --listing-guid)", Type: "string"},
@@ -56,9 +80,11 @@ func init() {
 				},
 			},
 			{
-				Name:        "message-send",
-				Description: "Send a buyer↔seller message on a listing or a transaction",
-				ToolName:    "UteamupMarketplaceMessageSend",
+				Name:         "message-send",
+				Description:  "Send a buyer↔seller message on a listing or a transaction",
+				ToolName:     "UteamupMarketplaceMessageSend",
+				RESTBasePath: mpMessagesPath,
+				HTTPMethod:   "POST",
 				Flags: []FlagDef{
 					{Name: "listing-guid", Description: "Listing GUID (for a listing thread)", Type: "string"},
 					{Name: "transaction-guid", Description: "Transaction GUID (for a transaction thread)", Type: "string"},
@@ -67,22 +93,28 @@ func init() {
 				},
 			},
 			{
-				Name:        "message-thread",
-				Description: "Get one message thread (root + replies) by root message GUID",
-				ToolName:    "UteamupMarketplaceMessageThreadGet",
+				Name:         "message-thread",
+				Description:  "Get one message thread (root + replies) by root message GUID",
+				ToolName:     "UteamupMarketplaceMessageThreadGet",
+				RESTBasePath: mpMessagesPath,
+				RESTPath:     "{guid}/thread",
 				Flags: []FlagDef{
 					{Name: "guid", Short: "g", Description: "Root message GUID", Required: true, Type: "string"},
 				},
 			},
 			{
-				Name:        "requirements",
-				Description: "List open anonymous stock requirements visible to your tenant",
-				ToolName:    "UteamupMarketplaceRequirementsList",
+				Name:         "requirements",
+				Description:  "List open anonymous stock requirements visible to your tenant",
+				ToolName:     "UteamupMarketplaceRequirementsList",
+				RESTBasePath: mpRequirementsPath,
+				RESTPath:     "open",
 			},
 			{
-				Name:        "requirement-draft-create",
-				Description: "Create a private tenant-owned marketplace requirement draft",
-				ToolName:    "UteamupMarketplaceRequirementCreateDraft",
+				Name:         "requirement-draft-create",
+				Description:  "Create a private tenant-owned marketplace requirement draft",
+				ToolName:     "UteamupMarketplaceRequirementCreateDraft",
+				RESTBasePath: mpRequirementsPath,
+				HTTPMethod:   "POST",
 				Flags: []FlagDef{
 					{Name: "stock-item-guid", Description: "Optional tenant stock item GUID", Type: "uuid"},
 					{Name: "item-name", Description: "Item name when no stock item GUID is supplied", Type: "string"},
@@ -97,9 +129,12 @@ func init() {
 				},
 			},
 			{
-				Name:        "requirement-publish",
-				Description: "Publish one tenant-owned marketplace requirement",
-				ToolName:    "UteamupMarketplaceRequirementPublish",
+				Name:         "requirement-publish",
+				Description:  "Publish one tenant-owned marketplace requirement",
+				ToolName:     "UteamupMarketplaceRequirementPublish",
+				RESTBasePath: mpRequirementsPath,
+				RESTPath:     "{requirementGuid}/publish",
+				HTTPMethod:   "POST",
 				Args: []ArgDef{
 					{Name: "requirementGuid", Description: "Marketplace requirement GUID", Required: true, Type: "uuid"},
 				},
@@ -108,28 +143,36 @@ func init() {
 				Name:        "requirement-offers-compare",
 				Description: "Compare current offers for one tenant-owned requirement",
 				ToolName:    "UteamupMarketplaceRequirementOffersCompare",
+				// The comparison is computed by the tool; no REST adapter exposes it.
+				MCPOnly: true,
 				Args: []ArgDef{
 					{Name: "requirementGuid", Description: "Marketplace requirement GUID", Required: true, Type: "uuid"},
 				},
 			},
 			{
-				Name:        "requirement-offer-accept",
-				Description: "Accept one explicitly selected current offer",
-				ToolName:    "UteamupMarketplaceRequirementOfferAccept",
+				Name:         "requirement-offer-accept",
+				Description:  "Accept one explicitly selected current offer",
+				ToolName:     "UteamupMarketplaceRequirementOfferAccept",
+				RESTBasePath: mpRequirementsPath,
+				RESTPath:     "{requirementGuid}/offers/{offerGuid}/accept",
+				HTTPMethod:   "POST",
 				Args: []ArgDef{
 					{Name: "requirementGuid", Description: "Marketplace requirement GUID", Required: true, Type: "uuid"},
 					{Name: "offerGuid", Description: "Selected offer GUID", Required: true, Type: "uuid"},
 				},
 			},
 			{
-				Name:        "my-offers",
-				Description: "List your tenant's offers on requirements",
-				ToolName:    "UteamupMarketplaceMyOffersList",
+				Name:         "my-offers",
+				Description:  "List your tenant's offers on requirements",
+				ToolName:     "UteamupMarketplaceMyOffersList",
+				RESTBasePath: mpRequirementsPath,
+				RESTPath:     "my-offers",
 			},
 			{
 				Name:        "transactions",
 				Description: "List your tenant's marketplace transactions",
 				ToolName:    "UteamupMarketplaceTransactionsList",
+				RESTPath:    "transactions",
 				Flags: []FlagDef{
 					{Name: "page", Description: "Page number", Type: "float", Default: 1.0},
 					{Name: "page-size", Description: "Page size", Type: "float", Default: 20.0},
@@ -139,16 +182,20 @@ func init() {
 				Name:        "settings",
 				Description: "Get your tenant's marketplace settings",
 				ToolName:    "UteamupMarketplaceSettingsGet",
+				RESTPath:    "settings",
 			},
 			{
-				Name:        "saved-searches",
-				Description: "List your saved marketplace searches",
-				ToolName:    "UteamupMarketplaceSavedSearchesList",
+				Name:         "saved-searches",
+				Description:  "List your saved marketplace searches",
+				ToolName:     "UteamupMarketplaceSavedSearchesList",
+				RESTBasePath: mpSavedSearchesPath,
 			},
 			{
-				Name:        "save-search",
-				Description: "Save a browse filter as a search, optionally notifying you on new matches",
-				ToolName:    "UteamupMarketplaceSaveSearch",
+				Name:         "save-search",
+				Description:  "Save a browse filter as a search, optionally notifying you on new matches",
+				ToolName:     "UteamupMarketplaceSaveSearch",
+				RESTBasePath: mpSavedSearchesPath,
+				HTTPMethod:   "POST",
 				Flags: []FlagDef{
 					{Name: "name", Short: "n", Description: "A short name for the saved search", Required: true, Type: "string"},
 					{Name: "filters-json", Description: `Browse filter as JSON, e.g. {"itemType":"Tool","maxPrice":200}`, Type: "string", Default: "{}"},
@@ -156,9 +203,12 @@ func init() {
 				},
 			},
 			{
-				Name:        "delete-saved-search",
-				Description: "Delete one of your saved searches",
-				ToolName:    "UteamupMarketplaceDeleteSavedSearch",
+				Name:         "delete-saved-search",
+				Description:  "Delete one of your saved searches",
+				ToolName:     "UteamupMarketplaceDeleteSavedSearch",
+				RESTBasePath: mpSavedSearchesPath,
+				RESTPath:     "{guid}",
+				HTTPMethod:   "DELETE",
 				Flags: []FlagDef{
 					{Name: "guid", Short: "g", Description: "Saved search GUID", Required: true, Type: "string"},
 				},
@@ -167,6 +217,7 @@ func init() {
 				Name:        "seller-scorecard",
 				Description: "Get a seller's trust scorecard (rating, fulfillment, response time)",
 				ToolName:    "UteamupMarketplaceSellerScorecard",
+				RESTPath:    "sellers/{sellerGuid}/scorecard",
 				Flags: []FlagDef{
 					{Name: "seller-guid", Short: "s", Description: "Seller tenant GUID", Required: true, Type: "string"},
 				},
@@ -175,6 +226,7 @@ func init() {
 				Name:        "facets",
 				Description: "Get item-type / condition / price-band facet counts for a search",
 				ToolName:    "UteamupMarketplaceFacets",
+				RESTPath:    "facets",
 				Flags: []FlagDef{
 					{Name: "search", Description: "Optional free-text search to facet within", Type: "string"},
 				},
@@ -183,6 +235,7 @@ func init() {
 				Name:        "buyer-reputation",
 				Description: "Get a buyer's reputation (completed purchases, tenure, verified badge)",
 				ToolName:    "UteamupMarketplaceBuyerReputation",
+				RESTPath:    "buyers/{buyerGuid}/reputation",
 				Flags: []FlagDef{
 					{Name: "buyer-guid", Short: "b", Description: "Buyer tenant GUID", Required: true, Type: "string"},
 				},

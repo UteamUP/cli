@@ -189,3 +189,95 @@ func TestMarketplaceFloatDefaultsAreFloats(t *testing.T) {
 		}
 	}
 }
+
+// The ToolName assertions above are metadata — the CLI calls REST, so they stayed green
+// while every action in this domain 404'd on GET /api/marketplace. These pin the route
+// that actually gets requested, against the real controller paths.
+func TestMarketplaceActionsResolveToRealRoutes(t *testing.T) {
+	d := findMarketplaceDomain()
+	if d == nil {
+		t.Fatal("expected marketplace domain to be registered")
+	}
+
+	args := map[string]any{
+		"guid":            "LISTING",
+		"requirementGuid": "REQ",
+		"offerGuid":       "OFFER",
+		"sellerGuid":      "SELLER",
+		"buyerGuid":       "BUYER",
+	}
+	want := map[string]string{
+		"browse":                   "/api/marketplace/listings",
+		"listing-get":              "/api/marketplace/listings/LISTING",
+		"listing-report":           "/api/marketplace/listings/LISTING/report",
+		"message-send":             "/api/marketplace/messages",
+		"message-thread":           "/api/marketplace/messages/LISTING/thread",
+		"requirements":             "/api/marketplace/requirements/open",
+		"requirement-draft-create": "/api/marketplace/requirements",
+		"requirement-publish":      "/api/marketplace/requirements/REQ/publish",
+		"requirement-offer-accept": "/api/marketplace/requirements/REQ/offers/OFFER/accept",
+		"my-offers":                "/api/marketplace/requirements/my-offers",
+		"transactions":             "/api/marketplace/transactions",
+		"settings":                 "/api/marketplace/settings",
+		"saved-searches":           "/api/marketplace/saved-searches",
+		"save-search":              "/api/marketplace/saved-searches",
+		"delete-saved-search":      "/api/marketplace/saved-searches/LISTING",
+		"seller-scorecard":         "/api/marketplace/sellers/SELLER/scorecard",
+		"facets":                   "/api/marketplace/facets",
+		"buyer-reputation":         "/api/marketplace/buyers/BUYER/reputation",
+	}
+	// No REST adapter serves these; they go over the tools/call transport instead.
+	mcpOnly := map[string]bool{"messages-list": true, "requirement-offers-compare": true}
+
+	for _, a := range d.Actions {
+		if mcpOnly[a.Name] {
+			if !a.MCPOnly {
+				t.Errorf("action %q must be MCPOnly — no REST route serves it", a.Name)
+			}
+			continue
+		}
+		if a.MCPOnly {
+			t.Errorf("action %q is MCPOnly but a REST route exists", a.Name)
+			continue
+		}
+		expect, ok := want[a.Name]
+		if !ok {
+			t.Errorf("action %q has no expected route — add it here and to the controller map", a.Name)
+			continue
+		}
+		got, _ := buildRESTPath(d, a, args)
+		if got != expect {
+			t.Errorf("action %q routes to %q, want %q", a.Name, got, expect)
+		}
+		// The original defect: every action collapsed onto the domain root.
+		if got == "/api/marketplace" {
+			t.Errorf("action %q fell back to the bare domain path — no controller serves it", a.Name)
+		}
+	}
+}
+
+func TestMarketplaceNonGETActionsDeclareTheirMethod(t *testing.T) {
+	d := findMarketplaceDomain()
+	if d == nil {
+		t.Fatal("expected marketplace domain to be registered")
+	}
+	// Action names here match none of the HTTPMethod map keys, so anything that
+	// writes must say so or it silently ships as a GET.
+	want := map[string]string{
+		"listing-report":           "POST",
+		"message-send":             "POST",
+		"requirement-draft-create": "POST",
+		"requirement-publish":      "POST",
+		"requirement-offer-accept": "POST",
+		"save-search":              "POST",
+		"delete-saved-search":      "DELETE",
+	}
+	for _, a := range d.Actions {
+		if method, ok := want[a.Name]; ok && a.HTTPMethod != method {
+			t.Errorf("action %q declares HTTPMethod %q, want %q", a.Name, a.HTTPMethod, method)
+		}
+		if _, ok := want[a.Name]; !ok && a.HTTPMethod != "" {
+			t.Errorf("action %q declares HTTPMethod %q but should default to GET", a.Name, a.HTTPMethod)
+		}
+	}
+}
