@@ -146,6 +146,64 @@ func TestWorkorderCompleteUsesGuidOnlyStatusFreeContract(t *testing.T) {
 	t.Fatal("expected complete action")
 }
 
+func TestWorkorderCreateUsesOneGuidSafeIdempotentMCPContract(t *testing.T) {
+	d := findDomain("workorder")
+	if d == nil {
+		t.Fatal("expected workorder domain to be registered")
+	}
+
+	var create *Action
+	for i := range d.Actions {
+		action := &d.Actions[i]
+		if action.Name == "create-by-guid" {
+			t.Fatal("create-by-guid alias must be removed in favor of the canonical create action")
+		}
+		if action.Name == "create" {
+			if create != nil {
+				t.Fatal("expected exactly one create action")
+			}
+			create = action
+		}
+	}
+	if create == nil {
+		t.Fatal("expected create action")
+	}
+	if create.ToolName != "UteamupWorkorderCreate" {
+		t.Fatalf("create tool = %q, want UteamupWorkorderCreate", create.ToolName)
+	}
+	if !create.MCPOnly {
+		t.Fatal("create must call the scalar MCP contract instead of the multipart REST model")
+	}
+	if len(create.Args) != 0 {
+		t.Fatalf("create args = %+v, want scalar named flags only", create.Args)
+	}
+
+	flags := make(map[string]FlagDef, len(create.Flags))
+	for _, flag := range create.Flags {
+		flags[flag.Name] = flag
+	}
+	for _, name := range []string{"title", "description", "start-utc", "due-utc", "idempotency-key"} {
+		flag, ok := flags[name]
+		if !ok || !flag.Required {
+			t.Errorf("create flag --%s must exist and be required", name)
+		}
+	}
+	for _, name := range []string{"asset-guid", "primary-assignee-guid"} {
+		flag, ok := flags[name]
+		if !ok || flag.Type != "uuid" || flag.Required {
+			t.Errorf("create flag --%s = %+v, want optional uuid", name, flag)
+		}
+	}
+	for _, legacy := range []string{"asset-id", "assigned-to", "from-json"} {
+		if _, ok := flags[legacy]; ok {
+			t.Errorf("legacy integer/model flag --%s must not be public", legacy)
+		}
+	}
+	if priority := flags["priority"]; priority.Type != "int" || priority.Default != 3 {
+		t.Errorf("priority = %+v, want int default 3", priority)
+	}
+}
+
 func TestWorkorderSearchUsesBackendQueryParameter(t *testing.T) {
 	d := findDomain("workorder")
 	if d == nil {

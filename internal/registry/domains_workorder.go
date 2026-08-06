@@ -37,23 +37,11 @@ func init() {
 			},
 			{
 				Name:        "create",
-				Description: "Create a new work order",
-				ToolName:    "UteamupWorkOrderCreate",
+				Description: "Create a workorder using GUID-only entity references and a retry-safe idempotency key",
+				ToolName:    "UteamupWorkorderCreate",
+				MCPOnly:     true,
 				Flags: []FlagDef{
 					{Name: "title", Description: "Work order title", Required: true, Type: "string"},
-					{Name: "description", Description: "Work order description", Type: "string"},
-					{Name: "priority", Description: "Priority (1=Low, 2=Medium, 3=High, 4=Urgent, 5=Critical)", Default: "Medium", Type: "string"},
-					{Name: "asset-id", Description: "Associated asset ID", Type: "int"},
-					{Name: "assigned-to", Description: "Assigned user ID", Type: "int"},
-					{Name: "from-json", Description: "JSON file with work order data", Type: "string"},
-				},
-			},
-			{
-				Name:        "create-by-guid",
-				Description: "Create a workorder using GUID-only entity references",
-				ToolName:    "UteamupWorkorderCreateByGuid",
-				Flags: []FlagDef{
-					{Name: "title", Description: "Workorder title", Required: true, Type: "string"},
 					{Name: "description", Description: "Work to perform", Required: true, Type: "string"},
 					{Name: "start-utc", Description: "Planned UTC start", Required: true, Type: "string"},
 					{Name: "due-utc", Description: "Planned UTC due time", Required: true, Type: "string"},

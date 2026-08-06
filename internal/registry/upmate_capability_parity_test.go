@@ -50,7 +50,7 @@ func TestEnabledUpmateCapabilitiesHaveCLIRegistrations(t *testing.T) {
 		"UteamupVendorGetCatalog",
 		"UteamupWorkorderPrepareCloseoutByGuid",
 		"UteamupWorkorderCompleteCloseoutByGuid",
-		"UteamupWorkorderCreateByGuid",
+		"UteamupWorkorderCreate",
 		"UteamupWorkorderTemplateCreateFromTemplateByGuid",
 		"UteamupWorkorderTemplateAnalyzePreview",
 	}
