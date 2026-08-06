@@ -28,6 +28,14 @@ func init() {
 				Args:        []ArgDef{{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "uuid"}},
 			},
 			{
+				Name:        "complete",
+				Description: "Complete a work order by GUID using the server-owned completion policy",
+				ToolName:    "UteamupWorkorderComplete",
+				HTTPMethod:  "POST",
+				RESTPath:    "by-guid/{workorderGuid}/complete",
+				Args:        []ArgDef{{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "uuid"}},
+			},
+			{
 				Name:        "create",
 				Description: "Create a new work order",
 				ToolName:    "UteamupWorkOrderCreate",

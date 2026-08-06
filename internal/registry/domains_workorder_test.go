@@ -24,6 +24,12 @@ func TestWorkorderGuidAndLookupRoutes(t *testing.T) {
 			used:   []string{"workorderGuid"},
 		},
 		{
+			action: "complete",
+			args:   map[string]any{"workorderGuid": "11111111-1111-4111-8111-111111111111"},
+			want:   "/api/workorder/by-guid/11111111-1111-4111-8111-111111111111/complete",
+			used:   []string{"workorderGuid"},
+		},
+		{
 			action: "search",
 			args:   map[string]any{"query": "pump"},
 			want:   "/api/workorder/search",
@@ -58,6 +64,35 @@ func TestWorkorderGuidAndLookupRoutes(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestWorkorderCompleteUsesGuidOnlyStatusFreeContract(t *testing.T) {
+	d := findDomain("workorder")
+	if d == nil {
+		t.Fatal("expected workorder domain to be registered")
+	}
+
+	for i := range d.Actions {
+		action := d.Actions[i]
+		if action.Name != "complete" {
+			continue
+		}
+		if action.ToolName != "UteamupWorkorderComplete" {
+			t.Fatalf("complete tool = %q", action.ToolName)
+		}
+		if action.HTTPMethod != "POST" {
+			t.Fatalf("complete method = %q, want POST", action.HTTPMethod)
+		}
+		if len(action.Args) != 1 || action.Args[0].Name != "workorderGuid" || action.Args[0].Type != "uuid" {
+			t.Fatalf("complete args = %+v, want one workorderGuid uuid", action.Args)
+		}
+		if len(action.Flags) != 0 {
+			t.Fatalf("complete flags = %+v, want no caller-selected status", action.Flags)
+		}
+		return
+	}
+
+	t.Fatal("expected complete action")
 }
 
 func TestWorkorderSearchUsesBackendQueryParameter(t *testing.T) {
