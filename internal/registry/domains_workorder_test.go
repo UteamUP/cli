@@ -24,6 +24,18 @@ func TestWorkorderGuidAndLookupRoutes(t *testing.T) {
 			used:   []string{"workorderGuid"},
 		},
 		{
+			action: "update",
+			args:   map[string]any{"workorderGuid": "22222222-2222-4222-8222-222222222222"},
+			want:   "/api/workorder/by-guid/22222222-2222-4222-8222-222222222222",
+			used:   []string{"workorderGuid"},
+		},
+		{
+			action: "delete",
+			args:   map[string]any{"workorderGuid": "33333333-3333-4333-8333-333333333333"},
+			want:   "/api/workorder/by-guid/33333333-3333-4333-8333-333333333333",
+			used:   []string{"workorderGuid"},
+		},
+		{
 			action: "complete",
 			args:   map[string]any{"workorderGuid": "11111111-1111-4111-8111-111111111111"},
 			want:   "/api/workorder/by-guid/11111111-1111-4111-8111-111111111111/complete",
@@ -63,6 +75,45 @@ func TestWorkorderGuidAndLookupRoutes(t *testing.T) {
 				t.Fatalf("consumed = %v, want %v", consumed, test.used)
 			}
 		})
+	}
+}
+
+func TestWorkorderGetUpdateDeleteMatchMCPGuidContracts(t *testing.T) {
+	d := findDomain("workorder")
+	if d == nil {
+		t.Fatal("expected workorder domain to be registered")
+	}
+
+	expectedTools := map[string]string{
+		"get":    "UteamupWorkorderGet",
+		"update": "UteamupWorkorderUpdate",
+		"delete": "UteamupWorkorderDelete",
+	}
+
+	for actionName, toolName := range expectedTools {
+		var action *Action
+		for i := range d.Actions {
+			if d.Actions[i].Name == actionName {
+				action = &d.Actions[i]
+				break
+			}
+		}
+		if action == nil {
+			t.Fatalf("expected %s action", actionName)
+		}
+		if action.ToolName != toolName {
+			t.Errorf("%s tool = %q, want %q", actionName, action.ToolName, toolName)
+		}
+		wantPath := "by-guid/{workorderGuid}"
+		if actionName == "get" {
+			wantPath = "{workorderGuid}"
+		}
+		if action.RESTPath != wantPath {
+			t.Errorf("%s REST path = %q, want %q", actionName, action.RESTPath, wantPath)
+		}
+		if len(action.Args) != 1 || action.Args[0].Name != "workorderGuid" || action.Args[0].Type != "uuid" {
+			t.Errorf("%s args = %+v, want one workorderGuid uuid", actionName, action.Args)
+		}
 	}
 }
 

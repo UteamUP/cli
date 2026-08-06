@@ -23,7 +23,7 @@ func init() {
 			{
 				Name:        "get",
 				Description: "Get work order details by GUID",
-				ToolName:    "UteamupWorkOrderGet",
+				ToolName:    "UteamupWorkorderGet",
 				RESTPath:    "{workorderGuid}",
 				Args:        []ArgDef{{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "uuid"}},
 			},
@@ -88,9 +88,10 @@ func init() {
 			},
 			{
 				Name:        "update",
-				Description: "Update an existing work order",
-				ToolName:    "UteamupWorkOrderUpdate",
-				Args:        []ArgDef{{Name: "id", Description: "Work order ID", Required: true, Type: "int"}},
+				Description: "Update an existing work order by GUID",
+				ToolName:    "UteamupWorkorderUpdate",
+				RESTPath:    "by-guid/{workorderGuid}",
+				Args:        []ArgDef{{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "uuid"}},
 				Flags: []FlagDef{
 					{Name: "title", Description: "New title", Type: "string"},
 					{Name: "status", Description: "New status", Type: "string"},
@@ -100,9 +101,10 @@ func init() {
 			},
 			{
 				Name:        "delete",
-				Description: "Delete a work order by ID",
-				ToolName:    "UteamupWorkOrderDelete",
-				Args:        []ArgDef{{Name: "id", Description: "Work order ID", Required: true, Type: "int"}},
+				Description: "Delete a work order by GUID",
+				ToolName:    "UteamupWorkorderDelete",
+				RESTPath:    "by-guid/{workorderGuid}",
+				Args:        []ArgDef{{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "uuid"}},
 			},
 			{
 				Name:        "search",
