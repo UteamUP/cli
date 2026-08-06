@@ -7,14 +7,14 @@ func init() {
 		Name:        "logbook-import",
 		Aliases:     []string{"logimp"},
 		Description: "Inspect parsed Word-logbook (.docx) imports before committing entries as Journals",
+		APIPath:     "/api/logbookimport",
 		Actions: []Action{
 			{
 				Name:        "get",
 				Description: "Get a parsed logbook import with its entries",
 				ToolName:    "UteamupLogbookImportGet",
-				Flags: []FlagDef{
-					{Name: "batch-id", Short: "b", Description: "Batch ID of the logbook import", Required: true, Type: "int"},
-				},
+				RESTPath:    "{externalGuid}",
+				Args:        externalGUIDArg(),
 			},
 		},
 	})
