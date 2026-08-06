@@ -29,6 +29,9 @@ func TestWorkorderTemplateCreateWorkorderTool(t *testing.T) {
 	if a.ToolName != "UteamupWorkorderTemplateCreateFromTemplateByGuid" {
 		t.Errorf("create-workorder: expected tool UteamupWorkorderTemplateCreateFromTemplateByGuid, got %q", a.ToolName)
 	}
+	if a.HTTPMethod != "POST" || a.RESTPath != "{templateGuid}/create-workorder" {
+		t.Errorf("create-workorder route = %s %q, want POST {templateGuid}/create-workorder", a.HTTPMethod, a.RESTPath)
+	}
 }
 
 // --template carries the template's public GUID and is the only required
@@ -43,10 +46,46 @@ func TestWorkorderTemplateCreateWorkorderRequiresTemplate(t *testing.T) {
 			if !f.Required {
 				t.Error("flag --template must be marked Required")
 			}
+			if f.BodyName != "templateGuid" {
+				t.Errorf("flag --template BodyName = %q, want templateGuid", f.BodyName)
+			}
 		}
 	}
 	if !seen {
 		t.Error("missing required flag --template")
+	}
+}
+
+func TestWorkorderTemplateCreateWorkorderMirrorsCanonicalGuidOverrides(t *testing.T) {
+	a := wotCreateAction(t)
+	want := map[string]string{
+		"asset-guids":           "assetGuids",
+		"part-guids":            "partGuids",
+		"tool-guids":            "toolGuids",
+		"chemical-guids":        "chemicalGuids",
+		"task-list-guids":       "taskListGuids",
+		"check-list-guids":      "checkListGuids",
+		"location-guid":         "locationGuid",
+		"location-floor-guid":   "locationFloorGuid",
+		"primary-assignee-guid": "primaryAssigneeGuid",
+		"estimated-duration":    "estimatedDuration",
+		"estimated-cost":        "estimatedCost",
+	}
+	seen := map[string]bool{}
+	for _, flag := range a.Flags {
+		bodyName, ok := want[flag.Name]
+		if !ok {
+			continue
+		}
+		seen[flag.Name] = true
+		if flag.BodyName != bodyName || flag.Required {
+			t.Errorf("flag --%s = BodyName %q Required %v, want %q and optional", flag.Name, flag.BodyName, flag.Required, bodyName)
+		}
+	}
+	for name := range want {
+		if !seen[name] {
+			t.Errorf("missing canonical override flag --%s", name)
+		}
 	}
 }
 
