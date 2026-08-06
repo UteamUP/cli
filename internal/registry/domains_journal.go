@@ -1,98 +1,133 @@
 package registry
 
 func init() {
-	journalActions := crudActions("Journal")
-	for index := range journalActions {
-		if journalActions[index].Name == "create" {
-			journalActions[index].Description = "Create a journal or GUID-linked field note from a JSON request"
-			break
-		}
-	}
-
 	Register(&Domain{
 		Name:        "journal",
 		Aliases:     []string{"journals"},
 		Description: "Manage journal entries, import documents, and query by code / asset / workorder",
-		Actions: append(journalActions,
+		Actions: []Action{
+			{
+				Name:        "list",
+				Description: "List journal entries with pagination",
+				ToolName:    "UteamupJournalList",
+				HTTPMethod:  "POST",
+				RESTPath:    "search",
+				Flags: []FlagDef{
+					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int", BodyName: "pageNumber"},
+					{Name: "page-size", Short: "s", Description: "Items per page", Default: 20, Type: "int", BodyName: "pageSize"},
+				},
+			},
+			{
+				Name:        "get",
+				Description: "Get a journal entry by GUID",
+				ToolName:    "UteamupJournalGet",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-guid/{journalGuid}",
+				Args:        []ArgDef{{Name: "journalGuid", Description: "Journal GUID", Required: true, Type: "uuid"}},
+			},
+			{
+				Name:        "create",
+				Description: "Create a journal or GUID-linked field note from a reviewed JSON file",
+				ToolName:    "UteamupJournalCreate",
+				MCPOnly:     true,
+				Flags: []FlagDef{
+					{Name: "from-json", BodyName: "model", Description: "JSON file containing the JournalCreateModel request", Required: true, Type: "string", JSONFile: true},
+				},
+			},
+			{
+				Name:        "update",
+				Description: "Update a journal entry by GUID from a reviewed JSON file",
+				ToolName:    "UteamupJournalUpdate",
+				MCPOnly:     true,
+				Args:        []ArgDef{{Name: "journalGuid", Description: "Journal GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "from-json", BodyName: "model", Description: "JSON file containing the JournalUpdateModel request", Required: true, Type: "string", JSONFile: true},
+				},
+			},
+			{
+				Name:        "delete",
+				Description: "Delete a journal entry by GUID",
+				ToolName:    "UteamupJournalDelete",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "by-guid/{journalGuid}",
+				Args:        []ArgDef{{Name: "journalGuid", Description: "Journal GUID", Required: true, Type: "uuid"}},
+			},
 			Action{
 				Name:        "by-code",
 				Description: "List journal entries linked to a code catalog entry",
-				ToolName:    "UteamupJournalByCode",
-				RESTPath:    "by-code",
-				Args:        []ArgDef{{Name: "code-catalog-entry-id", Description: "Code catalog entry ID", Required: true, Type: "int"}},
+				ToolName:    "UteamupJournalGetByCode",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-code/{codeCatalogEntryGuid}",
+				Args:        []ArgDef{{Name: "codeCatalogEntryGuid", Description: "Code catalog entry GUID", Required: true, Type: "uuid"}},
 				Flags: []FlagDef{
-					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
-					{Name: "page-size", Short: "s", Description: "Items per page", Default: 25, Type: "int"},
+					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int", QueryName: "pageNumber"},
+					{Name: "page-size", Short: "s", Description: "Items per page", Default: 20, Type: "int", QueryName: "pageSize"},
 				},
 			},
 			Action{
 				Name:        "by-asset",
 				Description: "List journal entries for an asset",
-				ToolName:    "UteamupJournalByAsset",
-				RESTPath:    "by-asset",
-				Args:        []ArgDef{{Name: "asset-id", Description: "Asset ID", Required: true, Type: "int"}},
+				ToolName:    "UteamupJournalGetByAsset",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-asset/{assetGuid}",
+				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset GUID", Required: true, Type: "uuid"}},
 				Flags: []FlagDef{
-					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
-					{Name: "page-size", Short: "s", Description: "Items per page", Default: 25, Type: "int"},
+					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int", QueryName: "pageNumber"},
+					{Name: "page-size", Short: "s", Description: "Items per page", Default: 20, Type: "int", QueryName: "pageSize"},
 				},
 			},
-			// --- Import pipeline (journal-document-import-and-inline-tags) ---
-			// These wrap the POST /api/journal/import and /{guid}/images endpoints
-			// via base64 payloads so MCP/CLI callers don't need multipart plumbing.
-			// The underlying MCP tool converts the base64 body into the same
-			// multipart shape the HTTP endpoint accepts.
 			Action{
 				Name:        "import",
 				Description: "Import a .docx / .md / .txt file (base64) into a new journal; auto-tags KKS/Asset/Workorder tokens",
 				ToolName:    "UteamupJournalImport",
-				RESTPath:    "import",
+				MCPOnly:     true,
 				Args: []ArgDef{
-					{Name: "file-name", Description: "Source filename (extension drives MIME detection)", Required: true, Type: "string"},
-					{Name: "file-content-base64", Description: "Base64-encoded file content (max 10 MB)", Required: true, Type: "string"},
+					{Name: "fileName", Description: "Source filename (extension drives MIME detection)", Required: true, Type: "string"},
+					{Name: "fileContentBase64", Description: "Base64-encoded file content (max 10 MB)", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
-					{Name: "title", Description: "Journal title (defaults to filename)", Type: "string"},
-					{Name: "summary", Description: "Optional summary for the journal list surface", Type: "string"},
-					{Name: "target-journal-guid", Description: "Append to an existing journal instead of creating a new one", Type: "uuid"},
+					{Name: "title", BodyName: "title", Description: "Journal title (defaults to filename)", Type: "string"},
+					{Name: "summary", BodyName: "summary", Description: "Optional summary for the journal list surface", Type: "string"},
+					{Name: "target-journal-guid", BodyName: "targetJournalGuid", Description: "Append to an existing journal instead of creating a new one", Type: "uuid"},
 				},
 			},
 			Action{
 				Name:        "create-from-image",
 				Description: "Create a stub journal from one image (base64); re-encoded server-side to strip EXIF",
 				ToolName:    "UteamupJournalCreateFromImage",
-				RESTPath:    "import",
+				MCPOnly:     true,
 				Args: []ArgDef{
-					{Name: "image-file-name", Description: "Source image filename", Required: true, Type: "string"},
-					{Name: "image-content-base64", Description: "Base64-encoded image bytes (max 25 MB, png/jpeg/webp/gif)", Required: true, Type: "string"},
+					{Name: "imageFileName", Description: "Source image filename", Required: true, Type: "string"},
+					{Name: "imageContentBase64", Description: "Base64-encoded image bytes (max 25 MB, png/jpeg/webp/gif)", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
-					{Name: "title", Description: "Journal title (defaults to timestamp)", Type: "string"},
-				},
-			},
-			// --- Mention search helpers ---
-			// Read-only autocomplete endpoints matching what the web journal
-			// editor hits for the `#`, `$`, and `%` triggers. Lets scripts
-			// pre-resolve mention IDs before calling the update endpoint.
-			Action{
-				Name:        "search-assets",
-				Description: "Search assets for the $ mention trigger (tenant-scoped, active only)",
-				ToolName:    "UteamupAssetMentionSearch",
-				RESTPath:    "",
-				Args:        []ArgDef{{Name: "query", Description: "Search query (min 1 char)", Required: true, Type: "string"}},
-				Flags: []FlagDef{
-					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int"},
+					{Name: "title", BodyName: "title", Description: "Journal title (defaults to timestamp)", Type: "string"},
 				},
 			},
 			Action{
-				Name:        "search-workorders",
-				Description: "Search workorders by TicketId for the % mention trigger (tenant-scoped)",
-				ToolName:    "UteamupWorkorderMentionSearch",
-				RESTPath:    "",
-				Args:        []ArgDef{{Name: "query", Description: "Search query against Workorder.TicketId", Required: true, Type: "string"}},
+				Name:         "search-assets",
+				Description:  "Search assets for the $ mention trigger (tenant-scoped, active only)",
+				ToolName:     "UteamupAssetMentionSearch",
+				RESTBasePath: "/api/asset",
+				RESTPath:     "mention-search",
+				HTTPMethod:   "GET",
+				Args:         []ArgDef{{Name: "query", Description: "Search query (min 1 char)", Required: true, Type: "string", QueryName: "query"}},
 				Flags: []FlagDef{
-					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int"},
+					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int", QueryName: "limit"},
 				},
 			},
-		),
+			Action{
+				Name:         "search-workorders",
+				Description:  "Search workorders by TicketId for the % mention trigger (tenant-scoped)",
+				ToolName:     "UteamupWorkorderMentionSearch",
+				RESTBasePath: "/api/workorder",
+				RESTPath:     "mention-search",
+				HTTPMethod:   "GET",
+				Args:         []ArgDef{{Name: "query", Description: "Search query against Workorder.TicketId", Required: true, Type: "string", QueryName: "query"}},
+				Flags: []FlagDef{
+					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int", QueryName: "limit"},
+				},
+			},
+		},
 	})
 }
