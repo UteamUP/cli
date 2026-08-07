@@ -5,6 +5,31 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.92.1](https://github.com/UteamUP/cli/compare/1.92.0...1.92.1) (2026-08-07)
+
+
+### Bug Fixes
+
+* add GUID-only workorder completion ([eca68c0](https://github.com/UteamUP/cli/commit/eca68c064b58c5ad5fc0da57d1b9bdf8cfedd0f1))
+* address cost overviews by workorder GUID ([920ad66](https://github.com/UteamUP/cli/commit/920ad66471a90095509cba26bd64da7fdcd42f04))
+* align coding and document CLI GUID contracts ([0744091](https://github.com/UteamUP/cli/commit/074409153ba70a5fc293d0ede6b55a964baaaddc))
+* expose asset reports by GUID ([2866699](https://github.com/UteamUP/cli/commit/28666995ba043c41c25c1f01a58b9373080165fc))
+* expose canonical GUID workorder create ([afd8b12](https://github.com/UteamUP/cli/commit/afd8b1296c5b8da025fe89767610c7268ad4264a))
+* expose contractor and vendor GUID commands ([dfb9fc1](https://github.com/UteamUP/cli/commit/dfb9fc1b7fd500ff62282d899f771f9019470059))
+* expose document review GUID routes ([e5c3903](https://github.com/UteamUP/cli/commit/e5c3903ba647163939b3c2ba2acb99b14cdd81ac))
+* expose IoT definition lifecycle controls ([0df23fa](https://github.com/UteamUP/cli/commit/0df23fa8d4525a1c1f5ac4f062bfcfd696c41711))
+* **marketplace:** route every marketplace action instead of collapsing onto /api/marketplace ([fe84652](https://github.com/UteamUP/cli/commit/fe8465262fcce44dfb722b8e129c75788a024fff))
+* register signature commands with GUID-only arguments ([1de951a](https://github.com/UteamUP/cli/commit/1de951a344ddd16ff94f4ad53af498a1bdf35a1e))
+* repair CLI startup panic from string defaults on int flags ([314fa44](https://github.com/UteamUP/cli/commit/314fa44b6b5b2b3071fd3426a23874f3c1816962))
+* repair journal command transports ([7b4769d](https://github.com/UteamUP/cli/commit/7b4769d39225556dbd619deb080f5788ddb043ee))
+* route logbook imports by GUID ([a4b987f](https://github.com/UteamUP/cli/commit/a4b987f408f9ae35cff3caa7db2d79e40da33c06))
+* route stock CLI actions by GUID ([2fae0a9](https://github.com/UteamUP/cli/commit/2fae0a935be22b6856e48959de7ec402193d3ec2))
+* sync asset calibration cli registry ([cb031db](https://github.com/UteamUP/cli/commit/cb031dbede57ca82d16d88731e4a8d93837f1730))
+* sync quick report CLI contract ([881784a](https://github.com/UteamUP/cli/commit/881784ac1d05ef70c49b1d3f9b93a53e0584f6ff))
+* synchronize template workorder CLI contract ([6c350f3](https://github.com/UteamUP/cli/commit/6c350f3d1011bd1e436c6861826a46ee6f696a1a))
+* use GUID asset type contracts in CLI ([95e20bf](https://github.com/UteamUP/cli/commit/95e20bf0e57e2f99e0b3f77e33b48fad6989e98b))
+* **workorder:** route CLI actions by GUID ([18d56f3](https://github.com/UteamUP/cli/commit/18d56f383a2e8b1d5c78202dc276a1f3cfc076f6))
+
 ## [1.92.0](https://github.com/UteamUP/cli/compare/1.91.0...1.92.0) (2026-07-24)
 
 
