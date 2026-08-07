@@ -73,7 +73,82 @@ func init() {
 			},
 		},
 	)})
-	Register(&Domain{Name: "workorder-signature", Description: "Manage work order signatures", Actions: crudActions("WorkorderSignature")})
+	Register(&Domain{
+		Name:        "workorder-signature",
+		Description: "Manage work order signatures",
+		Actions: []Action{
+			{
+				Name:        "summary",
+				Description: "Get the signature summary for a work order by public GUID",
+				ToolName:    "UteamupSignatureGetSummary",
+				MCPOnly:     true,
+				Args: []ArgDef{
+					{Name: "workorderGuid", Description: "Work order public GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:        "compute-requirements",
+				Description: "Preview signature requirements for a work order by public GUID",
+				ToolName:    "UteamupSignatureComputeRequirements",
+				MCPOnly:     true,
+				Args: []ArgDef{
+					{Name: "workorderGuid", Description: "Work order public GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:        "create-requirements",
+				Description: "Create configured signature requirements for a work order by public GUID",
+				ToolName:    "UteamupSignatureCreateRequirements",
+				MCPOnly:     true,
+				Args: []ArgDef{
+					{Name: "workorderGuid", Description: "Work order public GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:        "assign-signer",
+				Description: "Assign a signer to a work order using a reviewed GUID-only model",
+				ToolName:    "UteamupSignatureAssignSigner",
+				MCPOnly:     true,
+				Args: []ArgDef{
+					{Name: "workorderGuid", Description: "Work order public GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "model", Short: "f", BodyName: "model", Description: "JSON file containing signerGuid, contactGuid, or signerGroupGuid assignment details", Required: true, Type: "string", JSONFile: true},
+				},
+			},
+			{
+				Name:        "remove-signer",
+				Description: "Remove a signature requirement by public GUID",
+				ToolName:    "UteamupSignatureRemoveSigner",
+				MCPOnly:     true,
+				Args: []ArgDef{
+					{Name: "requirementGuid", Description: "Signature requirement public GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:        "settings",
+				Description: "Get tenant signature settings",
+				ToolName:    "UteamupSignatureGetSettings",
+				MCPOnly:     true,
+			},
+			{
+				Name:        "dashboard",
+				Description: "Get the tenant signature dashboard",
+				ToolName:    "UteamupSignatureGetDashboard",
+				MCPOnly:     true,
+			},
+			{
+				Name:        "analytics",
+				Description: "Get signature analytics for an ISO-8601 date range",
+				ToolName:    "UteamupSignatureGetAnalytics",
+				MCPOnly:     true,
+				Flags: []FlagDef{
+					{Name: "start-date", BodyName: "startDate", Description: "Analytics period start in ISO-8601 format", Required: true, Type: "string"},
+					{Name: "end-date", BodyName: "endDate", Description: "Analytics period end in ISO-8601 format", Required: true, Type: "string"},
+				},
+			},
+		},
+	})
 	Register(&Domain{Name: "workorder-watchlist", Description: "Manage work order watchlists", Actions: crudActions("WorkorderWatchlist")})
 	Register(&Domain{Name: "tasklist", Aliases: []string{"tasks"}, Description: "Manage task lists", Actions: crudActions("TaskList")})
 	Register(&Domain{Name: "checklist", Aliases: []string{"checklists"}, Description: "Manage checklists", Actions: crudActions("CheckList")})

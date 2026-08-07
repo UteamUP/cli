@@ -105,3 +105,147 @@ func TestWorkorderTemplateCreateWorkorderOverridesAreOptional(t *testing.T) {
 		}
 	}
 }
+
+func workorderSignatureDomain(t *testing.T) *Domain {
+	t.Helper()
+	domain := findDomain("workorder-signature")
+	if domain == nil {
+		t.Fatal("expected workorder-signature domain to be registered")
+	}
+	return domain
+}
+
+func workorderSignatureAction(t *testing.T, name string) *Action {
+	t.Helper()
+	action := findAction(workorderSignatureDomain(t), name)
+	if action == nil {
+		t.Fatalf("expected %s action on the workorder-signature domain", name)
+	}
+	return action
+}
+
+func TestWorkorderSignatureActionsMirrorBackendTools(t *testing.T) {
+	expected := map[string]string{
+		"summary":              "UteamupSignatureGetSummary",
+		"compute-requirements": "UteamupSignatureComputeRequirements",
+		"create-requirements":  "UteamupSignatureCreateRequirements",
+		"assign-signer":        "UteamupSignatureAssignSigner",
+		"remove-signer":        "UteamupSignatureRemoveSigner",
+		"settings":             "UteamupSignatureGetSettings",
+		"dashboard":            "UteamupSignatureGetDashboard",
+		"analytics":            "UteamupSignatureGetAnalytics",
+	}
+
+	domain := workorderSignatureDomain(t)
+	if len(domain.Actions) != len(expected) {
+		t.Fatalf("workorder-signature actions = %d, want %d", len(domain.Actions), len(expected))
+	}
+
+	for actionName, toolName := range expected {
+		action := workorderSignatureAction(t, actionName)
+		if action.ToolName != toolName {
+			t.Errorf("%s tool = %q, want %q", actionName, action.ToolName, toolName)
+		}
+		if !action.MCPOnly {
+			t.Errorf("%s must use the MCP transport because it has no REST adapter", actionName)
+		}
+	}
+}
+
+func TestWorkorderSignatureOperationsUsePublicGuidArguments(t *testing.T) {
+	expected := map[string]string{
+		"summary":              "workorderGuid",
+		"compute-requirements": "workorderGuid",
+		"create-requirements":  "workorderGuid",
+		"assign-signer":        "workorderGuid",
+		"remove-signer":        "requirementGuid",
+	}
+	for actionName, argumentName := range expected {
+		action := workorderSignatureAction(t, actionName)
+		if len(action.Args) != 1 {
+			t.Fatalf("%s arguments = %d, want one public GUID", actionName, len(action.Args))
+		}
+		argument := action.Args[0]
+		if argument.Name != argumentName || argument.Type != "uuid" || !argument.Required {
+			t.Errorf(
+				"%s argument = %+v, want required uuid %s",
+				actionName,
+				argument,
+				argumentName,
+			)
+		}
+	}
+}
+
+func TestWorkorderSignatureAssignSignerUsesReviewedGuidModel(t *testing.T) {
+	action := workorderSignatureAction(t, "assign-signer")
+	if len(action.Flags) != 1 {
+		t.Fatalf("assign-signer flags = %d, want one JSON model flag", len(action.Flags))
+	}
+	model := action.Flags[0]
+	if model.BodyName != "model" || model.Type != "string" || !model.Required || !model.JSONFile {
+		t.Errorf("assign-signer model flag = %+v, want required JSON file mapped to model", model)
+	}
+}
+
+func TestWorkorderSignatureAnalyticsUsesDateArguments(t *testing.T) {
+	action := workorderSignatureAction(t, "analytics")
+	expected := map[string]string{
+		"start-date": "startDate",
+		"end-date":   "endDate",
+	}
+	if len(action.Flags) != len(expected) {
+		t.Fatalf("analytics flags = %d, want %d", len(action.Flags), len(expected))
+	}
+	for _, flag := range action.Flags {
+		bodyName, ok := expected[flag.Name]
+		if !ok {
+			t.Errorf("analytics exposes unexpected flag --%s", flag.Name)
+			continue
+		}
+		if flag.BodyName != bodyName || flag.Type != "string" || !flag.Required {
+			t.Errorf("analytics flag --%s = %+v, want required string mapped to %s", flag.Name, flag, bodyName)
+		}
+	}
+}
+
+func TestWorkorderSignatureRegistryRejectsInternalIdentifiers(t *testing.T) {
+	internalIdentifiers := map[string]bool{
+		"id":            true,
+		"workorderId":   true,
+		"requirementId": true,
+		"signerId":      true,
+		"contactId":     true,
+		"signerGroupId": true,
+	}
+
+	for _, action := range workorderSignatureDomain(t).Actions {
+		for _, argument := range action.Args {
+			name := argument.BodyName
+			if name == "" {
+				name = argument.Name
+			}
+			if internalIdentifiers[name] || argument.Type == "int" {
+				t.Errorf("%s exposes internal argument %q with type %q", action.Name, name, argument.Type)
+			}
+		}
+		for _, flag := range action.Flags {
+			name := flag.BodyName
+			if name == "" {
+				name = toCamelCase(flag.Name)
+			}
+			if internalIdentifiers[name] || flag.Type == "int" {
+				t.Errorf("%s exposes internal flag %q with type %q", action.Name, name, flag.Type)
+			}
+		}
+	}
+}
+
+func TestWorkorderSignatureSettingsAndDashboardNeedNoArguments(t *testing.T) {
+	for _, actionName := range []string{"settings", "dashboard"} {
+		action := workorderSignatureAction(t, actionName)
+		if len(action.Args) != 0 || len(action.Flags) != 0 {
+			t.Errorf("%s must not require arguments or flags", actionName)
+		}
+	}
+}
