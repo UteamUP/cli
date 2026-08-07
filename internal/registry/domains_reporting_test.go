@@ -44,3 +44,21 @@ func TestApprovedReportAnalyticsReadWired(t *testing.T) {
 		t.Errorf("group-by = %+v, want optional string default month", flag)
 	}
 }
+
+func TestCostOverviewWorkorderGetUsesGuidContract(t *testing.T) {
+	action := findDomainAction(t, "cost-overview", "get")
+
+	if action.ToolName != "UteamupCostByWorkorder" {
+		t.Fatalf("ToolName = %q, want UteamupCostByWorkorder", action.ToolName)
+	}
+	if action.HTTPMethod != "GET" || action.RESTPath != "workorders/by-guid/{workorderGuid}" {
+		t.Fatalf("route = %s %s, want GET workorders/by-guid/{workorderGuid}", action.HTTPMethod, action.RESTPath)
+	}
+	if len(action.Args) != 1 {
+		t.Fatalf("args = %+v, want one GUID arg", action.Args)
+	}
+	arg := action.Args[0]
+	if arg.Name != "workorderGuid" || arg.Type != "uuid" || !arg.Required {
+		t.Fatalf("arg = %+v, want required workorderGuid uuid", arg)
+	}
+}

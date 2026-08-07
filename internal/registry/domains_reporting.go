@@ -27,5 +27,28 @@ func init() {
 	Register(&Domain{Name: "forecast", Aliases: []string{"forecasts"}, Description: "View forecasts", Actions: listGetActions("Forecast")})
 	Register(&Domain{Name: "ifta", Description: "Manage IFTA records", Actions: crudActions("Ifta")})
 	Register(&Domain{Name: "meter-reading", Aliases: []string{"meter"}, Description: "Manage meter readings", Actions: crudActions("MeterReading")})
-	Register(&Domain{Name: "cost-overview", Aliases: []string{"costs"}, Description: "View cost overviews", Actions: listGetActions("CostOverview")})
+	Register(&Domain{
+		Name:        "cost-overview",
+		Aliases:     []string{"costs"},
+		Description: "View cost overviews",
+		APIPath:     "/api/costoverview",
+		Actions: []Action{
+			{
+				Name:        "list",
+				Description: "View the tenant cost overview summary",
+				ToolName:    "UteamupCostOverviewSummary",
+				HTTPMethod:  "GET",
+			},
+			{
+				Name:        "get",
+				Description: "Get cost details for a workorder by its stable public GUID",
+				ToolName:    "UteamupCostByWorkorder",
+				HTTPMethod:  "GET",
+				RESTPath:    "workorders/by-guid/{workorderGuid}",
+				Args: []ArgDef{
+					{Name: "workorderGuid", Description: "Workorder GUID", Required: true, Type: "uuid"},
+				},
+			},
+		},
+	})
 }
