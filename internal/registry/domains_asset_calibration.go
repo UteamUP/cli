@@ -4,6 +4,7 @@ func init() {
 	Register(&Domain{
 		Name:        "asset-calibration",
 		Description: "Manage asset calibration records",
+		APIPath:     "/api/assetcalibration",
 		Actions: []Action{
 			{
 				Name:        "due-soon",
@@ -22,11 +23,54 @@ func init() {
 				HTTPMethod:  "GET",
 				RESTPath:    "overdue",
 			},
-			{Name: "list", Description: "List calibrations for an asset", ToolName: "UteamupAssetCalibrationList", Flags: append(paginationFlags(), FlagDef{Name: "asset-id", Description: "Asset ID", Type: "int"})},
-			{Name: "get", Description: "Get calibration by ID", ToolName: "UteamupAssetCalibrationGet", Args: idArg()},
-			{Name: "create", Description: "Create a calibration record", ToolName: "UteamupAssetCalibrationCreate", Flags: []FlagDef{jsonFlag()}},
-			{Name: "update", Description: "Update a calibration record", ToolName: "UteamupAssetCalibrationUpdate", Args: idArg(), Flags: []FlagDef{jsonFlag()}},
-			{Name: "delete", Description: "Delete a calibration record", ToolName: "UteamupAssetCalibrationDelete", Args: idArg()},
+			{
+				Name:        "list",
+				Description: "List calibrations for an asset by public GUID",
+				ToolName:    "UteamupAssetcalibrationGetByAsset",
+				HTTPMethod:  "GET",
+				RESTPath:    "asset/by-guid/{assetGuid}",
+				Args: []ArgDef{
+					{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "get",
+				Description: "Get a calibration by public GUID",
+				ToolName:    "UteamupAssetcalibrationGet",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-guid/{calibrationGuid}",
+				Args: []ArgDef{
+					{Name: "calibrationGuid", Description: "Public calibration GUID", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "create",
+				Description: "Create a calibration record",
+				ToolName:    "UteamupAssetcalibrationCreate",
+				HTTPMethod:  "POST",
+				Flags:       []FlagDef{jsonFlag()},
+			},
+			{
+				Name:        "update",
+				Description: "Update a calibration by public GUID",
+				ToolName:    "UteamupAssetcalibrationUpdate",
+				HTTPMethod:  "PUT",
+				RESTPath:    "by-guid/{calibrationGuid}",
+				Args: []ArgDef{
+					{Name: "calibrationGuid", Description: "Public calibration GUID", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{jsonFlag()},
+			},
+			{
+				Name:        "delete",
+				Description: "Delete a calibration by public GUID",
+				ToolName:    "UteamupAssetcalibrationDelete",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "by-guid/{calibrationGuid}",
+				Args: []ArgDef{
+					{Name: "calibrationGuid", Description: "Public calibration GUID", Required: true, Type: "string"},
+				},
+			},
 		},
 	})
 }
