@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -88,26 +89,79 @@ func TestCodingSystemTreeFlags(t *testing.T) {
 		t.Fatal("expected tree action")
 	}
 
-	// Should have coding-system-id (required) and parent-id (optional)
+	// Public identifiers are validated UUIDs and map to the registered MCP names.
 	flagMap := make(map[string]FlagDef)
 	for _, f := range treeAction.Flags {
 		flagMap[f.Name] = f
 	}
 
-	csFlag, ok := flagMap["coding-system-id"]
+	csFlag, ok := flagMap["coding-system-guid"]
 	if !ok {
-		t.Fatal("missing coding-system-id flag")
+		t.Fatal("missing coding-system-guid flag")
 	}
 	if !csFlag.Required {
-		t.Error("coding-system-id should be required")
+		t.Error("coding-system-guid should be required")
+	}
+	if csFlag.Type != "uuid" || csFlag.BodyName != "codingSystemGuid" {
+		t.Errorf("coding-system-guid = %#v, want uuid mapped to codingSystemGuid", csFlag)
 	}
 
-	parentFlag, ok := flagMap["parent-id"]
+	parentFlag, ok := flagMap["parent-guid"]
 	if !ok {
-		t.Fatal("missing parent-id flag")
+		t.Fatal("missing parent-guid flag")
 	}
 	if parentFlag.Required {
-		t.Error("parent-id should not be required")
+		t.Error("parent-guid should not be required")
+	}
+	if parentFlag.Type != "uuid" || parentFlag.BodyName != "parentGuid" {
+		t.Errorf("parent-guid = %#v, want uuid mapped to parentGuid", parentFlag)
+	}
+}
+
+func TestCodingSystemActionsUseRegisteredMCPGuidContracts(t *testing.T) {
+	var csDomain *Domain
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name == "codingsystem" {
+			csDomain = d
+			break
+		}
+	}
+	if csDomain == nil {
+		t.Fatal("expected codingsystem domain to be registered")
+	}
+
+	expectedGuidFlags := map[string]map[string]string{
+		"next-code":        {"parent-guid": "parentEntryGuid"},
+		"assign":           {"asset-guid": "assetGuid", "entry-guid": "codeCatalogEntryGuid"},
+		"create-workorder": {"entry-guid": "codeCatalogEntryGuid"},
+	}
+
+	for _, action := range csDomain.Actions {
+		if !action.MCPOnly {
+			t.Errorf("action %q must use its registered MCP tool contract", action.Name)
+		}
+		for _, flag := range action.Flags {
+			if strings.HasSuffix(flag.Name, "-id") {
+				t.Errorf("action %q exposes forbidden integer identifier flag --%s", action.Name, flag.Name)
+			}
+		}
+
+		for flagName, bodyName := range expectedGuidFlags[action.Name] {
+			var found *FlagDef
+			for i := range action.Flags {
+				if action.Flags[i].Name == flagName {
+					found = &action.Flags[i]
+					break
+				}
+			}
+			if found == nil {
+				t.Errorf("action %q missing --%s", action.Name, flagName)
+				continue
+			}
+			if found.Type != "uuid" || found.BodyName != bodyName {
+				t.Errorf("action %q --%s = %#v, want uuid mapped to %s", action.Name, flagName, *found, bodyName)
+			}
+		}
 	}
 }
 

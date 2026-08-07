@@ -29,44 +29,43 @@ func findDocumentAction(t *testing.T, name string) *Action {
 
 // TestDocumentLifecycleActionsAreGuidKeyed guards the GUID-first migration of
 // the document lifecycle verbs. update/delete/list-versions/upload-version/
-// restore-version must expose a single `externalGuid` positional arg (string),
-// NOT the legacy int `id`/`documentId`. The corresponding backend routes are
-// the new /api/document/{externalGuid}/... siblings of the [Obsolete] int ones.
+// Each lifecycle action exposes the canonical `documentGuid` positional arg,
+// never a legacy int `id`/`documentId`.
 func TestDocumentLifecycleActionsAreGuidKeyed(t *testing.T) {
-	for _, name := range []string{"update", "delete", "list-versions", "upload-version"} {
+	for _, name := range []string{"get", "update", "delete", "archive", "unarchive", "list-versions", "upload-version"} {
 		action := findDocumentAction(t, name)
 		if len(action.Args) != 1 {
 			t.Fatalf("%s expected exactly 1 positional arg, got %+v", name, action.Args)
 		}
 		arg := action.Args[0]
-		if arg.Name != "externalGuid" {
-			t.Errorf("%s positional arg = %q, want externalGuid", name, arg.Name)
+		if arg.Name != "documentGuid" {
+			t.Errorf("%s positional arg = %q, want documentGuid", name, arg.Name)
 		}
 		if arg.Type != "string" {
 			t.Errorf("%s arg type = %q, want string (GUIDs are strings)", name, arg.Type)
 		}
 		if !arg.Required {
-			t.Errorf("%s externalGuid arg must be Required", name)
+			t.Errorf("%s documentGuid arg must be Required", name)
 		}
 	}
 }
 
 // TestDocumentRestoreVersionGuidKeyed guards restore-version specifically: it
 // takes the document GUID plus the version ordinal, routes POST to
-// /api/document/{externalGuid}/versions/{versionNumber}/restore.
+// /api/document/{documentGuid}/versions/{versionNumber}/restore.
 func TestDocumentRestoreVersionGuidKeyed(t *testing.T) {
 	action := findDocumentAction(t, "restore-version")
 	if action.HTTPMethod != "POST" {
 		t.Errorf("restore-version HTTPMethod = %q, want POST", action.HTTPMethod)
 	}
-	if action.RESTPath != "{externalGuid}/versions/{versionNumber}/restore" {
-		t.Errorf("restore-version RESTPath = %q, want %q", action.RESTPath, "{externalGuid}/versions/{versionNumber}/restore")
+	if action.RESTPath != "{documentGuid}/versions/{versionNumber}/restore" {
+		t.Errorf("restore-version RESTPath = %q, want %q", action.RESTPath, "{documentGuid}/versions/{versionNumber}/restore")
 	}
 	if len(action.Args) != 2 {
 		t.Fatalf("restore-version expected 2 positional args, got %+v", action.Args)
 	}
-	if action.Args[0].Name != "externalGuid" || action.Args[0].Type != "string" {
-		t.Errorf("restore-version arg[0] = %+v, want externalGuid/string", action.Args[0])
+	if action.Args[0].Name != "documentGuid" || action.Args[0].Type != "string" {
+		t.Errorf("restore-version arg[0] = %+v, want documentGuid/string", action.Args[0])
 	}
 	if action.Args[1].Name != "versionNumber" || action.Args[1].Type != "int" {
 		t.Errorf("restore-version arg[1] = %+v, want versionNumber/int", action.Args[1])
@@ -86,9 +85,9 @@ func TestDocumentVersionRoutesResolve(t *testing.T) {
 		wantPath string
 		wantBody []string // arg names that must remain in body (not consumed)
 	}{
-		{"list-versions", map[string]any{"externalGuid": guid}, "/api/document/" + guid + "/versions", nil},
-		{"upload-version", map[string]any{"externalGuid": guid, "notes": "x"}, "/api/document/" + guid + "/versions", []string{"notes"}},
-		{"restore-version", map[string]any{"externalGuid": guid, "versionNumber": 3}, "/api/document/" + guid + "/versions/3/restore", nil},
+		{"list-versions", map[string]any{"documentGuid": guid}, "/api/document/" + guid + "/versions", nil},
+		{"upload-version", map[string]any{"documentGuid": guid}, "/api/document/" + guid + "/versions", nil},
+		{"restore-version", map[string]any{"documentGuid": guid, "versionNumber": 3}, "/api/document/" + guid + "/versions/3/restore", nil},
 	}
 
 	for _, c := range cases {
@@ -119,14 +118,14 @@ func TestDocumentVersionRoutesResolve(t *testing.T) {
 				t.Errorf("%s expected %q to remain in body, was consumed", c.action, want)
 			}
 		}
-		if _, leaked := args["externalGuid"]; leaked {
-			t.Errorf("%s leaked externalGuid into body", c.action)
+		if _, leaked := args["documentGuid"]; leaked {
+			t.Errorf("%s leaked documentGuid into body", c.action)
 		}
 	}
 }
 
 // TestDocumentUpdateDeleteRoutesResolve proves the GUID update/delete verbs
-// route to /api/document/{externalGuid} (no /status, no int collision).
+// route to /api/document/{documentGuid} (no /status, no int collision).
 func TestDocumentUpdateDeleteRoutesResolve(t *testing.T) {
 	doc := findDocumentDomain(t)
 	guid := "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
@@ -141,28 +140,40 @@ func TestDocumentUpdateDeleteRoutesResolve(t *testing.T) {
 		if action == nil {
 			t.Fatalf("missing action %q", name)
 		}
-		args := map[string]any{"externalGuid": guid}
+		args := map[string]any{"documentGuid": guid}
 		path, consumed := buildRESTPath(doc, *action, args)
 		want := "/api/document/" + guid
 		if path != want {
 			t.Errorf("%s path = %q, want %q", name, path, want)
 		}
-		if len(consumed) != 1 || consumed[0] != "externalGuid" {
-			t.Errorf("%s consumed = %v, want [externalGuid]", name, consumed)
+		if len(consumed) != 1 || consumed[0] != "documentGuid" {
+			t.Errorf("%s consumed = %v, want [documentGuid]", name, consumed)
 		}
 	}
 }
 
-// TestDocumentReadActionsStayIntKeyed guards that list/get/create are left
-// untouched by the lifecycle migration — get keeps the legacy {id:int} route
-// per the document GUID-first contract ("Do NOT touch GetDocument").
-func TestDocumentReadActionsStayIntKeyed(t *testing.T) {
+// TestDocumentGetUsesCanonicalGuidRoute guards the GUID-only read contract.
+func TestDocumentGetUsesCanonicalGuidRoute(t *testing.T) {
 	get := findDocumentAction(t, "get")
-	if len(get.Args) != 1 || get.Args[0].Name != "id" {
-		t.Errorf("get must keep legacy int `id` arg, got %+v", get.Args)
+	if len(get.Args) != 1 || get.Args[0].Name != "documentGuid" {
+		t.Errorf("get must use documentGuid, got %+v", get.Args)
 	}
-	if get.Args[0].Type != "int" {
-		t.Errorf("get id arg type = %q, want int", get.Args[0].Type)
+	if get.Args[0].Type != "string" || get.RESTPath != "by-guid/{documentGuid}" {
+		t.Errorf("get contract = %+v, want string GUID at by-guid/{documentGuid}", get)
+	}
+}
+
+func TestDocumentVersionUploadUsesMultipartFile(t *testing.T) {
+	upload := findDocumentAction(t, "upload-version")
+	if upload.ToolName != "UteamupDocumentUploadVersionByGuid" {
+		t.Errorf("upload-version ToolName = %q", upload.ToolName)
+	}
+	if len(upload.Flags) != 1 {
+		t.Fatalf("upload-version flags = %+v, want one file flag", upload.Flags)
+	}
+	file := upload.Flags[0]
+	if file.Name != "file" || file.BodyName != "file" || !file.Required || !file.UploadFile {
+		t.Errorf("upload-version file flag = %+v, want required multipart field named file", file)
 	}
 }
 

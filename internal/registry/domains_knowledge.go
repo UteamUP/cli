@@ -4,6 +4,10 @@ package registry
 // entity-link endpoints (KnowledgeArticleController /linked routes).
 const knowledgeEntityTypes = "asset, part, tool, chemical, location, workorder, workordertemplate, industrycode"
 
+func documentGUIDArg() []ArgDef {
+	return []ArgDef{{Name: "documentGuid", Description: "Document public GUID", Required: true, Type: "string"}}
+}
+
 func init() {
 	Register(&Domain{
 		Name:        "knowledge",
@@ -54,22 +58,20 @@ func init() {
 		Name:        "document",
 		Aliases:     []string{"documents", "doc"},
 		Description: "Manage documents with versioning and archiving",
-		// list/get/create stay as-is (get keeps the legacy {id:int} route per the
-		// document GUID-first contract). The lifecycle verbs below are GUID-keyed
-		// against the new /api/document/{externalGuid}/... routes; the int routes
-		// remain as [Obsolete] shims on the backend.
+		// Every document identity crossing the CLI boundary is the canonical public
+		// GUID. Integer keys remain private to EF joins in the backend.
 		Actions: append([]Action{
 			{Name: "list", Description: "List records", ToolName: "UteamupDocumentList", Flags: paginationFlags()},
-			{Name: "get", Description: "Get by ID", ToolName: "UteamupDocumentGet", Args: idArg()},
+			{Name: "get", Description: "Get a document by GUID", ToolName: "UteamupDocumentGet", RESTPath: "by-guid/{documentGuid}", Args: documentGUIDArg()},
 			{Name: "create", Description: "Create a record", ToolName: "UteamupDocumentCreate", Flags: []FlagDef{jsonFlag()}},
-			{Name: "update", Description: "Update a record by GUID", ToolName: "UteamupDocumentUpdate", Args: externalGUIDArg(), Flags: []FlagDef{jsonFlag()}},
-			{Name: "delete", Description: "Delete a record by GUID", ToolName: "UteamupDocumentDelete", Args: externalGUIDArg()},
-			{Name: "list-versions", Description: "List version history for a document by GUID", ToolName: "UteamupDocumentListVersionsByGuid", HTTPMethod: "GET", RESTPath: "{externalGuid}/versions", Args: externalGUIDArg()},
-			{Name: "upload-version", Description: "Upload a new version of a document by GUID", ToolName: "UteamupDocumentUploadVersion", HTTPMethod: "POST", RESTPath: "{externalGuid}/versions", Args: externalGUIDArg(), Flags: []FlagDef{{Name: "file", Description: "Path to file", Default: ""}, {Name: "notes", Description: "Change notes", Default: ""}}},
-			{Name: "restore-version", Description: "Restore a previous version as current by GUID", ToolName: "UteamupDocumentRestoreVersion", HTTPMethod: "POST", RESTPath: "{externalGuid}/versions/{versionNumber}/restore", Args: []ArgDef{{Name: "externalGuid", Description: "Document GUID", Required: true, Type: "string"}, {Name: "versionNumber", Description: "Version number to restore", Required: true, Type: "int"}}},
+			{Name: "update", Description: "Update a record by GUID", ToolName: "UteamupDocumentUpdate", RESTPath: "{documentGuid}", Args: documentGUIDArg(), Flags: []FlagDef{jsonFlag()}},
+			{Name: "delete", Description: "Archive a record by GUID", ToolName: "UteamupDocumentDelete", RESTPath: "{documentGuid}", Args: documentGUIDArg()},
+			{Name: "list-versions", Description: "List version history for a document by GUID", ToolName: "UteamupDocumentListVersionsByGuid", HTTPMethod: "GET", RESTPath: "{documentGuid}/versions", Args: documentGUIDArg()},
+			{Name: "upload-version", Description: "Upload a new version of a document by GUID", ToolName: "UteamupDocumentUploadVersionByGuid", HTTPMethod: "POST", RESTPath: "{documentGuid}/versions", Args: documentGUIDArg(), Flags: []FlagDef{{Name: "file", Short: "f", BodyName: "file", Description: "Path to the version file", Required: true, Type: "string", UploadFile: true}}},
+			{Name: "restore-version", Description: "Restore a previous version as current by GUID", ToolName: "UteamupDocumentRestoreVersionByGuid", HTTPMethod: "POST", RESTPath: "{documentGuid}/versions/{versionNumber}/restore", Args: []ArgDef{{Name: "documentGuid", Description: "Document GUID", Required: true, Type: "string"}, {Name: "versionNumber", Description: "Version number to restore", Required: true, Type: "int"}}},
 		},
-			Action{Name: "archive", Description: "Archive (soft-delete) a document", ToolName: "UteamupDocumentArchive", RESTPath: "archive", Args: []ArgDef{{Name: "id", Description: "Document ID", Required: true}}},
-			Action{Name: "unarchive", Description: "Restore a document from archive", ToolName: "UteamupDocumentUnarchive", RESTPath: "unarchive", Args: []ArgDef{{Name: "id", Description: "Document ID", Required: true}}},
+			Action{Name: "archive", Description: "Archive (soft-delete) a document by GUID", ToolName: "UteamupDocumentArchive", HTTPMethod: "DELETE", RESTPath: "{documentGuid}", Args: documentGUIDArg()},
+			Action{Name: "unarchive", Description: "Restore a document from archive by GUID", ToolName: "UteamupDocumentUnarchive", HTTPMethod: "POST", RESTPath: "{documentGuid}/unarchive", Args: documentGUIDArg()},
 			Action{Name: "list-archived", Description: "List archived documents", ToolName: "UteamupDocumentListArchived", RESTPath: "archived"},
 			Action{Name: "get-metadata", Description: "Get extracted metadata (EXIF / PDF DocInfo / OOXML core / camera / GPS) for a document by GUID", ToolName: "UteamupDocumentGetMetadata", Args: []ArgDef{{Name: "guid", Description: "Document public GUID", Required: true}}},
 			Action{Name: "get-timeline", Description: "Get the document timeline strip (ordered by CapturedAt ASC) for a date range", ToolName: "UteamupDocumentGetTimeline", Flags: []FlagDef{
