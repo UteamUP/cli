@@ -107,8 +107,8 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "start-date", Description: "Optional inclusive start date", Type: "string"},
 					{Name: "end-date", Description: "Optional inclusive end date", Type: "string"},
-					{Name: "page", Description: "Page number", Default: "1", Type: "int"},
-					{Name: "page-size", Description: "Page size", Default: "20", Type: "int"},
+					{Name: "page", Description: "Page number", Default: 1, Type: "int"},
+					{Name: "page-size", Description: "Page size", Default: 20, Type: "int"},
 				},
 			},
 		},

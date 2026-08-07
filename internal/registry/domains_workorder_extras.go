@@ -113,7 +113,7 @@ func init() {
 					{Name: "workorderGuid", Description: "Work order public GUID", Required: true, Type: "uuid"},
 				},
 				Flags: []FlagDef{
-					{Name: "model", Short: "f", BodyName: "model", Description: "JSON file containing signerGuid, contactGuid, or signerGroupGuid assignment details", Required: true, Type: "string", JSONFile: true},
+					{Name: "request-file", Short: "f", BodyName: "model", Description: "JSON file containing signerGuid, contactGuid, or signerGroupGuid assignment details", Required: true, Type: "string", JSONFile: true},
 				},
 			},
 			{

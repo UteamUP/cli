@@ -161,25 +161,19 @@ func TestVendorCatalogActionWired(t *testing.T) {
 }
 
 func TestAssetTypeCompatiblePartsWired(t *testing.T) {
-	d := findDomainByName(t, "asset-type")
-	// The controller routes at api/asset-type (hyphenated); the derived path would strip
-	// the hyphen to /api/assettype, so the domain must pin the base path explicitly.
-	if d.APIPath != "/api/asset-type" {
-		t.Errorf("asset-type APIPath = %q, want /api/asset-type (backend route is hyphenated)", d.APIPath)
-	}
-
 	a := findDomainAction(t, "asset-type", "compatible-parts")
-	if a.ToolName != "UteamupAssetTypeListCompatibleParts" || a.RESTPath != "by-guid/{guid}/compatible-parts" {
-		t.Errorf("compatible-parts miswired: %+v", a)
+	if a.ToolName != "UteamupAssetTypeListCompatibleParts" {
+		t.Errorf("compatible-parts tool = %q, want UteamupAssetTypeListCompatibleParts", a.ToolName)
 	}
 
-	// The full URL must resolve to the hyphenated controller route.
-	url, consumed := buildRESTPath(d, *a, map[string]any{"guid": "11111111-1111-1111-1111-111111111111"})
-	if url != "/api/asset-type/by-guid/11111111-1111-1111-1111-111111111111/compatible-parts" {
-		t.Errorf("compatible-parts URL = %q, want the hyphenated api/asset-type route", url)
+	// asset-type dispatches through the JSON-RPC tools/call transport, so no REST base
+	// path is derived for it and the hyphenated-route concern does not apply.
+	if !a.MCPOnly {
+		t.Error("compatible-parts must stay MCP-only")
 	}
-	if len(consumed) != 1 || consumed[0] != "guid" {
-		t.Errorf("compatible-parts should consume the guid placeholder, consumed=%+v", consumed)
+
+	if len(a.Args) != 1 || a.Args[0].Name != "assetTypeGuid" || !a.Args[0].Required || a.Args[0].Type != "uuid" {
+		t.Errorf("compatible-parts expected a single required uuid arg 'assetTypeGuid', got %+v", a.Args)
 	}
 }
 
