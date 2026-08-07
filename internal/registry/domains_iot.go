@@ -47,7 +47,17 @@ func init() {
 				RESTPath:     "definitions",
 				Flags: []FlagDef{
 					{Name: "device-type-guid", BodyName: "deviceTypeGuid", Description: "Optional IoT device type GUID", Type: "uuid"},
-					{Name: "include-inactive", BodyName: "includeInactive", Description: "Include inactive definition versions", Type: "bool", Default: false},
+				},
+			},
+			{
+				Name:         "command-definition-history",
+				Description:  "List active and inactive command-definition revisions with lifecycle evidence",
+				ToolName:     "UteamupIoTCommandDefinitionHistory",
+				RESTBasePath: iotCommandAPIPath,
+				HTTPMethod:   "GET",
+				RESTPath:     "definitions/history",
+				Flags: []FlagDef{
+					{Name: "device-type-guid", BodyName: "deviceTypeGuid", Description: "Optional IoT device type GUID", Type: "uuid"},
 				},
 			},
 			{
@@ -203,13 +213,28 @@ func iotCommandDefinitionFlags(includeExpectedVersion bool) []FlagDef {
 		{Name: "maximum-firmware-version", BodyName: "maximumFirmwareVersion", Description: "Optional maximum firmware version", Type: "string"},
 	}
 	if includeExpectedVersion {
-		flags = append(flags, FlagDef{
-			Name:        "expected-updated-at",
-			BodyName:    "expectedUpdatedAt",
-			Description: "Current definition UpdatedAt value",
-			Required:    true,
-			Type:        "string",
-		})
+		flags = append(flags,
+			FlagDef{
+				Name:        "expected-updated-at",
+				BodyName:    "expectedUpdatedAt",
+				Description: "Current definition UpdatedAt value",
+				Required:    true,
+				Type:        "string",
+			},
+			FlagDef{
+				Name:        "is-active",
+				BodyName:    "isActive",
+				Description: "Whether the new immutable revision can be previewed",
+				Type:        "bool",
+				Default:     true,
+			},
+			FlagDef{
+				Name:        "lifecycle-reason",
+				BodyName:    "lifecycleReason",
+				Description: "Reason required when active availability changes",
+				Type:        "string",
+			},
+		)
 	}
 	return flags
 }

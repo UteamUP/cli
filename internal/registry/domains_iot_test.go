@@ -10,23 +10,24 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 		t.Fatal("expected iot domain to be registered")
 	}
 	expected := map[string]string{
-		"status":                    "UteamupIoTEnvironmentStatus",
-		"monitoring":                "UteamupIoTMonitoringDashboard",
-		"telemetry":                 "UteamupIoTTelemetryPoints",
-		"rules":                     "UteamupIoTRulesList",
-		"command-definitions":       "UteamupIoTCommandDefinitionsList",
-		"command-definition-create": "UteamupIoTCommandDefinitionCreate",
-		"command-definition-update": "UteamupIoTCommandDefinitionUpdate",
-		"command-control":           "UteamupIoTCommandControlGet",
-		"command-control-update":    "UteamupIoTCommandControlUpdate",
-		"command-preview":           "UteamupIoTCommandRequestPreview",
-		"command-requests":          "UteamupIoTCommandRequestsList",
-		"command-request":           "UteamupIoTCommandRequestGet",
-		"command-confirm":           "UteamupIoTCommandRequestConfirm",
-		"command-approve":           "UteamupIoTCommandRequestApprove",
-		"command-reject":            "UteamupIoTCommandRequestReject",
-		"command-cancel":            "UteamupIoTCommandRequestCancel",
-		"command-monitoring":        "UteamupIoTCommandMonitoringGet",
+		"status":                     "UteamupIoTEnvironmentStatus",
+		"monitoring":                 "UteamupIoTMonitoringDashboard",
+		"telemetry":                  "UteamupIoTTelemetryPoints",
+		"rules":                      "UteamupIoTRulesList",
+		"command-definitions":        "UteamupIoTCommandDefinitionsList",
+		"command-definition-history": "UteamupIoTCommandDefinitionHistory",
+		"command-definition-create":  "UteamupIoTCommandDefinitionCreate",
+		"command-definition-update":  "UteamupIoTCommandDefinitionUpdate",
+		"command-control":            "UteamupIoTCommandControlGet",
+		"command-control-update":     "UteamupIoTCommandControlUpdate",
+		"command-preview":            "UteamupIoTCommandRequestPreview",
+		"command-requests":           "UteamupIoTCommandRequestsList",
+		"command-request":            "UteamupIoTCommandRequestGet",
+		"command-confirm":            "UteamupIoTCommandRequestConfirm",
+		"command-approve":            "UteamupIoTCommandRequestApprove",
+		"command-reject":             "UteamupIoTCommandRequestReject",
+		"command-cancel":             "UteamupIoTCommandRequestCancel",
+		"command-monitoring":         "UteamupIoTCommandMonitoringGet",
 	}
 	for _, action := range domain.Actions {
 		if tool, ok := expected[action.Name]; ok {
@@ -180,6 +181,36 @@ func TestIoTCommandPreviewUsesReviewedJSONFileAndConcurrency(t *testing.T) {
 	expected := flags["expected-updated-at"]
 	if expected.BodyName != "expectedUpdatedAt" || !expected.Required {
 		t.Fatalf("preview must bind the exact device version: %+v", expected)
+	}
+}
+
+func TestIoTCommandDefinitionListsSeparateActivePreviewFromConfigureHistory(t *testing.T) {
+	active := findIoTAction(t, "command-definitions")
+	history := findIoTAction(t, "command-definition-history")
+	if active.RESTPath != "definitions" {
+		t.Fatalf("active list path = %q, want definitions", active.RESTPath)
+	}
+	if history.RESTPath != "definitions/history" {
+		t.Fatalf("history path = %q, want definitions/history", history.RESTPath)
+	}
+	for _, flag := range active.Flags {
+		if flag.Name == "include-inactive" {
+			t.Fatal("active preview list must not expose include-inactive")
+		}
+	}
+}
+
+func TestIoTCommandDefinitionUpdateExposesLifecycleEvidence(t *testing.T) {
+	action := findIoTAction(t, "command-definition-update")
+	flags := make(map[string]FlagDef)
+	for _, flag := range action.Flags {
+		flags[flag.Name] = flag
+	}
+	if flags["is-active"].Default != true || flags["is-active"].BodyName != "isActive" {
+		t.Fatalf("is-active must preserve active revisions by default: %+v", flags["is-active"])
+	}
+	if flags["lifecycle-reason"].BodyName != "lifecycleReason" {
+		t.Fatalf("lifecycle-reason must bind durable lifecycle evidence: %+v", flags["lifecycle-reason"])
 	}
 }
 
