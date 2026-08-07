@@ -30,6 +30,9 @@ type ArgDef struct {
 	Description string
 	Required    bool
 	Type        string // "string", "int", "uuid"
+	// BodyName overrides the MCP/JSON argument name while preserving a
+	// user-friendly positional name in CLI help and validation messages.
+	BodyName string
 	// QueryName routes a positional argument directly to the named query-string
 	// field. This is useful when a GET endpoint's parameter name differs from
 	// the CLI client's legacy search aliases.
@@ -304,7 +307,11 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 			queryParams[argDef.QueryName] = value
 			continue
 		}
-		toolArgs[argDef.Name] = value
+		bodyName := argDef.Name
+		if argDef.BodyName != "" {
+			bodyName = argDef.BodyName
+		}
+		toolArgs[bodyName] = value
 	}
 
 	// Flags. HeaderName routes a flag to an HTTP header instead of the body /

@@ -73,11 +73,12 @@ func init() {
 				Name:        "update-attributes",
 				Description: "Upsert (create or update) attribute values for an asset",
 				ToolName:    "UteamupMeterreadingUpdateAttributes",
+				MCPOnly:     true,
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset external GUID", Required: true, Type: "uuid"},
 				},
 				Flags: []FlagDef{
-					{Name: "values-json", Description: "Attribute values as JSON array (e.g. '[{\"attributeDefinitionId\":1,\"rawValue\":\"42\"}]')", Required: true, Type: "string"},
+					{Name: "request-file", Short: "f", BodyName: "request", Description: "JSON file containing {\"values\":[{\"attributeDefinitionGuid\":\"…\",\"rawValue\":\"42\"}]}", Required: true, Type: "string", JSONFile: true},
 				},
 			},
 		},
