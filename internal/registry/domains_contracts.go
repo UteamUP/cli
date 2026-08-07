@@ -2,8 +2,85 @@ package registry
 
 func init() {
 	Register(&Domain{Name: "contract", Aliases: []string{"contracts"}, Description: "Manage contracts", Actions: crudActions("Contract")})
-	Register(&Domain{Name: "contractor", Aliases: []string{"contractors"}, Description: "Manage contractor profiles", Actions: crudActions("ContractorProfile")})
-	Register(&Domain{Name: "contractor-workorder", Description: "Manage contractor work orders", Actions: crudActions("ContractorWorkOrder")})
+	Register(&Domain{
+		Name:        "contractor",
+		Aliases:     []string{"contractors"},
+		Description: "View contractor profiles by public GUID",
+		APIPath:     "/api/v1/contractor",
+		Actions: []Action{
+			{
+				Name:        "list",
+				Description: "List contractor profiles",
+				ToolName:    "UteamupContractorProfileList",
+				MCPOnly:     true,
+				Flags:       paginationFlags(),
+			},
+			{
+				Name:        "get",
+				Description: "Get a contractor profile by public GUID",
+				ToolName:    "UteamupContractorProfileGet",
+				RESTPath:    "profile/by-guid/{profileGuid}",
+				HTTPMethod:  "GET",
+				Args: []ArgDef{{
+					Name:        "profileGuid",
+					Description: "Contractor profile public GUID",
+					Required:    true,
+					Type:        "uuid",
+				}},
+			},
+		},
+	})
+	Register(&Domain{
+		Name:        "contractor-workorder",
+		Description: "Assign contractors and review bids using public GUIDs",
+		APIPath:     "/api/v1/contractor/assignments",
+		Actions: []Action{
+			{
+				Name:        "assign",
+				Description: "Assign a contractor from a GUID-only JSON model",
+				ToolName:    "UteamupContractorAssign",
+				MCPOnly:     true,
+				Flags: []FlagDef{{
+					Name:        "from-json",
+					BodyName:    "model",
+					Description: "JSON file containing workOrderGuid and contractorProfileGuid",
+					Required:    true,
+					Type:        "string",
+					JSONFile:    true,
+				}},
+			},
+			{
+				Name:        "assignments",
+				Description: "List assignments for a work order public GUID",
+				ToolName:    "UteamupContractorAssignmentList",
+				RESTPath:    "workorder/{workOrderGuid}",
+				HTTPMethod:  "GET",
+				Args: []ArgDef{{
+					Name: "workOrderGuid", Description: "Work order public GUID", Required: true, Type: "uuid",
+				}},
+			},
+			{
+				Name:        "bids",
+				Description: "List bids for a work order public GUID",
+				ToolName:    "UteamupContractorBidList",
+				RESTPath:    "workorder/{workOrderGuid}/bids",
+				HTTPMethod:  "GET",
+				Args: []ArgDef{{
+					Name: "workOrderGuid", Description: "Work order public GUID", Required: true, Type: "uuid",
+				}},
+			},
+			{
+				Name:        "accept-bid",
+				Description: "Accept a contractor bid by public GUID",
+				ToolName:    "UteamupContractorBidAccept",
+				RESTPath:    "bids/{bidGuid}/accept",
+				HTTPMethod:  "POST",
+				Args: []ArgDef{{
+					Name: "bidGuid", Description: "Contractor bid public GUID", Required: true, Type: "uuid",
+				}},
+			},
+		},
+	})
 	Register(&Domain{
 		Name:        "labour-rate",
 		Description: "Manage GUID-first labour rate rules and schedule modifiers",

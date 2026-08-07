@@ -18,7 +18,6 @@ func init() {
 		),
 	})
 
-	Register(&Domain{Name: "vendor-portal", Description: "Manage vendor portal", Actions: crudActions("VendorPortal")})
 	Register(&Domain{
 		Name:        "vendor-performance",
 		Aliases:     []string{"vendor-scorecard"},
@@ -96,7 +95,142 @@ func init() {
 	})
 	Register(&Domain{Name: "vendor-analytics", Description: "View vendor analytics", Actions: listGetActions("VendorAnalytics")})
 	Register(&Domain{Name: "vendor-compliance", Description: "Manage vendor compliance", Actions: crudActions("VendorCompliance")})
-	Register(&Domain{Name: "vendor-match", Description: "Find matching vendors", Actions: listGetActions("VendorMatch")})
-	Register(&Domain{Name: "vendor-message", Description: "Manage vendor messages", Actions: crudActions("VendorMessage")})
-	Register(&Domain{Name: "vendor-rating", Description: "Manage vendor ratings", Actions: crudActions("VendorRating")})
+	Register(&Domain{
+		Name:        "vendor-match",
+		Description: "Find matching vendors by work order public GUID",
+		APIPath:     "/api/v1/vendor/match",
+		Actions: []Action{
+			{
+				Name:        "match",
+				Description: "Calculate vendor matches from a GUID-only JSON model",
+				ToolName:    "UteamupVendorMatchVendors",
+				MCPOnly:     true,
+				Flags: []FlagDef{{
+					Name:        "from-json",
+					BodyName:    "model",
+					Description: "JSON file containing workOrderGuid and maxResults",
+					Required:    true,
+					Type:        "string",
+					JSONFile:    true,
+				}},
+			},
+			{
+				Name:        "list",
+				Description: "List existing matches for a work order public GUID",
+				ToolName:    "UteamupVendorMatchGet",
+				RESTPath:    "workorder/{workOrderGuid}",
+				HTTPMethod:  "GET",
+				Args: []ArgDef{{
+					Name: "workOrderGuid", Description: "Work order public GUID", Required: true, Type: "uuid",
+				}},
+			},
+		},
+	})
+	Register(&Domain{
+		Name:        "vendor-message",
+		Description: "Manage vendor messages by public GUID",
+		APIPath:     "/api/v1/vendor/messages",
+		Actions: []Action{
+			{
+				Name:        "send",
+				Description: "Send a vendor message from a GUID-only JSON model",
+				ToolName:    "UteamupVendorMessageSend",
+				MCPOnly:     true,
+				Flags: []FlagDef{{
+					Name:        "from-json",
+					BodyName:    "model",
+					Description: "JSON file containing vendorGuid and message content",
+					Required:    true,
+					Type:        "string",
+					JSONFile:    true,
+				}},
+			},
+			{
+				Name:        "list",
+				Description: "List messages for a vendor public GUID",
+				ToolName:    "UteamupVendorMessageList",
+				RESTPath:    "vendor/{vendorGuid}",
+				HTTPMethod:  "GET",
+				Args: []ArgDef{{
+					Name: "vendorGuid", Description: "Vendor public GUID", Required: true, Type: "uuid",
+				}},
+				Flags: []FlagDef{
+					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int", QueryName: "page"},
+					{Name: "page-size", Short: "s", Description: "Page size", Default: 25, Type: "int", QueryName: "pageSize"},
+				},
+			},
+			{
+				Name:        "unread",
+				Description: "Get unread message count for a vendor public GUID",
+				ToolName:    "UteamupVendorMessageUnreadCount",
+				RESTPath:    "vendor/{vendorGuid}/unread",
+				HTTPMethod:  "GET",
+				Args: []ArgDef{{
+					Name: "vendorGuid", Description: "Vendor public GUID", Required: true, Type: "uuid",
+				}},
+			},
+		},
+	})
+	Register(&Domain{
+		Name:        "vendor-rating",
+		Description: "Manage vendor ratings by public GUID",
+		APIPath:     "/api/v1/vendorratings",
+		Actions: []Action{
+			{
+				Name:        "submit",
+				Description: "Submit a vendor rating from a GUID-only JSON model",
+				ToolName:    "UteamupVendorRatingSubmit",
+				MCPOnly:     true,
+				Flags: []FlagDef{{
+					Name:        "from-json",
+					BodyName:    "model",
+					Description: "JSON file containing vendorGuid and rating details",
+					Required:    true,
+					Type:        "string",
+					JSONFile:    true,
+				}},
+			},
+			{
+				Name:        "list",
+				Description: "List ratings for a vendor public GUID",
+				ToolName:    "UteamupVendorRatingList",
+				RESTPath:    "by-guid/{vendorGuid}",
+				HTTPMethod:  "GET",
+				Args: []ArgDef{{
+					Name: "vendorGuid", Description: "Vendor public GUID", Required: true, Type: "uuid",
+				}},
+				Flags: []FlagDef{
+					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int", QueryName: "page"},
+					{Name: "page-size", Short: "s", Description: "Page size", Default: 25, Type: "int", QueryName: "pageSize"},
+				},
+			},
+			{
+				Name:        "aggregate",
+				Description: "Get aggregate ratings for a vendor public GUID",
+				ToolName:    "UteamupVendorRatingAggregate",
+				RESTPath:    "by-guid/{vendorGuid}/aggregate",
+				HTTPMethod:  "GET",
+				Args: []ArgDef{{
+					Name: "vendorGuid", Description: "Vendor public GUID", Required: true, Type: "uuid",
+				}},
+			},
+			{
+				Name:        "flag",
+				Description: "Flag a vendor rating by public GUID",
+				ToolName:    "UteamupVendorRatingFlag",
+				MCPOnly:     true,
+				Args: []ArgDef{{
+					Name: "ratingGuid", Description: "Vendor rating public GUID", Required: true, Type: "uuid",
+				}},
+				Flags: []FlagDef{{
+					Name:        "from-json",
+					BodyName:    "model",
+					Description: "JSON file containing the moderation flag reason",
+					Required:    true,
+					Type:        "string",
+					JSONFile:    true,
+				}},
+			},
+		},
+	})
 }
