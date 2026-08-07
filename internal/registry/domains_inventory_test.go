@@ -36,6 +36,36 @@ func TestStockDomainRegistered(t *testing.T) {
 	}
 }
 
+func TestStockCrudActionsAreGuidFirstAndLocationScoped(t *testing.T) {
+	expected := map[string]struct {
+		method  string
+		path    string
+		hasGuid bool
+	}{
+		"list":   {path: "locations"},
+		"get":    {path: "locations/{guid}", hasGuid: true},
+		"create": {method: "POST", path: "locations"},
+		"update": {method: "PUT", path: "locations/{guid}", hasGuid: true},
+		"delete": {method: "DELETE", path: "locations/{guid}", hasGuid: true},
+	}
+
+	for name, want := range expected {
+		action := findStockAction(t, name)
+		if action.HTTPMethod != want.method || action.RESTPath != want.path {
+			t.Errorf("stock %s route = %q %q, want %q %q", name, action.HTTPMethod, action.RESTPath, want.method, want.path)
+		}
+		if !want.hasGuid {
+			if len(action.Args) != 0 {
+				t.Errorf("stock %s expected no identifier argument, got %+v", name, action.Args)
+			}
+			continue
+		}
+		if len(action.Args) != 1 || action.Args[0].Name != "guid" || action.Args[0].Type != "uuid" || !action.Args[0].Required {
+			t.Errorf("stock %s must expose one required GUID argument, got %+v", name, action.Args)
+		}
+	}
+}
+
 func findChemicalAction(t *testing.T, name string) *Action {
 	t.Helper()
 	for _, dom := range DefaultRegistry.Domains() {
