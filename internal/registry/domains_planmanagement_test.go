@@ -194,16 +194,17 @@ func TestPlanAnalyticsDomainRegistered(t *testing.T) {
 
 func TestSubscriptionLifecycleDomainRegistered(t *testing.T) {
 	d := assertDomainAPIPath(t, "subscription-lifecycle", "/api/internalbilling")
-	if len(d.Actions) != 5 {
-		t.Errorf("subscription-lifecycle expected 5 lifecycle actions, got %d", len(d.Actions))
+	if len(d.Actions) != 6 {
+		t.Errorf("subscription-lifecycle expected 6 lifecycle actions, got %d", len(d.Actions))
 	}
 
 	for actionName, restPath := range map[string]string{
-		"suspend":                "admin/subscriptions/{guid}/suspend",
-		"cancel":                 "admin/subscriptions/{guid}/cancel",
-		"reactivate":             "admin/subscriptions/{guid}/reactivate",
-		"schedule-cancel":        "admin/subscriptions/{guid}/schedule-cancel",
-		"clear-scheduled-cancel": "admin/subscriptions/{guid}/clear-scheduled-cancel",
+		"suspend":                  "admin/subscriptions/{guid}/suspend",
+		"cancel":                   "admin/subscriptions/{guid}/cancel",
+		"reactivate":               "admin/subscriptions/{guid}/reactivate",
+		"schedule-cancel":          "admin/subscriptions/{guid}/schedule-cancel",
+		"activate-without-payment": "admin/subscriptions/{guid}/activate-without-payment",
+		"clear-scheduled-cancel":   "admin/subscriptions/{guid}/clear-scheduled-cancel",
 	} {
 		a := findDomainAction(t, "subscription-lifecycle", actionName)
 		// Every lifecycle verb needs an explicit POST — none of these names is
@@ -222,6 +223,18 @@ func TestSubscriptionLifecycleDomainRegistered(t *testing.T) {
 	cancel := findDomainAction(t, "subscription-lifecycle", "cancel")
 	if len(cancel.Flags) != 0 {
 		t.Errorf("subscription-lifecycle cancel must take no flags (raw-string body not expressible), got %d", len(cancel.Flags))
+	}
+
+	// activate-without-payment is the BIL-002 audited override. Unlike cancel, its
+	// backend binds a real DTO ([FromBody] ActivateWithoutPaymentRequestModel), so the
+	// flag→object body mapping produces exactly the {"reason":...} it expects. The flag
+	// MUST stay required: an override with no stated reason is indistinguishable from a
+	// mistake when it is read back, and the backend refuses it anyway — better to fail
+	// in the shell than after a round trip.
+	override := findDomainAction(t, "subscription-lifecycle", "activate-without-payment")
+	reason := findFlag(override, "reason")
+	if reason == nil || !reason.Required || reason.Type != "string" {
+		t.Errorf("subscription-lifecycle activate-without-payment --reason must be a required string flag, got %+v", reason)
 	}
 
 	sched := findDomainAction(t, "subscription-lifecycle", "schedule-cancel")

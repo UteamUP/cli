@@ -51,6 +51,22 @@ func init() {
 				},
 			},
 			{
+				// BIL-002. Waives only the settled-invoice guard; the tenant-state and
+				// resolvable-owner guards still apply, so this cannot revive a cancelled
+				// tenant. The reason is mandatory — the backend rejects blank and
+				// whitespace — and the resulting subscription is excluded from MRR/ARR
+				// until a real invoice settles.
+				Name:        "activate-without-payment",
+				Description: "Activate a subscription with no settled invoice (audited override; requires a reason)",
+				ToolName:    "UteamupSubscriptionActivateWithoutPayment",
+				HTTPMethod:  "POST",
+				RESTPath:    "admin/subscriptions/{guid}/activate-without-payment",
+				Args:        []ArgDef{{Name: "guid", Description: "Subscription GUID (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "reason", Description: "Why payment is being waived (required; recorded permanently in the admin audit log)", Required: true, Type: "string"},
+				},
+			},
+			{
 				Name:        "clear-scheduled-cancel",
 				Description: "Clear a scheduled cancellation before it fires; the subscription stays active",
 				ToolName:    "UteamupSubscriptionClearScheduledCancel",
