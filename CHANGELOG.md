@@ -5,6 +5,36 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0](https://github.com/UteamUP/cli/compare/1.92.1...2.0.0) (2026-08-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* **billing:** bank-transfer get-invoice, mark-paid, and activate now take external GUIDs instead of integer ids, and mark-paid requires --payment-date.
+
+### Features
+
+* **billing:** bank-transfer domain goes GUID-first with real routes and a refund verb ([f5d15c3](https://github.com/UteamUP/cli/commit/f5d15c324f371a47e457c892585bd768c936c7f5))
+* **billing:** bank-transfer status verb reads the tenant billing overview ([0247f52](https://github.com/UteamUP/cli/commit/0247f5252d7f0698554746c967480daccb58e9a5))
+* **billing:** payment-providers CLI domain (list, health-check, set-active) ([2ad08c6](https://github.com/UteamUP/cli/commit/2ad08c666066194842c87d3f3081fa1fb6df492b))
+* **registry:** add subscription-lifecycle activate-without-payment ([73fb9ab](https://github.com/UteamUP/cli/commit/73fb9ab325096230a699fb06fabce3e0a0f5b0f2))
+
+
+### Bug Fixes
+
+* **billing:** route admin-billing-gateway at the real globaladmin endpoints ([1cb5266](https://github.com/UteamUP/cli/commit/1cb526647ae2d461140b2d7ca4fd6c6e222fa401))
+* **cli:** route eight domains at their real controllers instead of phantom URLs ([6acd7c8](https://github.com/UteamUP/cli/commit/6acd7c8ae876d888b266c006cc7511b63d4f8414))
+
+
+### Documentation
+
+* **billing:** record the sound way to verify a CLI route against a live backend ([ce54a8f](https://github.com/UteamUP/cli/commit/ce54a8f20bc1f6ef6005bc64864383b15380b091))
+
+
+### Tests
+
+* **billing:** registry coverage for seven untested billing/plan domains ([d76a85a](https://github.com/UteamUP/cli/commit/d76a85a6c9e5bbabd49046ead2ea8e811d9b393a))
+
 ## [1.92.1](https://github.com/UteamUP/cli/compare/1.92.0...1.92.1) (2026-08-07)
 
 
