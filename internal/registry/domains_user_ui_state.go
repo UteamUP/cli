@@ -15,16 +15,22 @@ func init() {
 		Name:        "user-ui-state",
 		Aliases:     []string{"ui-state", "prefs", "user-prefs"},
 		Description: "Manage the signed-in user's UI preferences and last-known page",
+		// Two controllers back this domain: UserPreferencesController (/api/userpreferences) and
+		// UserStateController (/api/userstate). Without APIPath the REST fallback derived
+		// /api/useruistate — no such controller, so every verb 404'd.
+		APIPath: "/api/userpreferences",
 		Actions: []Action{
 			{
 				Name:        "get-preferences",
 				Description: "Get the signed-in user's UI preferences (Bug & Feature widget, Feature Preview widget, show restore banner)",
 				ToolName:    "UteamupUserPreferencesGet",
+				HTTPMethod:  "GET",
 			},
 			{
 				Name:        "set-preferences",
 				Description: "Partially update the signed-in user's UI preferences (omit flags to leave them unchanged)",
 				ToolName:    "UteamupUserPreferencesSet",
+				HTTPMethod:  "PUT",
 				Flags: []FlagDef{
 					{Name: "enable-bug-and-feature-widget", Description: "Enable/disable the Bug & Feature capture widget", Type: "bool"},
 					{Name: "enable-feature-preview-widget", Description: "Enable/disable the Feature Preview widget (bounded by tenant plan cap)", Type: "bool"},
@@ -33,23 +39,32 @@ func init() {
 				},
 			},
 			{
-				Name:        "get-last-page",
-				Description: "Get the signed-in user's last-known page (null when none recorded)",
-				ToolName:    "UteamupUserStateGetLastPage",
+				Name:         "get-last-page",
+				Description:  "Get the signed-in user's last-known page (null when none recorded)",
+				ToolName:     "UteamupUserStateGetLastPage",
+				HTTPMethod:   "GET",
+				RESTBasePath: "/api/userstate",
+				RESTPath:     "last-page",
 			},
 			{
-				Name:        "set-last-page",
-				Description: "Record the signed-in user's last-known page. Path must be a relative route starting with '/'",
-				ToolName:    "UteamupUserStateSetLastPage",
+				Name:         "set-last-page",
+				Description:  "Record the signed-in user's last-known page. Path must be a relative route starting with '/'",
+				ToolName:     "UteamupUserStateSetLastPage",
+				HTTPMethod:   "PUT",
+				RESTBasePath: "/api/userstate",
+				RESTPath:     "last-page",
 				Flags: []FlagDef{
 					{Name: "last-page-path", Description: "Relative route path (e.g. /workorder/123)", Required: true, Type: "string"},
 					{Name: "last-page-query", Description: "Optional query string (e.g. ?tab=details)", Type: "string"},
 				},
 			},
 			{
-				Name:        "clear-last-page",
-				Description: "Clear the signed-in user's last-known page",
-				ToolName:    "UteamupUserStateClearLastPage",
+				Name:         "clear-last-page",
+				Description:  "Clear the signed-in user's last-known page",
+				ToolName:     "UteamupUserStateClearLastPage",
+				HTTPMethod:   "DELETE",
+				RESTBasePath: "/api/userstate",
+				RESTPath:     "last-page",
 			},
 		},
 	})

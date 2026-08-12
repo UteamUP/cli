@@ -5,11 +5,16 @@ func init() {
 		Name:        "admin-users",
 		Aliases:     []string{"adminusers", "gausers"},
 		Description: "Global-admin user management (list, detail, login events, disable/enable, password reset)",
+		// Routes mirror GlobalAdminUsersController. Without APIPath the REST fallback derived
+		// /api/adminusers — no such controller, so every verb 404'd.
+		APIPath: "/api/globaladmin/users",
 		Actions: []Action{
 			{
 				Name:        "list",
 				Description: "List users across all tenants (global-admin only)",
 				ToolName:    "UteamupAdminUserList",
+				HTTPMethod:  "GET",
+				RESTPath:    "list",
 				Flags: []FlagDef{
 					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
 					{Name: "page-size", Short: "s", Description: "Items per page (max 100)", Default: 25, Type: "int"},
@@ -23,12 +28,16 @@ func init() {
 				Name:        "get",
 				Description: "Get a user's full detail by GUID",
 				ToolName:    "UteamupAdminUserGet",
+				HTTPMethod:  "GET",
+				RESTPath:    "{guid}",
 				Args:        []ArgDef{{Name: "guid", Description: "User GUID", Required: true, Type: "string"}},
 			},
 			{
 				Name:        "login-events",
 				Description: "Paginated login/logout history for a user",
 				ToolName:    "UteamupAdminUserLoginEvents",
+				HTTPMethod:  "GET",
+				RESTPath:    "{guid}/login-events",
 				Args:        []ArgDef{{Name: "guid", Description: "User GUID", Required: true, Type: "string"}},
 				Flags: []FlagDef{
 					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
@@ -39,6 +48,8 @@ func init() {
 				Name:        "disable",
 				Description: "Disable (ban) a user. Revokes refresh tokens immediately.",
 				ToolName:    "UteamupAdminUserDisable",
+				HTTPMethod:  "POST",
+				RESTPath:    "{guid}/disable",
 				Args:        []ArgDef{{Name: "guid", Description: "User GUID", Required: true, Type: "string"}},
 				Flags: []FlagDef{
 					{Name: "confirm-email", Description: "Target user's email (case-insensitive match required)", Type: "string", Required: true},
@@ -49,6 +60,8 @@ func init() {
 				Name:        "enable",
 				Description: "Re-enable a previously disabled user",
 				ToolName:    "UteamupAdminUserEnable",
+				HTTPMethod:  "POST",
+				RESTPath:    "{guid}/enable",
 				Args:        []ArgDef{{Name: "guid", Description: "User GUID", Required: true, Type: "string"}},
 				Flags: []FlagDef{
 					{Name: "reason", Description: "Optional reason captured on the audit log", Type: "string"},
@@ -58,6 +71,8 @@ func init() {
 				Name:        "reset-password",
 				Description: "Admin-initiated password reset (email-link OR one-time temp password)",
 				ToolName:    "UteamupAdminUserResetPassword",
+				HTTPMethod:  "POST",
+				RESTPath:    "{guid}/reset-password",
 				Args:        []ArgDef{{Name: "guid", Description: "User GUID", Required: true, Type: "string"}},
 				Flags: []FlagDef{
 					{Name: "mode", Description: "EmailLink (send reset link) or TempPassword (return one-time password)", Type: "string", Required: true},

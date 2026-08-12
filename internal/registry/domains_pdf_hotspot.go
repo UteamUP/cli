@@ -11,11 +11,17 @@ func init() {
 		Name:        "pdfhotspot",
 		Aliases:     []string{"hotspot", "pdfhotspots"},
 		Description: "Manage positional hotspots that anchor industrial codes to drawing/PDF pages",
+		// Routes mirror CodePdfLinkController. Without APIPath the REST fallback derived
+		// /api/pdfhotspot — no such controller, so every verb 404'd.
+		APIPath: "/api/codepdflink",
 		Actions: []Action{
 			{
-				Name:        "list-for-drawing",
-				Description: "List every hotspot on a drawing/PDF (codes referenced + their normalized rectangles)",
-				ToolName:    "UteamupCodepdfhotspotListForDrawing",
+				Name:         "list-for-drawing",
+				Description:  "List every hotspot on a drawing/PDF (codes referenced + their normalized rectangles)",
+				ToolName:     "UteamupCodepdfhotspotListForDrawing",
+				HTTPMethod:   "GET",
+				RESTBasePath: "/api/document",
+				RESTPath:     "{documentGuid}/codehotspots",
 				Args: []ArgDef{
 					{Name: "documentGuid", Description: "Drawing/document Guid", Required: true, Type: "string"},
 				},
@@ -24,6 +30,8 @@ func init() {
 				Name:        "list-drawings-for-code",
 				Description: "List every drawing where a given industrial code has a hotspot (or a CodePdfLink without an anchor yet)",
 				ToolName:    "UteamupCodepdfhotspotListDrawingsForCode",
+				// No REST adapter exists for this read; the governed MCP tool is the only surface.
+				MCPOnly: true,
 				Args: []ArgDef{
 					{Name: "codeGuid", Description: "Code catalog entry Guid", Required: true, Type: "string"},
 				},
@@ -32,6 +40,8 @@ func init() {
 				Name:        "create",
 				Description: "Create a positional hotspot on a CodePdfLink (rectangle in normalized 0..1 coords)",
 				ToolName:    "UteamupCodepdfhotspotCreate",
+				HTTPMethod:  "POST",
+				RESTPath:    "{linkGuid}/hotspots",
 				Args: []ArgDef{
 					{Name: "linkGuid", Description: "Parent CodePdfLink Guid", Required: true, Type: "string"},
 				},
@@ -52,6 +62,8 @@ func init() {
 				Name:        "update",
 				Description: "Update an existing hotspot — any of page, shape, coords, kind, target Guids, or label",
 				ToolName:    "UteamupCodepdfhotspotUpdate",
+				HTTPMethod:  "PUT",
+				RESTPath:    "{linkGuid}/hotspots/{hotspotGuid}",
 				Args: []ArgDef{
 					{Name: "linkGuid", Description: "Parent CodePdfLink Guid", Required: true, Type: "string"},
 					{Name: "hotspotGuid", Description: "Hotspot Guid", Required: true, Type: "string"},
@@ -73,6 +85,8 @@ func init() {
 				Name:        "delete",
 				Description: "Delete a hotspot from its parent CodePdfLink",
 				ToolName:    "UteamupCodepdfhotspotDelete",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "{linkGuid}/hotspots/{hotspotGuid}",
 				Args: []ArgDef{
 					{Name: "linkGuid", Description: "Parent CodePdfLink Guid", Required: true, Type: "string"},
 					{Name: "hotspotGuid", Description: "Hotspot Guid", Required: true, Type: "string"},

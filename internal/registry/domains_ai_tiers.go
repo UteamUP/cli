@@ -33,7 +33,7 @@ func init() {
 				Name:        "prefill",
 				Description: "Suggest permit hazards, PPE, isolation steps, and rescue notes",
 				ToolName:    "UteamupWorkPermitAiPrefill",
-				RESTPath:    "by-guid/{work-permit-guid}/ai-prefill",
+				RESTPath:    "by-guid/{workPermitGuid}/ai-prefill",
 				HTTPMethod:  "POST",
 				Args: []ArgDef{
 					{Name: "work-permit-guid", Description: "Work permit external Guid", Required: true, Type: "string"},

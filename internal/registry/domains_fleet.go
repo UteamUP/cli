@@ -113,16 +113,18 @@ func init() {
 			},
 		},
 	})
-	Register(&Domain{Name: "fleet-dashboard", Description: "View fleet dashboard data", Actions: []Action{
-		{Name: "get", Description: "Get the fleet dashboard summary", ToolName: "UteamupFleetDashboardGet"},
-		{Name: "utilization", Description: "Get GUID-first vehicle utilization", ToolName: "UteamupFleetDashboardGetUtilization"},
-		{Name: "compliance", Description: "Get GUID-first fleet compliance", ToolName: "UteamupFleetDashboardGetCompliance"},
+	// Routes mirror FleetDashboardController (/api/fleet/dashboard). Without APIPath the REST
+	// fallback derived /api/fleetdashboard — no such controller, so every verb 404'd.
+	Register(&Domain{Name: "fleet-dashboard", Description: "View fleet dashboard data", APIPath: "/api/fleet/dashboard", Actions: []Action{
+		{Name: "get", HTTPMethod: "GET", Description: "Get the fleet dashboard summary", ToolName: "UteamupFleetDashboardGet"},
+		{Name: "utilization", HTTPMethod: "GET", RESTPath: "utilization", Description: "Get GUID-first vehicle utilization", ToolName: "UteamupFleetDashboardGetUtilization"},
+		{Name: "compliance", HTTPMethod: "GET", RESTPath: "compliance", Description: "Get GUID-first fleet compliance", ToolName: "UteamupFleetDashboardGetCompliance"},
 		{Name: "propose-maintenance", Description: "Prepare a governed maintenance proposal from fleet evidence", ToolName: "UteamupFleetMaintenancePropose", RESTBasePath: "/api/upmateassistant/fleet", RESTPath: "maintenance-proposals", HTTPMethod: "POST", Flags: []FlagDef{
 			{Name: "source-type", BodyName: "sourceType", Description: "vehicle-inspection, telematics-event, or asset-maintenance-package", Required: true, Type: "string"},
 			{Name: "source-guid", BodyName: "sourceGuid", Description: "Public GUID of the inspection, DTC event, or asset package", Required: true, Type: "string"},
 			{Name: "idempotency-key", Description: "Stable retry key", Required: true, Type: "string", HeaderName: "Idempotency-Key"},
 		}},
-		{Name: "costs", Description: "Get fleet costs for an optional date range", ToolName: "UteamupFleetDashboardGetCosts", Flags: []FlagDef{
+		{Name: "costs", HTTPMethod: "GET", RESTPath: "costs", Description: "Get fleet costs for an optional date range", ToolName: "UteamupFleetDashboardGetCosts", Flags: []FlagDef{
 			{Name: "date-from", Description: "Optional UTC period start", Type: "string"},
 			{Name: "date-to", Description: "Optional UTC period end", Type: "string"},
 		}},

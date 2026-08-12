@@ -3,8 +3,12 @@ package registry
 import "testing"
 
 func TestAiTierDomainsExposeNewBackendEndpoints(t *testing.T) {
+	// Placeholders must use the CAMEL-CASE arg key. runCommand stores positional args in
+	// toolArgs under BodyName or camelCase(Name), and expandPathTemplate looks them up by that
+	// key — so the dashed forms these assertions used to pin ({asset-guid},
+	// {attribute-definition-guid}) never expanded and shipped the literal token in the URL.
 	ocr := findDomainAction(t, "meter-reading", "ocr")
-	if ocr.RESTPath != "{asset-guid}/meter-readings/{attribute-definition-guid}/ocr" || ocr.HTTPMethod != "POST" {
+	if ocr.RESTPath != "{assetGuid}/meter-readings/{attributeDefinitionGuid}/ocr" || ocr.HTTPMethod != "POST" {
 		t.Fatalf("meter-reading ocr route = method %q path %q", ocr.HTTPMethod, ocr.RESTPath)
 	}
 
@@ -21,7 +25,7 @@ func TestAiTierDomainsExposeNewBackendEndpoints(t *testing.T) {
 	}
 
 	prefill := findDomainAction(t, "work-permit-ai", "prefill")
-	if prefill.RESTPath != "by-guid/{work-permit-guid}/ai-prefill" || prefill.HTTPMethod != "POST" {
+	if prefill.RESTPath != "by-guid/{workPermitGuid}/ai-prefill" || prefill.HTTPMethod != "POST" {
 		t.Fatalf("prefill route = method %q path %q", prefill.HTTPMethod, prefill.RESTPath)
 	}
 

@@ -9,11 +9,16 @@ func init() {
 		Name:        "meter-reading",
 		Aliases:     []string{"meter-readings", "mr"},
 		Description: "Read and record meter values on assets",
+		// Routes mirror MeterReadingController. Without APIPath the REST fallback derived
+		// /api/meterreading — no such controller, so every verb 404'd.
+		APIPath: "/api/assets",
 		Actions: []Action{
 			{
 				Name:        "current",
 				Description: "Get current (latest) meter values for an asset",
 				ToolName:    "UteamupMeterreadingGetCurrent",
+				HTTPMethod:  "GET",
+				RESTPath:    "{assetGuid}/meter-readings/current",
 				Args: []ArgDef{
 					{Name: "asset-guid", Description: "Asset external Guid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
 				},
@@ -22,6 +27,8 @@ func init() {
 				Name:        "attributes",
 				Description: "Get the full attribute snapshot (static + meter) for an asset",
 				ToolName:    "UteamupMeterreadingGetAttributes",
+				HTTPMethod:  "GET",
+				RESTPath:    "{assetGuid}/attributes",
 				Args: []ArgDef{
 					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
 				},
@@ -30,6 +37,8 @@ func init() {
 				Name:        "history",
 				Description: "Get paginated reading history for a specific meter attribute",
 				ToolName:    "UteamupMeterreadingGetHistory",
+				HTTPMethod:  "GET",
+				RESTPath:    "{assetGuid}/meter-readings/{attributeDefinitionGuid}/history",
 				Args: []ArgDef{
 					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
 					{Name: "attribute-definition-guid", Description: "Attribute definition external Guid", Required: true, Type: "string"},
@@ -45,6 +54,8 @@ func init() {
 				Name:        "record",
 				Description: "Record a manual meter reading",
 				ToolName:    "UteamupMeterreadingRecord",
+				HTTPMethod:  "POST",
+				RESTPath:    "{assetGuid}/meter-readings",
 				Args: []ArgDef{
 					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
 				},
@@ -59,7 +70,7 @@ func init() {
 				Name:        "ocr",
 				Description: "Analyze a meter photo and return a review-only OCR reading suggestion",
 				ToolName:    "UteamupMeterreadingPhotoOcr",
-				RESTPath:    "{asset-guid}/meter-readings/{attribute-definition-guid}/ocr",
+				RESTPath:    "{assetGuid}/meter-readings/{attributeDefinitionGuid}/ocr",
 				HTTPMethod:  "POST",
 				Args: []ArgDef{
 					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
