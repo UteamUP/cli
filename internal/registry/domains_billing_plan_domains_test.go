@@ -87,8 +87,7 @@ func TestBillingPlanDomainsDeclareNoIntIdentityArg(t *testing.T) {
 
 func TestBillingGatewaySwitcherRoutesMatchGlobalAdminController(t *testing.T) {
 	t.Parallel()
-	// Paths mirror GlobalAdminController: POST tenants/{tenantGuid:guid}/billing-method,
-	// GET .../history, GET .../{auditGuid:guid}, POST .../{auditGuid:guid}/cancel.
+	// New switch creation is retired. These paths preserve only history/detail/cancellation.
 	tests := []struct {
 		actionName string
 		method     string
@@ -96,8 +95,6 @@ func TestBillingGatewaySwitcherRoutesMatchGlobalAdminController(t *testing.T) {
 		path       string
 		consumed   int
 	}{
-		{"change", "POST", map[string]any{"tenantGuid": "tenant-guid"},
-			"/api/globaladmin/tenants/tenant-guid/billing-method", 1},
 		{"history", "GET", map[string]any{"tenantGuid": "tenant-guid"},
 			"/api/globaladmin/tenants/tenant-guid/billing-method/history", 1},
 		{"get", "GET", map[string]any{"tenantGuid": "tenant-guid", "auditGuid": "audit-guid"},
@@ -153,34 +150,6 @@ func TestBillingGatewaySwitcherNeverDerivesThePhantomPath(t *testing.T) {
 
 func TestBillingGatewaySwitcherFieldMappingMatchesBackendBinding(t *testing.T) {
 	t.Parallel()
-	// The backend binds the idempotency key with [FromHeader(Name = "Idempotency-Key")], so it
-	// must travel as a header — a BodyName mapping would put it in the JSON body where nothing
-	// reads it. Everything else maps onto BillingMethodChangeRequest / …CancelRequest fields.
-	_, change := billingPlanAction(t, "admin-billing-gateway", "change")
-	body := map[string]string{}
-	var idempotencyHeader string
-	for _, flag := range change.Flags {
-		if flag.HeaderName != "" {
-			idempotencyHeader = flag.HeaderName
-			if flag.BodyName != "" {
-				t.Fatalf("--%s must not also declare BodyName; the backend reads it from the header only", flag.Name)
-			}
-			continue
-		}
-		body[flag.Name] = flag.BodyName
-	}
-	if idempotencyHeader != "Idempotency-Key" {
-		t.Fatalf("idempotency key header = %q, want Idempotency-Key", idempotencyHeader)
-	}
-	for flagName, want := range map[string]string{
-		"tenant": "tenantGuid", "to": "newBillingMethod",
-		"reason": "reason", "kennitala": "kennitala", "effective": "effective",
-	} {
-		if body[flagName] != want {
-			t.Fatalf("--%s maps to %q, want %q", flagName, body[flagName], want)
-		}
-	}
-
 	_, history := billingPlanAction(t, "admin-billing-gateway", "history")
 	pagination := map[string]string{}
 	for _, flag := range history.Flags {
@@ -191,35 +160,15 @@ func TestBillingGatewaySwitcherFieldMappingMatchesBackendBinding(t *testing.T) {
 	}
 }
 
-func TestBillingGatewaySwitcherUsesBackendEnumVocabulary(t *testing.T) {
+func TestBillingGatewaySwitcherDoesNotExposeRetiredChange(t *testing.T) {
 	t.Parallel()
-	// The API registers JsonStringEnumConverter(camelCase, allowIntegerValues: true), so the
-	// enum NAMES bind directly and the CLI translates nothing. The prior header comment
-	// promised stripe/ibt/kling aliases that no code implemented; this pins the honest
-	// vocabulary so the docs cannot drift back.
-	_, change := billingPlanAction(t, "admin-billing-gateway", "change")
-	for _, flag := range change.Flags {
-		switch flag.Name {
-		case "to":
-			for _, member := range []string{"stripe", "icelandicBankTransfer"} {
-				if !strings.Contains(flag.Description, member) {
-					t.Fatalf("--to must document the %q enum member, got %q", member, flag.Description)
-				}
-			}
-			for _, ghost := range []string{"ibt", "kling"} {
-				if strings.Contains(strings.ToLower(flag.Description), ghost) {
-					t.Fatalf("--to documents the %q alias, which no code implements", ghost)
-				}
-			}
-		case "effective":
-			for _, member := range []string{"endOfCurrentCycle", "startImmediately"} {
-				if !strings.Contains(flag.Description, member) {
-					t.Fatalf("--effective must document the %q enum member, got %q", member, flag.Description)
-				}
-			}
-			if flag.Default != "endOfCurrentCycle" {
-				t.Fatalf("--effective default = %v, want endOfCurrentCycle", flag.Default)
-			}
+	domain := findDomain("admin-billing-gateway")
+	if domain == nil {
+		t.Fatal("admin-billing-gateway domain is not registered")
+	}
+	for _, action := range domain.Actions {
+		if action.Name == "change" || action.ToolName == "AdminChangeTenantBillingMethod" {
+			t.Fatal("retired Stripe/local-provider switch mutation is still reachable")
 		}
 	}
 }
@@ -227,7 +176,6 @@ func TestBillingGatewaySwitcherUsesBackendEnumVocabulary(t *testing.T) {
 func TestBillingGatewaySwitcherFlagContract(t *testing.T) {
 	t.Parallel()
 	required := map[string][]string{
-		"change":  {"tenant", "to", "reason"},
 		"history": {"tenant"},
 		"get":     {"tenant", "audit"},
 		"cancel":  {"tenant", "audit", "reason"},

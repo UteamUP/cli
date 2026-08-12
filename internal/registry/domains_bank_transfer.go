@@ -51,13 +51,6 @@ func init() {
 				},
 			},
 			{
-				Name:        "status",
-				Description: "Show the caller's own tenant billing overview (internal subscription status)",
-				ToolName:    "UteamupBankTransferBillingOverview",
-				HTTPMethod:  "GET",
-				RESTPath:    "subscription-status",
-			},
-			{
 				Name:        "list-subscriptions",
 				Description: "List all bank transfer subscriptions",
 				ToolName:    "UteamupBankTransferListSubscriptions",

@@ -1,46 +1,24 @@
 package registry
 
-// Per-tenant billing-gateway switcher — CLI parity for the globaladmin REST surface on
-// UteamUP_Backend/UteamUP_API/Controllers/GlobalAdminController.cs (the same operations the
-// MCP tools in MCP/Tools/BillingGatewaySwitchTools.cs expose).
+// Read/cancel compatibility surface for the retired per-tenant billing-gateway switch audit.
+// New provider changes use the provider-neutral BillingAgreement lifecycle and are deliberately
+// not exposed here.
 //
 // Every action is globaladmin-only: the backend gate checks GlobalAdminEmails AND
 // ApplicationUser.EmailConfirmed = true, so a caller outside that list gets 403.
 //
 // Command shape:
-//   ut admin-billing-gateway change --tenant <guid> --to <stripe|icelandicBankTransfer> --reason "..." [--kennitala <10-digits>] [--effective <endOfCurrentCycle|startImmediately>] [--idempotency-key <key>]
 //   ut admin-billing-gateway history --tenant <guid> [--page <n>] [--page-size <n>]
 //   ut admin-billing-gateway get --tenant <guid> --audit <guid>
 //   ut admin-billing-gateway cancel --tenant <guid> --audit <guid> --reason "..."
-//
-// --to and --effective take the backend ENUM NAMES verbatim. The API registers
-// JsonStringEnumConverter(camelCase, allowIntegerValues: true), so the names bind directly and
-// the CLI performs no translation. (A previous version of this comment promised stripe/ibt/kling
-// aliases that never existed in code; "kling" was wrong regardless — Kling is the card provider
-// that settles the IcelandicBankTransfer rail, not a billing method.)
 
 func init() {
 	Register(&Domain{
 		Name:        "admin-billing-gateway",
 		Aliases:     []string{"abg", "billing-gateway", "gateway"},
-		Description: "Globaladmin-only per-tenant billing-gateway switcher (Stripe <-> IcelandicBankTransfer)",
+		Description: "Globaladmin-only history/cancellation for the retired billing-gateway switcher",
 		APIPath:     "/api/globaladmin",
 		Actions: []Action{
-			{
-				Name:        "change",
-				Description: "Request a billing-gateway change for a tenant. Returns a checkout URL that the tenant owner must complete.",
-				ToolName:    "AdminChangeTenantBillingMethod",
-				HTTPMethod:  "POST",
-				RESTPath:    "tenants/{tenantGuid}/billing-method",
-				Flags: []FlagDef{
-					{Name: "tenant", Short: "t", BodyName: "tenantGuid", Description: "Public GUID of the target tenant", Required: true, Type: "string"},
-					{Name: "to", BodyName: "newBillingMethod", Description: "Target billing method: stripe or icelandicBankTransfer", Required: true, Type: "string"},
-					{Name: "reason", Short: "r", BodyName: "reason", Description: "Globaladmin-authored reason, 10-1000 chars. Stored verbatim on the 7-year audit log.", Required: true, Type: "string"},
-					{Name: "kennitala", Short: "k", BodyName: "kennitala", Description: "10-digit Icelandic company kennitala. Required when --to = icelandicBankTransfer.", Type: "string"},
-					{Name: "effective", BodyName: "effective", Description: "When the new subscription starts: endOfCurrentCycle (default) or startImmediately", Default: "endOfCurrentCycle", Type: "string"},
-					{Name: "idempotency-key", HeaderName: "Idempotency-Key", Description: "Optional idempotency key sent as the Idempotency-Key header. If omitted, the server generates one. Uniqueness is scoped to (key, tenant).", Type: "string"},
-				},
-			},
 			{
 				Name:        "history",
 				Description: "Paginated audit log of billing-gateway changes for a tenant (reason + next-action URL excluded from list).",
