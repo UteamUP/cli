@@ -4,7 +4,7 @@ func init() {
 	Register(&Domain{
 		Name:        "payment-providers",
 		Aliases:     []string{"pp", "providers"},
-		Description: "Inspect and manage payment providers (global admin; Kling is the only live rail)",
+		Description: "Inspect payment providers (global admin; Kling is the only customer rail)",
 		APIPath:     "/api/globaladmin",
 		Actions: []Action{
 			{
@@ -21,14 +21,6 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "payment-providers/{providerName}/health-check",
 				Args:        []ArgDef{{Name: "providerName", Description: "Provider name, e.g. kling", Required: true, Type: "string"}},
-			},
-			{
-				Name:        "set-active",
-				Description: "Set the active payment provider (global admin only; parked rails are rejected by the backend guards)",
-				ToolName:    "UteamupPaymentProviderSetActive",
-				HTTPMethod:  "POST",
-				RESTPath:    "payment-providers/{providerName}/set-active",
-				Args:        []ArgDef{{Name: "providerName", Description: "Provider name to activate, e.g. kling", Required: true, Type: "string"}},
 			},
 		},
 	})

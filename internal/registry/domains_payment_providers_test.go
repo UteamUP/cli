@@ -27,7 +27,6 @@ func TestPaymentProvidersRoutesMirrorGlobalAdminController(t *testing.T) {
 	}{
 		{"list", "GET", map[string]any{}, "/api/globaladmin/payment-providers"},
 		{"health-check", "POST", map[string]any{"providerName": "kling"}, "/api/globaladmin/payment-providers/kling/health-check"},
-		{"set-active", "POST", map[string]any{"providerName": "kling"}, "/api/globaladmin/payment-providers/kling/set-active"},
 	}
 	for _, test := range tests {
 		t.Run(test.actionName, func(t *testing.T) {
@@ -40,6 +39,19 @@ func TestPaymentProvidersRoutesMirrorGlobalAdminController(t *testing.T) {
 				t.Fatalf("path = %q, want %q", path, test.path)
 			}
 		})
+	}
+}
+
+func TestPaymentProvidersDoesNotExposeProviderSelection(t *testing.T) {
+	t.Parallel()
+	domain := findDomain("payment-providers")
+	if domain == nil {
+		t.Fatal("payment-providers domain is not registered")
+	}
+	for _, action := range domain.Actions {
+		if action.Name == "set-active" || action.ToolName == "UteamupPaymentProviderSetActive" {
+			t.Fatalf("parked providers must not be selectable through CLI action %q", action.Name)
+		}
 	}
 }
 
