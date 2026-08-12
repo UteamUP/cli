@@ -10,6 +10,13 @@ import (
 // admin-billing-gateway: its routing defect (no APIPath/RESTPath → phantom
 // /api/adminbillinggateway that 404s) is now fixed against the real GlobalAdminController
 // surface, so the paths are pinned here rather than left uncovered.
+//
+// Verifying a route against a running backend: probe it UNAUTHENTICATED and expect 401
+// (the endpoint exists and challenges) versus 404 (no such endpoint). Do NOT probe with a
+// valid token and read 403 as proof the route exists — TenantIdentificationMiddleware
+// returns 403 before routing resolves, so a nonexistent path answers 403 identically.
+//   curl -sk -o /dev/null -w '%{http_code}' -X POST -d '{}' \
+//     https://localhost:5002/api/globaladmin/tenants/<guid>/billing-method    # 401 = exists
 
 func billingPlanAction(t *testing.T, domainName, actionName string) (*Domain, Action) {
 	t.Helper()
