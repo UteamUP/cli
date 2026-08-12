@@ -1,12 +1,15 @@
 package registry
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // billing-kling-remediation F5.3 — coverage for the billing/plan domains that shipped
-// without a _test.go. Route assertions pin the URL contract for every domain whose
-// registration declares real paths; admin-billing-gateway gets registration/flag-contract
-// coverage only, because its routing is a known defect (no APIPath/RESTPath/MCPOnly →
-// phantom derived URL) tracked for its own fix — pinning the broken path would bless it.
+// without a _test.go. Route assertions pin the URL contract for every domain, including
+// admin-billing-gateway: its routing defect (no APIPath/RESTPath → phantom
+// /api/adminbillinggateway that 404s) is now fixed against the real GlobalAdminController
+// surface, so the paths are pinned here rather than left uncovered.
 
 func billingPlanAction(t *testing.T, domainName, actionName string) (*Domain, Action) {
 	t.Helper()
@@ -70,6 +73,145 @@ func TestBillingPlanDomainsDeclareNoIntIdentityArg(t *testing.T) {
 				if arg.Type == "int" {
 					t.Fatalf("%s %s declares int identity arg %s — public identifiers must be GUIDs", name, action.Name, arg.Name)
 				}
+			}
+		}
+	}
+}
+
+func TestBillingGatewaySwitcherRoutesMatchGlobalAdminController(t *testing.T) {
+	t.Parallel()
+	// Paths mirror GlobalAdminController: POST tenants/{tenantGuid:guid}/billing-method,
+	// GET .../history, GET .../{auditGuid:guid}, POST .../{auditGuid:guid}/cancel.
+	tests := []struct {
+		actionName string
+		method     string
+		args       map[string]any
+		path       string
+		consumed   int
+	}{
+		{"change", "POST", map[string]any{"tenantGuid": "tenant-guid"},
+			"/api/globaladmin/tenants/tenant-guid/billing-method", 1},
+		{"history", "GET", map[string]any{"tenantGuid": "tenant-guid"},
+			"/api/globaladmin/tenants/tenant-guid/billing-method/history", 1},
+		{"get", "GET", map[string]any{"tenantGuid": "tenant-guid", "auditGuid": "audit-guid"},
+			"/api/globaladmin/tenants/tenant-guid/billing-method/audit-guid", 2},
+		{"cancel", "POST", map[string]any{"tenantGuid": "tenant-guid", "auditGuid": "audit-guid"},
+			"/api/globaladmin/tenants/tenant-guid/billing-method/audit-guid/cancel", 2},
+	}
+	for _, test := range tests {
+		t.Run(test.actionName, func(t *testing.T) {
+			domain, action := billingPlanAction(t, "admin-billing-gateway", test.actionName)
+			if action.HTTPMethod != test.method {
+				t.Fatalf("method = %q, want %q — the HTTPMethod map has no entry for %q, so an "+
+					"unset override silently falls back to GET", action.HTTPMethod, test.method, test.actionName)
+			}
+			path, consumed := buildRESTPath(domain, action, test.args)
+			if path != test.path {
+				t.Fatalf("path = %q, want %q", path, test.path)
+			}
+			if len(consumed) != test.consumed {
+				t.Fatalf("consumed %d path args, want %d — unconsumed identifiers leak into the body",
+					len(consumed), test.consumed)
+			}
+		})
+	}
+}
+
+func TestBillingGatewaySwitcherNeverDerivesThePhantomPath(t *testing.T) {
+	t.Parallel()
+	// The regression this domain shipped with: no APIPath + no RESTPath means buildRESTPath
+	// derives "/api/" + domainName with dashes stripped — a controller that does not exist.
+	domain := findDomain("admin-billing-gateway")
+	if domain == nil {
+		t.Fatal("admin-billing-gateway domain is not registered")
+	}
+	if domain.APIPath != "/api/globaladmin" {
+		t.Fatalf("APIPath = %q, want /api/globaladmin", domain.APIPath)
+	}
+	for _, action := range domain.Actions {
+		if action.RESTPath == "" {
+			t.Fatalf("action %s declares no RESTPath", action.Name)
+		}
+		path, _ := buildRESTPath(domain, action, map[string]any{
+			"tenantGuid": "t", "auditGuid": "a",
+		})
+		if strings.Contains(path, "adminbillinggateway") {
+			t.Fatalf("action %s still resolves to the phantom derived path: %s", action.Name, path)
+		}
+		if strings.Contains(path, "{") {
+			t.Fatalf("action %s left an unexpanded placeholder: %s", action.Name, path)
+		}
+	}
+}
+
+func TestBillingGatewaySwitcherFieldMappingMatchesBackendBinding(t *testing.T) {
+	t.Parallel()
+	// The backend binds the idempotency key with [FromHeader(Name = "Idempotency-Key")], so it
+	// must travel as a header — a BodyName mapping would put it in the JSON body where nothing
+	// reads it. Everything else maps onto BillingMethodChangeRequest / …CancelRequest fields.
+	_, change := billingPlanAction(t, "admin-billing-gateway", "change")
+	body := map[string]string{}
+	var idempotencyHeader string
+	for _, flag := range change.Flags {
+		if flag.HeaderName != "" {
+			idempotencyHeader = flag.HeaderName
+			if flag.BodyName != "" {
+				t.Fatalf("--%s must not also declare BodyName; the backend reads it from the header only", flag.Name)
+			}
+			continue
+		}
+		body[flag.Name] = flag.BodyName
+	}
+	if idempotencyHeader != "Idempotency-Key" {
+		t.Fatalf("idempotency key header = %q, want Idempotency-Key", idempotencyHeader)
+	}
+	for flagName, want := range map[string]string{
+		"tenant": "tenantGuid", "to": "newBillingMethod",
+		"reason": "reason", "kennitala": "kennitala", "effective": "effective",
+	} {
+		if body[flagName] != want {
+			t.Fatalf("--%s maps to %q, want %q", flagName, body[flagName], want)
+		}
+	}
+
+	_, history := billingPlanAction(t, "admin-billing-gateway", "history")
+	pagination := map[string]string{}
+	for _, flag := range history.Flags {
+		pagination[flag.Name] = flag.BodyName
+	}
+	if pagination["page"] != "page" || pagination["page-size"] != "pageSize" {
+		t.Fatalf("history pagination maps to %v, want page/pageSize", pagination)
+	}
+}
+
+func TestBillingGatewaySwitcherUsesBackendEnumVocabulary(t *testing.T) {
+	t.Parallel()
+	// The API registers JsonStringEnumConverter(camelCase, allowIntegerValues: true), so the
+	// enum NAMES bind directly and the CLI translates nothing. The prior header comment
+	// promised stripe/ibt/kling aliases that no code implemented; this pins the honest
+	// vocabulary so the docs cannot drift back.
+	_, change := billingPlanAction(t, "admin-billing-gateway", "change")
+	for _, flag := range change.Flags {
+		switch flag.Name {
+		case "to":
+			for _, member := range []string{"stripe", "icelandicBankTransfer"} {
+				if !strings.Contains(flag.Description, member) {
+					t.Fatalf("--to must document the %q enum member, got %q", member, flag.Description)
+				}
+			}
+			for _, ghost := range []string{"ibt", "kling"} {
+				if strings.Contains(strings.ToLower(flag.Description), ghost) {
+					t.Fatalf("--to documents the %q alias, which no code implements", ghost)
+				}
+			}
+		case "effective":
+			for _, member := range []string{"endOfCurrentCycle", "startImmediately"} {
+				if !strings.Contains(flag.Description, member) {
+					t.Fatalf("--effective must document the %q enum member, got %q", member, flag.Description)
+				}
+			}
+			if flag.Default != "endOfCurrentCycle" {
+				t.Fatalf("--effective default = %v, want endOfCurrentCycle", flag.Default)
 			}
 		}
 	}
