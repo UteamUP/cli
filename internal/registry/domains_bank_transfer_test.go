@@ -60,6 +60,7 @@ func TestBankTransferReadSurfacesTargetAdminRoutes(t *testing.T) {
 		{"list-invoices", "/api/internalbilling/admin/invoices/pending"},
 		{"list-overdue", "/api/internalbilling/admin/invoices/overdue"},
 		{"list-paid", "/api/internalbilling/admin/invoices/paid"},
+		{"status", "/api/internalbilling/subscription-status"},
 		{"list-subscriptions", "/api/internalbilling/admin/subscriptions"},
 		{"dashboard", "/api/internalbilling/admin/dashboard"},
 	}
