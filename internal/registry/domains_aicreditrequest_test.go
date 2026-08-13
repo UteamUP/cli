@@ -40,7 +40,6 @@ func TestAiCreditRequestActionsWired(t *testing.T) {
 		"submit":  "UteamupAiCreditRequestSubmit",
 		"mine":    "UteamupAiCreditRequestMine",
 		"pending": "UteamupAiCreditRequestPending",
-		"fulfill": "UteamupAiCreditRequestFulfill",
 		"reject":  "UteamupAiCreditRequestReject",
 	}
 	d := findAiCreditRequestDomain(t)
@@ -85,8 +84,7 @@ func TestAiCreditRequestSubmitWiring(t *testing.T) {
 
 func TestAiCreditRequestGuidRoutesAreGuidFirst(t *testing.T) {
 	cases := map[string]string{
-		"fulfill": "{guid}/fulfill",
-		"reject":  "{guid}/reject",
+		"reject": "{guid}/reject",
 	}
 	for name, wantPath := range cases {
 		a := findAiCreditRequestAction(t, name)
@@ -100,23 +98,14 @@ func TestAiCreditRequestGuidRoutesAreGuidFirst(t *testing.T) {
 			t.Errorf("%s must take a single required string `guid` arg, got %+v", name, a.Args)
 		}
 	}
+}
 
-	// fulfill requires the package-plan-guid body flag (GUID-keyed at the boundary).
-	fulfill := findAiCreditRequestAction(t, "fulfill")
-	var foundPlan bool
-	for _, f := range fulfill.Flags {
-		if f.Name == "package-plan-guid" {
-			foundPlan = true
-			if !f.Required {
-				t.Error("fulfill --package-plan-guid must be required")
-			}
-			if f.BodyName != "packagePlanGuid" {
-				t.Errorf("fulfill --package-plan-guid BodyName = %q, want packagePlanGuid", f.BodyName)
-			}
+func TestAiCreditRequestDirectFulfillmentIsNotExposed(t *testing.T) {
+	domain := findAiCreditRequestDomain(t)
+	for _, action := range domain.Actions {
+		if action.Name == "fulfill" || action.RESTPath == "{guid}/fulfill" {
+			t.Fatalf("legacy direct fulfillment must not be exposed: %+v", action)
 		}
-	}
-	if !foundPlan {
-		t.Error("fulfill action must declare a --package-plan-guid flag")
 	}
 }
 

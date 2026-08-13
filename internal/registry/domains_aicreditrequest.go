@@ -1,13 +1,13 @@
 package registry
 
 // Custom AI-credit requests CLI surface — a tenant asks for a non-catalog credit amount (e.g. 500,000/month
-// billed annually); global admins list, fulfil, or reject them. Mirrors the backend AiCreditRequestController
+// billed annually); global admins list or reject them. Paid fulfilment is owned by the provider-neutral billing
+// order and settlement flow. Mirrors the backend AiCreditRequestController
 // (GUID-first per Guidelines/ApiGuidelines.md):
 //
 //   submit   POST /api/aicreditrequest                 (body = flags, camelCased; tenant owner)
 //   mine     GET  /api/aicreditrequest/mine            (current tenant's requests)
 //   pending  GET  /api/aicreditrequest/pending         (global-admin review queue)
-//   fulfill  POST /api/aicreditrequest/{guid}/fulfill  (subscribe the tenant to an AI-credit package plan)
 //   reject   POST /api/aicreditrequest/{guid}/reject
 //
 // The CLI calls these REST routes directly (CallREST); the ToolName is the MCP mirror declaration.
@@ -16,7 +16,7 @@ func init() {
 	Register(&Domain{
 		Name:        "aicreditrequest",
 		Aliases:     []string{"aicreditrequests", "creditrequest", "creditrequests"},
-		Description: "Submit, list, fulfil, and reject custom AI-credit requests",
+		Description: "Submit, list, and reject custom AI-credit requests",
 		APIPath:     "/api/aicreditrequest",
 		Actions: []Action{
 			{
@@ -41,20 +41,6 @@ func init() {
 				Description: "List pending custom AI-credit requests across all tenants (global-admin only)",
 				ToolName:    "UteamupAiCreditRequestPending",
 				RESTPath:    "pending",
-			},
-			{
-				Name:        "fulfill",
-				Description: "Fulfil a pending request by subscribing the tenant to an AI-credit package plan (global-admin only)",
-				ToolName:    "UteamupAiCreditRequestFulfill",
-				HTTPMethod:  "POST",
-				RESTPath:    "{guid}/fulfill",
-				Args:        []ArgDef{{Name: "guid", Description: "Request GUID (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
-				Flags: []FlagDef{
-					{Name: "package-plan-guid", BodyName: "packagePlanGuid", Description: "AI-credit package plan GUID to subscribe the tenant to (required)", Required: true, Type: "string"},
-					{Name: "billing-cycle", BodyName: "billingCycle", Description: "Billing cycle: monthly or annual (default annual)", Type: "string"},
-					{Name: "quantity", Description: "Number of package units (default 1)", Type: "int"},
-					{Name: "resolution-note", BodyName: "resolutionNote", Description: "Optional note captured at fulfilment", Type: "string"},
-				},
 			},
 			{
 				Name:        "reject",
