@@ -4,7 +4,7 @@ func init() {
 	Register(&Domain{
 		Name:        "bank-transfer",
 		Aliases:     []string{"bt", "billing-transfer"},
-		Description: "Manage Icelandic bank transfer billing (invoices, subscriptions, reconciliation, refunds)",
+		Description: "Manage Icelandic bank transfer billing (invoices, subscriptions, reconciliation)",
 		APIPath:     "/api/internalbilling",
 		Actions: []Action{
 			{
@@ -64,18 +64,6 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "admin/subscriptions/{subscriptionGuid}/activate",
 				Args:        []ArgDef{{Name: "subscriptionGuid", Description: "Subscription external GUID", Required: true, Type: "uuid"}},
-			},
-			{
-				Name:        "refund",
-				Description: "Refund a settled provider payment (Kling card intents) and issue the paired credit note",
-				ToolName:    "UteamupBankTransferRefundPayment",
-				HTTPMethod:  "POST",
-				RESTPath:    "admin/payments/{paymentGuid}/refund",
-				Args:        []ArgDef{{Name: "paymentGuid", Description: "Payment external GUID", Required: true, Type: "uuid"}},
-				Flags: []FlagDef{
-					{Name: "reason", Short: "r", BodyName: "reason", Description: "Refund reason (max 500 characters)", Required: true, Type: "string"},
-					{Name: "amount", Short: "a", BodyName: "amount", Description: "Partial refund amount; omit to refund the full remaining refundable amount", Type: "float"},
-				},
 			},
 			{
 				Name:        "dashboard",

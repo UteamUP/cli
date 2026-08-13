@@ -39,7 +39,6 @@ func TestBankTransferRoutesAreGuidOnly(t *testing.T) {
 		{"get-invoice", "invoiceGuid", "/api/internalbilling/invoices/invoice-guid"},
 		{"mark-paid", "invoiceGuid", "/api/internalbilling/admin/invoices/invoice-guid/mark-paid"},
 		{"activate", "subscriptionGuid", "/api/internalbilling/admin/subscriptions/subscription-guid/activate"},
-		{"refund", "paymentGuid", "/api/internalbilling/admin/payments/payment-guid/refund"},
 	}
 	for _, test := range tests {
 		t.Run(test.actionName, func(t *testing.T) {
@@ -132,21 +131,21 @@ func TestBankTransferReconciliationBodiesMirrorBackendModels(t *testing.T) {
 		}
 	}
 
-	_, refund := bankTransferAction(t, "refund")
-	var reasonRequired, amountOptional bool
-	for _, flag := range refund.Flags {
-		if flag.BodyName == "reason" && flag.Required {
-			reasonRequired = true
-		}
-		if flag.BodyName == "amount" && !flag.Required {
-			amountOptional = true
-		}
+}
+
+func TestBankTransferDomainDoesNotExposeImmediateProviderRefund(t *testing.T) {
+	t.Parallel()
+	domain := findDomain("bank-transfer")
+	if domain == nil {
+		t.Fatal("bank-transfer domain is not registered")
 	}
-	if !reasonRequired {
-		t.Fatal("refund must require --reason (RefundPaymentRequestModel.Reason is [Required])")
-	}
-	if !amountOptional {
-		t.Fatal("refund --amount must stay optional (null = full remaining refundable amount)")
+	for _, action := range domain.Actions {
+		if action.Name == "refund" || action.ToolName == "UteamupBankTransferRefundPayment" {
+			t.Fatalf("retired immediate provider refund is registered: %+v", action)
+		}
+		if strings.Contains(strings.ToLower(action.RESTPath), "/payments/") {
+			t.Fatalf("bank-transfer CLI exposes a payment-keyed provider write: %q", action.RESTPath)
+		}
 	}
 }
 
