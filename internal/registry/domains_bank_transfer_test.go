@@ -60,7 +60,6 @@ func TestBankTransferReadSurfacesTargetAdminRoutes(t *testing.T) {
 		{"list-invoices", "/api/internalbilling/admin/invoices/pending"},
 		{"list-overdue", "/api/internalbilling/admin/invoices/overdue"},
 		{"list-paid", "/api/internalbilling/admin/invoices/paid"},
-		{"status", "/api/internalbilling/subscription-status"},
 		{"list-subscriptions", "/api/internalbilling/admin/subscriptions"},
 		{"dashboard", "/api/internalbilling/admin/dashboard"},
 	}
@@ -75,6 +74,19 @@ func TestBankTransferReadSurfacesTargetAdminRoutes(t *testing.T) {
 				t.Fatalf("path = %q, want %q", path, test.path)
 			}
 		})
+	}
+}
+
+func TestBankTransferDomainDoesNotExposeLegacyTenantOverview(t *testing.T) {
+	t.Parallel()
+	domain := findDomain("bank-transfer")
+	if domain == nil {
+		t.Fatal("bank-transfer domain is not registered")
+	}
+	for _, action := range domain.Actions {
+		if action.Name == "status" || action.ToolName == "UteamupBankTransferBillingOverview" {
+			t.Fatalf("legacy provider-specific billing overview is registered: %+v", action)
+		}
 	}
 }
 
