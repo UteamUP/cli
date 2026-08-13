@@ -1,8 +1,17 @@
 package registry
 
 import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/uteamup/cli/internal/auth"
+	"github.com/uteamup/cli/internal/client"
+	"github.com/uteamup/cli/internal/logging"
 )
 
 func bankTransferAction(t *testing.T, actionName string) (*Domain, Action) {
@@ -139,4 +148,90 @@ func TestBankTransferReconciliationBodiesMirrorBackendModels(t *testing.T) {
 	if !amountOptional {
 		t.Fatal("refund --amount must stay optional (null = full remaining refundable amount)")
 	}
+}
+
+func TestBankTransferListSubscriptionsPreservesGuidOnlyResponse(t *testing.T) {
+	domain, action := bankTransferAction(t, "list-subscriptions")
+	path, _ := buildRESTPath(domain, action, nil)
+	const tenantGUID = "11111111-1111-4111-8111-111111111111"
+	const subscriptionGUID = "22222222-2222-4222-8222-222222222222"
+	const planGUID = "33333333-3333-4333-8333-333333333333"
+	const pendingPlanGUID = "44444444-4444-4444-8444-444444444444"
+
+	apiClient := newBankTransferContractClient(t, tenantGUID, func(
+		response http.ResponseWriter,
+		request *http.Request,
+	) {
+		if request.Method != http.MethodGet || request.URL.Path != path {
+			t.Errorf("request = %s %s, want GET %s", request.Method, request.URL.Path, path)
+		}
+		if request.Header.Get("X-Tenant-Guid") != tenantGUID {
+			t.Errorf("tenant GUID header = %q", request.Header.Get("X-Tenant-Guid"))
+		}
+		if request.Header.Get("X-Tenant-ID") != "" {
+			t.Errorf("integer tenant identity leaked in header: %q", request.Header.Get("X-Tenant-ID"))
+		}
+		response.Header().Set("Content-Type", "application/json")
+		_, _ = response.Write([]byte(`[{
+			"guid":"` + subscriptionGUID + `",
+			"tenantGuid":"` + tenantGUID + `",
+			"planGuid":"` + planGUID + `",
+			"pendingPlanGuid":"` + pendingPlanGUID + `",
+			"status":"Active"
+		}]`))
+	})
+
+	result, err := apiClient.CallREST(
+		context.Background(),
+		action.HTTPMethod,
+		path,
+		nil,
+		nil,
+		action.Name,
+	)
+	if err != nil {
+		t.Fatalf("list-subscriptions transport failed: %v", err)
+	}
+	var subscriptions []map[string]json.RawMessage
+	if err := json.Unmarshal(result, &subscriptions); err != nil || len(subscriptions) != 1 {
+		t.Fatalf("decode subscription response: %v (%s)", err, result)
+	}
+	for _, field := range []string{"guid", "tenantGuid", "planGuid", "pendingPlanGuid"} {
+		if _, ok := subscriptions[0][field]; !ok {
+			t.Errorf("subscription response is missing %q: %s", field, result)
+		}
+	}
+	for _, retired := range []string{"id", "tenantId", "planId", "pendingPlanId"} {
+		if _, ok := subscriptions[0][retired]; ok {
+			t.Errorf("subscription response leaked retired field %q: %s", retired, result)
+		}
+	}
+}
+
+func newBankTransferContractClient(
+	t *testing.T,
+	tenantGUID string,
+	handler http.HandlerFunc,
+) *client.APIClient {
+	t.Helper()
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	if err := auth.SaveToken(&auth.TokenData{
+		AccessToken: "bank-transfer-contract-token",
+		ExpiresAt:   time.Now().Add(time.Hour),
+		TenantGUID:  tenantGUID,
+	}); err != nil {
+		t.Fatalf("save test token: %v", err)
+	}
+
+	server := httptest.NewTLSServer(handler)
+	t.Cleanup(server.Close)
+	return client.NewAPIClient(
+		server.URL,
+		time.Second,
+		true,
+		client.RetryOptions{MaxRetries: 0},
+		logging.New(logging.LevelError),
+	)
 }
