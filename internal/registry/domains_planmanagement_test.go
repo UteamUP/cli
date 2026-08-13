@@ -194,13 +194,12 @@ func TestPlanAnalyticsDomainRegistered(t *testing.T) {
 
 func TestSubscriptionLifecycleDomainRegistered(t *testing.T) {
 	d := assertDomainAPIPath(t, "subscription-lifecycle", "/api/internalbilling")
-	if len(d.Actions) != 6 {
-		t.Errorf("subscription-lifecycle expected 6 lifecycle actions, got %d", len(d.Actions))
+	if len(d.Actions) != 5 {
+		t.Errorf("subscription-lifecycle expected 5 lifecycle actions, got %d", len(d.Actions))
 	}
 
 	for actionName, restPath := range map[string]string{
 		"suspend":                  "admin/subscriptions/{guid}/suspend",
-		"cancel":                   "admin/subscriptions/{guid}/cancel",
 		"reactivate":               "admin/subscriptions/{guid}/reactivate",
 		"schedule-cancel":          "admin/subscriptions/{guid}/schedule-cancel",
 		"activate-without-payment": "admin/subscriptions/{guid}/activate-without-payment",
@@ -216,16 +215,7 @@ func TestSubscriptionLifecycleDomainRegistered(t *testing.T) {
 		assertSingleGUIDArg(t, a, "guid")
 	}
 
-	// cancel deliberately has NO --reason flag: the backend binds
-	// `[FromBody] string? reason` (a raw JSON string), which the flag→object
-	// body mapping cannot express — a reason flag would produce {"reason":...}
-	// and fail model binding with a 400.
-	cancel := findDomainAction(t, "subscription-lifecycle", "cancel")
-	if len(cancel.Flags) != 0 {
-		t.Errorf("subscription-lifecycle cancel must take no flags (raw-string body not expressible), got %d", len(cancel.Flags))
-	}
-
-	// activate-without-payment is the BIL-002 audited override. Unlike cancel, its
+	// activate-without-payment is the BIL-002 audited override. Its
 	// backend binds a real DTO ([FromBody] ActivateWithoutPaymentRequestModel), so the
 	// flag→object body mapping produces exactly the {"reason":...} it expects. The flag
 	// MUST stay required: an override with no stated reason is indistinguishable from a
@@ -241,5 +231,16 @@ func TestSubscriptionLifecycleDomainRegistered(t *testing.T) {
 	cancelAt := findFlag(sched, "cancel-at")
 	if cancelAt == nil || !cancelAt.Required || cancelAt.Type != "string" {
 		t.Errorf("subscription-lifecycle schedule-cancel --cancel-at must be a required string flag, got %+v", cancelAt)
+	}
+}
+
+func TestSubscriptionLifecycleImmediateCancelIsNotExposed(t *testing.T) {
+	domain := assertDomainAPIPath(t, "subscription-lifecycle", "/api/internalbilling")
+	for _, action := range domain.Actions {
+		if action.Name == "cancel" ||
+			action.ToolName == "UteamupSubscriptionCancel" ||
+			action.RESTPath == "admin/subscriptions/{guid}/cancel" {
+			t.Fatalf("legacy immediate subscription cancellation remains exposed: %+v", action)
+		}
 	}
 }

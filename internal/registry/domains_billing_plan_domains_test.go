@@ -51,7 +51,6 @@ func TestBillingPlanDomainRoutes(t *testing.T) {
 		{"plan-limit", "upsert", map[string]any{"planGuid": "plan-guid"}, "/api/planlimit/by-plan/plan-guid"},
 		{"plan-migration", "migrate", map[string]any{}, "/api/planmigration"},
 		{"subscription-lifecycle", "suspend", map[string]any{"guid": "sub-guid"}, "/api/internalbilling/admin/subscriptions/sub-guid/suspend"},
-		{"subscription-lifecycle", "cancel", map[string]any{"guid": "sub-guid"}, "/api/internalbilling/admin/subscriptions/sub-guid/cancel"},
 		{"subscription-lifecycle", "reactivate", map[string]any{"guid": "sub-guid"}, "/api/internalbilling/admin/subscriptions/sub-guid/reactivate"},
 		{"subscription-lifecycle", "schedule-cancel", map[string]any{"guid": "sub-guid"}, "/api/internalbilling/admin/subscriptions/sub-guid/schedule-cancel"},
 		{"subscription-lifecycle", "activate-without-payment", map[string]any{"guid": "sub-guid"}, "/api/internalbilling/admin/subscriptions/sub-guid/activate-without-payment"},
