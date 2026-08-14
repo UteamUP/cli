@@ -67,6 +67,20 @@ func init() {
 					{Name: "priority", Description: "Priority (1=Low, 2=Medium, 3=High, 4=Critical)", Default: 2, Type: "int"},
 				},
 			},
+			{
+				Name:        "materialize-register-code",
+				Description: "Create the catalog entry behind a register scaffolding row so it can be edited",
+				ToolName:    "UteamupCodingsystemMaterializeRegisterCode",
+				MCPOnly:     true,
+				Flags: []FlagDef{
+					{Name: "coding-system-guid", Short: "c", BodyName: "codingSystemGuid", Description: "Coding system GUID", Required: true, Type: "uuid"},
+					{Name: "code", BodyName: "code", Description: "Leaf code segment of the row (e.g. 'L', 'LBA')", Required: true, Type: "string"},
+					{Name: "display-code", BodyName: "displayCode", Description: "Full register path of the row (e.g. 'L' or 'L-LBA')", Required: true, Type: "string"},
+					{Name: "level-order", BodyName: "levelOrder", Description: "Register tier (0 Plant, 1 System, 2 Equipment, 3 Component)", Required: true, Type: "int"},
+					{Name: "name", BodyName: "name", Description: "Display name (defaults to the code)", Type: "string"},
+					{Name: "parent-guid", Short: "p", BodyName: "parentEntryGuid", Description: "Already-materialised parent entry GUID; omit for a register root (Plant and Function tiers are both roots)", Type: "uuid"},
+				},
+			},
 		},
 	})
 }

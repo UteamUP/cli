@@ -43,13 +43,14 @@ func TestCodingSystemDomainActions(t *testing.T) {
 	}
 
 	expectedActions := map[string]string{
-		"list":             "UteamupCodingsystemList",
-		"tree":             "UteamupCodingsystemTree",
-		"search":           "UteamupCodingsystemSearchAssets",
-		"next-code":        "UteamupCodingsystemNextCode",
-		"assign":           "UteamupCodingsystemAssignCode",
-		"workorders":       "UteamupCodingsystemWorkorders",
-		"create-workorder": "UteamupCodingsystemCreateWorkorder",
+		"list":                      "UteamupCodingsystemList",
+		"tree":                      "UteamupCodingsystemTree",
+		"search":                    "UteamupCodingsystemSearchAssets",
+		"next-code":                 "UteamupCodingsystemNextCode",
+		"assign":                    "UteamupCodingsystemAssignCode",
+		"workorders":                "UteamupCodingsystemWorkorders",
+		"create-workorder":          "UteamupCodingsystemCreateWorkorder",
+		"materialize-register-code": "UteamupCodingsystemMaterializeRegisterCode",
 	}
 
 	actionMap := make(map[string]string)
@@ -134,6 +135,9 @@ func TestCodingSystemActionsUseRegisteredMCPGuidContracts(t *testing.T) {
 		"next-code":        {"parent-guid": "parentEntryGuid"},
 		"assign":           {"asset-guid": "assetGuid", "entry-guid": "codeCatalogEntryGuid"},
 		"create-workorder": {"entry-guid": "codeCatalogEntryGuid"},
+		// Register scaffolding rows have no GUID of their own, so the parent is
+		// the only identifier on the wire — and it must stay a GUID.
+		"materialize-register-code": {"coding-system-guid": "codingSystemGuid", "parent-guid": "parentEntryGuid"},
 	}
 
 	for _, action := range csDomain.Actions {
