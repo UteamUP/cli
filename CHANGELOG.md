@@ -5,6 +5,29 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0](https://github.com/UteamUP/cli/compare/2.0.0...2.1.0) (2026-08-14)
+
+
+### Features
+
+* add billing commerce reads ([ab39ea0](https://github.com/UteamUP/cli/commit/ab39ea051e5ce93b36ad0b068e20fc3127890c4a))
+* **registry:** add codingsystem materialize-register-code ([d247e2a](https://github.com/UteamUP/cli/commit/d247e2abc46325d9518674e9e7200c5f2d2713b8))
+
+
+### Bug Fixes
+
+* remove payment provider selection from CLI ([9932066](https://github.com/UteamUP/cli/commit/99320668ed19082947ce8995cacd8e87071a6698))
+* remove unsafe subscription cancellation command ([e56c41d](https://github.com/UteamUP/cli/commit/e56c41d17f87a22a175d06a8f18d611e182b7607))
+* retire custom AI fulfillment command ([a751574](https://github.com/UteamUP/cli/commit/a7515748d5a25572586d4fef20ced9ff90deee0b))
+* retire immediate bank transfer refund command ([66fb2aa](https://github.com/UteamUP/cli/commit/66fb2aa40e19065aeb1d665d804091f8d9476c48))
+* retire legacy billing CLI mutations ([dca787d](https://github.com/UteamUP/cli/commit/dca787dde34775c356143a66fa87d2fc4ecfeec6))
+
+
+### Tests
+
+* pin bank transfer GUID responses ([acc301c](https://github.com/UteamUP/cli/commit/acc301c4d24fb0d0823f3767b34139452da6fba6))
+* retire legacy bank transfer status expectation ([dab987d](https://github.com/UteamUP/cli/commit/dab987d39a50e000db47157f8a232ef5f381c9d4))
+
 ## [2.0.0](https://github.com/UteamUP/cli/compare/1.92.1...2.0.0) (2026-08-12)
 
 
