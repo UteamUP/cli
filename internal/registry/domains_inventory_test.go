@@ -335,6 +335,7 @@ func TestStockPurchaseOrderActionsWired(t *testing.T) {
 		{"po-get", "UteamupStockGetPurchaseOrder", "", "purchase-orders/{guid}", true},
 		{"po-submit", "UteamupStockSubmitPurchaseOrder", "POST", "purchase-orders/{guid}/submit", true},
 		{"po-approve", "UteamupStockApprovePurchaseOrder", "POST", "purchase-orders/{guid}/approve", true},
+		{"po-calendar", "UteamupStockGetPurchaseOrderCalendar", "GET", "purchase-orders/{guid}/calendar.ics", true},
 		{"po-cancel", "UteamupStockCancelPurchaseOrder", "POST", "purchase-orders/{guid}/cancel", true},
 	}
 

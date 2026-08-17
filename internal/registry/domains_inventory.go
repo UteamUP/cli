@@ -196,6 +196,14 @@ func init() {
 				Args:        []ArgDef{{Name: "guid", Description: "Purchase order GUID", Required: true, Type: "string"}},
 			},
 			Action{
+				Name:        "po-calendar",
+				Description: "Download the purchase-order delivery calendar (.ics, UID = PO GUID)",
+				ToolName:    "UteamupStockGetPurchaseOrderCalendar",
+				HTTPMethod:  "GET",
+				RESTPath:    "purchase-orders/{guid}/calendar.ics",
+				Args:        []ArgDef{{Name: "guid", Description: "Purchase order GUID", Required: true, Type: "string"}},
+			},
+			Action{
 				Name:        "po-cancel",
 				Description: "Cancel a purchase order",
 				ToolName:    "UteamupStockCancelPurchaseOrder",
