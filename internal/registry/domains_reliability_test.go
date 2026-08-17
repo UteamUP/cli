@@ -10,8 +10,8 @@ func TestReliabilityRiskUsesGuidFirstEvidenceRoute(t *testing.T) {
 	if domain.APIPath != "/api/analytics/reliability" {
 		t.Fatalf("API path = %q", domain.APIPath)
 	}
-	if len(domain.Actions) != 6 {
-		t.Fatalf("actions = %d, want 6", len(domain.Actions))
+	if len(domain.Actions) != 10 {
+		t.Fatalf("actions = %d, want 10", len(domain.Actions))
 	}
 
 	action := domain.Actions[0]
@@ -68,6 +68,22 @@ func TestReliabilityEvidenceAndRunActionsStayGuidFirst(t *testing.T) {
 			"UteamupReliabilityStrategyPrepareRun",
 			"POST",
 			"strategies/prepare-run",
+		},
+		"forecasts":         {"UteamupReliabilityForecastList", "GET", "forecasts"},
+		"forecast": {
+			"UteamupReliabilityForecastGet",
+			"GET",
+			"forecasts/{assetGuid}",
+		},
+		"forecast-schedule": {
+			"UteamupReliabilityForecastSchedulePropose",
+			"POST",
+			"forecasts/{assetGuid}/schedule",
+		},
+		"forecast-confirm": {
+			"UteamupReliabilityForecastScheduleConfirm",
+			"POST",
+			"forecasts/{assetGuid}/schedule/confirm",
 		},
 	}
 

@@ -93,6 +93,62 @@ func init() {
 					{Name: "to-utc", BodyName: "toUtc", Description: "Optional UTC evidence-window end", Type: "string"},
 				},
 			},
+			{
+				Name:        "forecasts",
+				Description: "List elevated-risk deterministic failure forecasts for the horizon",
+				ToolName:    "UteamupReliabilityForecastList",
+				HTTPMethod:  "GET",
+				RESTPath:    "forecasts",
+				Flags: []FlagDef{
+					{Name: "horizon-days", Description: "Forecast horizon in days (1-90)", Default: 7, Type: "int"},
+				},
+			},
+			{
+				Name:        "forecast",
+				Description: "Read a deterministic evidence-cited failure forecast for one asset",
+				ToolName:    "UteamupReliabilityForecastGet",
+				HTTPMethod:  "GET",
+				RESTPath:    "forecasts/{assetGuid}",
+				Args: []ArgDef{
+					{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "horizon-days", Description: "Forecast horizon in days (1-90)", Default: 7, Type: "int"},
+				},
+			},
+			{
+				Name:        "forecast-schedule",
+				Description: "Propose a HITL inspection from a failure forecast (does not create a workorder)",
+				ToolName:    "UteamupReliabilityForecastSchedulePropose",
+				HTTPMethod:  "POST",
+				RESTPath:    "forecasts/{assetGuid}/schedule",
+				Args: []ArgDef{
+					{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "request-guid", BodyName: "requestGuid", Description: "Caller-generated idempotency GUID", Required: true, Type: "uuid"},
+					{Name: "workorder-template-guid", BodyName: "workorderTemplateGuid", Description: "Optional public template GUID", Type: "uuid"},
+					{Name: "due-date-utc", BodyName: "dueDateUtc", Description: "Optional UTC due date", Type: "string"},
+					{Name: "assignee-guid", BodyName: "assigneeGuid", Description: "Optional public assignee GUID", Type: "uuid"},
+				},
+			},
+			{
+				Name:        "forecast-confirm",
+				Description: "Confirm a forecast inspection proposal after WorkOrder.Create recheck",
+				ToolName:    "UteamupReliabilityForecastScheduleConfirm",
+				HTTPMethod:  "POST",
+				RESTPath:    "forecasts/{assetGuid}/schedule/confirm",
+				Args: []ArgDef{
+					{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "proposal-guid", BodyName: "proposalGuid", Description: "Proposal GUID from forecast-schedule", Required: true, Type: "uuid"},
+					{Name: "request-guid", BodyName: "requestGuid", Description: "Caller-generated idempotency GUID", Required: true, Type: "uuid"},
+					{Name: "workorder-template-guid", BodyName: "workorderTemplateGuid", Description: "Optional public template GUID", Type: "uuid"},
+					{Name: "due-date-utc", BodyName: "dueDateUtc", Description: "Optional UTC due date", Type: "string"},
+					{Name: "assignee-guid", BodyName: "assigneeGuid", Description: "Optional public assignee GUID", Type: "uuid"},
+				},
+			},
 		},
 	})
 }
