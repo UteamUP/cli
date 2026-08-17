@@ -5,6 +5,20 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0](https://github.com/UteamUP/cli/compare/2.1.0...2.2.0) (2026-08-17)
+
+
+### Features
+
+* **maintenance:** add CLI flags and item-nest for nested PM ([2450cca](https://github.com/UteamUP/cli/commit/2450cca8d600cc52f0b4ff891856ad6bc449f06f))
+* **registry:** add heat domain for Heat NEP readings ([50332b3](https://github.com/UteamUP/cli/commit/50332b369395e3109c362a58550fdad2e0f9522e))
+* **registry:** add marketplace list-from-stock action ([dc2845f](https://github.com/UteamUP/cli/commit/dc2845f80d96869dd30c565739e4cda129978e44))
+* **registry:** add menu-visibility domain ([8548ec6](https://github.com/UteamUP/cli/commit/8548ec62f4e8ea073488e3738cd8af2662d74069))
+* **registry:** add report-link domain for CLI and MCP ([5ce00bf](https://github.com/UteamUP/cli/commit/5ce00bfd5f0abcc06fe7abae5bfa8c0e32086de4))
+* **registry:** add safety incident domain ([f3725f1](https://github.com/UteamUP/cli/commit/f3725f101288c3851f88efa6e997620499b8e8a2))
+* **registry:** add stock po-calendar delivery .ics download ([c99dbbd](https://github.com/UteamUP/cli/commit/c99dbbd7fa9b4dcef8623f03396a9ea911dd600f))
+* **reliability:** add CLI forecast list, get, and schedule actions ([41d30da](https://github.com/UteamUP/cli/commit/41d30dab9281686b4cb69defc210553abd786bac))
+
 ## [2.1.0](https://github.com/UteamUP/cli/compare/2.0.0...2.1.0) (2026-08-14)
 
 
