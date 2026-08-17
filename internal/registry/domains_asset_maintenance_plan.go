@@ -16,12 +16,20 @@ func init() {
 		{Name: "baseline-meter-attribute-external-guid", BodyName: "baselineMeterAttributeExternalGuid", Description: "Meter attribute external GUID for the onboarding baseline", Type: "string"},
 		{Name: "consolidation-window-days", BodyName: "consolidationWindowDays", Description: "Compatible-work consolidation window in days", Type: "int"},
 		{Name: "due-trigger-policy", BodyName: "dueTriggerPolicy", Description: "Due policy: 0=earliest valid trigger wins", Default: 0, Type: "int"},
+		{Name: "nesting-policy", BodyName: "nestingPolicy", Description: "Nesting policy: 0=independent, 1=skip shorter when longer due", Default: 0, Type: "int"},
+		{Name: "scheduling-horizon-days", BodyName: "schedulingHorizonDays", Description: "Nested scheduling horizon in days", Default: 14, Type: "int"},
+		{Name: "cycle-start-offset", BodyName: "cycleStartOffset", Description: "Months to wait before shorter nested work is eligible", Default: 0, Type: "int"},
 	}
 
 	itemFlags := []FlagDef{
 		{Name: "name", Description: "Maintenance plan item name", Required: true, Type: "string"},
 		{Name: "trigger-type", BodyName: "triggerType", Description: "Trigger type: 0=calendar, 1=meter, 2=inspection result, 3=IoT alert", Default: 0, Type: "int"},
 		{Name: "calendar-interval-days", BodyName: "calendarIntervalDays", Description: "Calendar interval in days (1-3650)", Type: "int"},
+		{Name: "frequency-preset", BodyName: "frequencyPreset", Description: "Frequency preset: 0=custom days, 1=weekly, 2=monthly, 3=quarterly, 4=semi-annual, 5=annual", Default: 0, Type: "int"},
+		{Name: "parent-item-external-guid", BodyName: "parentItemExternalGuid", Description: "Shorter parent item external GUID for nested frequencies", Type: "string"},
+		{Name: "sort-order", BodyName: "sortOrder", Description: "Stable sort order within the plan", Type: "int"},
+		{Name: "cycle-multiple", BodyName: "cycleMultiple", Description: "Run every N parent cycles", Default: 1, Type: "int"},
+		{Name: "item-external-guid", BodyName: "itemExternalGuid", Description: "Optional client-supplied item GUID for same-request nesting", Type: "string"},
 		{Name: "meter-interval-value", BodyName: "meterIntervalValue", Description: "Meter usage interval", Type: "float"},
 		{Name: "meter-attribute-definition-external-guid", BodyName: "meterAttributeDefinitionExternalGuid", Description: "Meter attribute definition external GUID", Type: "string"},
 		{Name: "required-chemical-items-json", BodyName: "requiredChemicalItemsJson", Description: "Required chemicals as JSON text", Type: "string"},
@@ -36,6 +44,9 @@ func init() {
 		{Name: "name", Description: "Reusable maintenance template name", Required: true, Type: "string"},
 		{Name: "description", Description: "Optional template description", Type: "string"},
 		{Name: "consolidation-window-days", BodyName: "consolidationWindowDays", Description: "Compatible-work consolidation window in days", Type: "int"},
+		{Name: "nesting-policy", BodyName: "nestingPolicy", Description: "Nesting policy: 0=independent, 1=skip shorter when longer due", Default: 0, Type: "int"},
+		{Name: "scheduling-horizon-days", BodyName: "schedulingHorizonDays", Description: "Nested scheduling horizon in days", Default: 14, Type: "int"},
+		{Name: "cycle-start-offset", BodyName: "cycleStartOffset", Description: "Months to wait before shorter nested work is eligible", Default: 0, Type: "int"},
 	}
 
 	Register(&Domain{
@@ -113,6 +124,20 @@ func init() {
 					{Name: "planExternalGuid", Description: "Maintenance plan external GUID", Required: true, Type: "uuid"},
 				},
 				Flags: itemFlags,
+			},
+			{
+				Name:        "item-nest",
+				Description: "Re-parent an existing item as a longer nested frequency",
+				ToolName:    "UteamupAssetMaintenancePlanNestItem",
+				HTTPMethod:  "POST",
+				RESTPath:    "{planExternalGuid}/items/{itemExternalGuid}/nest",
+				Args: []ArgDef{
+					{Name: "planExternalGuid", Description: "Maintenance plan external GUID", Required: true, Type: "uuid"},
+					{Name: "itemExternalGuid", Description: "Child item external GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "parent-item-external-guid", BodyName: "parentItemExternalGuid", Description: "Shorter parent item external GUID", Required: true, Type: "string"},
+				},
 			},
 			{
 				Name:        "item-update",

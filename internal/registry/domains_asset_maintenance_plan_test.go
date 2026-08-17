@@ -83,12 +83,17 @@ func TestAssetMaintenancePlanFlagsMirrorBackendModels(t *testing.T) {
 		assertMaintenanceFlag(t, action, "baseline-meter-attribute-external-guid", "baselineMeterAttributeExternalGuid", "string", false)
 		assertMaintenanceFlag(t, action, "consolidation-window-days", "consolidationWindowDays", "int", false)
 		assertMaintenanceFlag(t, action, "due-trigger-policy", "dueTriggerPolicy", "int", false)
+		assertMaintenanceFlag(t, action, "nesting-policy", "nestingPolicy", "int", false)
+		assertMaintenanceFlag(t, action, "scheduling-horizon-days", "schedulingHorizonDays", "int", false)
+		assertMaintenanceFlag(t, action, "cycle-start-offset", "cycleStartOffset", "int", false)
 	}
 
 	for _, actionName := range []string{"item-add", "item-update"} {
 		_, action := maintenancePlanAction(t, actionName)
 		assertMaintenanceFlag(t, action, "trigger-type", "triggerType", "int", false)
 		assertMaintenanceFlag(t, action, "calendar-interval-days", "calendarIntervalDays", "int", false)
+		assertMaintenanceFlag(t, action, "frequency-preset", "frequencyPreset", "int", false)
+		assertMaintenanceFlag(t, action, "parent-item-external-guid", "parentItemExternalGuid", "string", false)
 		assertMaintenanceFlag(t, action, "meter-interval-value", "meterIntervalValue", "float", false)
 		assertMaintenanceFlag(t, action, "meter-attribute-definition-external-guid", "meterAttributeDefinitionExternalGuid", "string", false)
 		assertMaintenanceFlag(t, action, "workorder-template-external-guid", "workorderTemplateExternalGuid", "string", false)
@@ -100,12 +105,29 @@ func TestAssetMaintenancePlanFlagsMirrorBackendModels(t *testing.T) {
 		_, action := maintenancePlanAction(t, actionName)
 		assertMaintenanceFlag(t, action, "name", "name", "string", true)
 		assertMaintenanceFlag(t, action, "consolidation-window-days", "consolidationWindowDays", "int", false)
+		assertMaintenanceFlag(t, action, "nesting-policy", "nestingPolicy", "int", false)
 	}
 
 	_, templateList := maintenancePlanAction(t, "template-list")
 	assertMaintenanceFlag(t, templateList, "include-history", "includeHistory", "bool", false)
 	_, dueProjection := maintenancePlanAction(t, "due-projection")
 	assertMaintenanceFlag(t, dueProjection, "as-of", "asOf", "string", false)
+}
+
+func TestAssetMaintenancePlanNestRouteUsesTwoGuids(t *testing.T) {
+	t.Parallel()
+	domain, action := maintenancePlanAction(t, "item-nest")
+	path, consumed := buildRESTPath(domain, action, map[string]any{
+		"planExternalGuid": "plan-guid",
+		"itemExternalGuid": "item-guid",
+	})
+	if path != "/api/v1/maintenanceplans/plan-guid/items/item-guid/nest" {
+		t.Fatalf("path = %q", path)
+	}
+	if len(consumed) != 2 {
+		t.Fatalf("consumed args = %v, want two GUID arguments", consumed)
+	}
+	assertMaintenanceFlag(t, action, "parent-item-external-guid", "parentItemExternalGuid", "string", true)
 }
 
 func assertMaintenanceFlag(
