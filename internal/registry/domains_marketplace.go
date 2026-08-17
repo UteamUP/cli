@@ -66,6 +66,23 @@ func init() {
 				},
 			},
 			{
+				Name:        "list-from-stock",
+				Description: "List surplus stock on Trade from an existing stock item",
+				ToolName:    "UteamupMarketplaceListFromStock",
+				HTTPMethod:  "POST",
+				RESTPath:    "listings/from-stock/{stockItemGuid}",
+				Args:        []ArgDef{{Name: "stockItemGuid", Description: "Stock item GUID", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "listing-type", BodyName: "listingType", Description: "Listing type: Sale (default), Rental, or Exchange", Default: "Sale", Type: "string"},
+					{Name: "price", BodyName: "price", Description: "Listing price (required)", Required: true, Type: "float"},
+					{Name: "currency", BodyName: "currency", Description: "ISO 4217 currency code", Default: "USD", Type: "string"},
+					{Name: "quantity", BodyName: "quantity", Description: "Quantity to list (quantity-tracked items)", Type: "int"},
+					{Name: "unit-guids", BodyName: "unitGuids", Description: "Serialized units to hold under the listing", Type: "stringSlice"},
+					{Name: "title", BodyName: "title", Description: "Listing title (optional)", Type: "string"},
+					{Name: "description", BodyName: "description", Description: "Listing description (optional)", Type: "string"},
+				},
+			},
+			{
 				Name:        "messages-list",
 				Description: "List buyer↔seller message threads on a listing or a transaction",
 				ToolName:    "UteamupMarketplaceMessagesList",

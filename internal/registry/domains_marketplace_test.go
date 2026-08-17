@@ -33,6 +33,7 @@ func TestMarketplaceActionsWired(t *testing.T) {
 		"browse":              "UteamupMarketplaceBrowse",
 		"listing-get":         "UteamupMarketplaceListingGet",
 		"listing-report":      "UteamupMarketplaceListingReport",
+		"list-from-stock":     "UteamupMarketplaceListFromStock",
 		"messages-list":       "UteamupMarketplaceMessagesList",
 		"message-send":        "UteamupMarketplaceMessageSend",
 		"message-thread":      "UteamupMarketplaceMessageThreadGet",
@@ -201,6 +202,7 @@ func TestMarketplaceActionsResolveToRealRoutes(t *testing.T) {
 
 	args := map[string]any{
 		"guid":            "LISTING",
+		"stockItemGuid":   "STOCK",
 		"requirementGuid": "REQ",
 		"offerGuid":       "OFFER",
 		"sellerGuid":      "SELLER",
@@ -210,6 +212,7 @@ func TestMarketplaceActionsResolveToRealRoutes(t *testing.T) {
 		"browse":                   "/api/marketplace/listings",
 		"listing-get":              "/api/marketplace/listings/LISTING",
 		"listing-report":           "/api/marketplace/listings/LISTING/report",
+		"list-from-stock":          "/api/marketplace/listings/from-stock/STOCK",
 		"message-send":             "/api/marketplace/messages",
 		"message-thread":           "/api/marketplace/messages/LISTING/thread",
 		"requirements":             "/api/marketplace/requirements/open",
@@ -265,6 +268,7 @@ func TestMarketplaceNonGETActionsDeclareTheirMethod(t *testing.T) {
 	// writes must say so or it silently ships as a GET.
 	want := map[string]string{
 		"listing-report":           "POST",
+		"list-from-stock":          "POST",
 		"message-send":             "POST",
 		"requirement-draft-create": "POST",
 		"requirement-publish":      "POST",
