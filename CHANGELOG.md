@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0](https://github.com/UteamUP/cli/compare/2.3.0...2.4.0) (2026-08-18)
+
+
+### Features
+
+* **registry:** add teammood aggregates-only CLI domain ([2c08d0e](https://github.com/UteamUP/cli/commit/2c08d0e57fdcf26b78f60534d51ceb06d483a10b))
+* **registry:** asset-certification GUID routes, heat status/get, ita-export cases ([ebb719f](https://github.com/UteamUP/cli/commit/ebb719f58f6a41a5c3054116ed1323ea3a410f7e))
+
 ## [2.3.0](https://github.com/UteamUP/cli/compare/2.2.0...2.3.0) (2026-08-18)
 
 
