@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0](https://github.com/UteamUP/cli/compare/2.2.0...2.3.0) (2026-08-18)
+
+
+### Features
+
+* **registry:** add daily briefing domain ([b1fa7a0](https://github.com/UteamUP/cli/commit/b1fa7a0757df9e2c553b4777c785b355571a4877))
+
+
+### CI/CD
+
+* **cra:** attach a CycloneDX SBOM to CLI CI and releases ([791a566](https://github.com/UteamUP/cli/commit/791a566b6cc1ce616bdb90cdadde5b49abc8fc93))
+
 ## [2.2.0](https://github.com/UteamUP/cli/compare/2.1.0...2.2.0) (2026-08-17)
 
 
