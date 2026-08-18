@@ -18,6 +18,8 @@ import (
 	"github.com/uteamup/cli/internal/output"
 )
 
+// Peer Sync is device-only (Nearby on the phone). There is no CLI domain and no MCP tool.
+
 // ExportConfig holds JSON export settings from the active profile.
 type ExportConfig struct {
 	Enabled bool

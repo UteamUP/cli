@@ -21,6 +21,8 @@ func TestHeatDomainActions(t *testing.T) {
 	expected := map[string]string{
 		"list":   "UteamupHeatexposureList",
 		"create": "UteamupHeatexposureCreate",
+		"status": "UteamupHeatexposureGetStatus",
+		"get":    "UteamupHeatexposureGet",
 	}
 
 	actionMap := make(map[string]string)

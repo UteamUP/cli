@@ -56,3 +56,31 @@ func TestSafetyGetUsesGuidPath(t *testing.T) {
 		t.Fatalf("safety get path = %q", path)
 	}
 }
+
+func TestSafetyItaExportIncludeCasesFlag(t *testing.T) {
+	d := findDomain("safety")
+	if d == nil {
+		t.Fatal("expected safety domain to be registered")
+	}
+	action := findAction(d, "ita-export")
+	if action == nil {
+		t.Fatal("expected ita-export action on safety domain")
+	}
+
+	var flag *FlagDef
+	for i := range action.Flags {
+		if action.Flags[i].Name == "include-cases" {
+			flag = &action.Flags[i]
+			break
+		}
+	}
+	if flag == nil {
+		t.Fatal("expected --include-cases on safety ita-export")
+	}
+	if flag.Type != "bool" || flag.BodyName != "includeCases" {
+		t.Errorf("include-cases type/body = %q %q, want bool includeCases", flag.Type, flag.BodyName)
+	}
+	if v, ok := flag.Default.(bool); !ok || v {
+		t.Errorf("include-cases default = %v (%T), want false", flag.Default, flag.Default)
+	}
+}

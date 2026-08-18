@@ -4,7 +4,7 @@ func init() {
 	Register(&Domain{
 		Name:        "safety",
 		Aliases:     []string{"osha", "incident", "ita"},
-		Description: "OSHA safety incidents and ITA 300A CSV. UteamUP generates; the employer files.",
+		Description: "OSHA safety incidents and ITA 300A/300/301 CSV. UteamUP generates; the employer files.",
 		APIPath:     "/api/safetyincident",
 		Actions: []Action{
 			{
@@ -50,12 +50,13 @@ func init() {
 			},
 			{
 				Name:        "ita-export",
-				Description: "Prepare an OSHA ITA 300A CSV. Employer files; UteamUP does not auto-file.",
+				Description: "Prepare an OSHA ITA 300A CSV, and 300/301 case CSV when required or --include-cases. Employer files; UteamUP does not auto-file.",
 				ToolName:    "UteamupOshaItaExport",
 				RESTPath:    "ita/export",
 				HTTPMethod:  "POST",
 				Flags: []FlagDef{
 					{Name: "from-json", BodyName: "model", Description: "JSON file containing OshaItaExportRequestModel", Required: true, Type: "string", JSONFile: true},
+					{Name: "include-cases", BodyName: "includeCases", Description: "Also prepare Form 300/301 case CSV. Appendix B 100+ always includes cases. Employer files; UteamUP does not auto-file.", Type: "bool", Default: false},
 				},
 			},
 		},

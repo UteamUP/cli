@@ -30,6 +30,27 @@ func init() {
 					{Name: "from-json", BodyName: "model", Description: "JSON file containing HeatExposureReadingCreateModel", Required: true, Type: "string", JSONFile: true},
 				},
 			},
+			{
+				Name:        "status",
+				Description: "Get Heat NEP status for a work order or location. Weather is hint-only; UteamUP is not a medical device.",
+				ToolName:    "UteamupHeatexposureGetStatus",
+				HTTPMethod:  "GET",
+				RESTPath:    "status",
+				Flags: []FlagDef{
+					{Name: "workorder-guid", Description: "Optional work order GUID", Type: "uuid", QueryName: "workorderGuid"},
+					{Name: "location-guid", Description: "Optional location GUID", Type: "uuid", QueryName: "locationGuid"},
+				},
+			},
+			{
+				Name:        "get",
+				Description: "Get one Heat NEP reading by public GUID",
+				ToolName:    "UteamupHeatexposureGet",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-guid/{guid}",
+				Args: []ArgDef{
+					{Name: "guid", Description: "Public heat reading GUID", Required: true, Type: "string"},
+				},
+			},
 		},
 	})
 }
