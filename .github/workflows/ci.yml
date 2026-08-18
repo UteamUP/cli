@@ -30,6 +30,21 @@ jobs:
       - name: Build
         run: go build -o bin/uteamup .
 
+      # CRA / NIS2 evidence: CycloneDX SBOM is a CI + GitHub Release artifact.
+      # Fail this job if the generator crashes. Do not fail on advisory/CVE noise.
+      - name: Generate CycloneDX SBOM
+        run: |
+          set -euo pipefail
+          go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@v1.11.0
+          cyclonedx-gomod app -json -output sbom-cli.cdx.json
+          test -s sbom-cli.cdx.json
+      - name: Upload CycloneDX SBOM
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sbom-cli-cyclonedx
+          path: sbom-cli.cdx.json
+          if-no-files-found: error
+
   conventional-commits:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest

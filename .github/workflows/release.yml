@@ -35,6 +35,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Generate CycloneDX SBOM
+        run: |
+          set -euo pipefail
+          go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@v1.11.0
+          cyclonedx-gomod app -json -output sbom-cli.cdx.json
+          test -s sbom-cli.cdx.json
+      - name: Attach SBOM to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          gh release upload "${{ github.ref_name }}"
+          sbom-cli.cdx.json --clobber
+
       - name: Update Homebrew tap
         uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
         with:

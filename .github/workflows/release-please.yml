@@ -54,3 +54,16 @@ jobs:
           # mechanism (commits authored by goreleaserbot). No repository_dispatch
           # follow-up step is needed; the tap has no workflow listening for one.
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+
+      - name: Generate CycloneDX SBOM
+        run: |
+          set -euo pipefail
+          go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@v1.11.0
+          cyclonedx-gomod app -json -output sbom-cli.cdx.json
+          test -s sbom-cli.cdx.json
+      - name: Attach SBOM to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          gh release upload "${{ needs.release-please.outputs.tag_name }}"
+          sbom-cli.cdx.json --clobber
