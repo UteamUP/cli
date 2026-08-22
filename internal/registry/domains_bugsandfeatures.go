@@ -37,7 +37,7 @@ func init() {
 					{Name: "type", Description: "Bug or Feature", Default: "Bug", Type: "string"},
 					{Name: "severity", Description: "Low | Medium | High | Critical", Default: "Medium", Type: "string"},
 					{Name: "title", Description: "Short title (max 200)", Required: true, Type: "string"},
-					{Name: "description", Description: "Description (max 4000)", Required: true, Type: "string"},
+					{Name: "description", Description: "Description (no length limit)", Required: true, Type: "string"},
 					// Routed via HeaderName because BugsAndFeaturesController.Create reads
 					// it from `[FromHeader(Name = "Idempotency-Key")]`. Sending it in the
 					// JSON body returns `400 "Missing or invalid Idempotency-Key header."`.
