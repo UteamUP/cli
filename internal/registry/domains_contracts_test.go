@@ -81,3 +81,31 @@ func TestLabourRateDomainDoesNotExposeIntegerIdArguments(t *testing.T) {
 		}
 	}
 }
+
+// Bug 1cdcc88e: neither domain declared an APIPath, so buildRESTPath derived the SINGULAR
+// "/api/contract" and "/api/warranty" from the domain name. The backing controllers are
+// [Route("api/[controller]")] on ContractsController / WarrantiesController, i.e. the PLURAL
+// "/api/contracts" and "/api/warranties", so every command on both domains returned 404.
+func TestContractAndWarrantyDomainsUsePluralControllerPaths(t *testing.T) {
+	want := map[string]string{
+		"contract": "/api/contracts",
+		"warranty": "/api/warranties",
+	}
+
+	for name, wantPath := range want {
+		var domain *Domain
+		for _, d := range DefaultRegistry.Domains() {
+			if d.Name == name {
+				domain = d
+				break
+			}
+		}
+		if domain == nil {
+			t.Fatalf("expected %q domain to be registered", name)
+		}
+		if domain.APIPath != wantPath {
+			t.Errorf("%s APIPath = %q, want %q (an empty APIPath derives the singular path and 404s)",
+				name, domain.APIPath, wantPath)
+		}
+	}
+}

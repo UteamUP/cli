@@ -1,7 +1,10 @@
 package registry
 
 func init() {
-	Register(&Domain{Name: "contract", Aliases: []string{"contracts"}, Description: "Manage contracts", Actions: crudActions("Contract")})
+	// APIPath is explicit because buildRESTPath would otherwise derive "/api/contract" from the
+	// singular domain name, while ContractsController is [Route("api/[controller]")] and so
+	// serves the PLURAL "/api/contracts" — every command 404'd.
+	Register(&Domain{Name: "contract", Aliases: []string{"contracts"}, APIPath: "/api/contracts", Description: "Manage contracts", Actions: crudActions("Contract")})
 	Register(&Domain{
 		Name:        "contractor",
 		Aliases:     []string{"contractors"},
@@ -173,6 +176,8 @@ func init() {
 		},
 	})
 	Register(&Domain{Name: "rental-rate", Description: "Manage rental rates", Actions: crudActions("RentalRate")})
-	Register(&Domain{Name: "warranty", Aliases: []string{"warranties"}, Description: "Manage warranties", Actions: crudActions("Warranty")})
+	// Same plural-controller mismatch as "contract" above: WarrantiesController serves
+	// "/api/warranties", not the derived "/api/warranty".
+	Register(&Domain{Name: "warranty", Aliases: []string{"warranties"}, APIPath: "/api/warranties", Description: "Manage warranties", Actions: crudActions("Warranty")})
 	Register(&Domain{Name: "commission", Aliases: []string{"commissions"}, Description: "Manage commissions", Actions: crudActions("Commission")})
 }
