@@ -115,7 +115,7 @@ func TestScheduleAssignmentCreateByGuidPostsBackendModelFieldNames(t *testing.T)
 }
 
 func TestTimeEntryWritesRequireRetryKeyAndObservedTimerVersion(t *testing.T) {
-	for _, name := range []string{"start-timer", "stop-timer", "log-time"} {
+	for _, name := range []string{"start-timer", "pause-timer", "resume-timer", "stop-timer", "log-time"} {
 		action := findDomainAction(t, "time-entry", name)
 		if action.HTTPMethod != "POST" || action.RESTBasePath != "/api/timeentry" {
 			t.Errorf("%s route = %s %s, want POST /api/timeentry", name, action.HTTPMethod, action.RESTBasePath)
@@ -132,9 +132,39 @@ func TestTimeEntryWritesRequireRetryKeyAndObservedTimerVersion(t *testing.T) {
 			idempotency.BodyName != "idempotencyKey" {
 			t.Errorf("%s idempotency flag = %+v, want required mirrored header/body key", name, idempotency)
 		}
-		if name == "stop-timer" && !flags["expected-updated-at"].Required {
-			t.Error("stop-timer must require --expected-updated-at")
+		if (name == "pause-timer" || name == "resume-timer" || name == "stop-timer") && !flags["expected-updated-at"].Required {
+			t.Errorf("%s must require --expected-updated-at", name)
 		}
+	}
+}
+
+func TestTimeEntryConcurrentTimerContracts(t *testing.T) {
+	start := findDomainAction(t, "time-entry", "start-timer")
+	startFlags := make(map[string]FlagDef, len(start.Flags))
+	for _, flag := range start.Flags {
+		startFlags[flag.Name] = flag
+	}
+	if startFlags["start-mode"].BodyName != "startMode" || startFlags["start-mode"].Default != "RejectIfAnyActive" {
+		t.Errorf("start mode flag = %+v", startFlags["start-mode"])
+	}
+	if startFlags["transition-workorder"].BodyName != "transitionWorkorderToInProgress" {
+		t.Errorf("transition flag = %+v", startFlags["transition-workorder"])
+	}
+
+	active := findDomainAction(t, "time-entry", "active-timers")
+	if active.HTTPMethod != "GET" || active.RESTPath != "active-timers" {
+		t.Errorf("active-timers route = %s %s", active.HTTPMethod, active.RESTPath)
+	}
+
+	resume := findDomainAction(t, "time-entry", "resume-timer")
+	var resumeMode FlagDef
+	for _, flag := range resume.Flags {
+		if flag.Name == "start-mode" {
+			resumeMode = flag
+		}
+	}
+	if resumeMode.BodyName != "startMode" {
+		t.Errorf("resume start mode flag = %+v", resumeMode)
 	}
 }
 

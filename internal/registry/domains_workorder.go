@@ -18,6 +18,8 @@ func init() {
 					{Name: "sort-by", Description: "Sort field", Default: "CreatedAt", Type: "string"},
 					{Name: "sort-order", Description: "Sort direction (asc or desc)", Default: "desc", Type: "string"},
 					{Name: "asset-guid", Description: "Filter by asset GUID — list only the work orders linked to that asset", Type: "string"},
+					{Name: "search-term", BodyName: "searchTerm", Description: "Match name, ticket ID, or exact GUID", Type: "string"},
+					{Name: "open-only", BodyName: "openOnly", Description: "Exclude completed and cancelled workorders", Type: "bool"},
 				},
 			},
 			{

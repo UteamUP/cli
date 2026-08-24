@@ -545,6 +545,39 @@ func init() {
 				{Name: "workorder-guid", BodyName: "workorderGuid", Description: "Related workorder GUID", Type: "string"},
 				{Name: "project-guid", BodyName: "projectGuid", Description: "Related project GUID", Type: "string"},
 				{Name: "entry-type", BodyName: "entryType", Description: "Work, Travel, Break, or Admin", Default: "Work", Type: "string"},
+				{Name: "start-mode", BodyName: "startMode", Description: "RejectIfAnyActive, RunAlongside, or PauseOthers", Default: "RejectIfAnyActive", Type: "string"},
+				{Name: "transition-workorder", BodyName: "transitionWorkorderToInProgress", Description: "Atomically move an eligible workorder to In Progress", Type: "bool"},
+			},
+		},
+		Action{
+			Name:         "pause-timer",
+			Description:  "Pause one exact running timer version",
+			ToolName:     "UteamupTimeEntryPauseTimer",
+			HTTPMethod:   "POST",
+			RESTBasePath: "/api/timeentry",
+			RESTPath:     "pause-timer/by-guid/{externalGuid}",
+			Args: []ArgDef{
+				{Name: "externalGuid", Description: "Time-entry public GUID", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{
+				timeEntryIdempotencyFlag(),
+				{Name: "expected-updated-at", BodyName: "expectedUpdatedAt", Description: "Exact reviewed UpdatedAt timestamp", Required: true, Type: "string"},
+			},
+		},
+		Action{
+			Name:         "resume-timer",
+			Description:  "Resume one exact paused timer version",
+			ToolName:     "UteamupTimeEntryResumeTimer",
+			HTTPMethod:   "POST",
+			RESTBasePath: "/api/timeentry",
+			RESTPath:     "resume-timer/by-guid/{externalGuid}",
+			Args: []ArgDef{
+				{Name: "externalGuid", Description: "Time-entry public GUID", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{
+				timeEntryIdempotencyFlag(),
+				{Name: "expected-updated-at", BodyName: "expectedUpdatedAt", Description: "Exact reviewed UpdatedAt timestamp", Required: true, Type: "string"},
+				{Name: "start-mode", BodyName: "startMode", Description: "RejectIfAnyActive, RunAlongside, or PauseOthers", Default: "RejectIfAnyActive", Type: "string"},
 			},
 		},
 		Action{
@@ -586,6 +619,14 @@ func init() {
 			HTTPMethod:   "GET",
 			RESTBasePath: "/api/timeentry",
 			RESTPath:     "active-timer",
+		},
+		Action{
+			Name:         "active-timers",
+			Description:  "Read all authenticated-user running and paused timers",
+			ToolName:     "UteamupTimeEntryGetActiveTimers",
+			HTTPMethod:   "GET",
+			RESTBasePath: "/api/timeentry",
+			RESTPath:     "active-timers",
 		},
 		Action{
 			Name:         "summary",
