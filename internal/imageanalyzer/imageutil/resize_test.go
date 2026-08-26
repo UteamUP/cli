@@ -1,6 +1,35 @@
 package imageutil
 
-import "testing"
+import (
+	"bytes"
+	"compress/bzip2"
+	"encoding/base64"
+	"io"
+	"strings"
+	"testing"
+)
+
+// This is the compressed upstream x/image WebP regression fixture that
+// references Huffman group 65535. Vulnerable decoders allocated about 170 MiB
+// for unused Huffman groups before decoding the image.
+const largeHuffmanIndexWebPBzip2Base64 = "QlpoOTFBWSZTWdD9D0AABRR+zdwAyACAAIBAVyRRgAACRAAAAMAAQAAADiAAUKAAAAACSkBoNAGmR6SbqnOnIsnOD++mypKryggARGSBAJJsPfvWaUIY/M1I0suEACPH/i7kinChIaH6HoA="
+
+func TestResizeImageRejectsExcessiveWebPHuffmanGroups(t *testing.T) {
+	compressed, err := base64.StdEncoding.DecodeString(largeHuffmanIndexWebPBzip2Base64)
+	if err != nil {
+		t.Fatalf("decode fixture: %v", err)
+	}
+
+	payload, err := io.ReadAll(bzip2.NewReader(bytes.NewReader(compressed)))
+	if err != nil {
+		t.Fatalf("decompress fixture: %v", err)
+	}
+
+	_, err = ResizeImage(payload, 2048)
+	if err == nil || !strings.Contains(err.Error(), "vp8l: too many Huffman trees") {
+		t.Fatalf("expected bounded VP8L rejection, got %v", err)
+	}
+}
 
 func TestValidateImageDimensionsRejectsDecompressionBombShapes(t *testing.T) {
 	tests := []struct {
