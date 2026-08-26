@@ -92,8 +92,11 @@ func NewAPIClient(baseURL string, timeout time.Duration, insecure bool, retryOpt
 
 func (c *APIClient) httpClient() *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
-	if c.insecure {
-		transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true} //nolint:gosec // user-requested
+	// --insecure is honoured for loopback only. Against a remote host the request is
+	// ignored rather than refused, so an existing habit does not break the command — it
+	// just stops disabling verification where an interceptor could read the bearer token.
+	if auth.SkipTLSVerifyFor(c.baseURL, c.insecure) {
+		transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true} //nolint:gosec // loopback-only, see auth.SkipTLSVerifyFor
 	}
 	return &http.Client{Transport: transport, Timeout: c.timeout}
 }

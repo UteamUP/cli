@@ -58,7 +58,7 @@ Examples:
 		}
 
 		// Fetch all tenants.
-		tenants, err := auth.FetchAllTenants(token.AccessToken, profile.BaseURL)
+		tenants, err := auth.FetchAllTenants(token.AccessToken, profile.BaseURL, insecure)
 		if err != nil {
 			return fmt.Errorf("fetching tenants: %w", err)
 		}
@@ -144,7 +144,7 @@ Examples:
 		}
 
 		// Fetch all tenants.
-		tenants, err := auth.FetchAllTenants(token.AccessToken, profile.BaseURL)
+		tenants, err := auth.FetchAllTenants(token.AccessToken, profile.BaseURL, insecure)
 		if err != nil {
 			return fmt.Errorf("fetching tenants: %w", err)
 		}

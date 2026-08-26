@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -49,10 +50,56 @@ func (t *TenantInfo) HasPlan() bool {
 	return t.PlanID > 0 && t.PlanName != ""
 }
 
+// skipTLSVerifyFor reports whether certificate verification may be skipped.
+//
+// Skipping verification makes the connection trivially interceptable: an attacker on the
+// path can present any certificate and read the bearer token in the Authorization header.
+// It is therefore honoured only when the user explicitly asked for it AND the target is
+// loopback, where a self-signed development certificate is the normal case and there is no
+// network path to intercept.
+//
+// A request to skip verification against a remote host is ignored rather than refused, so
+// an existing --insecure habit does not break the command; it simply stops disabling the
+// protection where it matters.
+func SkipTLSVerifyFor(baseURL string, insecure bool) bool {
+	return skipTLSVerifyFor(baseURL, insecure)
+}
+
+func skipTLSVerifyFor(baseURL string, insecure bool) bool {
+	if !insecure {
+		return false
+	}
+
+	parsed, err := url.Parse(strings.TrimRight(baseURL, "/"))
+	if err != nil {
+		return false
+	}
+
+	host := parsed.Hostname()
+	if host == "localhost" {
+		return true
+	}
+
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+func tenantHTTPClient(baseURL string, insecure bool) *http.Client {
+	return &http.Client{
+		Timeout: 15 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				MinVersion:         tls.VersionTLS12,
+				InsecureSkipVerify: skipTLSVerifyFor(baseURL, insecure), //nolint:gosec // loopback-only, see skipTLSVerifyFor
+			},
+		},
+	}
+}
+
 // FetchTenantInfo calls the my-tenants endpoint and returns tenant info for the
 // given tenant GUID. If tenantGUID is empty, returns the default/first tenant.
 // Requires a valid access token and the backend base URL.
-func FetchTenantInfo(accessToken, baseURL, tenantGUID string) (*TenantInfo, error) {
+func FetchTenantInfo(accessToken, baseURL, tenantGUID string, insecure bool) (*TenantInfo, error) {
 	req, err := http.NewRequest("GET", strings.TrimRight(baseURL, "/")+"/api/tenant/my-tenants", nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
@@ -60,12 +107,7 @@ func FetchTenantInfo(accessToken, baseURL, tenantGUID string) (*TenantInfo, erro
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{
-		Timeout: 15 * time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true}, //nolint:gosec // dev support
-		},
-	}
+	client := tenantHTTPClient(baseURL, insecure)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("fetching tenants: %w", err)
@@ -102,7 +144,7 @@ func FetchTenantInfo(accessToken, baseURL, tenantGUID string) (*TenantInfo, erro
 
 // FetchAllTenants calls the my-tenants endpoint and returns all tenants
 // the user has access to. Used for interactive tenant selection.
-func FetchAllTenants(accessToken, baseURL string) ([]TenantInfo, error) {
+func FetchAllTenants(accessToken, baseURL string, insecure bool) ([]TenantInfo, error) {
 	req, err := http.NewRequest("GET", strings.TrimRight(baseURL, "/")+"/api/tenant/my-tenants", nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
@@ -110,12 +152,7 @@ func FetchAllTenants(accessToken, baseURL string) ([]TenantInfo, error) {
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{
-		Timeout: 15 * time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true}, //nolint:gosec // dev support
-		},
-	}
+	client := tenantHTTPClient(baseURL, insecure)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("fetching tenants: %w", err)
@@ -149,8 +186,8 @@ func NewClient(baseURL string, insecure bool, logger *logging.Logger) *Client {
 
 func (a *Client) httpClient() *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
-	if a.insecure {
-		transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true} //nolint:gosec // user-requested for dev
+	if skipTLSVerifyFor(a.baseURL, a.insecure) {
+		transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true} //nolint:gosec // loopback-only, see skipTLSVerifyFor
 	}
 	return &http.Client{Transport: transport, Timeout: 30 * time.Second}
 }
