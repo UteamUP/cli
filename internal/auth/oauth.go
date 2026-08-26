@@ -184,6 +184,104 @@ func NewClient(baseURL string, insecure bool, logger *logging.Logger) *Client {
 	return &Client{baseURL: strings.TrimRight(baseURL, "/"), insecure: insecure, logger: logger}
 }
 
+// completeMfaLogin prompts for a code and exchanges the challenge token for a session.
+//
+// Interactive only, and deliberately so. The non-interactive --api-key/--api-secret path
+// never reaches here: an API key is already a separate credential class with its own
+// lifecycle, and demanding a phone for it would break every script that uses one.
+func (a *Client) completeMfaLogin(mfaToken, email string) (*TokenData, error) {
+	if mfaToken == "" {
+		return nil, clierrors.NewAuthError("server demanded a second factor but sent no challenge token", nil)
+	}
+
+	code, err := PromptMfaCode()
+	if err != nil {
+		return nil, clierrors.NewAuthError("reading verification code", err)
+	}
+
+	body := fmt.Sprintf(`{"mfaToken":%q,"code":%q}`, mfaToken, code)
+	req, err := http.NewRequest("POST", a.baseURL+"/api/auth/mfa/verify", strings.NewReader(body))
+	if err != nil {
+		return nil, clierrors.NewAuthError("creating verification request", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := a.httpClient().Do(req)
+	if err != nil {
+		return nil, clierrors.NewAuthError("verification request failed", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		// The server answers every failure identically on purpose — an expired, spent or
+		// unknown token is indistinguishable from a wrong code — so do not invent a more
+		// specific message here than the server was willing to give.
+		return nil, clierrors.NewAuthError("verification failed: check the code and try again", nil)
+	}
+
+	var loginResp LoginResponse
+	if err := json.Unmarshal(respBody, &loginResp); err != nil {
+		return nil, clierrors.NewAuthError("parsing verification response", err)
+	}
+
+	// Same tail as an ordinary login, deliberately shared rather than repeated: a session
+	// obtained through MFA must be indistinguishable from one obtained without it, down to
+	// the cached auth method and the selected tenant.
+	token := a.sessionFromLoginResponse(&loginResp, email)
+	a.selectTenantForSession(token, loginResp.DefaultTenantID)
+	a.logger.Info("login successful for %s (second factor verified)", email)
+	return token, nil
+}
+
+// selectTenantForSession attaches the caller's default tenant to a freshly issued token.
+//
+// Failure to fetch tenants is a warning, not an error: a user with no tenants yet still has a
+// valid session, and refusing to log them in would strand exactly the people who need to
+// create their first tenant.
+func (a *Client) selectTenantForSession(token *TokenData, defaultTenantID int) {
+	tenants, err := a.fetchMyTenants(token.AccessToken)
+	if err != nil {
+		a.logger.Warn("could not fetch tenants: %v", err)
+		return
+	}
+	if len(tenants) == 0 {
+		return
+	}
+
+	selected := tenants[0]
+	for _, t := range tenants {
+		if t.ID == defaultTenantID {
+			selected = t
+			break
+		}
+	}
+	token.TenantID = selected.ID
+	token.TenantGUID = selected.GUID
+	token.TenantName = selected.Name
+	a.logger.Info("selected tenant: %s (%s)", selected.Name, selected.GUID)
+}
+
+// sessionFromLoginResponse builds the cached token from a login or MFA-verify response.
+// Shared so a second-factor session carries the same auth method, email and expiry handling
+// as a password-only one.
+func (a *Client) sessionFromLoginResponse(loginResp *LoginResponse, email string) *TokenData {
+	expiresAt := time.Now().Add(7 * 24 * time.Hour)
+	if loginResp.TokenExpiry != "" {
+		if parsed, err := time.Parse(time.RFC3339, loginResp.TokenExpiry); err == nil {
+			expiresAt = parsed
+		}
+	}
+
+	return &TokenData{
+		AccessToken:  loginResp.AccessToken,
+		RefreshToken: loginResp.RefreshToken,
+		ExpiresAt:    expiresAt,
+		AuthMethod:   "login",
+		Email:        email,
+	}
+}
+
 func (a *Client) httpClient() *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	if skipTLSVerifyFor(a.baseURL, a.insecure) {
@@ -210,6 +308,20 @@ func (a *Client) LoginWithCredentials(email, password string) (*TokenData, error
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
+
+	// The password was right and a second factor is owed. Without this the user sees
+	// "login failed with status 403" and the JSON body, which reads as a broken CLI rather
+	// than a prompt they are supposed to answer.
+	if resp.StatusCode == http.StatusForbidden {
+		var challenge struct {
+			Message  string `json:"message"`
+			MfaToken string `json:"mfaToken"`
+		}
+		if json.Unmarshal(respBody, &challenge) == nil && challenge.Message == "MFA_REQUIRED" {
+			return a.completeMfaLogin(challenge.MfaToken, email)
+		}
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, clierrors.NewAuthError(
 			fmt.Sprintf("login failed with status %d: %s", resp.StatusCode, string(respBody)), nil,
@@ -221,40 +333,9 @@ func (a *Client) LoginWithCredentials(email, password string) (*TokenData, error
 		return nil, clierrors.NewAuthError("parsing login response", err)
 	}
 
-	// Parse expiry from response or default to 7 days
-	expiresAt := time.Now().Add(7 * 24 * time.Hour)
-	if loginResp.TokenExpiry != "" {
-		if parsed, err := time.Parse(time.RFC3339, loginResp.TokenExpiry); err == nil {
-			expiresAt = parsed
-		}
-	}
+	token := a.sessionFromLoginResponse(&loginResp, email)
 
-	token := &TokenData{
-		AccessToken:  loginResp.AccessToken,
-		RefreshToken: loginResp.RefreshToken,
-		ExpiresAt:    expiresAt,
-		AuthMethod:   "login",
-		Email:        email,
-	}
-
-	// Fetch tenants to get tenant ID and GUID
-	tenants, err := a.fetchMyTenants(token.AccessToken)
-	if err != nil {
-		a.logger.Warn("could not fetch tenants: %v", err)
-	} else if len(tenants) > 0 {
-		// Use the first tenant (or match DefaultTenantId)
-		selected := tenants[0]
-		for _, t := range tenants {
-			if t.ID == loginResp.DefaultTenantID {
-				selected = t
-				break
-			}
-		}
-		token.TenantID = selected.ID
-		token.TenantGUID = selected.GUID
-		token.TenantName = selected.Name
-		a.logger.Info("selected tenant: %s (%s)", selected.Name, selected.GUID)
-	}
+	a.selectTenantForSession(token, loginResp.DefaultTenantID)
 
 	a.logger.Info("login successful for %s", email)
 	return token, nil

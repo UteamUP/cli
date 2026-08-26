@@ -72,6 +72,28 @@ func PromptCredentials() (email, password string, err error) {
 	return email, password, nil
 }
 
+// PromptMfaCode asks for the second factor after the password was accepted.
+//
+// A recovery code is accepted in the same box as an authenticator code, so somebody whose
+// phone is dead or lost does not have to find a different command to get in. The prompt says
+// so, because a field labelled only "code" invites people to give up when the phone is the
+// thing that is missing.
+func PromptMfaCode() (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Println("This account requires a second factor.")
+	code, err := readSecret(reader, "Authenticator or recovery code: ")
+	if err != nil {
+		return "", fmt.Errorf("reading verification code: %w", err)
+	}
+
+	code = strings.TrimSpace(code)
+	if code == "" {
+		return "", fmt.Errorf("a verification code is required")
+	}
+	return code, nil
+}
+
 // PromptAPIKey interactively prompts for API key and secret.
 func PromptAPIKey() (apiKey, secret string, err error) {
 	reader := bufio.NewReader(os.Stdin)
