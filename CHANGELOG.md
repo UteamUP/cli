@@ -5,6 +5,34 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0](https://github.com/UteamUP/cli/compare/2.4.0...2.5.0) (2026-08-27)
+
+
+### Features
+
+* **auth:** answer an MFA challenge during CLI login ([bcee4b4](https://github.com/UteamUP/cli/commit/bcee4b4915c61999aee807020c843577c2326e15))
+* **digitaltwin:** add digitaltwin CLI domain ([0ea853e](https://github.com/UteamUP/cli/commit/0ea853e9b9ecf39645942378c61b1b66ec8c676c))
+* expose concurrent timer options ([57e676f](https://github.com/UteamUP/cli/commit/57e676ff092e6fb45a759fc8ec63b96070862c42))
+* **registry:** add the conversation domain ([c13252a](https://github.com/UteamUP/cli/commit/c13252aa99c5af5acbc2180db3c16251b0974fff))
+* **registry:** construction domains — issues, rfi, submittal, dailylog, sheets ([29d5acd](https://github.com/UteamUP/cli/commit/29d5acde30929971bb3e5d44475fd66b71e07c46))
+
+
+### Bug Fixes
+
+* **cli:** honour the insecure flag instead of always skipping tls verification ([1ccfe61](https://github.com/UteamUP/cli/commit/1ccfe612d38efdc6ba0f93659ce9419beb192c3d))
+* **registry:** point contract and warranty at their plural controller paths ([814cfc4](https://github.com/UteamUP/cli/commit/814cfc4f6c4260e8004e137d7026d0e62036b12b))
+* upgrade x/image for VP8L memory safety ([801e788](https://github.com/UteamUP/cli/commit/801e788100779073300b3faf16c561deaaf3e7bd))
+
+
+### Miscellaneous
+
+* **bugsandfeatures:** drop the max-4000 hint from the description flag ([6b8e8fb](https://github.com/UteamUP/cli/commit/6b8e8fb3db86c18620253bee09f3579cd66959fc))
+
+
+### Tests
+
+* **auth:** cover the CLI second-factor challenge path ([bab3287](https://github.com/UteamUP/cli/commit/bab3287b1639bfa3ac11ed5bf9da49c8b462478c))
+
 ## [2.4.0](https://github.com/UteamUP/cli/compare/2.3.0...2.4.0) (2026-08-18)
 
 
