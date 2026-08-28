@@ -34,6 +34,46 @@ func init() {
 					{Name: "domainRecordGuid", Description: "Quality domain-record public GUID", Required: true, Type: "uuid"},
 				},
 			},
+			{
+				Name:         "cleanup-deadletters",
+				Description:  "List tenant-scoped document-storage cleanup dead letters",
+				ToolName:     "UteamupQualityCleanupDeadLettersList",
+				HTTPMethod:   "GET",
+				RESTBasePath: "/api/quality/operations/storage-cleanup/dead-letters",
+				Flags: []FlagDef{
+					{Name: "page", QueryName: "page", Description: "One-based page number", Default: 1, Type: "int"},
+					{Name: "page-size", QueryName: "pageSize", Description: "Results per page", Default: 25, Type: "int"},
+				},
+			},
+			{
+				Name:         "cleanup-deadletter-get",
+				Description:  "Inspect one document-storage cleanup dead letter and its redrive preview",
+				ToolName:     "UteamupQualityCleanupDeadLetterGet",
+				HTTPMethod:   "GET",
+				RESTBasePath: "/api/quality/operations/storage-cleanup/dead-letters",
+				RESTPath:     "{cleanupJobGuid}",
+				Args: []ArgDef{
+					{Name: "cleanupJobGuid", Description: "Cleanup-job public GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:         "cleanup-deadletter-redrive",
+				Description:  "Explicitly redrive one server-approved Azure cleanup dead letter",
+				ToolName:     "UteamupQualityCleanupDeadLetterRedrive",
+				HTTPMethod:   "POST",
+				RESTBasePath: "/api/quality/operations/storage-cleanup/dead-letters",
+				RESTPath:     "{cleanupJobGuid}/redrive",
+				Args: []ArgDef{
+					{Name: "cleanupJobGuid", Description: "Cleanup-job public GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "preview-token", BodyName: "previewToken", Description: "Unexpired preview token from cleanup-deadletter-get", Required: true, Sensitive: true, Type: "string"},
+					{Name: "reason", BodyName: "reason", Description: "Auditable operator reason for the redrive", Required: true, Type: "string"},
+					{Name: "confirm", BodyName: "confirmed", Description: "Explicitly confirm the reviewed redrive", Required: true, Type: "bool", MustBeTrue: true},
+					{Name: "idempotency-key", HeaderName: "Idempotency-Key", Description: "Caller-generated GUID reused only for the same redrive", Required: true, Type: "uuid"},
+					{Name: "concurrency-token", HeaderName: "If-Match", Description: "Current concurrency token from cleanup-deadletter-get", Required: true, Sensitive: true, Type: "string"},
+				},
+			},
 		},
 	})
 }

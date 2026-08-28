@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -84,7 +85,14 @@ type FlagDef struct {
 	// multipart payload owns the body. Used by endpoints binding IFormFile
 	// (e.g. stock CSV import).
 	UploadFile bool
+	// MustBeTrue requires an explicitly enabled boolean safety confirmation.
+	// It is stronger than Required, which only proves that the flag was passed.
+	MustBeTrue bool
 }
+
+var uuidValuePattern = regexp.MustCompile(
+	`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`,
+)
 
 // HTTPMethod maps action names to HTTP methods for REST calls.
 //
@@ -213,6 +221,9 @@ func buildActionCommand(domain *Domain, action Action, apiClientFactory APIClien
 		Use:   use,
 		Short: action.Description,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := validateActionInput(cmd, args, action); err != nil {
+				return err
+			}
 			apiClient, err := apiClientFactory()
 			if err != nil {
 				return err
@@ -285,6 +296,43 @@ func buildActionCommand(domain *Domain, action Action, apiClientFactory APIClien
 	}
 
 	return cmd
+}
+
+func validateActionInput(cmd *cobra.Command, args []string, action Action) error {
+	for index, argument := range action.Args {
+		if index >= len(args) || argument.Type != "uuid" {
+			continue
+		}
+		if !uuidValuePattern.MatchString(strings.TrimSpace(args[index])) {
+			return fmt.Errorf("invalid %s: must be a GUID", argument.Name)
+		}
+	}
+
+	for _, flag := range action.Flags {
+		if !cmd.Flags().Changed(flag.Name) {
+			continue
+		}
+		if flag.Type == "uuid" {
+			value, _ := cmd.Flags().GetString(flag.Name)
+			if !uuidValuePattern.MatchString(strings.TrimSpace(value)) {
+				return fmt.Errorf("invalid --%s: must be a GUID", flag.Name)
+			}
+		}
+		if flag.Required && (flag.Type == "string" || flag.Type == "uuid") {
+			value, _ := cmd.Flags().GetString(flag.Name)
+			if strings.TrimSpace(value) == "" {
+				return fmt.Errorf("--%s cannot be empty", flag.Name)
+			}
+		}
+		if flag.MustBeTrue {
+			value, _ := cmd.Flags().GetBool(flag.Name)
+			if !value {
+				return fmt.Errorf("--%s must be explicitly enabled", flag.Name)
+			}
+		}
+	}
+
+	return nil
 }
 
 func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string, export *ExportConfig) error {
