@@ -71,7 +71,7 @@ func init() {
 					{Name: "reason", BodyName: "reason", Description: "Auditable operator reason for the redrive", Required: true, Type: "string"},
 					{Name: "confirm", BodyName: "confirmed", Description: "Explicitly confirm the reviewed redrive", Required: true, Type: "bool", MustBeTrue: true},
 					{Name: "idempotency-key", HeaderName: "Idempotency-Key", Description: "Caller-generated GUID reused only for the same redrive", Required: true, Type: "uuid"},
-					{Name: "concurrency-token", HeaderName: "If-Match", Description: "Current concurrency token from cleanup-deadletter-get", Required: true, Sensitive: true, Type: "string"},
+					{Name: "concurrency-token", HeaderName: "If-Match", Description: "Current concurrency token from cleanup-deadletter-get", Required: true, Sensitive: true, StrongETag: true, Type: "string"},
 				},
 			},
 		},

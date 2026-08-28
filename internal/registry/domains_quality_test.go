@@ -168,7 +168,7 @@ func TestQualityCleanupRedriveRequiresReviewedBodyAndHeaders(t *testing.T) {
 		"reason":            {BodyName: "reason", Required: true, Type: "string"},
 		"confirm":           {BodyName: "confirmed", Required: true, Type: "bool", MustBeTrue: true},
 		"idempotency-key":   {HeaderName: "Idempotency-Key", Required: true, Type: "uuid"},
-		"concurrency-token": {HeaderName: "If-Match", Required: true, Sensitive: true, Type: "string"},
+		"concurrency-token": {HeaderName: "If-Match", Required: true, Sensitive: true, StrongETag: true, Type: "string"},
 	}
 	for _, flag := range action.Flags {
 		expected, ok := want[flag.Name]
@@ -178,13 +178,34 @@ func TestQualityCleanupRedriveRequiresReviewedBodyAndHeaders(t *testing.T) {
 		}
 		if flag.BodyName != expected.BodyName || flag.HeaderName != expected.HeaderName ||
 			flag.Required != expected.Required || flag.Sensitive != expected.Sensitive ||
-			flag.Type != expected.Type || flag.MustBeTrue != expected.MustBeTrue {
+			flag.Type != expected.Type || flag.MustBeTrue != expected.MustBeTrue ||
+			flag.StrongETag != expected.StrongETag {
 			t.Errorf("redrive --%s = %+v, want contract %+v", flag.Name, flag, expected)
 		}
 		delete(want, flag.Name)
 	}
 	if len(want) != 0 {
 		t.Errorf("missing redrive flags: %v", want)
+	}
+}
+
+func TestQualityCleanupConcurrencyTokenFormatsOneStrongETag(t *testing.T) {
+	t.Parallel()
+
+	for input, want := range map[string]string{
+		"opaque-token":     "\"opaque-token\"",
+		"\"opaque-token\"": "\"opaque-token\"",
+	} {
+		actual, err := formatStrongETag(input)
+		if err != nil || actual != want {
+			t.Errorf("formatStrongETag(%q) = %q, %v; want %q", input, actual, err, want)
+		}
+	}
+
+	for _, input := range []string{"", " token", "token ", "*", "W/\"token\"", "a,b", "\"token", "token\""} {
+		if _, err := formatStrongETag(input); err == nil {
+			t.Errorf("formatStrongETag(%q) succeeded, want failure", input)
+		}
 	}
 }
 

@@ -88,6 +88,9 @@ type FlagDef struct {
 	// MustBeTrue requires an explicitly enabled boolean safety confirmation.
 	// It is stronger than Required, which only proves that the flag was passed.
 	MustBeTrue bool
+	// StrongETag accepts the opaque token returned by an API response and sends
+	// it as one validated, quoted strong ETag header value.
+	StrongETag bool
 }
 
 var uuidValuePattern = regexp.MustCompile(
@@ -330,6 +333,12 @@ func validateActionInput(cmd *cobra.Command, args []string, action Action) error
 				return fmt.Errorf("--%s must be explicitly enabled", flag.Name)
 			}
 		}
+		if flag.StrongETag {
+			value, _ := cmd.Flags().GetString(flag.Name)
+			if _, err := formatStrongETag(value); err != nil {
+				return fmt.Errorf("invalid --%s: %w", flag.Name, err)
+			}
+		}
 	}
 
 	return nil
@@ -408,11 +417,25 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 			if cmd.Flags().Changed(flag.Name) {
 				v, _ := cmd.Flags().GetString(flag.Name)
 				if v != "" {
+					if flag.StrongETag {
+						formatted, formatErr := formatStrongETag(v)
+						if formatErr != nil {
+							return fmt.Errorf("invalid --%s: %w", flag.Name, formatErr)
+						}
+						v = formatted
+					}
 					headers[flag.HeaderName] = v
 					headerValue = v
 				}
 			} else if flag.Default != nil {
 				if dv, ok := flag.Default.(string); ok && dv != "" {
+					if flag.StrongETag {
+						formatted, formatErr := formatStrongETag(dv)
+						if formatErr != nil {
+							return fmt.Errorf("invalid default --%s: %w", flag.Name, formatErr)
+						}
+						dv = formatted
+					}
 					headers[flag.HeaderName] = dv
 					headerValue = dv
 				}
@@ -555,6 +578,32 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 
 	format := output.ParseFormat(*outputFormat)
 	return output.Print(format, result)
+}
+
+func formatStrongETag(value string) (string, error) {
+	if value == "" || strings.TrimSpace(value) != value {
+		return "", fmt.Errorf("must be one non-empty opaque token without surrounding whitespace")
+	}
+	if value == "*" || strings.HasPrefix(strings.ToUpper(value), "W/") ||
+		strings.Contains(value, ",") {
+		return "", fmt.Errorf("must not be weak, wildcard, or contain multiple ETags")
+	}
+
+	opaque := value
+	if strings.HasPrefix(value, "\"") || strings.HasSuffix(value, "\"") {
+		if len(value) < 3 || !strings.HasPrefix(value, "\"") ||
+			!strings.HasSuffix(value, "\"") {
+			return "", fmt.Errorf("has mismatched ETag quotes")
+		}
+		opaque = value[1 : len(value)-1]
+	}
+	if opaque == "" || len(opaque) > 128 || strings.ContainsAny(opaque, "\",") ||
+		strings.IndexFunc(opaque, func(character rune) bool {
+			return character < 0x20 || character == 0x7f
+		}) >= 0 {
+		return "", fmt.Errorf("contains an invalid opaque ETag token")
+	}
+	return "\"" + opaque + "\"", nil
 }
 
 func defaultDownloadPath(base, rawURL string) string {
