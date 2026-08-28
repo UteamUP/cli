@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0](https://github.com/UteamUP/cli/compare/2.6.0...2.7.0) (2026-08-28)
+
+
+### Features
+
+* add quality cleanup dead-letter commands ([3f9f8c9](https://github.com/UteamUP/cli/commit/3f9f8c9ca5a8304fe5a8ac5f4cff5d338085ed56))
+
+
+### Bug Fixes
+
+* format cleanup concurrency as strong etag ([8baa160](https://github.com/UteamUP/cli/commit/8baa1601175ac066e8921ce07ef0ff1bb4c4964b))
+
 ## [2.6.0](https://github.com/UteamUP/cli/compare/2.5.0...2.6.0) (2026-08-28)
 
 
