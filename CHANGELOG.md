@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0](https://github.com/UteamUP/cli/compare/2.5.0...2.6.0) (2026-08-28)
+
+
+### Features
+
+* add quality governance CLI reads ([37d33b9](https://github.com/UteamUP/cli/commit/37d33b9d20a65ea6484cac12546103df5ed00585))
+
+
+### Tests
+
+* accept GUID quality identifiers ([8f89037](https://github.com/UteamUP/cli/commit/8f89037459b6e7ffec61c5559e4e70ce7c012e91))
+
 ## [2.5.0](https://github.com/UteamUP/cli/compare/2.4.0...2.5.0) (2026-08-27)
 
 
