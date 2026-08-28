@@ -106,7 +106,7 @@ func TestQualityBoundaryContainsNoIntegerIdentifiers(t *testing.T) {
 	domain := findQualityDomain(t)
 	for _, action := range domain.Actions {
 		for _, arg := range action.Args {
-			if strings.HasSuffix(strings.ToLower(arg.Name), "id") {
+			if arg.Type == "int" && strings.HasSuffix(strings.ToLower(arg.Name), "id") {
 				t.Errorf("%s exposes integer-style identifier %s", action.Name, arg.Name)
 			}
 		}
