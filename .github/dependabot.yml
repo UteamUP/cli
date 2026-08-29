@@ -10,3 +10,17 @@ updates:
       github-actions:
         patterns:
           - "*"
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 3
+    groups:
+      gomod-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+      gomod-major:
+        update-types:
+          - "major"
