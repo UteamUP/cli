@@ -52,7 +52,7 @@ func init() {
 				RESTPath:    "by-guid/{journalGuid}",
 				Args:        []ArgDef{{Name: "journalGuid", Description: "Journal GUID", Required: true, Type: "uuid"}},
 			},
-			Action{
+			{
 				Name:        "by-code",
 				Description: "List journal entries linked to a code catalog entry",
 				ToolName:    "UteamupJournalGetByCode",
@@ -64,7 +64,7 @@ func init() {
 					{Name: "page-size", Short: "s", Description: "Items per page", Default: 20, Type: "int", QueryName: "pageSize"},
 				},
 			},
-			Action{
+			{
 				Name:        "by-asset",
 				Description: "List journal entries for an asset",
 				ToolName:    "UteamupJournalGetByAsset",
@@ -76,7 +76,7 @@ func init() {
 					{Name: "page-size", Short: "s", Description: "Items per page", Default: 20, Type: "int", QueryName: "pageSize"},
 				},
 			},
-			Action{
+			{
 				Name:        "import",
 				Description: "Import a .docx / .md / .txt file (base64) into a new journal; auto-tags KKS/Asset/Workorder tokens",
 				ToolName:    "UteamupJournalImport",
@@ -91,7 +91,7 @@ func init() {
 					{Name: "target-journal-guid", BodyName: "targetJournalGuid", Description: "Append to an existing journal instead of creating a new one", Type: "uuid"},
 				},
 			},
-			Action{
+			{
 				Name:        "create-from-image",
 				Description: "Create a stub journal from one image (base64); re-encoded server-side to strip EXIF",
 				ToolName:    "UteamupJournalCreateFromImage",
@@ -104,7 +104,7 @@ func init() {
 					{Name: "title", BodyName: "title", Description: "Journal title (defaults to timestamp)", Type: "string"},
 				},
 			},
-			Action{
+			{
 				Name:         "search-assets",
 				Description:  "Search assets for the $ mention trigger (tenant-scoped, active only)",
 				ToolName:     "UteamupAssetMentionSearch",
@@ -116,7 +116,7 @@ func init() {
 					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int", QueryName: "limit"},
 				},
 			},
-			Action{
+			{
 				Name:         "search-workorders",
 				Description:  "Search workorders by TicketId for the % mention trigger (tenant-scoped)",
 				ToolName:     "UteamupWorkorderMentionSearch",

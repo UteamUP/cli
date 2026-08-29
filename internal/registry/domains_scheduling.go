@@ -532,7 +532,7 @@ func init() {
 	// TimesheetController (`/api/timesheet`), not TimeEntryController, so
 	// those actions override the base path via RESTBasePath.
 	timeEntryActions := []Action{
-		Action{
+		{
 			Name:         "start-timer",
 			Description:  "Start a retry-safe timer for the authenticated user",
 			ToolName:     "UteamupTimeEntryStartTimer",
@@ -549,7 +549,7 @@ func init() {
 				{Name: "transition-workorder", BodyName: "transitionWorkorderToInProgress", Description: "Atomically move an eligible workorder to In Progress", Type: "bool"},
 			},
 		},
-		Action{
+		{
 			Name:         "pause-timer",
 			Description:  "Pause one exact running timer version",
 			ToolName:     "UteamupTimeEntryPauseTimer",
@@ -564,7 +564,7 @@ func init() {
 				{Name: "expected-updated-at", BodyName: "expectedUpdatedAt", Description: "Exact reviewed UpdatedAt timestamp", Required: true, Type: "string"},
 			},
 		},
-		Action{
+		{
 			Name:         "resume-timer",
 			Description:  "Resume one exact paused timer version",
 			ToolName:     "UteamupTimeEntryResumeTimer",
@@ -580,7 +580,7 @@ func init() {
 				{Name: "start-mode", BodyName: "startMode", Description: "RejectIfAnyActive, RunAlongside, or PauseOthers", Default: "RejectIfAnyActive", Type: "string"},
 			},
 		},
-		Action{
+		{
 			Name:         "stop-timer",
 			Description:  "Stop the exact reviewed timer version once",
 			ToolName:     "UteamupTimeEntryStopTimer",
@@ -595,7 +595,7 @@ func init() {
 				{Name: "expected-updated-at", BodyName: "expectedUpdatedAt", Description: "Exact reviewed UpdatedAt timestamp", Required: true, Type: "string"},
 			},
 		},
-		Action{
+		{
 			Name:         "log-time",
 			Description:  "Create one retry-safe manual time entry",
 			ToolName:     "UteamupTimeEntryLogTime",
@@ -612,7 +612,7 @@ func init() {
 				{Name: "entry-type", BodyName: "entryType", Description: "Time-entry type", Default: "Work", Type: "string"},
 			},
 		},
-		Action{
+		{
 			Name:         "active-timer",
 			Description:  "Read the authenticated user's active timer",
 			ToolName:     "UteamupTimeEntryGetActiveTimer",
@@ -620,7 +620,7 @@ func init() {
 			RESTBasePath: "/api/timeentry",
 			RESTPath:     "active-timer",
 		},
-		Action{
+		{
 			Name:         "active-timers",
 			Description:  "Read all authenticated-user running and paused timers",
 			ToolName:     "UteamupTimeEntryGetActiveTimers",
@@ -628,7 +628,7 @@ func init() {
 			RESTBasePath: "/api/timeentry",
 			RESTPath:     "active-timers",
 		},
-		Action{
+		{
 			Name:         "summary",
 			Description:  "Read a time-entry summary for a date range",
 			ToolName:     "UteamupTimeEntryGetSummary",
@@ -643,7 +643,7 @@ func init() {
 				{Name: "end-date", BodyName: "endDate", Description: "ISO-8601 range end", Required: true, Type: "string"},
 			},
 		},
-		Action{
+		{
 			Name:         "weekly-mine",
 			Description:  "Read the authenticated user's weekly timesheet grid",
 			ToolName:     "UteamupTimesheetWeeklyMine",
@@ -654,7 +654,7 @@ func init() {
 				{Name: "week-start", BodyName: "weekStart", Description: "ISO week start date (YYYY-MM-DD)", Required: true, Type: "string"},
 			},
 		},
-		Action{
+		{
 			Name:         "pending-approvals",
 			Description:  "List timesheets pending approval in the active tenant",
 			ToolName:     "UteamupTimesheetPendingApprovals",
