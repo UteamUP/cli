@@ -80,6 +80,20 @@ func init() {
 				},
 			},
 			{
+				Name:        "create-by-path",
+				Description: "Create a whole designation in one call — \"FOL 1LBA3 CT001 XQ01\" — instead of one entry per tier. Missing ancestors are created on the way down, existing ones are reused, and a rerun changes nothing. A segment that breaks its level's format needs --acknowledge-non-standard.",
+				ToolName:    "UteamupCodingsystemCreateCodeByPath",
+				HTTPMethod:  "POST",
+				RESTPath:    "entries/by-path",
+				Flags: []FlagDef{
+					{Name: "coding-system-guid", Description: "ExternalGuid of the coding system the designation belongs to", Type: "string", BodyName: "codingSystemGuid"},
+					{Name: "code-path", Description: "The designation as printed, e.g. 'FOL 1LBA3 CT001 XQ01'", Type: "string", BodyName: "codePath"},
+					{Name: "name", Description: "Display name for the leaf entry (ancestors are named after their code)", Type: "string", BodyName: "name"},
+					{Name: "description", Description: "Long-form description for the leaf entry", Type: "string", BodyName: "description"},
+					{Name: "acknowledge-non-standard", Description: "Waive the level format check for a non-standard segment", Default: false, Type: "bool", BodyName: "acknowledgeNonStandard"},
+				},
+			},
+			{
 				Name:        "move",
 				Description: "Reparent a code catalog entry under a new parent by their ExternalGuids — recomputes the entry's and its descendants' DisplayCode. Same coding system only; parent tier must be shallower-or-equal; cannot move under itself or one of its descendants.",
 				ToolName:    "UteamupCodingsystemMoveEntryByGuid",

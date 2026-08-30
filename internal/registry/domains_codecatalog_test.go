@@ -382,3 +382,66 @@ func TestCodecatalogDuplicateActionWired(t *testing.T) {
 		t.Errorf("new-root-code flag = %+v, want string → body newRootCode", f)
 	}
 }
+
+// A registry action with no RESTPath silently 404s, because the registry calls REST and the
+// ToolName is only metadata. This locks the whole contract for create-by-path: the route, the
+// method, and the body field names the backend model expects.
+func TestCodecatalogCreateByPathActionWired(t *testing.T) {
+	var d *Domain
+	for _, dom := range DefaultRegistry.Domains() {
+		if dom.Name == "codecatalog" {
+			d = dom
+			break
+		}
+	}
+	if d == nil {
+		t.Fatal("expected codecatalog domain to be registered")
+	}
+
+	var action *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "create-by-path" {
+			action = &d.Actions[i]
+			break
+		}
+	}
+	if action == nil {
+		t.Fatal("expected `create-by-path` action on codecatalog domain")
+	}
+
+	if action.ToolName != "UteamupCodingsystemCreateCodeByPath" {
+		t.Errorf("create-by-path ToolName = %q, want %q",
+			action.ToolName, "UteamupCodingsystemCreateCodeByPath")
+	}
+	if action.HTTPMethod != "POST" {
+		t.Errorf("create-by-path HTTPMethod = %q, want POST", action.HTTPMethod)
+	}
+	if action.RESTPath != "entries/by-path" {
+		t.Errorf("create-by-path RESTPath = %q, want %q", action.RESTPath, "entries/by-path")
+	}
+
+	wantBody := map[string]string{
+		"coding-system-guid":       "codingSystemGuid",
+		"code-path":                "codePath",
+		"name":                     "name",
+		"description":              "description",
+		"acknowledge-non-standard": "acknowledgeNonStandard",
+	}
+	seen := map[string]bool{}
+	for _, flag := range action.Flags {
+		want, ok := wantBody[flag.Name]
+		if !ok {
+			t.Errorf("create-by-path has unexpected flag %q", flag.Name)
+			continue
+		}
+		if flag.BodyName != want {
+			t.Errorf("create-by-path flag %q BodyName = %q, want %q", flag.Name, flag.BodyName, want)
+		}
+		seen[flag.Name] = true
+	}
+	for name := range wantBody {
+		if !seen[name] {
+			t.Errorf("create-by-path missing flag %q", name)
+		}
+	}
+}
