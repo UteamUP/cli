@@ -36,6 +36,7 @@ func TestConversationDomainActionsRouteCorrectly(t *testing.T) {
 		"get":     {"GET", "{conversationGuid}"},
 		"send":    {"POST", "{conversationGuid}/messages"},
 		"search":  {"GET", "{conversationGuid}/messages/search"},
+		"react":   {"POST", "{conversationGuid}/messages/{messageGuid}/reactions"},
 		"since":   {"GET", "{conversationGuid}/messages"},
 		"archive": {"PATCH", "{conversationGuid}/inbox-state"},
 	}

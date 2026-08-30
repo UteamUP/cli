@@ -51,6 +51,20 @@ func init() {
 				},
 			},
 			{
+				Name:        "react",
+				Description: "Toggle the caller's emoji reaction on a message (same emoji again removes it)",
+				ToolName:    "UteamupConversationMessageReactionToggle",
+				HTTPMethod:  "POST",
+				RESTPath:    "{conversationGuid}/messages/{messageGuid}/reactions",
+				Args: []ArgDef{
+					conversationGUID,
+					{Name: "messageGuid", Description: "Public GUID of the message to react to", Required: true},
+				},
+				Flags: []FlagDef{
+					{Name: "emoji", Description: "One of the six supported emojis: 👍 👎 ❤️ 😂 😮 ☹️", Type: "string", Required: true},
+				},
+			},
+			{
 				Name:        "search",
 				Description: "Search messages the caller may read within one conversation",
 				ToolName:    "UteamupConversationMessagesSearch",
