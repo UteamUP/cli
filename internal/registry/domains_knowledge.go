@@ -63,6 +63,9 @@ func init() {
 		Actions: append([]Action{
 			{Name: "list", Description: "List records", ToolName: "UteamupDocumentList", Flags: paginationFlags()},
 			{Name: "get", Description: "Get a document by GUID", ToolName: "UteamupDocumentGet", RESTPath: "by-guid/{documentGuid}", Args: documentGUIDArg()},
+			// Content dedup: resolve a stored document by the SHA-256 of its bytes so
+			// identical content is attached rather than uploaded a second time.
+			{Name: "find-by-hash", Description: "Find a document by the SHA-256 of its bytes", ToolName: "UteamupDocumentFindByHash", HTTPMethod: "GET", RESTPath: "by-hash/{sha256}", Args: []ArgDef{{Name: "sha256", Description: "Lowercase 64-character hex SHA-256 of the file bytes", Required: true, Type: "string"}}},
 			{Name: "create", Description: "Create a record", ToolName: "UteamupDocumentCreate", Flags: []FlagDef{jsonFlag()}},
 			{Name: "update", Description: "Update a record by GUID", ToolName: "UteamupDocumentUpdate", RESTPath: "{documentGuid}", Args: documentGUIDArg(), Flags: []FlagDef{jsonFlag()}},
 			{Name: "delete", Description: "Archive a record by GUID", ToolName: "UteamupDocumentDelete", RESTPath: "{documentGuid}", Args: documentGUIDArg()},

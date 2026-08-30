@@ -252,3 +252,33 @@ func TestDocumentGetTimelineFlags(t *testing.T) {
 		}
 	}
 }
+
+// TestDocumentFindByHashRoutesToRest guards the content-dedup lookup. A registry
+// entry without a RESTPath resolves to nothing and 404s silently, so the route
+// is pinned here alongside its argument contract.
+func TestDocumentFindByHashRoutesToRest(t *testing.T) {
+	action := findDocumentAction(t, "find-by-hash")
+
+	if action.HTTPMethod != "GET" {
+		t.Errorf("find-by-hash HTTPMethod = %q, want GET", action.HTTPMethod)
+	}
+	if action.RESTPath != "by-hash/{sha256}" {
+		t.Errorf("find-by-hash RESTPath = %q, want by-hash/{sha256}", action.RESTPath)
+	}
+	if action.ToolName != "UteamupDocumentFindByHash" {
+		t.Errorf("find-by-hash ToolName = %q, want UteamupDocumentFindByHash", action.ToolName)
+	}
+	if len(action.Args) != 1 {
+		t.Fatalf("find-by-hash expected exactly 1 positional arg, got %+v", action.Args)
+	}
+	arg := action.Args[0]
+	if arg.Name != "sha256" {
+		t.Errorf("find-by-hash positional arg = %q, want sha256", arg.Name)
+	}
+	if arg.Type != "string" {
+		t.Errorf("find-by-hash arg type = %q, want string", arg.Type)
+	}
+	if !arg.Required {
+		t.Error("find-by-hash sha256 arg must be Required")
+	}
+}
