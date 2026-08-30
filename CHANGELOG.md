@@ -5,6 +5,15 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0](https://github.com/UteamUP/cli/compare/2.7.2...2.8.0) (2026-08-30)
+
+
+### Features
+
+* **codecatalog:** add create-by-path, so a whole designation registers in one command ([eceb392](https://github.com/UteamUP/cli/commit/eceb392ebcf4c6508e888b08f4d2bacadd12c610))
+* **conversation:** react action - toggle an emoji on a message ([67d0461](https://github.com/UteamUP/cli/commit/67d046184a0efce50efa8a2c5091db86dda8f0db))
+* **document:** add find-by-hash to resolve stored documents by content ([30851fc](https://github.com/UteamUP/cli/commit/30851fcdfa45dfa4488759b8e94ccc4ec79ada8f))
+
 ## [2.7.2](https://github.com/UteamUP/cli/compare/2.7.1...2.7.2) (2026-08-29)
 
 
