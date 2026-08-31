@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11.0](https://github.com/UteamUP/cli/compare/2.10.0...2.11.0) (2026-08-31)
+
+
+### Features
+
+* **quality:** add audit CLI parity ([9f6cc2b](https://github.com/UteamUP/cli/commit/9f6cc2b05209c251636b65236b0e69ff9465a1b7))
+* **quality:** add governed CAPA CLI parity ([1aab086](https://github.com/UteamUP/cli/commit/1aab0863f1e5f24f13d231b0ef333009e0a1d963))
+
 ## [2.10.0](https://github.com/UteamUP/cli/compare/2.9.0...2.10.0) (2026-08-31)
 
 
