@@ -35,7 +35,7 @@ type ArgDef struct {
 	Name        string
 	Description string
 	Required    bool
-	Type        string // "string", "int", "uuid"
+	Type        string // "string", "int", "uuid", "non-empty-uuid"
 	// AllowedValues constrains a string positional argument to exact, stable
 	// route-segment values. It prevents free-form values from changing the
 	// intended REST path shape.
@@ -55,7 +55,7 @@ type FlagDef struct {
 	Short       string
 	Description string
 	Default     any
-	Type        string // "string", "int", "bool", "float", "stringSlice"
+	Type        string // "string", "int", "bool", "float", "stringSlice", "uuid", "non-empty-uuid"
 	Required    bool
 	// Sensitive keeps the value available to the outgoing request while
 	// replacing it with [REDACTED] in diagnostic argument/header logs.
@@ -110,6 +110,8 @@ type FlagDef struct {
 var uuidValuePattern = regexp.MustCompile(
 	`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`,
 )
+
+const emptyUUIDValue = "00000000-0000-0000-0000-000000000000"
 
 // HTTPMethod maps action names to HTTP methods for REST calls.
 //
@@ -329,8 +331,13 @@ func validateActionInput(cmd *cobra.Command, args []string, action Action) error
 			continue
 		}
 		value := strings.TrimSpace(args[index])
-		if argument.Type == "uuid" && !uuidValuePattern.MatchString(value) {
-			return fmt.Errorf("invalid %s: must be a GUID", argument.Name)
+		if argument.Type == "uuid" || argument.Type == "non-empty-uuid" {
+			if !uuidValuePattern.MatchString(value) {
+				return fmt.Errorf("invalid %s: must be a GUID", argument.Name)
+			}
+			if argument.Type == "non-empty-uuid" && strings.EqualFold(value, emptyUUIDValue) {
+				return fmt.Errorf("invalid %s: must be a non-empty GUID", argument.Name)
+			}
 		}
 		if len(argument.AllowedValues) > 0 && !containsExact(argument.AllowedValues, value) {
 			return fmt.Errorf(
@@ -345,13 +352,17 @@ func validateActionInput(cmd *cobra.Command, args []string, action Action) error
 		if !cmd.Flags().Changed(flag.Name) {
 			continue
 		}
-		if flag.Type == "uuid" {
+		if flag.Type == "uuid" || flag.Type == "non-empty-uuid" {
 			value, _ := cmd.Flags().GetString(flag.Name)
-			if !uuidValuePattern.MatchString(strings.TrimSpace(value)) {
+			value = strings.TrimSpace(value)
+			if !uuidValuePattern.MatchString(value) {
 				return fmt.Errorf("invalid --%s: must be a GUID", flag.Name)
 			}
+			if flag.Type == "non-empty-uuid" && strings.EqualFold(value, emptyUUIDValue) {
+				return fmt.Errorf("invalid --%s: must be a non-empty GUID", flag.Name)
+			}
 		}
-		if flag.Required && (flag.Type == "string" || flag.Type == "uuid") {
+		if flag.Required && (flag.Type == "string" || flag.Type == "uuid" || flag.Type == "non-empty-uuid") {
 			value, _ := cmd.Flags().GetString(flag.Name)
 			if strings.TrimSpace(value) == "" {
 				return fmt.Errorf("--%s cannot be empty", flag.Name)
