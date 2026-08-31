@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.0](https://github.com/UteamUP/cli/compare/2.9.0...2.10.0) (2026-08-31)
+
+
+### Features
+
+* **bugs:** expose the report platform on list and create ([948ee51](https://github.com/UteamUP/cli/commit/948ee5141cfae77f25f5e0d5b959c3477933a046))
+* **bugs:** filter reports by deployment ([e240445](https://github.com/UteamUP/cli/commit/e240445cf24db375ad016071a475e712c0ebb661))
+
 ## [2.9.0](https://github.com/UteamUP/cli/compare/2.8.0...2.9.0) (2026-08-31)
 
 
