@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0](https://github.com/UteamUP/cli/compare/2.8.0...2.9.0) (2026-08-31)
+
+
+### Features
+
+* add governed NCR CLI domain ([664eea6](https://github.com/UteamUP/cli/commit/664eea6a93825112da726c1beb5aed044fe19714))
+
 ## [2.8.0](https://github.com/UteamUP/cli/compare/2.7.2...2.8.0) (2026-08-30)
 
 
