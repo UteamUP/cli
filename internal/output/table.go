@@ -90,17 +90,17 @@ func printArrayTable(items []map[string]any) error {
 // blockRenderedKeys are JSON fields that get their own dedicated block under
 // the key/value table instead of being inline-formatted (which would truncate
 // them to 60 chars and lose all signal). Each key here has a matching printer
-// invoked after the table flush. Order matters: blocks render in this order
-// so the admin/skill reads "what the user did" → "what the app did" → "what
-// the database did" → audit trail.
+// invoked after the table flush. Transition choices render first when present;
+// diagnostic blocks then retain their user → app → database → audit order.
 var blockRenderedKeys = map[string]bool{
-	"userActions":         true,
-	"additionalNotes":     true,
-	"recentApiCalls":      true,
-	"recentStoreActions":  true,
-	"involvedSourceFiles": true,
-	"recentSqlCommands":   true,
-	"statusHistory":       true,
+	"transitionAvailability": true,
+	"userActions":            true,
+	"additionalNotes":        true,
+	"recentApiCalls":         true,
+	"recentStoreActions":     true,
+	"involvedSourceFiles":    true,
+	"recentSqlCommands":      true,
+	"statusHistory":          true,
 }
 
 func printObjectTable(obj map[string]any) error {
@@ -120,9 +120,11 @@ func printObjectTable(obj map[string]any) error {
 		return err
 	}
 
-	// Order matches blockRenderedKeys docstring: user actions first (most
-	// directly answers "what was the user doing"), then app telemetry, then SQL,
-	// then the audit history.
+	// Lifecycle choices are actionable response metadata, so render them before
+	// the diagnostic and audit blocks.
+	if availability, ok := obj["transitionAvailability"]; ok {
+		printTransitionAvailabilityBlock(availability)
+	}
 	if v, ok := obj["userActions"]; ok {
 		printUserActionsBlock(v)
 	}
@@ -146,6 +148,133 @@ func printObjectTable(obj map[string]any) error {
 	}
 
 	return nil
+}
+
+func printTransitionAvailabilityBlock(value any) {
+	fmt.Println()
+	fmt.Println("Transition availability:")
+
+	availability, ok := value.(map[string]any)
+	if !ok {
+		fmt.Println("  (unavailable: malformed response)")
+		return
+	}
+	printTransitionBlockedReason("  ", availability)
+
+	options, ok := availability["options"].([]any)
+	if !ok || len(options) == 0 {
+		if stringVal(availability["blockedReasonCode"]) == "" &&
+			stringVal(availability["blockedReason"]) == "" {
+			fmt.Println("  (no transitions)")
+		}
+		return
+	}
+
+	for _, value := range options {
+		option, ok := value.(map[string]any)
+		if !ok {
+			fmt.Println("  - (unavailable: malformed option)")
+			continue
+		}
+		state := "blocked"
+		if available, ok := option["isAvailable"].(bool); ok && available {
+			state = "available"
+		}
+		fmt.Printf(
+			"  - %s -> %s  [%s]\n",
+			stringVal(option["actionKey"]),
+			stringVal(option["toStatus"]),
+			state,
+		)
+		printTransitionRequirements(option["requirements"])
+		printTransitionRoles("    eligible roles", option["eligibleRoles"])
+		printTransitionApproval(option["approval"])
+		printTransitionBlockedReason("    ", option)
+	}
+}
+
+func printTransitionRequirements(value any) {
+	requirements, ok := value.(map[string]any)
+	if !ok {
+		fmt.Println("    requirements: unavailable")
+		return
+	}
+	fmt.Printf(
+		"    requirements: reason=%s, evidence=%s, decision=%s, independentActor=%s, attestation=%s\n",
+		yesNo(requirements["requiresReason"]),
+		yesNo(requirements["requiresEvidence"]),
+		yesNo(requirements["requiresDecision"]),
+		yesNo(requirements["requiresIndependentActor"]),
+		yesNo(requirements["requiresAttestation"]),
+	)
+}
+
+func printTransitionApproval(value any) {
+	if value == nil {
+		return
+	}
+	approval, ok := value.(map[string]any)
+	if !ok {
+		fmt.Println("    approval: unavailable")
+		return
+	}
+	fmt.Printf(
+		"    approval: %s, minimum approvers=%s\n",
+		stringVal(approval["decisionKind"]),
+		stringVal(approval["minimumApprovers"]),
+	)
+	printTransitionRoles("    required roles", approval["requiredRoles"])
+}
+
+func printTransitionRoles(label string, value any) {
+	entries, ok := value.([]any)
+	if !ok || len(entries) == 0 {
+		fmt.Printf("%s: (none)\n", label)
+		return
+	}
+	roles := make([]string, 0, len(entries))
+	for _, value := range entries {
+		role, ok := value.(map[string]any)
+		if !ok {
+			roles = append(roles, "unavailable")
+			continue
+		}
+		roleKey := stringVal(role["roleKey"])
+		permissionKey := stringVal(role["permissionKey"])
+		if permissionKey != "" {
+			roles = append(roles, fmt.Sprintf("%s (%s)", roleKey, permissionKey))
+		} else {
+			roles = append(roles, roleKey)
+		}
+	}
+	fmt.Printf("%s: %s\n", label, strings.Join(roles, ", "))
+}
+
+func printTransitionBlockedReason(indent string, value map[string]any) {
+	code := stringVal(value["blockedReasonCode"])
+	reason := stringVal(value["blockedReason"])
+	if code == "" && reason == "" {
+		return
+	}
+	if code == "" {
+		fmt.Printf("%sblocked: %s\n", indent, reason)
+		return
+	}
+	if reason == "" {
+		fmt.Printf("%sblocked: %s\n", indent, code)
+		return
+	}
+	fmt.Printf("%sblocked: %s - %s\n", indent, code, reason)
+}
+
+func yesNo(value any) string {
+	if enabled, ok := value.(bool); ok {
+		if enabled {
+			return "yes"
+		}
+		return "no"
+	}
+	return "unavailable"
 }
 
 // printStatusHistoryBlock renders the `statusHistory` array as a chronological

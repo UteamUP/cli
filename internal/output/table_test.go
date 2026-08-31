@@ -172,3 +172,113 @@ func TestPrintObjectTable_FromToArrowRendered(t *testing.T) {
 		t.Fatalf("expected 'Validated -> InProgress' transition marker, got:\n%s", out)
 	}
 }
+
+func TestPrintObjectTable_RendersTransitionAvailabilityAsADedicatedBlock(t *testing.T) {
+	payload := `{
+      "nonConformance":{"externalGuid":"11111111-1111-4111-8111-111111111111","status":"Triage"},
+      "transitionAvailability":{
+        "blockedReasonCode":"POLICY_PARTIAL",
+        "blockedReason":"Some transitions require another role.",
+        "options":[
+          {
+            "actionKey":"ncr.accept-triage",
+            "toStatus":"Containment",
+            "isAvailable":true,
+            "requirements":{
+              "requiresReason":true,
+              "requiresEvidence":false,
+              "requiresDecision":true,
+              "requiresIndependentActor":false,
+              "requiresAttestation":true
+            },
+            "eligibleRoles":[
+              {"roleKey":"quality-triager","permissionKey":"NonConformance.Triage"}
+            ],
+            "approval":{
+              "decisionKind":"Approve",
+              "minimumApprovers":2,
+              "requiredRoles":[
+                {"roleKey":"quality-manager","permissionKey":"NonConformance.Disposition"}
+              ]
+            }
+          },
+          {
+            "actionKey":"ncr.verify-close",
+            "toStatus":"Closed",
+            "isAvailable":false,
+            "requirements":{
+              "requiresReason":false,
+              "requiresEvidence":true,
+              "requiresDecision":false,
+              "requiresIndependentActor":true,
+              "requiresAttestation":false
+            },
+            "eligibleRoles":[],
+            "blockedReasonCode":"EVIDENCE_REQUIRED",
+            "blockedReason":"Attach retained verification evidence."
+          }
+        ]
+      }
+    }`
+
+	out := captureStdout(t, func() {
+		if err := Print(FormatTable, json.RawMessage(payload)); err != nil {
+			t.Fatalf("Print: %v", err)
+		}
+	})
+
+	wantFragments := []string{
+		"Transition availability:",
+		"blocked: POLICY_PARTIAL - Some transitions require another role.",
+		"ncr.accept-triage -> Containment  [available]",
+		"requirements: reason=yes, evidence=no, decision=yes, independentActor=no, attestation=yes",
+		"eligible roles: quality-triager (NonConformance.Triage)",
+		"approval: Approve, minimum approvers=2",
+		"required roles: quality-manager (NonConformance.Disposition)",
+		"ncr.verify-close -> Closed  [blocked]",
+		"requirements: reason=no, evidence=yes, decision=no, independentActor=yes, attestation=no",
+		"blocked: EVIDENCE_REQUIRED - Attach retained verification evidence.",
+	}
+	for _, fragment := range wantFragments {
+		if !strings.Contains(out, fragment) {
+			t.Errorf("table output is missing %q:\n%s", fragment, out)
+		}
+	}
+	if strings.Contains(out, "transitionAvailability:") {
+		t.Errorf("transitionAvailability should not be rendered as a truncated key/value row:\n%s", out)
+	}
+}
+
+func TestTransitionAvailabilityRemainsOpaqueInJSONAndYAML(t *testing.T) {
+	payload := json.RawMessage(`{
+      "transitionAvailability":{
+        "options":[{"actionKey":"ncr.submit","toStatus":"Submitted","isAvailable":true}]
+      }
+    }`)
+
+	jsonOut := captureStdout(t, func() {
+		if err := Print(FormatJSON, payload); err != nil {
+			t.Fatalf("JSON Print: %v", err)
+		}
+	})
+	if !strings.Contains(jsonOut, `"transitionAvailability": {`) ||
+		!strings.Contains(jsonOut, `"actionKey": "ncr.submit"`) {
+		t.Errorf("JSON output changed the response shape:\n%s", jsonOut)
+	}
+	if strings.Contains(jsonOut, "Transition availability:") {
+		t.Errorf("JSON output received human table decoration:\n%s", jsonOut)
+	}
+
+	yamlOut := captureStdout(t, func() {
+		if err := Print(FormatYAML, payload); err != nil {
+			t.Fatalf("YAML Print: %v", err)
+		}
+	})
+	if !strings.Contains(yamlOut, "transitionAvailability:") ||
+		!strings.Contains(yamlOut, "actionKey: ncr.submit") {
+		t.Errorf("YAML output changed the response shape:\n%s", yamlOut)
+	}
+	if strings.Contains(yamlOut, "Transition availability:") {
+		t.Errorf("YAML output received human table decoration:\n%s", yamlOut)
+	}
+}

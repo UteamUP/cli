@@ -1,13 +1,16 @@
 package registry
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -33,6 +36,10 @@ type ArgDef struct {
 	Description string
 	Required    bool
 	Type        string // "string", "int", "uuid"
+	// AllowedValues constrains a string positional argument to exact, stable
+	// route-segment values. It prevents free-form values from changing the
+	// intended REST path shape.
+	AllowedValues []string
 	// BodyName overrides the MCP/JSON argument name while preserving a
 	// user-friendly positional name in CLI help and validation messages.
 	BodyName string
@@ -79,6 +86,10 @@ type FlagDef struct {
 	// only way to express array/object payloads that flat flags cannot carry
 	// (e.g. bulk stock operations, purchase-order receive lines).
 	JSONFile bool
+	// RootJSONObjectFile marks a string flag whose local JSON object is merged
+	// directly into the request-body root. It never creates a wrapper field,
+	// rejects arrays/scalars/duplicate keys, and fails on field collisions.
+	RootJSONObjectFile bool
 	// UploadFile marks a string flag whose value is a local path to a file
 	// sent as a multipart/form-data part named by BodyName (default
 	// camelCase(Name)). Remaining flags travel on the query string because the
@@ -88,6 +99,9 @@ type FlagDef struct {
 	// MustBeTrue requires an explicitly enabled boolean safety confirmation.
 	// It is stronger than Required, which only proves that the flag was passed.
 	MustBeTrue bool
+	// LocalOnly keeps a parsed flag entirely inside the CLI. It is used for
+	// explicit safety confirmations that must never become API request fields.
+	LocalOnly bool
 	// StrongETag accepts the opaque token returned by an API response and sends
 	// it as one validated, quoted strong ETag header value.
 	StrongETag bool
@@ -126,6 +140,10 @@ type Action struct {
 	// RESTBasePath overrides the domain API path for a single action. Use it
 	// when one domain action is intentionally served by a cross-domain adapter.
 	RESTBasePath string
+	// UseDomainBasePath routes this action to the exact domain API path without
+	// the conventional action-derived suffix (for example, a collection search
+	// served at the collection root). It cannot be combined with path overrides.
+	UseDomainBasePath bool
 	// RESTPath is the path suffix appended to the domain's basePath. It supports
 	// `{argName}` placeholders that are substituted from the action's positional
 	// args. Examples:
@@ -302,12 +320,24 @@ func buildActionCommand(domain *Domain, action Action, apiClientFactory APIClien
 }
 
 func validateActionInput(cmd *cobra.Command, args []string, action Action) error {
+	if err := validateActionDefinition(action); err != nil {
+		return err
+	}
+
 	for index, argument := range action.Args {
-		if index >= len(args) || argument.Type != "uuid" {
+		if index >= len(args) {
 			continue
 		}
-		if !uuidValuePattern.MatchString(strings.TrimSpace(args[index])) {
+		value := strings.TrimSpace(args[index])
+		if argument.Type == "uuid" && !uuidValuePattern.MatchString(value) {
 			return fmt.Errorf("invalid %s: must be a GUID", argument.Name)
+		}
+		if len(argument.AllowedValues) > 0 && !containsExact(argument.AllowedValues, value) {
+			return fmt.Errorf(
+				"invalid %s: must be one of %s",
+				argument.Name,
+				strings.Join(argument.AllowedValues, ", "),
+			)
 		}
 	}
 
@@ -342,6 +372,86 @@ func validateActionInput(cmd *cobra.Command, args []string, action Action) error
 	}
 
 	return nil
+}
+
+func validateActionDefinition(action Action) error {
+	if action.UseDomainBasePath && (action.RESTBasePath != "" || action.RESTPath != "") {
+		return fmt.Errorf(
+			"invalid action %s: domain-base routing cannot use REST path overrides",
+			action.Name,
+		)
+	}
+
+	rootObjectFiles := 0
+	for _, flag := range action.Flags {
+		if flag.RootJSONObjectFile {
+			rootObjectFiles++
+			if flag.Type != "string" || flag.BodyName != "" || flag.HeaderName != "" ||
+				flag.QueryName != "" || flag.JSONFile || flag.UploadFile || flag.LocalOnly ||
+				flag.MirrorHeaderInBody || flag.MustBeTrue || flag.StrongETag {
+				return fmt.Errorf(
+					"invalid action %s: --%s must be an unwrapped root-object JSON file",
+					action.Name,
+					flag.Name,
+				)
+			}
+		}
+		if flag.LocalOnly && (flag.Type != "bool" || flag.BodyName != "" ||
+			flag.HeaderName != "" || flag.QueryName != "" || flag.JSONFile ||
+			flag.RootJSONObjectFile || flag.UploadFile || flag.MirrorHeaderInBody ||
+			flag.StrongETag) {
+			return fmt.Errorf(
+				"invalid action %s: --%s must be a local-only boolean",
+				action.Name,
+				flag.Name,
+			)
+		}
+	}
+	if rootObjectFiles > 1 {
+		return fmt.Errorf("invalid action %s: only one root-object JSON file is allowed", action.Name)
+	}
+
+	for _, argument := range action.Args {
+		if len(argument.AllowedValues) == 0 {
+			continue
+		}
+		if argument.Type != "string" {
+			return fmt.Errorf(
+				"invalid action %s: %s allowed values require a string argument",
+				action.Name,
+				argument.Name,
+			)
+		}
+		seen := make(map[string]struct{}, len(argument.AllowedValues))
+		for _, value := range argument.AllowedValues {
+			if value == "" || strings.TrimSpace(value) != value || strings.ContainsAny(value, "/\\?#") {
+				return fmt.Errorf(
+					"invalid action %s: %s contains an unsafe allowed route value",
+					action.Name,
+					argument.Name,
+				)
+			}
+			if _, exists := seen[value]; exists {
+				return fmt.Errorf(
+					"invalid action %s: %s contains duplicate allowed values",
+					action.Name,
+					argument.Name,
+				)
+			}
+			seen[value] = struct{}{}
+		}
+	}
+
+	return nil
+}
+
+func containsExact(values []string, candidate string) bool {
+	for _, value := range values {
+		if value == candidate {
+			return true
+		}
+	}
+	return false
 }
 
 func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string, export *ExportConfig) error {
@@ -384,6 +494,9 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 			if cmd.Flags().Changed(flag.Name) {
 				downloadOutputPath, _ = cmd.Flags().GetString(flag.Name)
 			}
+			continue
+		}
+		if flag.LocalOnly {
 			continue
 		}
 		if flag.QueryName != "" {
@@ -452,6 +565,19 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		fieldName := flag.BodyName
 		if fieldName == "" {
 			fieldName = toCamelCase(flag.Name)
+		}
+		if flag.RootJSONObjectFile {
+			if cmd.Flags().Changed(flag.Name) {
+				path, _ := cmd.Flags().GetString(flag.Name)
+				parsed, err := readRootJSONObjectFile(path)
+				if err != nil {
+					return fmt.Errorf("reading --%s: %w", flag.Name, err)
+				}
+				if err := mergeRootJSONObject(toolArgs, parsed); err != nil {
+					return fmt.Errorf("reading --%s: %w", flag.Name, err)
+				}
+			}
+			continue
 		}
 		if flag.JSONFile {
 			if cmd.Flags().Changed(flag.Name) {
@@ -699,6 +825,135 @@ func readJSONFileFlag(path string) (any, error) {
 	return parsed, nil
 }
 
+var rejectedRootObjectWrappers = map[string]struct{}{
+	"args":      {},
+	"arguments": {},
+	"body":      {},
+	"data":      {},
+	"input":     {},
+	"model":     {},
+	"payload":   {},
+	"request":   {},
+}
+
+// readRootJSONObjectFile loads one strict JSON object for direct request-root
+// merging. It rejects wrapper-shaped payloads because the caller cannot know
+// or choose an API binder wrapper for this primitive.
+func readRootJSONObjectFile(path string) (map[string]any, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	parsed, err := decodeStrictJSONValue(decoder)
+	if err != nil {
+		return nil, fmt.Errorf("parsing %s as JSON: %w", filepath.Base(path), err)
+	}
+	if _, err := decoder.Token(); err != io.EOF {
+		if err == nil {
+			return nil, fmt.Errorf("parsing %s as JSON: multiple root values", filepath.Base(path))
+		}
+		return nil, fmt.Errorf("parsing %s as JSON: %w", filepath.Base(path), err)
+	}
+
+	object, ok := parsed.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("%s must contain one JSON object at the root", filepath.Base(path))
+	}
+	if len(object) == 1 {
+		for key := range object {
+			if _, rejected := rejectedRootObjectWrappers[strings.ToLower(key)]; rejected {
+				return nil, fmt.Errorf(
+					"%s must contain request fields directly, without a %q wrapper",
+					filepath.Base(path),
+					key,
+				)
+			}
+		}
+	}
+	return object, nil
+}
+
+func decodeStrictJSONValue(decoder *json.Decoder) (any, error) {
+	token, err := decoder.Token()
+	if err != nil {
+		return nil, err
+	}
+
+	delimiter, isDelimiter := token.(json.Delim)
+	if !isDelimiter {
+		return token, nil
+	}
+
+	switch delimiter {
+	case '{':
+		object := make(map[string]any)
+		for decoder.More() {
+			keyToken, err := decoder.Token()
+			if err != nil {
+				return nil, err
+			}
+			key, ok := keyToken.(string)
+			if !ok {
+				return nil, fmt.Errorf("object field name is not a string")
+			}
+			if _, exists := object[key]; exists {
+				return nil, fmt.Errorf("duplicate JSON object field %q", key)
+			}
+			value, err := decodeStrictJSONValue(decoder)
+			if err != nil {
+				return nil, err
+			}
+			object[key] = value
+		}
+		closing, err := decoder.Token()
+		if err != nil {
+			return nil, err
+		}
+		if closing != json.Delim('}') {
+			return nil, fmt.Errorf("JSON object is not closed")
+		}
+		return object, nil
+	case '[':
+		array := make([]any, 0)
+		for decoder.More() {
+			value, err := decodeStrictJSONValue(decoder)
+			if err != nil {
+				return nil, err
+			}
+			array = append(array, value)
+		}
+		closing, err := decoder.Token()
+		if err != nil {
+			return nil, err
+		}
+		if closing != json.Delim(']') {
+			return nil, fmt.Errorf("JSON array is not closed")
+		}
+		return array, nil
+	default:
+		return nil, fmt.Errorf("unexpected JSON delimiter %q", delimiter)
+	}
+}
+
+func mergeRootJSONObject(destination, source map[string]any) error {
+	keys := make([]string, 0, len(source))
+	for key := range source {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		if _, exists := destination[key]; exists {
+			return fmt.Errorf("request field %q is supplied more than once", key)
+		}
+	}
+	for _, key := range keys {
+		destination[key] = source[key]
+	}
+	return nil
+}
+
 // exportJSON writes the raw JSON response to a file in the export directory.
 func exportJSON(export *ExportConfig, domainName, actionName string, data json.RawMessage, logger *logging.Logger) error {
 	dir := export.Dir
@@ -743,13 +998,17 @@ func exportJSON(export *ExportConfig, domainName, actionName string, data json.R
 // substitution (those must be removed from the JSON body before the request
 // is sent so the same arg doesn't appear in both URL and body).
 func buildRESTPath(domain *Domain, action Action, args map[string]any) (string, []string) {
+	domainBasePath := domain.APIPath
+	if domainBasePath == "" {
+		domainBasePath = "/api/" + strings.ReplaceAll(domain.Name, "-", "")
+	}
+	if action.UseDomainBasePath {
+		return domainBasePath, nil
+	}
+
 	basePath := action.RESTBasePath
 	if basePath == "" {
-		basePath = domain.APIPath
-	}
-	if basePath == "" {
-		// Derive from domain name: "vendor" → "/api/vendor", "asset-type" → "/api/assettype"
-		basePath = "/api/" + strings.ReplaceAll(domain.Name, "-", "")
+		basePath = domainBasePath
 	}
 
 	// If the action declares an explicit RESTPath, expand `{argName}` placeholders
