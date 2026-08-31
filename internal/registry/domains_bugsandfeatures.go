@@ -16,6 +16,7 @@ func init() {
 					{Name: "severity", Description: "Filter by severity (Low, Medium, High, Critical)", Type: "string"},
 					{Name: "source", Description: "Filter by source (Manual, FrontendAuto, BackendAuto, PerformanceAuto, MobileAuto, DesktopAuto)", Type: "string"},
 					{Name: "platform", Description: "Filter by product (Frontend, Backend, Mobile, MacOsApp, WindowsApp, LinuxApp, Cli, Mcp, Unknown)", Type: "string"},
+					{Name: "environment", Description: "Filter by deployment (Production, Staging, Development, Localhost, Unknown)", Type: "string"},
 					{Name: "tenant-guid", Description: "Filter by tenant ExternalGuid", Type: "string"},
 					{Name: "submitter-user-id", Description: "Filter by submitter user id", Type: "string"},
 					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
@@ -37,6 +38,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "type", Description: "Bug or Feature", Default: "Bug", Type: "string"},
 					{Name: "platform", Description: "Which product this is about (Frontend, Backend, Mobile, MacOsApp, WindowsApp, LinuxApp, Cli, Mcp)", Default: "Cli", Type: "string"},
+					{Name: "environment", Description: "Which deployment this came from (Production, Staging, Development, Localhost)", Type: "string"},
 					{Name: "severity", Description: "Low | Medium | High | Critical", Default: "Medium", Type: "string"},
 					{Name: "title", Description: "Short title (max 200)", Required: true, Type: "string"},
 					{Name: "description", Description: "Description (no length limit)", Required: true, Type: "string"},
