@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11.1](https://github.com/UteamUP/cli/compare/2.11.0...2.11.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* align quality audit CLI tool names with MCP ([96873fc](https://github.com/UteamUP/cli/commit/96873fc01e2c002ab0d448f53b72e1b4d41191b4))
+* **registry:** route ifta at the real fleet controller, drop the duplicate meter-reading domain, add dashboard map action ([adf96ee](https://github.com/UteamUP/cli/commit/adf96ee1bd7d4a53ced6bfeaa722561be054967c))
+
 ## [2.11.0](https://github.com/UteamUP/cli/compare/2.10.0...2.11.0) (2026-08-31)
 
 
