@@ -61,10 +61,11 @@ func TestMeterReadingStatutoryActionsTargetLedgerRoutes(t *testing.T) {
 		if action.HTTPMethod != "POST" {
 			t.Fatalf("%s method = %q, want POST", action.Name, action.HTTPMethod)
 		}
+		// toolArgs reach buildRESTPath camelCased, matching the {placeholder} names
 		path, _ := buildRESTPath(domain, action, map[string]any{
-			"asset-guid":                assetGuid,
-			"attribute-definition-guid": attrGuid,
-			"reading-guid":              readingGuid,
+			"assetGuid":               assetGuid,
+			"attributeDefinitionGuid": attrGuid,
+			"readingGuid":             readingGuid,
 		})
 		if path != want {
 			t.Fatalf("%s path = %q, want %q", action.Name, path, want)

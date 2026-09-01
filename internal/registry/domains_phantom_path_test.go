@@ -143,6 +143,7 @@ func TestPhantomPathDomainsNeverDeriveTheStrippedFallback(t *testing.T) {
 			path, _ := buildRESTPath(domain, action, map[string]any{
 				"guid": "g", "assetGuid": "a", "attributeDefinitionGuid": "d", "documentGuid": "d",
 				"linkGuid": "l", "hotspotGuid": "h", "routeGuid": "r", "executionGuid": "e", "stopGuid": "s",
+				"readingGuid": "m",
 			})
 			if strings.HasPrefix(path, phantom) {
 				t.Fatalf("%s %s resolves to the phantom path %s", name, action.Name, path)
