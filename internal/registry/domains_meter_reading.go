@@ -61,8 +61,58 @@ func init() {
 				},
 				Flags: []FlagDef{
 					{Name: "attribute-definition-guid", Description: "Attribute definition external Guid", Required: true, Type: "string"},
-					{Name: "value", Description: "Reading value (numeric)", Required: true, Type: "float"},
-					{Name: "timestamp", Description: "Reading timestamp (ISO 8601, defaults to now)", Type: "string"},
+					// BodyName is load-bearing: the backend binds ReadingValue/ReadingTimestamp,
+					// and the camelCase default ("value"/"timestamp") silently recorded 0.
+					{Name: "value", BodyName: "readingValue", Description: "Reading value (numeric)", Required: true, Type: "float"},
+					{Name: "timestamp", BodyName: "readingTimestamp", Description: "Reading timestamp (ISO 8601, defaults to now)", Type: "string"},
+					{Name: "notes", Description: "Optional notes", Type: "string"},
+				},
+			},
+			{
+				Name:        "record-statutory",
+				Description: "Record a STATUTORY odometer reading (kilometragjald, Act 100/2025) with its legal trigger context",
+				ToolName:    "UteamupMeterreadingRecordStatutory",
+				HTTPMethod:  "POST",
+				RESTPath:    "{assetGuid}/meter-readings/{attributeDefinitionGuid}/statutory",
+				Args: []ArgDef{
+					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "attribute-definition-guid", Description: "Odometer attribute definition external Guid", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "value", BodyName: "readingValue", Description: "Reading value (numeric)", Required: true, Type: "float"},
+					{Name: "context", Description: "Legal trigger: periodicCadence|rentalCheckout|rentalReturn|ownershipChange|deregistration|reregistration|temporaryExport|seasonalDeactivation", Required: true, Type: "string"},
+					{Name: "observed-at", BodyName: "observedAt", Description: "Observation time (ISO 8601, defaults to now)", Type: "string"},
+					{Name: "evidence-url", BodyName: "evidenceDocumentUrl", Description: "Optional evidence document URL", Type: "string"},
+					{Name: "notes", Description: "Optional notes", Type: "string"},
+				},
+			},
+			{
+				Name:        "correct",
+				Description: "Correct a reading via the append-only correction chain (original never mutated)",
+				ToolName:    "UteamupMeterreadingCorrect",
+				HTTPMethod:  "POST",
+				RESTPath:    "{assetGuid}/meter-readings/by-guid/{readingGuid}/correct",
+				Args: []ArgDef{
+					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "reading-guid", Description: "Guid of the reading being corrected", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "value", BodyName: "correctedValue", Description: "Corrected reading value (numeric)", Required: true, Type: "float"},
+					{Name: "notes", Description: "Optional correction notes", Type: "string"},
+				},
+			},
+			{
+				Name:        "replace-meter",
+				Description: "Register a physical meter/odometer replacement (bumps the meter generation)",
+				ToolName:    "UteamupMeterreadingReplaceMeter",
+				HTTPMethod:  "POST",
+				RESTPath:    "{assetGuid}/meter-readings/{attributeDefinitionGuid}/replace-meter",
+				Args: []ArgDef{
+					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "attribute-definition-guid", Description: "Meter attribute definition external Guid", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "initial-value", BodyName: "initialValue", Description: "Reading shown on the replacement meter (defaults to 0)", Default: 0.0, Type: "float"},
 					{Name: "notes", Description: "Optional notes", Type: "string"},
 				},
 			},
