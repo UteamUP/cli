@@ -18,6 +18,9 @@ func TestFleetDashboardExposesGuidFirstReadParity(t *testing.T) {
 	if actions["compliance"].ToolName != "UteamupFleetDashboardGetCompliance" {
 		t.Fatalf("compliance action = %+v", actions["compliance"])
 	}
+	if actions["map"].ToolName != "UteamupFleetDashboardGetMap" || actions["map"].HTTPMethod != "GET" {
+		t.Fatalf("map action = %+v", actions["map"])
+	}
 }
 
 func TestFleetMaintenanceProposalUsesGovernedIdempotentRoute(t *testing.T) {

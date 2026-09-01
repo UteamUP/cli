@@ -119,6 +119,7 @@ func init() {
 		{Name: "get", HTTPMethod: "GET", Description: "Get the fleet dashboard summary", ToolName: "UteamupFleetDashboardGet"},
 		{Name: "utilization", HTTPMethod: "GET", RESTPath: "utilization", Description: "Get GUID-first vehicle utilization", ToolName: "UteamupFleetDashboardGetUtilization"},
 		{Name: "compliance", HTTPMethod: "GET", RESTPath: "compliance", Description: "Get GUID-first fleet compliance", ToolName: "UteamupFleetDashboardGetCompliance"},
+		{Name: "map", HTTPMethod: "GET", RESTPath: "map", Description: "Get last-known vehicle positions for the fleet map", ToolName: "UteamupFleetDashboardGetMap"},
 		{Name: "propose-maintenance", Description: "Prepare a governed maintenance proposal from fleet evidence", ToolName: "UteamupFleetMaintenancePropose", RESTBasePath: "/api/upmateassistant/fleet", RESTPath: "maintenance-proposals", HTTPMethod: "POST", Flags: []FlagDef{
 			{Name: "source-type", BodyName: "sourceType", Description: "vehicle-inspection, telematics-event, or asset-maintenance-package", Required: true, Type: "string"},
 			{Name: "source-guid", BodyName: "sourceGuid", Description: "Public GUID of the inspection, DTC event, or asset package", Required: true, Type: "string"},

@@ -115,8 +115,17 @@ func init() {
 	})
 	Register(&Domain{Name: "analytics", Description: "View maintenance analytics", Actions: listGetActions("MaintenanceAnalytics")})
 	Register(&Domain{Name: "forecast", Aliases: []string{"forecasts"}, Description: "View forecasts", Actions: listGetActions("Forecast")})
-	Register(&Domain{Name: "ifta", Description: "Manage IFTA records", Actions: crudActions("Ifta")})
-	Register(&Domain{Name: "meter-reading", Aliases: []string{"meter"}, Description: "Manage meter readings", Actions: crudActions("MeterReading")})
+	// Routes mirror IftaController (/api/fleet/ifta). The previous generic crudActions
+	// derived a phantom /api/ifta base and 404'd on every action; the CSV export stays
+	// out because the backend route is deliberately [NonAction]. The GUID-first
+	// meter-reading domain lives in domains_meter_reading.go — the duplicate generic
+	// registration that used to sit here shadowed it in help output and was removed.
+	Register(&Domain{Name: "ifta", Description: "IFTA quarterly fuel-tax reporting (US distance-tax scheme)", APIPath: "/api/fleet/ifta", Actions: []Action{
+		{Name: "quarterly-report", HTTPMethod: "GET", RESTPath: "report", Description: "Get the IFTA quarterly fuel-tax report", ToolName: "UteamupIftaGetQuarterlyReport", Flags: []FlagDef{
+			{Name: "year", Description: "Report year (e.g. 2026)", Required: true, Type: "int"},
+			{Name: "quarter", Description: "Report quarter (1-4)", Required: true, Type: "int"},
+		}},
+	}})
 	Register(&Domain{
 		Name:        "cost-overview",
 		Aliases:     []string{"costs"},
