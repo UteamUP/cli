@@ -83,7 +83,7 @@ func environmentFromBaseURL(baseURL string) string {
 // checkBackendHealth performs a best-effort GET against /health.
 func checkBackendHealth(baseURL string) bool {
 	url := strings.TrimRight(baseURL, "/") + "/health"
-	client := newHealthClient()
+	client := newHealthClient(baseURL)
 
 	resp, err := client.Get(url)
 	if err != nil {
@@ -94,13 +94,17 @@ func checkBackendHealth(baseURL string) bool {
 	return resp.StatusCode == http.StatusOK
 }
 
-func newHealthClient() *http.Client {
+// newHealthClient builds the probe client for baseURL. --insecure is routed through
+// auth.SkipTLSVerifyFor rather than applied directly, so verification is only ever
+// skipped for loopback. Reading the flag straight into TLSClientConfig let a health
+// probe against a remote host accept any certificate (UTP-CLI-INSECURE-TLS).
+func newHealthClient(baseURL string) *http.Client {
 	return &http.Client{
 		Timeout: 5 * time.Second,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				MinVersion:         tls.VersionTLS12,
-				InsecureSkipVerify: insecure, //nolint:gosec // user-requested dev flag
+				InsecureSkipVerify: auth.SkipTLSVerifyFor(baseURL, insecure), //nolint:gosec // loopback-only, see auth.SkipTLSVerifyFor
 			},
 		},
 	}

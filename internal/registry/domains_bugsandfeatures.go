@@ -55,7 +55,7 @@ func init() {
 				ToolName:    "UteamupBugsAndFeaturesUpdateStatus",
 				Args: []ArgDef{
 					{Name: "externalGuid", Description: "ExternalGuid", Required: true, Type: "string"},
-					{Name: "toStatus", Description: "Target status (Validated, Fixed, Confirmed, Rejected, New, WaitList)", Required: true, Type: "string"},
+					{Name: "toStatus", Description: "Target status (Validated, Fixed, Confirmed, Rejected, New, WaitList — WaitList accepts feature requests only)", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
 					{Name: "note", Description: "Required on Rejected and reopen transitions", Type: "string"},
