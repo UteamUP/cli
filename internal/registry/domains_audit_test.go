@@ -58,7 +58,7 @@ func TestAuditDomainRegistersAllRoutes(t *testing.T) {
 		"checklist-evaluate": {
 			method: "POST",
 			path:   base + "/checklist-items/" + qmsAuditValidGUID + "/evaluate",
-			tool:   "UteamupQualityAuditChecklistItemEvaluate",
+			tool:   "UteamupQualityAuditChecklistEvaluate",
 		},
 		"evidence-add": {
 			method: "POST",

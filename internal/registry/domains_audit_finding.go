@@ -111,7 +111,7 @@ func init() {
 			qualityAuditFindingLinkAction(qualityAuditFindingLinkActionDefinition{
 				name:               "ncr-link-add",
 				description:        "Link one existing NCR to the audit finding",
-				toolName:           "UteamupQualityAuditFindingNonConformanceLinkAdd",
+				toolName:           "UteamupQualityAuditFindingNonConformanceAdd",
 				resourcePath:       "non-conformances",
 				targetArgumentName: "nonConformanceGuid",
 				targetDescription:  "NCR public GUID",
@@ -119,7 +119,7 @@ func init() {
 			qualityAuditFindingLinkAction(qualityAuditFindingLinkActionDefinition{
 				name:               "ncr-link-revoke",
 				description:        "Revoke only the audit-finding NCR association while retaining history",
-				toolName:           "UteamupQualityAuditFindingNonConformanceLinkRevoke",
+				toolName:           "UteamupQualityAuditFindingNonConformanceRevoke",
 				resourcePath:       "non-conformances",
 				targetArgumentName: "linkGuid",
 				targetDescription:  "Retained NCR-link public GUID",
@@ -128,7 +128,7 @@ func init() {
 			qualityAuditFindingLinkAction(qualityAuditFindingLinkActionDefinition{
 				name:               "capa-link-add",
 				description:        "Link one existing CAPA to the audit finding",
-				toolName:           "UteamupQualityAuditFindingCorrectivePreventiveActionLinkAdd",
+				toolName:           "UteamupQualityAuditFindingCapaAdd",
 				resourcePath:       "corrective-preventive-actions",
 				targetArgumentName: "capaGuid",
 				targetDescription:  "CAPA public GUID",
@@ -136,7 +136,7 @@ func init() {
 			qualityAuditFindingLinkAction(qualityAuditFindingLinkActionDefinition{
 				name:               "capa-link-revoke",
 				description:        "Revoke only the audit-finding CAPA association while retaining history",
-				toolName:           "UteamupQualityAuditFindingCorrectivePreventiveActionLinkRevoke",
+				toolName:           "UteamupQualityAuditFindingCapaRevoke",
 				resourcePath:       "corrective-preventive-actions",
 				targetArgumentName: "linkGuid",
 				targetDescription:  "Retained CAPA-link public GUID",

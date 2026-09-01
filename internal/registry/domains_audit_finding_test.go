@@ -48,22 +48,22 @@ func TestAuditFindingDomainRegistersAllRoutes(t *testing.T) {
 		"ncr-link-add": {
 			method: "POST",
 			path:   base + "/non-conformances/" + qmsAuditValidGUID,
-			tool:   "UteamupQualityAuditFindingNonConformanceLinkAdd",
+			tool:   "UteamupQualityAuditFindingNonConformanceAdd",
 		},
 		"ncr-link-revoke": {
 			method: "POST",
 			path:   base + "/non-conformances/" + qmsAuditValidGUID + "/revoke",
-			tool:   "UteamupQualityAuditFindingNonConformanceLinkRevoke",
+			tool:   "UteamupQualityAuditFindingNonConformanceRevoke",
 		},
 		"capa-link-add": {
 			method: "POST",
 			path:   base + "/corrective-preventive-actions/" + qmsAuditValidGUID,
-			tool:   "UteamupQualityAuditFindingCorrectivePreventiveActionLinkAdd",
+			tool:   "UteamupQualityAuditFindingCapaAdd",
 		},
 		"capa-link-revoke": {
 			method: "POST",
 			path:   base + "/corrective-preventive-actions/" + qmsAuditValidGUID + "/revoke",
-			tool:   "UteamupQualityAuditFindingCorrectivePreventiveActionLinkRevoke",
+			tool:   "UteamupQualityAuditFindingCapaRevoke",
 		},
 	})
 }

@@ -116,7 +116,7 @@ func init() {
 			{
 				Name:        "checklist-evaluate",
 				Description: "Evaluate one frozen audit checklist item after explicit confirmation",
-				ToolName:    "UteamupQualityAuditChecklistItemEvaluate",
+				ToolName:    "UteamupQualityAuditChecklistEvaluate",
 				HTTPMethod:  "POST",
 				RESTPath:    "{auditGuid}/checklist-items/{checklistItemGuid}/evaluate",
 				Args: []ArgDef{
