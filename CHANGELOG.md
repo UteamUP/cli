@@ -5,6 +5,25 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.0](https://github.com/UteamUP/cli/compare/2.11.1...2.12.0) (2026-09-02)
+
+
+### Features
+
+* distance-tax domain and statutory meter-ledger actions ([9474fb9](https://github.com/UteamUP/cli/commit/9474fb9c8ffaf1fe3b66ec7584e12e6640377a1f))
+* **registry:** add quality-policy domain for workflow-policy administration ([983d83d](https://github.com/UteamUP/cli/commit/983d83d117952aabc18e2e5e71f9be37749611e6))
+* **registry:** vindecode domain mirroring the new fleet VIN decode MCP tool ([4c70795](https://github.com/UteamUP/cli/commit/4c707955a4ffc28c8bcb7eaf46cf1e084758b595))
+
+
+### Bug Fixes
+
+* never skip TLS verification for remote hosts in the health probe ([c9ee182](https://github.com/UteamUP/cli/commit/c9ee182b97691fdfa4d748605c652c9c672f4436))
+
+
+### Tests
+
+* expand placeholder vocabulary for readingGuid ([f2bcdc2](https://github.com/UteamUP/cli/commit/f2bcdc25d7941223adcca85043c0d3f7c009c4c3))
+
 ## [2.11.1](https://github.com/UteamUP/cli/compare/2.11.0...2.11.1) (2026-09-01)
 
 
