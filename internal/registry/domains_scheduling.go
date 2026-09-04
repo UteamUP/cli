@@ -662,6 +662,19 @@ func init() {
 			RESTBasePath: "/api/timesheet",
 			RESTPath:     "pending-approval",
 		},
+		{
+			Name:         "approval-history",
+			Description:  "Read saved timesheet submission and approval history",
+			ToolName:     "UteamupTimesheetApprovalHistory",
+			HTTPMethod:   "GET",
+			RESTBasePath: "/api/timesheet",
+			RESTPath:     "approval-history",
+			Flags: []FlagDef{
+				{Name: "page", BodyName: "page", Type: "int", Default: 1, Description: "Page number"},
+				{Name: "page-size", BodyName: "pageSize", Type: "int", Default: 25, Description: "Records per page (1-100)"},
+				{Name: "timesheet-guid", BodyName: "timesheetGuid", Type: "string", Description: "Filter by timesheet GUID"},
+			},
+		},
 	}
 	Register(&Domain{Name: "time-entry", Aliases: []string{"time", "timesheet"}, Description: "Manage time entries and timesheets", Actions: timeEntryActions})
 }

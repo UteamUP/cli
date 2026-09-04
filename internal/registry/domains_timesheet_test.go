@@ -64,6 +64,7 @@ func TestTimesheetRoutesResolve(t *testing.T) {
 	}{
 		{"weekly-mine", "/api/timesheet/weekly/me"},
 		{"pending-approvals", "/api/timesheet/pending-approval"},
+		{"approval-history", "/api/timesheet/approval-history"},
 	}
 
 	for _, tc := range cases {
