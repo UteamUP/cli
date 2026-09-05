@@ -291,6 +291,19 @@ func init() {
 			),
 		},
 		Action{
+			Name:        "reject",
+			Description: "Reject the reviewed handover version with a recorded reason",
+			ToolName:    "UteamupShiftHandoverReject",
+			HTTPMethod:  "PUT",
+			RESTPath:    "by-guid/{handoverGuid}/reject",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: append(handoverMutationFlags(),
+				FlagDef{Name: "reason", Description: "Reason for rejection, 1 to 2000 characters", Required: true, Type: "string"},
+			),
+		},
+		Action{
 			Name:        "carryovers",
 			Description: "List carry-over items by stable handover GUID",
 			ToolName:    "UteamupShiftHandoverGetCarryOvers",

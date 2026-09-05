@@ -10,6 +10,7 @@ func TestShiftHandoverAcceptanceActionsUseGuidContracts(t *testing.T) {
 	assertShiftHandoverAction(t, domain, "start-review", "PUT", "by-guid/{handoverGuid}/start-review", true)
 	assertShiftHandoverAction(t, domain, "accept", "PUT", "by-guid/{handoverGuid}/accept", true)
 	assertShiftHandoverAction(t, domain, "complete", "PUT", "by-guid/{handoverGuid}/complete", true)
+	assertShiftHandoverAction(t, domain, "reject", "PUT", "by-guid/{handoverGuid}/reject", true)
 	assertShiftHandoverAction(
 		t,
 		domain,
@@ -18,6 +19,21 @@ func TestShiftHandoverAcceptanceActionsUseGuidContracts(t *testing.T) {
 		"by-guid/{handoverGuid}/decline-acceptance",
 		true,
 	)
+}
+
+func TestShiftHandoverRejectionRequiresRecordedReason(t *testing.T) {
+	domain := findRegisteredDomain(t, "shift-handover")
+	for _, action := range domain.Actions {
+		if action.Name != "reject" {
+			continue
+		}
+		for _, flag := range action.Flags {
+			if flag.Name == "reason" && flag.Required && flag.Type == "string" {
+				return
+			}
+		}
+	}
+	t.Fatal("reject must require a recorded reason")
 }
 
 func findRegisteredDomain(t *testing.T, name string) *Domain {
