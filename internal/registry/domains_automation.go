@@ -6,6 +6,7 @@ func init() {
 	// identifier is a GUID; the int-keyed twins are not exposed here.
 	automationGuid := ArgDef{Name: "externalGuid", Description: "Automation GUID", Required: true, Type: "non-empty-uuid"}
 	runGuid := ArgDef{Name: "runGuid", Description: "Run GUID", Required: true, Type: "non-empty-uuid"}
+	approvalGuid := ArgDef{Name: "requestGuid", Description: "Approval request GUID", Required: true, Type: "non-empty-uuid"}
 
 	Register(&Domain{Name: "automation", Aliases: []string{"automations", "workflow", "workflows"}, Description: "Manage automations, publish workflows and follow their runs", APIPath: "/api/automation", Actions: []Action{
 		{Name: "list", HTTPMethod: "POST", Description: "List automations (paged)", ToolName: "UteamupAutomationSearch", RESTPath: "search", Args: []ArgDef{
@@ -51,5 +52,16 @@ func init() {
 			{Name: "reason", Description: "Why automations are paused", Type: "string"},
 		}},
 		{Name: "resume", HTTPMethod: "POST", Description: "Resume automations for the tenant", ToolName: "UteamupAutomationResume", RESTPath: "settings/resume"},
+		{Name: "approvals", HTTPMethod: "GET", Description: "Workflow approvals the caller may decide (paged, newest first)", ToolName: "UteamupAutomationApprovalsList", RESTPath: "approvals", Args: []ArgDef{
+			{Name: "status", Description: "Status filter (pending, approved, rejected, expired)", Type: "string", QueryName: "status"},
+			{Name: "page", Description: "Page number (default 1)", Type: "int", QueryName: "page"},
+			{Name: "pageSize", Description: "Page size (default 20, max 100)", Type: "int", QueryName: "pageSize"},
+		}},
+		{Name: "approval-get", HTTPMethod: "GET", Description: "One approval request", ToolName: "UteamupAutomationApprovalGet", RESTPath: "approvals/{requestGuid}", Args: []ArgDef{approvalGuid}},
+		{Name: "approval-decide", HTTPMethod: "POST", Description: "Approve or reject a waiting workflow step", ToolName: "UteamupAutomationApprovalDecide", RESTPath: "approvals/{requestGuid}/decide", Args: []ArgDef{
+			approvalGuid,
+			{Name: "approve", Description: "true to approve, false to reject", Required: true, Type: "bool"},
+			{Name: "comment", Description: "Comment recorded with the decision", Type: "string"},
+		}},
 	}})
 }

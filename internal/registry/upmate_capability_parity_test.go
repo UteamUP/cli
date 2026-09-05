@@ -53,6 +53,13 @@ func TestEnabledUpmateCapabilitiesHaveCLIRegistrations(t *testing.T) {
 		"UteamupWorkorderCreate",
 		"UteamupWorkorderTemplateCreateFromTemplateByGuid",
 		"UteamupWorkorderTemplateAnalyzePreview",
+		"UteamupAutomationWorkflowGet",
+		"UteamupAutomationWorkflowSave",
+		"UteamupAutomationApprovalsList",
+		"UteamupAutomationApprovalDecide",
+		"UteamupUpmateAgentsList",
+		"UteamupUpmateAgentGet",
+		"UteamupUpmateAgentRun",
 	}
 
 	registered := make(map[string]bool)

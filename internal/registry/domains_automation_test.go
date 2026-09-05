@@ -29,6 +29,9 @@ func TestAutomationDomainTargetsRealControllers(t *testing.T) {
 		{"run-stats", "GET", nil, "/api/automation/runs/stats"},
 		{"catalog", "GET", nil, "/api/automation/catalog"},
 		{"pause", "POST", nil, "/api/automation/settings/pause"},
+		{"approvals", "GET", nil, "/api/automation/approvals"},
+		{"approval-get", "GET", map[string]any{"requestGuid": "x1"}, "/api/automation/approvals/x1"},
+		{"approval-decide", "POST", map[string]any{"requestGuid": "x1", "approve": true}, "/api/automation/approvals/x1/decide"},
 	}
 	for _, tc := range cases {
 		action := findAction(domain, tc.action)
