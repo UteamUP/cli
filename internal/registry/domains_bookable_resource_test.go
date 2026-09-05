@@ -60,6 +60,19 @@ func TestBookableResourceDomainMirrorsBackendToolsAndGuidRoutes(t *testing.T) {
 	}
 }
 
+func TestBookableResourcePoolSearchExposesMemberTypeFilter(t *testing.T) {
+	action := findAction(findDomain("bookable-resource"), "list")
+	for _, flag := range action.Flags {
+		if flag.Name == "pool-member-resource-type" {
+			if flag.BodyName != "poolMemberResourceType" || flag.Type != "int" {
+				t.Fatalf("unexpected pool member filter: %+v", flag)
+			}
+			return
+		}
+	}
+	t.Fatal("pool member resource type filter is missing")
+}
+
 func TestBookableResourceUpdatesSendReviewedVersionInQuery(t *testing.T) {
 	domain := findDomain("bookable-resource")
 	for _, actionName := range []string{

@@ -70,6 +70,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "search", BodyName: "search", Description: "Name or description search", Type: "string"},
 					{Name: "resource-type", BodyName: "resourceType", Description: "Optional resource type number", Type: "int"},
+					{Name: "pool-member-resource-type", BodyName: "poolMemberResourceType", Description: "Only pools with active members of this concrete resource type (0-5)", Type: "int"},
 					{Name: "territory-guid", BodyName: "territoryGuid", Description: "Optional service territory public GUID", Type: "string"},
 					{Name: "is-active", BodyName: "isActive", Description: "Optional active-state filter", Type: "bool"},
 					{Name: "page", BodyName: "page", Description: "One-based page number", Default: 1, Type: "int"},
