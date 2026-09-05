@@ -80,6 +80,19 @@ func TestBookableResourceSourceFiltersUsePublicGuids(t *testing.T) {
 	}
 }
 
+func TestBookableResourceCreationKeyUsesTheRetryHeader(t *testing.T) {
+	action := findAction(findDomain("bookable-resource"), "create")
+	for _, flag := range action.Flags {
+		if flag.Name == "idempotency-key" {
+			if flag.HeaderName != "Idempotency-Key" || flag.Type != "string" || flag.BodyName != "" {
+				t.Fatalf("creation key must use the GUID retry header: %+v", flag)
+			}
+			return
+		}
+	}
+	t.Fatal("creation retry key is missing")
+}
+
 func TestBookableResourcePoolSearchExposesMemberTypeFilter(t *testing.T) {
 	action := findAction(findDomain("bookable-resource"), "list")
 	for _, flag := range action.Flags {

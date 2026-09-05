@@ -110,7 +110,10 @@ func init() {
 				Description: "Create a reviewed bookable resource",
 				ToolName:    "UteamupBookableResourceCreate",
 				HTTPMethod:  "POST",
-				Flags:       bookableResourceMutationFlags(),
+				Flags: append(bookableResourceMutationFlags(), FlagDef{
+					Name: "idempotency-key", HeaderName: "Idempotency-Key", Type: "string",
+					Description: "Stable creation request GUID; reuse with the same definition after an uncertain response",
+				}),
 			},
 			{
 				Name:        "update",
