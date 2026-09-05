@@ -61,6 +61,25 @@ func TestBookableResourceDomainMirrorsBackendToolsAndGuidRoutes(t *testing.T) {
 	}
 }
 
+func TestBookableResourceSourceFiltersUsePublicGuids(t *testing.T) {
+	action := findAction(findDomain("bookable-resource"), "list")
+	expected := map[string]string{
+		"user-guid": "userGuid", "contractor-profile-guid": "contractorProfileGuid",
+		"contractor-crew-guid": "contractorCrewGuid", "asset-guid": "assetGuid", "location-guid": "locationGuid",
+	}
+	for _, flag := range action.Flags {
+		if want, ok := expected[flag.Name]; ok {
+			if flag.BodyName != want || flag.Type != "string" || flag.Required {
+				t.Errorf("%s must be an optional GUID filter mapped to %s: %+v", flag.Name, want, flag)
+			}
+			delete(expected, flag.Name)
+		}
+	}
+	if len(expected) != 0 {
+		t.Fatalf("missing resource source filters: %v", expected)
+	}
+}
+
 func TestBookableResourcePoolSearchExposesMemberTypeFilter(t *testing.T) {
 	action := findAction(findDomain("bookable-resource"), "list")
 	for _, flag := range action.Flags {
