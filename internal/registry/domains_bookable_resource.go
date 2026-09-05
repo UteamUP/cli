@@ -109,7 +109,7 @@ func init() {
 			},
 			{
 				Name:        "update",
-				Description: "Update an exact bookable-resource version",
+				Description: "Update an exact bookable-resource version while preserving its type and source GUID",
 				ToolName:    "UteamupBookableResourceUpdate",
 				HTTPMethod:  "PUT",
 				RESTPath:    "{resourceGuid}",
