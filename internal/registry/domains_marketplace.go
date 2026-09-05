@@ -167,12 +167,26 @@ func init() {
 				},
 			},
 			{
+				Name:         "requirement-offer-quote",
+				Description:  "Review current buyer charges before accepting an offer",
+				ToolName:     "UteamupMarketplaceRequirementOfferQuote",
+				RESTBasePath: mpRequirementsPath,
+				RESTPath:     "{requirementGuid}/offers/{offerGuid}/quote",
+				Args: []ArgDef{
+					{Name: "requirementGuid", Description: "Marketplace requirement GUID", Required: true, Type: "uuid"},
+					{Name: "offerGuid", Description: "Selected offer GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
 				Name:         "requirement-offer-accept",
 				Description:  "Accept one explicitly selected current offer",
 				ToolName:     "UteamupMarketplaceRequirementOfferAccept",
 				RESTBasePath: mpRequirementsPath,
 				RESTPath:     "{requirementGuid}/offers/{offerGuid}/accept",
 				HTTPMethod:   "POST",
+				Flags: []FlagDef{
+					{Name: "quote-token", Description: "Unchanged token from the reviewed requirement-offer-quote result", Required: true, Type: "string"},
+				},
 				Args: []ArgDef{
 					{Name: "requirementGuid", Description: "Marketplace requirement GUID", Required: true, Type: "uuid"},
 					{Name: "offerGuid", Description: "Selected offer GUID", Required: true, Type: "uuid"},

@@ -544,6 +544,15 @@ func TestStockPoReceiveActionWired(t *testing.T) {
 	}
 }
 
+func TestStockReceiptAndInspectionRequireRetryStableKeys(t *testing.T) {
+	for _, name := range []string{"po-receive", "quarantine-release", "quarantine-reject"} {
+		flag := stockActionFlag(t, name, "idempotency-key")
+		if !flag.Required || flag.Type != "string" || flag.BodyName != "idempotencyKey" {
+			t.Errorf("%s must forward a required request GUID, got %+v", name, flag)
+		}
+	}
+}
+
 func TestStockBulkAdjustActionWired(t *testing.T) {
 	action := findStockAction(t, "bulk-adjust")
 
@@ -1781,5 +1790,18 @@ func TestInventoryBulkDeleteActionWired(t *testing.T) {
 	// the impact before destroying anything.
 	if f := flagByName("dry-run"); f == nil || f.BodyName != "dryRun" || f.Type != "bool" {
 		t.Errorf("dry-run must be an optional bool bound to `dryRun`, got %+v", f)
+	}
+}
+
+func TestStockQuarantineReceiptSelection(t *testing.T) {
+	action := findStockAction(t, "quarantine-receipts")
+	if action.ToolName != "UteamupStockGetQuarantineReceipts" || action.RESTPath != "items/{itemGuid}/quarantine/receipts" || action.HTTPMethod != "GET" {
+		t.Fatalf("quarantine receipt lookup mismatch: %+v", action)
+	}
+	for _, name := range []string{"quarantine-release", "quarantine-reject"} {
+		flag := stockActionFlag(t, name, "purchase-order-item-guid")
+		if flag.Type != "string" || flag.Required || flag.BodyName != "purchaseOrderItemGuid" {
+			t.Errorf("%s receipt GUID mapping mismatch: %+v", name, flag)
+		}
 	}
 }

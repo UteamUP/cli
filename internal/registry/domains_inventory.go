@@ -267,6 +267,7 @@ func init() {
 				RESTPath:    "purchase-orders/{guid}/receive",
 				Args:        []ArgDef{{Name: "guid", Description: "Purchase order GUID", Required: true, Type: "string"}},
 				Flags: []FlagDef{
+					{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Stable request GUID; reuse unchanged with the same payload when retrying", Required: true, Type: "string"},
 					{Name: "file", Short: "f", Description: "Path to a JSON file with the received lines: [{\"purchaseOrderItemGuid\":\"…\",\"receivedQuantity\":N}]", Required: true, Type: "string", JSONFile: true, BodyName: "receivedItems"},
 				},
 			},
@@ -406,6 +407,15 @@ func init() {
 				},
 			},
 			Action{
+				Name:        "quarantine-receipts",
+				Description: "List purchase-order receipts with stock awaiting inspection",
+				ToolName:    "UteamupStockGetQuarantineReceipts",
+				HTTPMethod:  "GET",
+				RESTPath:    "items/{itemGuid}/quarantine/receipts",
+				Args:        []ArgDef{{Name: "itemGuid", Description: "Stock item GUID", Required: true, Type: "string"}},
+				Flags:       paginationFlags(),
+			},
+			Action{
 				Name:        "quarantine-release",
 				Description: "Release quarantined quantity of a stock item back to available stock",
 				ToolName:    "UteamupStockReleaseQuarantine",
@@ -413,6 +423,8 @@ func init() {
 				RESTPath:    "items/{itemGuid}/quarantine/release",
 				Args:        []ArgDef{{Name: "itemGuid", Description: "Stock item GUID", Required: true, Type: "string"}},
 				Flags: []FlagDef{
+					{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Stable request GUID; reuse unchanged with the same payload when retrying", Required: true, Type: "string"},
+					{Name: "purchase-order-item-guid", BodyName: "purchaseOrderItemGuid", Description: "Originating purchase order line for receiving quarantine", Type: "string"},
 					{Name: "quantity", Description: "Quantity to release from quarantine (minimum 1)", Required: true, Type: "int"},
 					{Name: "reason-guid", Description: "Adjustment reason GUID (optional)", Type: "string"},
 					{Name: "notes", Description: "Notes for the audit trail (optional)", Type: "string"},
@@ -427,6 +439,8 @@ func init() {
 				RESTPath:    "items/{itemGuid}/quarantine/reject",
 				Args:        []ArgDef{{Name: "itemGuid", Description: "Stock item GUID", Required: true, Type: "string"}},
 				Flags: []FlagDef{
+					{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Stable request GUID; reuse unchanged with the same payload when retrying", Required: true, Type: "string"},
+					{Name: "purchase-order-item-guid", BodyName: "purchaseOrderItemGuid", Description: "Originating purchase order line for receiving quarantine", Type: "string"},
 					{Name: "quantity", Description: "Quantity to reject from quarantine (minimum 1)", Required: true, Type: "int"},
 					{Name: "reason-guid", Description: "Adjustment reason GUID (required)", Required: true, Type: "string"},
 					{Name: "notes", Description: "Notes for the audit trail (optional)", Type: "string"},

@@ -218,6 +218,7 @@ func TestMarketplaceActionsResolveToRealRoutes(t *testing.T) {
 		"requirements":             "/api/marketplace/requirements/open",
 		"requirement-draft-create": "/api/marketplace/requirements",
 		"requirement-publish":      "/api/marketplace/requirements/REQ/publish",
+		"requirement-offer-quote":  "/api/marketplace/requirements/REQ/offers/OFFER/quote",
 		"requirement-offer-accept": "/api/marketplace/requirements/REQ/offers/OFFER/accept",
 		"my-offers":                "/api/marketplace/requirements/my-offers",
 		"transactions":             "/api/marketplace/transactions",
