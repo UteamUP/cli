@@ -656,11 +656,18 @@ func init() {
 		},
 		{
 			Name:         "pending-approvals",
-			Description:  "List timesheets pending approval in the active tenant",
+			Description:  "Read a page of timesheets pending approval in the active tenant",
 			ToolName:     "UteamupTimesheetPendingApprovals",
 			HTTPMethod:   "GET",
 			RESTBasePath: "/api/timesheet",
-			RESTPath:     "pending-approval",
+			RESTPath:     "pending-approval/paginated",
+			Flags: []FlagDef{
+				{Name: "page", BodyName: "page", Type: "int", Default: 1, Description: "Page number"},
+				{Name: "page-size", BodyName: "pageSize", Type: "int", Default: 25, Description: "Records per page (1-100)"},
+				{Name: "search", BodyName: "search", Type: "string", Description: "Worker name or email (up to 100 characters)"},
+				{Name: "week-from", BodyName: "weekFrom", Type: "string", Description: "Earliest week start (YYYY-MM-DD)"},
+				{Name: "week-to", BodyName: "weekTo", Type: "string", Description: "Latest week start (YYYY-MM-DD)"},
+			},
 		},
 		{
 			Name:         "approval-history",

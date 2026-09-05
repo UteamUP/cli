@@ -40,11 +40,17 @@ func TestTimesheetPendingApprovalsActionWired(t *testing.T) {
 	if action.ToolName != "UteamupTimesheetPendingApprovals" {
 		t.Errorf("pending-approvals ToolName = %q, want %q", action.ToolName, "UteamupTimesheetPendingApprovals")
 	}
-	if action.HTTPMethod != "GET" || action.RESTBasePath != "/api/timesheet" || action.RESTPath != "pending-approval" {
+	if action.HTTPMethod != "GET" || action.RESTBasePath != "/api/timesheet" || action.RESTPath != "pending-approval/paginated" {
 		t.Errorf("pending-approvals = %s %q + %q, want GET /api/timesheet + pending-approval", action.HTTPMethod, action.RESTBasePath, action.RESTPath)
 	}
-	if len(action.Args) != 0 || len(action.Flags) != 0 {
-		t.Errorf("pending-approvals should not need args or flags, got args=%+v flags=%+v", action.Args, action.Flags)
+	if len(action.Args) != 0 {
+		t.Errorf("pending-approvals should derive its tenant from authentication")
+	}
+	for _, name := range []string{"page", "page-size", "search", "week-from", "week-to"} {
+		flag := findFlag(action, name)
+		if flag == nil || flag.Required {
+			t.Errorf("missing optional queue filter %q", name)
+		}
 	}
 }
 
@@ -63,7 +69,7 @@ func TestTimesheetRoutesResolve(t *testing.T) {
 		want string
 	}{
 		{"weekly-mine", "/api/timesheet/weekly/me"},
-		{"pending-approvals", "/api/timesheet/pending-approval"},
+		{"pending-approvals", "/api/timesheet/pending-approval/paginated"},
 		{"approval-history", "/api/timesheet/approval-history"},
 	}
 
