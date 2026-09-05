@@ -19,7 +19,7 @@ func init() {
 		}},
 		{Name: "runs", HTTPMethod: "GET", Description: "Runs of one agent (paged, newest first)", ToolName: "UteamupUpmateAgentRunsList", RESTPath: "by-guid/{agentGuid}/runs", Args: []ArgDef{
 			agentGuid,
-			{Name: "pageNumber", Description: "Page number (default 1)", Type: "int", QueryName: "pageNumber"},
+			{Name: "page", Description: "Page number (default 1)", Type: "int", QueryName: "page"},
 			{Name: "pageSize", Description: "Page size (default 20, max 100)", Type: "int", QueryName: "pageSize"},
 		}},
 		{Name: "run-get", HTTPMethod: "GET", Description: "One agent run with its evidence and proposal", ToolName: "UteamupUpmateAgentRunGet", RESTPath: "runs/{runGuid}", Args: []ArgDef{runGuid}},
