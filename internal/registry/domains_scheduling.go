@@ -144,7 +144,12 @@ func init() {
 		{Name: "delete", Description: "Delete a shift user assignment by GUID", ToolName: "UteamupShiftUserAssignmentDelete", Args: []ArgDef{{Name: "assignmentGuid", Description: "Shift user assignment GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{assignmentGuid}"},
 		{Name: "unavailable", Description: "Mark a shift user assignment unavailable by GUID", ToolName: "UteamupShiftUserAssignmentMarkUnavailable", HTTPMethod: "PUT", Args: []ArgDef{{Name: "assignmentGuid", Description: "Shift user assignment GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{assignmentGuid}/unavailable", Flags: []FlagDef{{Name: "reason", Description: "Optional reason for unavailability", Type: "string"}}},
 	}})
-	shiftHandoverActions := crudActions("ShiftHandover")
+	shiftHandoverActions := []Action{}
+	for _, action := range crudActions("ShiftHandover") {
+		if action.Name != "update" {
+			shiftHandoverActions = append(shiftHandoverActions, action)
+		}
+	}
 	shiftHandoverActions = append(shiftHandoverActions, Action{
 		Name:        "previous",
 		Description: "Get the previous handover for a shift by shift GUID",
@@ -166,6 +171,21 @@ func init() {
 		},
 	})
 	shiftHandoverActions = append(shiftHandoverActions,
+		Action{
+			Name:        "update",
+			Description: "Update a reviewed draft and retain its content history",
+			ToolName:    "UteamupShiftHandoverUpdate",
+			HTTPMethod:  "PUT",
+			RESTPath:    "by-guid/{handoverGuid}",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: append(handoverMutationFlags(),
+				FlagDef{Name: "summary", Description: "Updated shift notes; an empty value clears them", Type: "string"},
+				FlagDef{Name: "overall-assessment", BodyName: "overallAssessment", Description: "normal, minorIssues, majorIssues, or emergency", Type: "string"},
+				FlagDef{Name: "incoming-operator-guid", BodyName: "incomingOperatorGuid", Description: "Active tenant worker ApplicationUser.ExternalGuid", Type: "uuid"},
+			),
+		},
 		Action{
 			Name:        "operational-baton",
 			Description: "Show the deterministic action-first handover baton (zero AI credits)",

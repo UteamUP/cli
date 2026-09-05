@@ -11,6 +11,7 @@ func TestShiftHandoverAcceptanceActionsUseGuidContracts(t *testing.T) {
 	assertShiftHandoverAction(t, domain, "accept", "PUT", "by-guid/{handoverGuid}/accept", true)
 	assertShiftHandoverAction(t, domain, "complete", "PUT", "by-guid/{handoverGuid}/complete", true)
 	assertShiftHandoverAction(t, domain, "reject", "PUT", "by-guid/{handoverGuid}/reject", true)
+	assertShiftHandoverAction(t, domain, "update", "PUT", "by-guid/{handoverGuid}", true)
 	assertShiftHandoverAction(
 		t,
 		domain,
@@ -34,6 +35,35 @@ func TestShiftHandoverRejectionRequiresRecordedReason(t *testing.T) {
 		}
 	}
 	t.Fatal("reject must require a recorded reason")
+}
+
+func TestShiftHandoverUpdateAssignsOnlyByPublicWorkerGuid(t *testing.T) {
+	domain := findRegisteredDomain(t, "shift-handover")
+	count := 0
+	for _, action := range domain.Actions {
+		if action.Name == "update" {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Fatalf("expected one canonical update action, found %d", count)
+	}
+	for _, action := range domain.Actions {
+		if action.Name != "update" {
+			continue
+		}
+		for _, flag := range action.Flags {
+			if flag.Name == "incoming-operator-id" || flag.Name == "incoming-operator-name" {
+				t.Fatal("draft updates must not trust storage IDs or supplied operator names")
+			}
+		}
+		for _, flag := range action.Flags {
+			if flag.Name == "incoming-operator-guid" && flag.BodyName == "incomingOperatorGuid" && flag.Type == "uuid" {
+				return
+			}
+		}
+	}
+	t.Fatal("draft update must expose the incoming operator GUID")
 }
 
 func findRegisteredDomain(t *testing.T, name string) *Domain {
