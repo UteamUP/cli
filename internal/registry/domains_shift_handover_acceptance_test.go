@@ -47,6 +47,32 @@ func findRegisteredDomain(t *testing.T, name string) *Domain {
 	return nil
 }
 
+func TestShiftHandoverArchiveUsesGuidVersionQueryAndRetryHeader(t *testing.T) {
+	domain := findRegisteredDomain(t, "shift-handover")
+	for _, action := range domain.Actions {
+		if action.Name != "archive" {
+			continue
+		}
+		if action.HTTPMethod != "DELETE" || action.RESTPath != "by-guid/{handoverGuid}" || len(action.Args) != 1 || action.Args[0].Type != "uuid" {
+			t.Fatalf("unexpected archive contract: %#v", action)
+		}
+		version, receipt := false, false
+		for _, flag := range action.Flags {
+			if flag.Name == "concurrency-token" {
+				version = flag.Required && flag.QueryName == "concurrencyToken"
+			}
+			if flag.Name == "idempotency-key" {
+				receipt = flag.Required && flag.HeaderName == "Idempotency-Key"
+			}
+		}
+		if !version || !receipt {
+			t.Fatalf("archive must require version and retry evidence: %#v", action.Flags)
+		}
+		return
+	}
+	t.Fatal("archive action missing")
+}
+
 func assertShiftHandoverAction(
 	t *testing.T,
 	domain *Domain,

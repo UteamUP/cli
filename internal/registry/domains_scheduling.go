@@ -291,6 +291,20 @@ func init() {
 			),
 		},
 		Action{
+			Name:        "archive",
+			Description: "Archive a draft while retaining its evidence and history",
+			ToolName:    "UteamupShiftHandoverDelete",
+			HTTPMethod:  "DELETE",
+			RESTPath:    "by-guid/{handoverGuid}",
+			Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			},
+			Flags: []FlagDef{
+				{Name: "concurrency-token", QueryName: "concurrencyToken", Description: "Reviewed concurrency token", Required: true, Type: "string"},
+				{Name: "idempotency-key", HeaderName: "Idempotency-Key", Description: "Client-generated GUID stable across retries", Required: true, Type: "uuid"},
+			},
+		},
+		Action{
 			Name:        "reject",
 			Description: "Reject the reviewed handover version with a recorded reason",
 			ToolName:    "UteamupShiftHandoverReject",
