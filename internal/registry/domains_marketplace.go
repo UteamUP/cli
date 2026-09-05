@@ -146,6 +146,40 @@ func init() {
 				},
 			},
 			{
+				Name:         "requirement-get",
+				Description:  "Read a company-owned requirement and its draft version before editing",
+				ToolName:     "UteamupMarketplaceRequirementGet",
+				RESTBasePath: mpRequirementsPath,
+				RESTPath:     "{requirementGuid}",
+				Args: []ArgDef{
+					{Name: "requirementGuid", Description: "Company-owned requirement GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:         "requirement-draft-update",
+				Description:  "Replace a private draft using its reviewed version; omitted optional fields are cleared",
+				ToolName:     "UteamupMarketplaceRequirementUpdateDraft",
+				RESTBasePath: mpRequirementsPath,
+				RESTPath:     "{requirementGuid}/draft",
+				HTTPMethod:   "PUT",
+				Args: []ArgDef{
+					{Name: "requirementGuid", Description: "Company-owned requirement GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "draft-version", Description: "Unchanged draftVersion from requirement-get", Required: true, Type: "string"},
+					{Name: "stock-item-guid", Description: "Source stock GUID; preserve its current value to keep the link", Type: "uuid"},
+					{Name: "item-name", Description: "Item name", Required: true, Type: "string"},
+					{Name: "item-type", Description: "Part | Tool | Chemical | Asset", Required: true, Type: "string"},
+					{Name: "requested-quantity", Description: "Positive whole-item quantity", Required: true, Type: "int"},
+					{Name: "audience", Description: "Wholesalers | Tenants | Both", Required: true, Type: "string"},
+					{Name: "currency", Description: "Three-letter currency code", Required: true, Type: "string"},
+					{Name: "target-unit-price", Description: "Optional target unit price", Type: "float"},
+					{Name: "needed-by-date", Description: "Optional date goods are needed", Type: "string"},
+					{Name: "expires-at", Description: "Optional offer deadline, on or before the goods-needed day", Type: "string"},
+					{Name: "notes", Description: "Optional private owner notes", Type: "string"},
+				},
+			},
+			{
 				Name:         "requirement-publish",
 				Description:  "Publish one tenant-owned marketplace requirement",
 				ToolName:     "UteamupMarketplaceRequirementPublish",
@@ -154,6 +188,9 @@ func init() {
 				HTTPMethod:   "POST",
 				Args: []ArgDef{
 					{Name: "requirementGuid", Description: "Marketplace requirement GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "draft-version", Description: "Revision from the draft that was reviewed before publishing", Required: true, Type: "string"},
 				},
 			},
 			{

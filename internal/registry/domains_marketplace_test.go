@@ -30,23 +30,25 @@ func TestMarketplaceActionsWired(t *testing.T) {
 		t.Fatal("expected marketplace domain to be registered")
 	}
 	expected := map[string]string{
-		"browse":              "UteamupMarketplaceBrowse",
-		"listing-get":         "UteamupMarketplaceListingGet",
-		"listing-report":      "UteamupMarketplaceListingReport",
-		"list-from-stock":     "UteamupMarketplaceListFromStock",
-		"messages-list":       "UteamupMarketplaceMessagesList",
-		"message-send":        "UteamupMarketplaceMessageSend",
-		"message-thread":      "UteamupMarketplaceMessageThreadGet",
-		"requirements":        "UteamupMarketplaceRequirementsList",
-		"my-offers":           "UteamupMarketplaceMyOffersList",
-		"transactions":        "UteamupMarketplaceTransactionsList",
-		"settings":            "UteamupMarketplaceSettingsGet",
-		"saved-searches":      "UteamupMarketplaceSavedSearchesList",
-		"save-search":         "UteamupMarketplaceSaveSearch",
-		"delete-saved-search": "UteamupMarketplaceDeleteSavedSearch",
-		"seller-scorecard":    "UteamupMarketplaceSellerScorecard",
-		"facets":              "UteamupMarketplaceFacets",
-		"buyer-reputation":    "UteamupMarketplaceBuyerReputation",
+		"browse":                   "UteamupMarketplaceBrowse",
+		"listing-get":              "UteamupMarketplaceListingGet",
+		"listing-report":           "UteamupMarketplaceListingReport",
+		"list-from-stock":          "UteamupMarketplaceListFromStock",
+		"messages-list":            "UteamupMarketplaceMessagesList",
+		"message-send":             "UteamupMarketplaceMessageSend",
+		"message-thread":           "UteamupMarketplaceMessageThreadGet",
+		"requirements":             "UteamupMarketplaceRequirementsList",
+		"requirement-get":          "UteamupMarketplaceRequirementGet",
+		"requirement-draft-update": "UteamupMarketplaceRequirementUpdateDraft",
+		"my-offers":                "UteamupMarketplaceMyOffersList",
+		"transactions":             "UteamupMarketplaceTransactionsList",
+		"settings":                 "UteamupMarketplaceSettingsGet",
+		"saved-searches":           "UteamupMarketplaceSavedSearchesList",
+		"save-search":              "UteamupMarketplaceSaveSearch",
+		"delete-saved-search":      "UteamupMarketplaceDeleteSavedSearch",
+		"seller-scorecard":         "UteamupMarketplaceSellerScorecard",
+		"facets":                   "UteamupMarketplaceFacets",
+		"buyer-reputation":         "UteamupMarketplaceBuyerReputation",
 	}
 	actions := map[string]Action{}
 	for _, a := range d.Actions {
@@ -62,6 +64,32 @@ func TestMarketplaceActionsWired(t *testing.T) {
 			t.Errorf("action %q maps to %q, want %q", name, a.ToolName, tool)
 		}
 	}
+}
+
+func TestMarketplaceDraftUpdateRequiresReviewedVersionAndFullCoreFields(t *testing.T) {
+	d := findMarketplaceDomain()
+	if d == nil {
+		t.Fatal("expected marketplace domain")
+	}
+	for _, action := range d.Actions {
+		if action.Name != "requirement-draft-update" {
+			continue
+		}
+		required := map[string]bool{}
+		for _, flag := range action.Flags {
+			required[flag.Name] = flag.Required
+		}
+		for _, name := range []string{"draft-version", "item-name", "item-type", "requested-quantity", "currency", "audience"} {
+			if !required[name] {
+				t.Errorf("draft update must require %q", name)
+			}
+		}
+		if len(action.Args) != 1 || action.Args[0].Type != "uuid" || !action.Args[0].Required {
+			t.Error("draft update must identify one requirement by GUID")
+		}
+		return
+	}
+	t.Fatal("missing requirement-draft-update action")
 }
 
 func TestMarketplaceListingReportFlags(t *testing.T) {
@@ -217,6 +245,8 @@ func TestMarketplaceActionsResolveToRealRoutes(t *testing.T) {
 		"message-thread":           "/api/marketplace/messages/LISTING/thread",
 		"requirements":             "/api/marketplace/requirements/open",
 		"requirement-draft-create": "/api/marketplace/requirements",
+		"requirement-get":          "/api/marketplace/requirements/REQ",
+		"requirement-draft-update": "/api/marketplace/requirements/REQ/draft",
 		"requirement-publish":      "/api/marketplace/requirements/REQ/publish",
 		"requirement-offer-quote":  "/api/marketplace/requirements/REQ/offers/OFFER/quote",
 		"requirement-offer-accept": "/api/marketplace/requirements/REQ/offers/OFFER/accept",
@@ -272,6 +302,7 @@ func TestMarketplaceNonGETActionsDeclareTheirMethod(t *testing.T) {
 		"list-from-stock":          "POST",
 		"message-send":             "POST",
 		"requirement-draft-create": "POST",
+		"requirement-draft-update": "PUT",
 		"requirement-publish":      "POST",
 		"requirement-offer-accept": "POST",
 		"save-search":              "POST",
