@@ -5,6 +5,33 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.0](https://github.com/UteamUP/cli/compare/2.13.0...2.14.0) (2026-09-05)
+
+
+### Features
+
+* add audited draft handover archiving to CLI ([20ca2e7](https://github.com/UteamUP/cli/commit/20ca2e771e6446d445026943f43e21b7e08f3b4f))
+* expose inventory quarantine and marketplace quote flows ([d45a009](https://github.com/UteamUP/cli/commit/d45a009097d92572bbd8bdd2bccc277639713206))
+* expose paged on-call coverage history ([f0a6138](https://github.com/UteamUP/cli/commit/f0a6138fc0dec5c096a43d5796b1e483e0a43d32))
+* expose paginated timesheet approval filters in the CLI ([ca966ab](https://github.com/UteamUP/cli/commit/ca966abbe6a499ae00494fd357a38fb8b8d85294))
+* expose timesheet approval history in the CLI ([c0bcd5d](https://github.com/UteamUP/cli/commit/c0bcd5db79ea5ae71ddca6dc993a9f4e785192ca))
+* expose versioned handover rejection in CLI ([989fec0](https://github.com/UteamUP/cli/commit/989fec050ca691eadbe7ae6bd219ec866d9ce13b))
+* **registry:** add the project-share domain ([ff18dd3](https://github.com/UteamUP/cli/commit/ff18dd3bf0f78472e1a15d1455d98b7cde44a511))
+* **registry:** automation approvals and a upmate-agent domain ([569faa3](https://github.com/UteamUP/cli/commit/569faa3c6ab1c0174456fe98924519edb2bbb766))
+* **registry:** automation domain with workflow, run and settings actions ([a5805bb](https://github.com/UteamUP/cli/commit/a5805bbda53c14bad090e81806588ae088564ed1))
+* **registry:** workorder-share domain mirroring the share endpoints ([c70df46](https://github.com/UteamUP/cli/commit/c70df46e9fee8342596099d94cc539a384d8976a))
+
+
+### Bug Fixes
+
+* **registry:** upmate-agent runs pages with the query name the route binds ([22b424e](https://github.com/UteamUP/cli/commit/22b424e5102e9360251bf2b84674a4687d398504))
+* use versioned GUID contracts for handover draft updates ([8902693](https://github.com/UteamUP/cli/commit/8902693fa8d4d37622b9b34c5d446dac03cdb000))
+
+
+### Tests
+
+* **registry:** flag any int argument ending in Id on the upmate-agent domain ([e413b99](https://github.com/UteamUP/cli/commit/e413b99556026ce56292bc083f31a2e77fd73ef3))
+
 ## [2.13.0](https://github.com/UteamUP/cli/compare/2.12.0...2.13.0) (2026-09-02)
 
 
