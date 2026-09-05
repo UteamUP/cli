@@ -5,6 +5,26 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15.0](https://github.com/UteamUP/cli/compare/2.14.0...2.15.0) (2026-09-05)
+
+
+### Features
+
+* expose crew search for bookable resource selection ([240044e](https://github.com/UteamUP/cli/commit/240044e564a16b6dfd89e57cc7f082cac8cf4ee1))
+* expose inventory insights and marketplace flows ([a6a875b](https://github.com/UteamUP/cli/commit/a6a875bea0d91dea5aa59eec388c78df88caf0a4))
+* expose pool member type filtering in resource search ([50ab2db](https://github.com/UteamUP/cli/commit/50ab2dbaa67b1301bcb33a3877889dd636ef42f2))
+
+
+### Bug Fixes
+
+* align handover CLI commands with the canonical workforce API ([df2c48b](https://github.com/UteamUP/cli/commit/df2c48bb21ec394e2dd6626c17196924cf83afde))
+* require reviewed versions for pool member updates ([f83b695](https://github.com/UteamUP/cli/commit/f83b6952357f66ca8a727ebbc8e3d254fa08f96b))
+
+
+### Documentation
+
+* explain immutable resource identity in CLI updates ([5d80758](https://github.com/UteamUP/cli/commit/5d807589def446f56cb70ad8f6ff2e7ec1049327))
+
 ## [2.14.0](https://github.com/UteamUP/cli/compare/2.13.0...2.14.0) (2026-09-05)
 
 
