@@ -1,6 +1,9 @@
 package registry
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestUpmateAgentDomainTargetsTheAgentController(t *testing.T) {
 	t.Parallel()
@@ -49,7 +52,7 @@ func TestUpmateAgentDomainExposesNoIntegerIdentifiers(t *testing.T) {
 	}
 	for _, action := range domain.Actions {
 		for _, arg := range action.Args {
-			if arg.Type == "int" && (arg.Name == "id" || arg.Name == "agentId" || arg.Name == "runId") {
+			if arg.Type == "int" && (arg.Name == "id" || strings.HasSuffix(arg.Name, "Id")) {
 				t.Fatalf("%s exposes integer identifier %q", action.Name, arg.Name)
 			}
 		}
