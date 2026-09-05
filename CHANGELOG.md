@@ -5,6 +5,19 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.16.0](https://github.com/UteamUP/cli/compare/2.15.0...2.16.0) (2026-09-05)
+
+
+### Features
+
+* align marketplace offer contracts ([9ba06fa](https://github.com/UteamUP/cli/commit/9ba06fabbf6597bab2baacddc92698632fd86846))
+* expose resource creation retry keys ([e4dd155](https://github.com/UteamUP/cli/commit/e4dd1550f47790fd3cf352f39655dce2f7c38737))
+
+
+### Tests
+
+* cover public resource source filters in CLI ([d698c9a](https://github.com/UteamUP/cli/commit/d698c9a8550018d1359306d228394c9a2c9dfd91))
+
 ## [2.15.0](https://github.com/UteamUP/cli/compare/2.14.0...2.15.0) (2026-09-05)
 
 
