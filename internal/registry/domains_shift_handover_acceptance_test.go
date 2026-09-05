@@ -147,3 +147,36 @@ func assertHandoverMutationFlags(t *testing.T, actionName string, flags []FlagDe
 		t.Fatalf("%s must require concurrency body and idempotency header flags: %#v", actionName, flags)
 	}
 }
+
+func TestShiftHandoverCoreActionsMatchTheCanonicalAPI(t *testing.T) {
+	domain := findRegisteredDomain(t, "shift-handover")
+	expected := map[string]string{"get": "/api/shifthandover/by-guid/186d0e09-c70b-45ba-8763-a415b1420568", "list": "/api/shifthandover/search", "create": "/api/shifthandover"}
+	counts := map[string]int{}
+	for _, action := range domain.Actions {
+		counts[action.Name]++
+		if action.Name == "delete" {
+			t.Fatal("legacy unversioned delete must not coexist with the archive command")
+		}
+		if path, ok := expected[action.Name]; ok {
+			actual, _ := buildRESTPath(domain, action, map[string]any{"handoverGuid": "186d0e09-c70b-45ba-8763-a415b1420568"})
+			if actual != path {
+				t.Fatalf("%s routes to %s, expected %s", action.Name, actual, path)
+			}
+			if action.Name == "get" {
+				if action.HTTPMethod != "GET" || len(action.Args) != 1 || action.Args[0].Type != "uuid" {
+					t.Fatalf("get must require the public GUID: %#v", action)
+				}
+			} else if action.HTTPMethod != "POST" {
+				t.Fatalf("%s must post to the existing API", action.Name)
+			}
+		}
+	}
+	for name := range expected {
+		if counts[name] != 1 {
+			t.Fatalf("expected one %s action", name)
+		}
+	}
+	if counts["archive"] != 1 {
+		t.Fatal("retain one versioned archive action")
+	}
+}

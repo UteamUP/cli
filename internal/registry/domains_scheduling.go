@@ -144,11 +144,21 @@ func init() {
 		{Name: "delete", Description: "Delete a shift user assignment by GUID", ToolName: "UteamupShiftUserAssignmentDelete", Args: []ArgDef{{Name: "assignmentGuid", Description: "Shift user assignment GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{assignmentGuid}"},
 		{Name: "unavailable", Description: "Mark a shift user assignment unavailable by GUID", ToolName: "UteamupShiftUserAssignmentMarkUnavailable", HTTPMethod: "PUT", Args: []ArgDef{{Name: "assignmentGuid", Description: "Shift user assignment GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{assignmentGuid}/unavailable", Flags: []FlagDef{{Name: "reason", Description: "Optional reason for unavailability", Type: "string"}}},
 	}})
-	shiftHandoverActions := []Action{}
-	for _, action := range crudActions("ShiftHandover") {
-		if action.Name != "update" {
-			shiftHandoverActions = append(shiftHandoverActions, action)
-		}
+	shiftHandoverActions := []Action{
+		{Name: "list", Description: "Search tenant handovers with pagination", ToolName: "UteamupShiftHandoverSearch",
+			HTTPMethod: "POST", RESTPath: "search", Flags: []FlagDef{
+				{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
+				{Name: "page-size", Short: "s", BodyName: "pageSize", Description: "Items per page, maximum 200", Default: 25, Type: "int"},
+				{Name: "search", BodyName: "searchTerm", Description: "Search handover notes", Type: "string"},
+				{Name: "status", Description: "draft, submitted, reviewed, accepted, rejected, completed, or archived", Type: "string"},
+				{Name: "shift-guid", BodyName: "shiftGuid", Description: "Optional public shift GUID", Type: "uuid"},
+			}},
+		{Name: "get", Description: "Read a handover by its public GUID", ToolName: "UteamupShiftHandoverGet",
+			HTTPMethod: "GET", RESTPath: "by-guid/{handoverGuid}", Args: []ArgDef{
+				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
+			}},
+		{Name: "create", Description: "Create a handover with optional incoming operator assignment", ToolName: "UteamupShiftHandoverCreate",
+			HTTPMethod: "POST", UseDomainBasePath: true, Flags: []FlagDef{jsonFlag()}},
 	}
 	shiftHandoverActions = append(shiftHandoverActions, Action{
 		Name:        "previous",
