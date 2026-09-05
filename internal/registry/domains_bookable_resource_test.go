@@ -20,6 +20,7 @@ func TestBookableResourceDomainMirrorsBackendToolsAndGuidRoutes(t *testing.T) {
 		path   string
 	}{
 		"list":               {"UteamupBookableResourceList", "GET", ""},
+		"crew-list":          {"UteamupBookableResourceCrewList", "GET", "crews"},
 		"get":                {"UteamupBookableResourceGet", "GET", "{resourceGuid}"},
 		"create":             {"UteamupBookableResourceCreate", "POST", ""},
 		"update":             {"UteamupBookableResourceUpdate", "PUT", "{resourceGuid}"},
@@ -71,6 +72,28 @@ func TestBookableResourcePoolSearchExposesMemberTypeFilter(t *testing.T) {
 		}
 	}
 	t.Fatal("pool member resource type filter is missing")
+}
+
+func TestBookableResourceCrewLookupExposesSearchAndSavedGuid(t *testing.T) {
+	action := findAction(findDomain("bookable-resource"), "crew-list")
+	if action == nil {
+		t.Fatal("crew-list action is missing")
+	}
+	expected := map[string]string{"search": "search", "crew-guid": "crewGuid", "page": "page", "page-size": "pageSize"}
+	for _, flag := range action.Flags {
+		if want, ok := expected[flag.Name]; ok {
+			if flag.BodyName != want {
+				t.Errorf("%s maps to %q, want %q", flag.Name, flag.BodyName, want)
+			}
+			if flag.Name == "crew-guid" && (flag.Type != "string" || flag.Required) {
+				t.Errorf("crew-guid must be an optional public GUID string: %+v", flag)
+			}
+			delete(expected, flag.Name)
+		}
+	}
+	if len(expected) != 0 {
+		t.Fatalf("missing crew lookup filters: %v", expected)
+	}
 }
 
 func TestBookableResourceUpdatesSendReviewedVersionInQuery(t *testing.T) {

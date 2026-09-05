@@ -78,6 +78,19 @@ func init() {
 				},
 			},
 			{
+				Name:        "crew-list",
+				Description: "Search tenant crews by name or organization; resolve saved inactive crews by GUID",
+				ToolName:    "UteamupBookableResourceCrewList",
+				HTTPMethod:  "GET",
+				RESTPath:    "crews",
+				Flags: []FlagDef{
+					{Name: "search", BodyName: "search", Description: "Crew or organization name search", Type: "string"},
+					{Name: "crew-guid", BodyName: "crewGuid", Description: "Saved crew public GUID, including inactive crews", Type: "string"},
+					{Name: "page", BodyName: "page", Description: "One-based page number", Default: 1, Type: "int"},
+					{Name: "page-size", BodyName: "pageSize", Description: "Results per page, maximum 100", Default: 25, Type: "int"},
+				},
+			},
+			{
 				Name:        "get",
 				Description: "Get one resource with pool and territory evidence",
 				ToolName:    "UteamupBookableResourceGet",
