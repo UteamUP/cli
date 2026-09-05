@@ -8,6 +8,19 @@ func init() {
 		APIPath:     "/api/oncall",
 		Actions: []Action{
 			{
+				Name:        "coverage-requests",
+				Description: "Page pending coverage requests or saved decision history (OnCall.Override)",
+				ToolName:    "UteamupOncallCoverageRequests",
+				HTTPMethod:  "GET",
+				RESTPath:    "coverage-requests/paginated",
+				Flags: []FlagDef{
+					{Name: "history", QueryName: "history", Description: "Read closed decisions and withdrawals", Type: "bool"},
+					{Name: "page", QueryName: "page", Description: "Page number, 1–1,000,000", Type: "int", Default: 1},
+					{Name: "page-size", QueryName: "pageSize", Description: "Results per page, maximum 100", Type: "int", Default: 25},
+					{Name: "schedule-guid", QueryName: "scheduleGuid", Description: "Optional schedule public GUID", Type: "uuid"},
+				},
+			},
+			{
 				Name:        "who",
 				Description: "Who is on call for a schedule at an instant (defaults to now)",
 				ToolName:    "UteamupOnCallWho",

@@ -2,6 +2,27 @@ package registry
 
 import "testing"
 
+func TestOnCallCoverageHistoryActionWired(t *testing.T) {
+	d := findOnCallDomain(t)
+	for _, action := range d.Actions {
+		if action.Name != "coverage-requests" {
+			continue
+		}
+		if action.HTTPMethod != "GET" || action.RESTPath != "coverage-requests/paginated" || action.ToolName != "UteamupOncallCoverageRequests" {
+			t.Fatalf("unexpected coverage action: %+v", action)
+		}
+		flags := map[string]FlagDef{}
+		for _, flag := range action.Flags {
+			flags[flag.Name] = flag
+		}
+		if flags["history"].Type != "bool" || flags["page-size"].QueryName != "pageSize" || flags["page-size"].Default != 25 || flags["schedule-guid"].QueryName != "scheduleGuid" || flags["schedule-guid"].Type != "uuid" {
+			t.Fatalf("unexpected coverage filters: %+v", flags)
+		}
+		return
+	}
+	t.Fatal("coverage-requests action is missing")
+}
+
 func findOnCallDomain(t *testing.T) *Domain {
 	t.Helper()
 	for _, d := range DefaultRegistry.Domains() {
