@@ -64,6 +64,7 @@ func TestBookableResourceUpdatesSendReviewedVersionInQuery(t *testing.T) {
 	domain := findDomain("bookable-resource")
 	for _, actionName := range []string{
 		"update",
+		"pool-members-set",
 		"territory-update",
 		"requirement-update",
 	} {

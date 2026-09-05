@@ -118,6 +118,7 @@ func init() {
 				},
 				Flags: []FlagDef{
 					{Name: "members-file", BodyName: "members", Description: "JSON file containing reviewed pool-member rows", Required: true, Type: "string", JSONFile: true},
+					expectedUpdatedAtQueryFlag(),
 				},
 			},
 			{
