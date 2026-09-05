@@ -92,6 +92,23 @@ func TestMarketplaceDraftUpdateRequiresReviewedVersionAndFullCoreFields(t *testi
 	t.Fatal("missing requirement-draft-update action")
 }
 
+func TestMarketplacePublishRequiresReviewedDraftVersion(t *testing.T) {
+	d := findMarketplaceDomain()
+	if d == nil {
+		t.Fatal("expected marketplace domain")
+	}
+	for _, action := range d.Actions {
+		if action.Name == "requirement-publish" {
+			for _, flag := range action.Flags {
+				if flag.Name == "draft-version" && flag.Required && flag.Type == "string" {
+					return
+				}
+			}
+		}
+	}
+	t.Fatal("marketplace publication must require the reviewed draft version")
+}
+
 func TestMarketplaceListingReportFlags(t *testing.T) {
 	d := findMarketplaceDomain()
 	if d == nil {
@@ -316,4 +333,27 @@ func TestMarketplaceNonGETActionsDeclareTheirMethod(t *testing.T) {
 			t.Errorf("action %q declares HTTPMethod %q but should default to GET", a.Name, a.HTTPMethod)
 		}
 	}
+}
+
+func TestMarketplaceMyOffersSupportsBoundedFilteredReads(t *testing.T) {
+	domain := findMarketplaceDomain()
+	if domain == nil {
+		t.Fatal("expected marketplace domain")
+	}
+	for _, action := range domain.Actions {
+		if action.Name != "my-offers" {
+			continue
+		}
+		flags := map[string]bool{}
+		for _, flag := range action.Flags {
+			flags[flag.Name] = true
+		}
+		for _, expected := range []string{"page", "page-size", "status", "search"} {
+			if !flags[expected] {
+				t.Errorf("missing supplier offer flag %s", expected)
+			}
+		}
+		return
+	}
+	t.Fatal("missing my-offers action")
 }

@@ -235,6 +235,12 @@ func init() {
 				ToolName:     "UteamupMarketplaceMyOffersList",
 				RESTBasePath: mpRequirementsPath,
 				RESTPath:     "my-offers",
+				Flags: []FlagDef{
+					{Name: "page", Description: "Page number", Type: "float", Default: 1.0},
+					{Name: "page-size", Description: "Page size (1-100)", Type: "float", Default: 20.0},
+					{Name: "status", Description: "Offer status", Type: "string"},
+					{Name: "search", Description: "Search item name, code or type", Type: "string"},
+				},
 			},
 			{
 				Name:        "transactions",
