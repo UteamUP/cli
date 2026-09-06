@@ -96,6 +96,20 @@ func init() {
 				},
 			},
 			{
+				Name:        "source-list",
+				Description: "Search source records by resource type; resolve saved inactive sources by GUID",
+				ToolName:    "UteamupBookableResourceSourceList",
+				HTTPMethod:  "GET",
+				RESTPath:    "sources",
+				Flags: []FlagDef{
+					{Name: "resource-type", BodyName: "resourceType", Description: "0=technician, 1=contractor, 2=crew, 3=equipment, 4=vehicle, 5=facility", Required: true, Type: "int"},
+					{Name: "search", BodyName: "search", Description: "Source name or descriptive detail search", Type: "string"},
+					{Name: "source-guid", BodyName: "sourceGuid", Description: "Saved source public GUID, including inactive sources", Type: "string"},
+					{Name: "page", BodyName: "page", Description: "One-based page number", Default: 1, Type: "int"},
+					{Name: "page-size", BodyName: "pageSize", Description: "Results per page, maximum 100", Default: 25, Type: "int"},
+				},
+			},
+			{
 				Name:        "get",
 				Description: "Get one resource with pool and territory evidence",
 				ToolName:    "UteamupBookableResourceGet",

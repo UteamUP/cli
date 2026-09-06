@@ -21,6 +21,7 @@ func TestBookableResourceDomainMirrorsBackendToolsAndGuidRoutes(t *testing.T) {
 	}{
 		"list":               {"UteamupBookableResourceList", "GET", ""},
 		"crew-list":          {"UteamupBookableResourceCrewList", "GET", "crews"},
+		"source-list":        {"UteamupBookableResourceSourceList", "GET", "sources"},
 		"get":                {"UteamupBookableResourceGet", "GET", "{resourceGuid}"},
 		"create":             {"UteamupBookableResourceCreate", "POST", ""},
 		"update":             {"UteamupBookableResourceUpdate", "PUT", "{resourceGuid}"},
@@ -125,6 +126,31 @@ func TestBookableResourceCrewLookupExposesSearchAndSavedGuid(t *testing.T) {
 	}
 	if len(expected) != 0 {
 		t.Fatalf("missing crew lookup filters: %v", expected)
+	}
+}
+
+func TestBookableResourceSourceLookupRequiresTypeAndPublicIdentity(t *testing.T) {
+	action := findAction(findDomain("bookable-resource"), "source-list")
+	if action == nil {
+		t.Fatal("source-list action is missing")
+	}
+	expected := map[string]string{"resource-type": "resourceType", "search": "search", "source-guid": "sourceGuid", "page": "page", "page-size": "pageSize"}
+	for _, flag := range action.Flags {
+		if want, ok := expected[flag.Name]; ok {
+			if flag.BodyName != want {
+				t.Errorf("%s maps to %q, want %q", flag.Name, flag.BodyName, want)
+			}
+			if flag.Name == "source-guid" && (flag.Type != "string" || flag.Required) {
+				t.Errorf("source-guid must be an optional public GUID string: %+v", flag)
+			}
+			if flag.Name == "resource-type" && (flag.Type != "int" || !flag.Required) {
+				t.Errorf("resource-type must be required: %+v", flag)
+			}
+			delete(expected, flag.Name)
+		}
+	}
+	if len(expected) != 0 {
+		t.Fatalf("missing source lookup filters: %v", expected)
 	}
 }
 
