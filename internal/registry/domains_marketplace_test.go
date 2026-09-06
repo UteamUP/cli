@@ -357,3 +357,26 @@ func TestMarketplaceMyOffersSupportsBoundedFilteredReads(t *testing.T) {
 	}
 	t.Fatal("missing my-offers action")
 }
+
+func TestMarketplaceRequirementsSupportsSearchAndPaging(t *testing.T) {
+	domain := findMarketplaceDomain()
+	if domain == nil {
+		t.Fatal("expected marketplace domain")
+	}
+	for _, action := range domain.Actions {
+		if action.Name != "requirements" {
+			continue
+		}
+		flags := map[string]bool{}
+		for _, flag := range action.Flags {
+			flags[flag.Name] = true
+		}
+		for _, expected := range []string{"page", "page-size", "search"} {
+			if !flags[expected] {
+				t.Errorf("missing open request flag %s", expected)
+			}
+		}
+		return
+	}
+	t.Fatal("missing requirements action")
+}
