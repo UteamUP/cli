@@ -69,7 +69,7 @@ func TestReliabilityEvidenceAndRunActionsStayGuidFirst(t *testing.T) {
 			"POST",
 			"strategies/prepare-run",
 		},
-		"forecasts":         {"UteamupReliabilityForecastList", "GET", "forecasts"},
+		"forecasts": {"UteamupReliabilityForecastList", "GET", "forecasts"},
 		"forecast": {
 			"UteamupReliabilityForecastGet",
 			"GET",
