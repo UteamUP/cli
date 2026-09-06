@@ -2,6 +2,30 @@ package registry
 
 import "testing"
 
+func TestOnCallCoverageWorkersUsesRequestGUIDAndBoundedSearch(t *testing.T) {
+	domain := findOnCallDomain(t)
+	for _, action := range domain.Actions {
+		if action.Name != "coverage-workers" {
+			continue
+		}
+		if action.ToolName != "UteamupOncallCoverageWorkers" || action.HTTPMethod != "GET" || action.RESTPath != "coverage-requests/{request-guid}/workers" {
+			t.Fatalf("incorrect coverage worker route: %+v", action)
+		}
+		if len(action.Args) != 1 || action.Args[0].Name != "request-guid" || action.Args[0].Type != "uuid" || !action.Args[0].Required {
+			t.Fatalf("expected one required public request GUID: %+v", action.Args)
+		}
+		flags := map[string]FlagDef{}
+		for _, flag := range action.Flags {
+			flags[flag.Name] = flag
+		}
+		if len(flags) != 4 || flags["page"].Default != 1 || flags["page-size"].Default != 25 || flags["search"].QueryName != "search" || flags["selected-guid"].QueryName != "selectedGuid" || flags["selected-guid"].Type != "uuid" {
+			t.Fatalf("incorrect lookup flags: %+v", flags)
+		}
+		return
+	}
+	t.Fatal("coverage-workers action is missing")
+}
+
 func TestOnCallCoverageHistoryActionWired(t *testing.T) {
 	d := findOnCallDomain(t)
 	for _, action := range d.Actions {

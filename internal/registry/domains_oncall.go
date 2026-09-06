@@ -8,6 +8,20 @@ func init() {
 		APIPath:     "/api/oncall",
 		Actions: []Action{
 			{
+				Name:        "coverage-workers",
+				Description: "Search active replacement workers for a pending coverage request (OnCall.Override)",
+				ToolName:    "UteamupOncallCoverageWorkers",
+				HTTPMethod:  "GET",
+				RESTPath:    "coverage-requests/{request-guid}/workers",
+				Args:        []ArgDef{{Name: "request-guid", Description: "Pending coverage request public GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "search", QueryName: "search", Description: "Worker name, at most 100 characters", Type: "string"},
+					{Name: "selected-guid", QueryName: "selectedGuid", Description: "Optional selected worker public GUID", Type: "uuid"},
+					{Name: "page", QueryName: "page", Description: "Page number, 1–100,000", Type: "int", Default: 1},
+					{Name: "page-size", QueryName: "pageSize", Description: "Results per page, maximum 100", Type: "int", Default: 25},
+				},
+			},
+			{
 				Name:        "coverage-requests",
 				Description: "Page pending coverage requests or saved decision history (OnCall.Override)",
 				ToolName:    "UteamupOncallCoverageRequests",
