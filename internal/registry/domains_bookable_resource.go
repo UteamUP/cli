@@ -15,6 +15,7 @@ func bookableResourceMutationFlags() []FlagDef {
 		{Name: "asset-guid", BodyName: "assetGuid", Description: "Equipment or vehicle asset public GUID", Type: "string"},
 		{Name: "location-guid", BodyName: "locationGuid", Description: "Facility location public GUID", Type: "string"},
 		{Name: "territory-guid", BodyName: "territoryGuids", Description: "Service territory public GUID (repeatable)", Type: "stringSlice"},
+		{Name: "pool-members-file", BodyName: "poolMembers", Description: "JSON member list to save with pool settings; omit to preserve members, [] to clear", Type: "string", JSONFile: true},
 	}
 }
 

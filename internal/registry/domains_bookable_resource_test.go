@@ -204,17 +204,27 @@ func TestAppendQueryParametersPreservesPathAndEscapesReviewedTimestamp(t *testin
 
 func TestBookableResourceStructuredInputsUseJSONFiles(t *testing.T) {
 	domain := findDomain("bookable-resource")
-	action := findAction(domain, "pool-members-set")
-	if action == nil {
-		t.Fatal("pool-members-set action is not registered")
-	}
-	for _, flag := range action.Flags {
-		if flag.Name == "members-file" {
-			if !flag.Required || !flag.JSONFile || flag.BodyName != "members" {
-				t.Fatalf("members-file flag is not a required members JSON payload: %+v", flag)
+	for _, actionName := range []string{"create", "update", "pool-members-set"} {
+		action := findAction(domain, actionName)
+		if action == nil {
+			t.Fatalf("%s action is not registered", actionName)
+		}
+		flagName, bodyName := "pool-members-file", "poolMembers"
+		required := actionName == "pool-members-set"
+		if required {
+			flagName, bodyName = "members-file", "members"
+		}
+		found := false
+		for _, flag := range action.Flags {
+			if flag.Name == flagName {
+				found = true
+				if flag.Required != required || !flag.JSONFile || flag.BodyName != bodyName {
+					t.Errorf("%s must send the member list as %s: %+v", actionName, bodyName, flag)
+				}
 			}
-			return
+		}
+		if !found {
+			t.Errorf("%s is missing --%s", actionName, flagName)
 		}
 	}
-	t.Fatal("pool-members-set is missing --members-file")
 }
