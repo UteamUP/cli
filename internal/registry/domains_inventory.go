@@ -122,7 +122,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "stock-guid", BodyName: "stockGuid", Description: "Owning stock-location GUID", Required: true, Type: "string"},
 					{Name: "stock-item-guid", BodyName: "stockItemGuid", Description: "Stock-item GUID", Required: true, Type: "string"},
-					{Name: "quantity", BodyName: "quantity", Description: "Positive quantity to remove", Required: true, Type: "int"},
+					{Name: "quantity", BodyName: "quantity", Description: "Positive quantity to remove", Required: true, Type: "float"},
 					{Name: "reason", BodyName: "reason", Description: "Removal reason", Required: true, Type: "string"},
 					{Name: "reference-number", BodyName: "referenceNumber", Description: "Optional external reference", Type: "string"},
 					{Name: "workorder-guid", BodyName: "workorderGuid", Description: "Optional workorder GUID", Type: "string"},
@@ -244,7 +244,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "stock-item-guid", Description: "Stock item GUID to transfer", Required: true, Type: "string"},
 					{Name: "destination-stock-guid", Description: "Destination stock location GUID", Required: true, Type: "string"},
-					{Name: "quantity", Description: "Quantity to transfer (must be available at source)", Required: true, Type: "int"},
+					{Name: "quantity", Description: "Quantity to transfer (must be available at source)", Required: true, Type: "float"},
 					{Name: "destination-bin-guid", Description: "Destination bin GUID (optional)", Type: "string"},
 					{Name: "reason", Description: "Reason for the transfer", Type: "string"},
 					{Name: "reference", Description: "External reference (e.g. ticket number)", Type: "string"},
@@ -358,7 +358,7 @@ func init() {
 				RESTPath:    "reservations",
 				Flags: []FlagDef{
 					{Name: "stock-item-guid", Description: "Stock item GUID to reserve", Required: true, Type: "string"},
-					{Name: "quantity", Description: "Quantity to reserve (minimum 1)", Required: true, Type: "int"},
+					{Name: "quantity", Description: "Quantity to reserve (positive, up to six decimals for measured materials)", Required: true, Type: "float"},
 					{Name: "workorder-guid", Description: "Workorder GUID that owns the hold", Type: "string"},
 					{Name: "project-guid", Description: "Project GUID that owns the hold", Type: "string"},
 					{Name: "unit-guid", Description: "Specific serialized unit GUID to reserve (quantity must be 1)", Type: "string"},
@@ -425,7 +425,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Stable request GUID; reuse unchanged with the same payload when retrying", Required: true, Type: "string"},
 					{Name: "purchase-order-item-guid", BodyName: "purchaseOrderItemGuid", Description: "Originating purchase order line for receiving quarantine", Type: "string"},
-					{Name: "quantity", Description: "Quantity to release from quarantine (minimum 1)", Required: true, Type: "int"},
+					{Name: "quantity", Description: "Quantity to release from quarantine (positive, up to six decimals for measured materials)", Required: true, Type: "float"},
 					{Name: "reason-guid", Description: "Adjustment reason GUID (optional)", Type: "string"},
 					{Name: "notes", Description: "Notes for the audit trail (optional)", Type: "string"},
 					{Name: "unit-guids", Description: "Quarantined serialized unit GUIDs to release (count must equal quantity)", Type: "stringSlice"},
@@ -441,7 +441,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Stable request GUID; reuse unchanged with the same payload when retrying", Required: true, Type: "string"},
 					{Name: "purchase-order-item-guid", BodyName: "purchaseOrderItemGuid", Description: "Originating purchase order line for receiving quarantine", Type: "string"},
-					{Name: "quantity", Description: "Quantity to reject from quarantine (minimum 1)", Required: true, Type: "int"},
+					{Name: "quantity", Description: "Quantity to reject from quarantine (positive, up to six decimals for measured materials)", Required: true, Type: "float"},
 					{Name: "reason-guid", Description: "Adjustment reason GUID (required)", Required: true, Type: "string"},
 					{Name: "notes", Description: "Notes for the audit trail (optional)", Type: "string"},
 					{Name: "unit-guids", Description: "Quarantined serialized unit GUIDs to reject (count must equal quantity)", Type: "stringSlice"},
@@ -499,7 +499,7 @@ func init() {
 					{Name: "abc-class-a-days", Description: "Count cadence in days for ABC class A items", Default: 30, Type: "int", BodyName: "abcClassACountDays"},
 					{Name: "abc-class-b-days", Description: "Count cadence in days for ABC class B items", Default: 90, Type: "int", BodyName: "abcClassBCountDays"},
 					{Name: "abc-class-c-days", Description: "Count cadence in days for ABC class C items", Default: 180, Type: "int", BodyName: "abcClassCCountDays"},
-					{Name: "approval-threshold", Description: "Manual adjustments at or above this quantity require approval (omit to disable)", Type: "int", BodyName: "approvalThresholdQuantity"},
+					{Name: "approval-threshold", Description: "Manual adjustments at or above this quantity require approval (omit to disable)", Type: "float", BodyName: "approvalThresholdQuantity"},
 				},
 			},
 			Action{
@@ -751,7 +751,7 @@ func init() {
 					{Name: "listing-type", BodyName: "listingType", Description: "Listing type: Sale (default), Rental, or Exchange", Default: "Sale", Type: "string"},
 					{Name: "price", BodyName: "price", Description: "Listing price (required)", Required: true, Type: "float"},
 					{Name: "currency", BodyName: "currency", Description: "ISO 4217 currency code", Default: "USD", Type: "string"},
-					{Name: "quantity", BodyName: "quantity", Description: "Quantity to list (quantity-tracked items)", Type: "int"},
+					{Name: "quantity", BodyName: "quantity", Description: "Quantity to list (quantity-tracked items)", Type: "float"},
 					{Name: "unit-guids", BodyName: "unitGuids", Description: "Serialized units to hold under the listing — repeatable or comma-separated", Type: "stringSlice"},
 					{Name: "title", BodyName: "title", Description: "Listing title (optional)", Type: "string"},
 					{Name: "description", BodyName: "description", Description: "Listing description (optional)", Type: "string"},
@@ -961,7 +961,7 @@ func init() {
 				RESTPath:    "optimization/proposals",
 				Flags: []FlagDef{
 					{Name: "stock-item-guid", BodyName: "stockItemGuid", Description: "Destination stock item GUID", Required: true, Type: "string"},
-					{Name: "required-quantity", BodyName: "requiredQuantity", Description: "Required quantity (omit for live server-derived reorder shortfall)", Type: "int"},
+					{Name: "required-quantity", BodyName: "requiredQuantity", Description: "Required quantity (omit for live server-derived reorder shortfall)", Type: "float"},
 					{Name: "needed-by-utc", BodyName: "neededByUtc", Description: "Latest acceptable availability time in ISO 8601 UTC", Type: "string"},
 					{Name: "objective", BodyName: "objectiveKey", Description: "availability, cost, working-capital, or supplier-reliability", Default: "availability", Type: "string"},
 					{Name: "include-substitutes", BodyName: "includeSubstitutes", Description: "Include explicit Alternate/SupersededBy catalog links", Default: true, Type: "bool"},
@@ -974,7 +974,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "stock-item-guid", BodyName: "stockItemGuid", Description: "Destination stock item GUID", Required: true, Type: "string"},
 					{Name: "idempotency-guid", BodyName: "idempotencyGuid", Description: "Caller-generated retry-safe GUID", Required: true, Type: "string"},
-					{Name: "required-quantity", BodyName: "requiredQuantity", Description: "Required quantity (omit for live server-derived reorder shortfall)", Type: "int"},
+					{Name: "required-quantity", BodyName: "requiredQuantity", Description: "Required quantity (omit for live server-derived reorder shortfall)", Type: "float"},
 					{Name: "needed-by-utc", BodyName: "neededByUtc", Description: "Latest acceptable availability time in ISO 8601 UTC", Type: "string"},
 					{Name: "objective", BodyName: "objectiveKey", Description: "availability, cost, working-capital, or supplier-reliability", Default: "availability", Type: "string"},
 					{Name: "include-substitutes", BodyName: "includeSubstitutes", Description: "Include explicit Alternate/SupersededBy catalog links", Default: true, Type: "bool"},
@@ -1084,7 +1084,7 @@ func init() {
 					{Name: "vendor-part-number", Description: "The vendor's part number (max 200 characters)", Required: true, Type: "string"},
 					{Name: "unit-cost", Description: "Unit cost from this vendor (optional)", Type: "float"},
 					{Name: "currency-guid", Description: "Currency GUID for the unit cost (optional)", Type: "string"},
-					{Name: "minimum-order-quantity", Description: "Minimum order quantity (optional)", Type: "int"},
+					{Name: "minimum-order-quantity", Description: "Minimum order quantity (optional)", Type: "float"},
 					{Name: "lead-time-days", Description: "Lead time in days (optional)", Type: "int"},
 					{Name: "preferred", Description: "Mark this vendor as the preferred supplier", Default: false, Type: "bool", BodyName: "isPreferred"},
 				},

@@ -480,8 +480,8 @@ func TestStockTransferActionWired(t *testing.T) {
 			t.Errorf("transfer flag %q must be a Required string Guid, got %+v", name, f)
 		}
 	}
-	if qty := stockActionFlag(t, "transfer", "quantity"); !qty.Required || qty.Type != "int" {
-		t.Errorf("transfer quantity must be a Required int flag, got %+v", qty)
+	if qty := stockActionFlag(t, "transfer", "quantity"); !qty.Required || qty.Type != "float" {
+		t.Errorf("transfer quantity must be a Required float flag, got %+v", qty)
 	}
 	for _, name := range []string{"destination-bin-guid", "reason", "reference"} {
 		if f := stockActionFlag(t, "transfer", name); f.Required {
@@ -744,8 +744,8 @@ func TestStockReserveActionWired(t *testing.T) {
 	if sig := stockActionFlag(t, "reserve", "stock-item-guid"); !sig.Required || sig.Type != "string" {
 		t.Errorf("reserve stock-item-guid must be a Required string Guid, got %+v", sig)
 	}
-	if qty := stockActionFlag(t, "reserve", "quantity"); !qty.Required || qty.Type != "int" {
-		t.Errorf("reserve quantity must be a Required int flag, got %+v", qty)
+	if qty := stockActionFlag(t, "reserve", "quantity"); !qty.Required || qty.Type != "float" {
+		t.Errorf("reserve quantity must be a Required float flag, got %+v", qty)
 	}
 	for _, name := range []string{"workorder-guid", "project-guid", "unit-guid", "reserved-until"} {
 		if f := stockActionFlag(t, "reserve", name); f.Required || f.Type != "string" {
@@ -910,8 +910,8 @@ func TestStockQuarantineReleaseActionWired(t *testing.T) {
 		t.Fatalf("quarantine-release expected single required string positional arg 'itemGuid', got %+v", action.Args)
 	}
 
-	if q := stockActionFlag(t, "quarantine-release", "quantity"); !q.Required || q.Type != "int" {
-		t.Errorf("quarantine-release quantity must be a Required int flag, got %+v", q)
+	if q := stockActionFlag(t, "quarantine-release", "quantity"); !q.Required || q.Type != "float" {
+		t.Errorf("quarantine-release quantity must be a Required float flag, got %+v", q)
 	}
 	if rg := stockActionFlag(t, "quarantine-release", "reason-guid"); rg.Required || rg.Type != "string" {
 		t.Errorf("quarantine-release reason-guid must be an optional string flag, got %+v", rg)
@@ -940,8 +940,8 @@ func TestStockQuarantineRejectActionWired(t *testing.T) {
 	if rg := stockActionFlag(t, "quarantine-reject", "reason-guid"); !rg.Required || rg.Type != "string" {
 		t.Errorf("quarantine-reject reason-guid must be a Required string flag, got %+v", rg)
 	}
-	if q := stockActionFlag(t, "quarantine-reject", "quantity"); !q.Required || q.Type != "int" {
-		t.Errorf("quarantine-reject quantity must be a Required int flag, got %+v", q)
+	if q := stockActionFlag(t, "quarantine-reject", "quantity"); !q.Required || q.Type != "float" {
+		t.Errorf("quarantine-reject quantity must be a Required float flag, got %+v", q)
 	}
 }
 
@@ -1509,7 +1509,7 @@ func TestStockOptimizationProposalActionWired(t *testing.T) {
 	if item == nil || !item.Required || item.BodyName != "stockItemGuid" || item.Type != "string" {
 		t.Fatalf("optimization-propose stock-item-guid must be required and GUID-first, got %+v", item)
 	}
-	if quantity := stockFlagByName(action, "required-quantity"); quantity == nil || quantity.Type != "int" || quantity.BodyName != "requiredQuantity" {
+	if quantity := stockFlagByName(action, "required-quantity"); quantity == nil || quantity.Type != "float" || quantity.BodyName != "requiredQuantity" {
 		t.Errorf("optimization-propose required-quantity miswired: %+v", quantity)
 	}
 	if objective := stockFlagByName(action, "objective"); objective == nil || objective.Default != "availability" || objective.BodyName != "objectiveKey" {

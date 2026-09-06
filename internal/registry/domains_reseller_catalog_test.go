@@ -68,13 +68,13 @@ func TestPartVendorCatalogActionsWired(t *testing.T) {
 			t.Errorf("vendor-catalog-upsert flag %q must be a required string, got %+v", name, f)
 		}
 	}
-	if f := actionFlagByName(t, upsert, "unit-cost"); f.Type != "float" {
-		t.Errorf("vendor-catalog-upsert unit-cost must be a float flag, got %+v", f)
-	}
-	for _, name := range []string{"minimum-order-quantity", "lead-time-days"} {
-		if f := actionFlagByName(t, upsert, name); f.Type != "int" {
-			t.Errorf("vendor-catalog-upsert flag %q must be an int flag, got %+v", name, f)
+	for _, name := range []string{"unit-cost", "minimum-order-quantity"} {
+		if f := actionFlagByName(t, upsert, name); f.Type != "float" {
+			t.Errorf("vendor-catalog-upsert flag %q must be a float flag, got %+v", name, f)
 		}
+	}
+	if f := actionFlagByName(t, upsert, "lead-time-days"); f.Type != "int" {
+		t.Errorf("vendor-catalog-upsert lead-time-days must be an int flag, got %+v", f)
 	}
 	pref := actionFlagByName(t, upsert, "preferred")
 	if pref.Type != "bool" || pref.BodyName != "isPreferred" || pref.Default != false {

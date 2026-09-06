@@ -380,3 +380,30 @@ func TestMarketplaceRequirementsSupportsSearchAndPaging(t *testing.T) {
 	}
 	t.Fatal("missing requirements action")
 }
+
+func TestMarketplaceRequirementQuantitiesCarryUnitGuids(t *testing.T) {
+	domain := findMarketplaceDomain()
+	if domain == nil {
+		t.Fatal("missing marketplace domain")
+	}
+	found := 0
+	for _, action := range domain.Actions {
+		if action.Name != "requirement-draft-create" && action.Name != "requirement-draft-update" {
+			continue
+		}
+		found++
+		flags := map[string]FlagDef{}
+		for _, flag := range action.Flags {
+			flags[flag.Name] = flag
+		}
+		if flags["requested-quantity"].Type != "float" {
+			t.Errorf("%s must preserve measured quantities", action.Name)
+		}
+		if flags["unit-of-measure-guid"].Type != "uuid" {
+			t.Errorf("%s must identify the unit by GUID", action.Name)
+		}
+	}
+	if found != 2 {
+		t.Fatalf("expected create and update actions, found %d", found)
+	}
+}
