@@ -126,8 +126,8 @@ func init() {
 				RESTBasePath: mpRequirementsPath,
 				RESTPath:     "open",
 				Flags: []FlagDef{
-					{Name: "page", Description: "Page number (1-based)", Type: "int", Default: "1"},
-					{Name: "page-size", Description: "Page size (1-100)", Type: "int", Default: "20"},
+					{Name: "page", Description: "Page number (1-based)", Type: "int", Default: 1},
+					{Name: "page-size", Description: "Page size (1-100)", Type: "int", Default: 20},
 					{Name: "search", Description: "Search item name, anonymous code or type", Type: "string"},
 				},
 			},
