@@ -5,6 +5,22 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.17.0](https://github.com/UteamUP/cli/compare/2.16.0...2.17.0) (2026-09-06)
+
+
+### Features
+
+* add request-scoped on-call worker search ([4d84fed](https://github.com/UteamUP/cli/commit/4d84fed761fb74ecafe3ead0cd3f78e6665df285))
+* expose bookable resource source lookup in CLI ([a18b4ef](https://github.com/UteamUP/cli/commit/a18b4ef3f76649c438b626606526e7bab7d45fe6))
+* expose marketplace request search and paging flags ([3d928de](https://github.com/UteamUP/cli/commit/3d928deafc04498340ed642a6d45b832f46ced21))
+* expose paged handover creation choices in CLI ([4b44e51](https://github.com/UteamUP/cli/commit/4b44e519860d017528d88b28369c8541e9ee0489))
+* filter CLI handovers by public worker GUID ([2cf3e38](https://github.com/UteamUP/cli/commit/2cf3e3807b5d8253c9bfd55de41939e3ba05f3f8))
+
+
+### Bug Fixes
+
+* use integer defaults for marketplace paging flags ([f5aa1f8](https://github.com/UteamUP/cli/commit/f5aa1f8e501d42d855b651727742111113e36860))
+
 ## [2.16.0](https://github.com/UteamUP/cli/compare/2.15.0...2.16.0) (2026-09-05)
 
 
