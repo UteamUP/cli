@@ -81,17 +81,22 @@ func TestBookableResourceSourceFiltersUsePublicGuids(t *testing.T) {
 	}
 }
 
-func TestBookableResourceCreationKeyUsesTheRetryHeader(t *testing.T) {
-	action := findAction(findDomain("bookable-resource"), "create")
-	for _, flag := range action.Flags {
-		if flag.Name == "idempotency-key" {
-			if flag.HeaderName != "Idempotency-Key" || flag.Type != "string" || flag.BodyName != "" {
-				t.Fatalf("creation key must use the GUID retry header: %+v", flag)
+func TestBookableResourceSaveKeysUseTheRetryHeader(t *testing.T) {
+	for _, name := range []string{"create", "update"} {
+		action := findAction(findDomain("bookable-resource"), name)
+		found := false
+		for _, flag := range action.Flags {
+			if flag.Name == "idempotency-key" {
+				found = true
+				if flag.HeaderName != "Idempotency-Key" || flag.Type != "string" || flag.BodyName != "" {
+					t.Errorf("%s key must use the GUID retry header: %+v", name, flag)
+				}
 			}
-			return
+		}
+		if !found {
+			t.Errorf("%s retry key is missing", name)
 		}
 	}
-	t.Fatal("creation retry key is missing")
 }
 
 func TestBookableResourcePoolSearchExposesMemberTypeFilter(t *testing.T) {

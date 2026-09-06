@@ -142,6 +142,8 @@ func init() {
 				Flags: append(
 					bookableResourceMutationFlags(),
 					expectedUpdatedAtQueryFlag(),
+					FlagDef{Name: "idempotency-key", HeaderName: "Idempotency-Key", Type: "string",
+						Description: "Stable save request GUID; reuse the original definition and reviewed version after an uncertain response"},
 				),
 			},
 			{
