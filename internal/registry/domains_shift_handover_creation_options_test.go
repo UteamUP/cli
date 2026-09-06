@@ -2,6 +2,20 @@ package registry
 
 import "testing"
 
+func TestHandoverListFiltersByPublicOperatorGuid(t *testing.T) {
+	domain := findRegisteredDomain(t, "shift-handover")
+	action := findShiftHandoverAction(t, domain, "list")
+	for _, flag := range action.Flags {
+		if flag.Name == "operator-guid" {
+			if flag.Type != "uuid" || flag.BodyName != "operatorGuid" {
+				t.Fatalf("operator filter must remain a public GUID: %+v", flag)
+			}
+			return
+		}
+	}
+	t.Fatal("operator-guid filter is missing")
+}
+
 func TestHandoverCreationOptionsExposeBoundedGuidLookup(t *testing.T) {
 	domain := findRegisteredDomain(t, "shift-handover")
 	action := findShiftHandoverAction(t, domain, "creation-options")

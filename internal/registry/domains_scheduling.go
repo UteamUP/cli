@@ -160,6 +160,7 @@ func init() {
 				{Name: "search", BodyName: "searchTerm", Description: "Search handover notes", Type: "string"},
 				{Name: "status", Description: "draft, submitted, reviewed, accepted, rejected, completed, or archived", Type: "string"},
 				{Name: "shift-guid", BodyName: "shiftGuid", Description: "Optional public shift GUID", Type: "uuid"},
+				{Name: "operator-guid", BodyName: "operatorGuid", Description: "Filter incoming or outgoing worker by public GUID", Type: "uuid"},
 			}},
 		{Name: "get", Description: "Read a handover by its public GUID", ToolName: "UteamupShiftHandoverGet",
 			HTTPMethod: "GET", RESTPath: "by-guid/{handoverGuid}", Args: []ArgDef{
