@@ -145,6 +145,14 @@ func init() {
 		{Name: "unavailable", Description: "Mark a shift user assignment unavailable by GUID", ToolName: "UteamupShiftUserAssignmentMarkUnavailable", HTTPMethod: "PUT", Args: []ArgDef{{Name: "assignmentGuid", Description: "Shift user assignment GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{assignmentGuid}/unavailable", Flags: []FlagDef{{Name: "reason", Description: "Optional reason for unavailability", Type: "string"}}},
 	}})
 	shiftHandoverActions := []Action{
+		{Name: "creation-options", Description: "Find active shifts and eligible handover recipients by name", ToolName: "UteamupShiftHandoverGetCreateOptions",
+			HTTPMethod: "GET", RESTPath: "creation-options", Flags: []FlagDef{
+				{Name: "kind", Description: "0 for shifts, 1 for incoming operators", Required: true, Type: "int"},
+				{Name: "search", Description: "Display-name search, maximum 100 characters", Type: "string"},
+				{Name: "selected-guid", BodyName: "selectedGuid", Description: "Exact public GUID to resolve", Type: "uuid"},
+				{Name: "page", Default: 1, Description: "Page number, maximum 100000", Type: "int"},
+				{Name: "page-size", BodyName: "pageSize", Default: 25, Description: "Items per page, maximum 100", Type: "int"},
+			}},
 		{Name: "list", Description: "Search tenant handovers with pagination", ToolName: "UteamupShiftHandoverSearch",
 			HTTPMethod: "POST", RESTPath: "search", Flags: []FlagDef{
 				{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
