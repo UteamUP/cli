@@ -5,6 +5,16 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.18.0](https://github.com/UteamUP/cli/compare/2.17.0...2.18.0) (2026-09-06)
+
+
+### Features
+
+* accept measured quantities and unit GUIDs in inventory and marketplace commands ([0a2c4c5](https://github.com/UteamUP/cli/commit/0a2c4c534e24a1f0ddc4e4ce2093c4720bf916cc))
+* expose booking service type lookup in CLI ([aae60c5](https://github.com/UteamUP/cli/commit/aae60c5aa4af64bfa8d28dd92bbf0b8eed2fb859))
+* support atomic pool definitions in resource commands ([9043045](https://github.com/UteamUP/cli/commit/90430451f63d4c07a0bdf6888eaf64020d746a42))
+* support resource update retry keys in CLI ([d553d5c](https://github.com/UteamUP/cli/commit/d553d5cb010ff20b1b46123e6b817b3116e70366))
+
 ## [2.17.0](https://github.com/UteamUP/cli/compare/2.16.0...2.17.0) (2026-09-06)
 
 
