@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.19.0](https://github.com/UteamUP/cli/compare/2.18.0...2.19.0) (2026-09-07)
+
+
+### Features
+
+* expose stock count start and reviewed receipt units ([639b992](https://github.com/UteamUP/cli/commit/639b992b71a41720e4ee8be4840aba29c0980464))
+* expose workforce self service through actor-scoped CLI commands ([b74ec6b](https://github.com/UteamUP/cli/commit/b74ec6bfcf45732ffd2a0431277295df00bff2b9))
+
 ## [2.18.0](https://github.com/UteamUP/cli/compare/2.17.0...2.18.0) (2026-09-06)
 
 
