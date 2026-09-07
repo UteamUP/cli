@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.20.0](https://github.com/UteamUP/cli/compare/2.19.0...2.20.0) (2026-09-07)
+
+
+### Features
+
+* expose readiness, rental lifecycle, and quality evidence CLI actions ([f177c5a](https://github.com/UteamUP/cli/commit/f177c5a830354c0f6ee216625fd7bc8ae6ddbfe8))
+* expose transport planning and dispatch CLI actions ([a5a4d0e](https://github.com/UteamUP/cli/commit/a5a4d0ea382f75e7dac3ce6b797fb2e36ecdb04f))
+
 ## [2.19.0](https://github.com/UteamUP/cli/compare/2.18.0...2.19.0) (2026-09-07)
 
 
