@@ -220,3 +220,55 @@ func TestShiftHandoverPreviousUsesShiftGuid(t *testing.T) {
 		t.Fatalf("previous consumed = %v, want one path arg", consumed)
 	}
 }
+
+func TestShiftAssignmentUserDateUsesPublicGuid(t *testing.T) {
+	action := findDomainAction(t, "shift-assignment", "user-date")
+	if len(action.Args) != 2 || action.Args[0].Name != "userGuid" || action.Args[0].Type != "uuid" {
+		t.Fatalf("user-date must accept a public worker GUID: %+v", action.Args)
+	}
+	d := findDomain("shift-assignment")
+	guid := "8c7ae65f-73a8-4af1-a5e2-d0145348257b"
+	got, consumed := buildRESTPath(d, *action, map[string]any{"userGuid": guid, "date": "2026-09-07"})
+	want := "/api/shiftuserassignment/user/by-guid/" + guid + "/date/2026-09-07"
+	if got != want || len(consumed) != 2 {
+		t.Fatalf("user-date route = %q (%v), want %q and two path arguments", got, consumed, want)
+	}
+}
+
+func TestWorkerOwnShiftCommandsUseOwnRoutes(t *testing.T) {
+	cases := []struct {
+		domain, action, tool, method, path string
+		args                               map[string]any
+	}{
+		{"shift-assignment", "mine", "UteamupShiftUserAssignmentMine", "GET", "/api/shiftuserassignment/me/range", nil},
+		{"shift-assignment", "confirm-mine", "UteamupShiftUserAssignmentConfirmMine", "PUT", "/api/shiftuserassignment/me/by-guid/assignment/confirm", map[string]any{"assignmentGuid": "assignment"}},
+		{"shift-assignment", "decline-mine", "UteamupShiftUserAssignmentDeclineMine", "PUT", "/api/shiftuserassignment/me/by-guid/assignment/decline", map[string]any{"assignmentGuid": "assignment"}},
+		{"shift-assignment", "self-assign", "UteamupShiftUserAssignmentSelfAssign", "POST", "/api/shiftuserassignment/me/self-assign", nil},
+		{"shift-request", "mine", "UteamupShiftRequestMine", "GET", "/api/shiftrequest/mine", nil},
+		{"shift-request", "incoming", "UteamupShiftRequestIncoming", "GET", "/api/shiftrequest/mine/counterpart", nil},
+		{"shift-request", "respond", "UteamupShiftRequestRespondCounterpart", "PUT", "/api/shiftrequest/mine/counterpart/by-guid/request/respond", map[string]any{"requestGuid": "request"}},
+		{"shift-request", "withdraw-mine", "UteamupShiftRequestWithdrawMine", "DELETE", "/api/shiftrequest/mine/by-guid/request", map[string]any{"requestGuid": "request"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.domain+"/"+tc.action, func(t *testing.T) {
+			action := findDomainAction(t, tc.domain, tc.action)
+			got, _ := buildRESTPath(findDomain(tc.domain), *action, tc.args)
+			if got != tc.path || action.HTTPMethod != tc.method || action.ToolName != tc.tool {
+				t.Fatalf("own route = %s %s (%s), want %s %s (%s)", action.HTTPMethod, got, action.ToolName, tc.method, tc.path, tc.tool)
+			}
+			for _, arg := range action.Args {
+				if arg.Name == "userGuid" || arg.Name == "userId" || arg.Name == "tenantGuid" {
+					t.Fatalf("own command must derive actor from authentication: %s", arg.Name)
+				}
+			}
+		})
+	}
+	response := findDomainAction(t, "shift-request", "respond")
+	if len(response.Flags) != 1 || response.Flags[0].Name != "accept" || !response.Flags[0].Required {
+		t.Fatal("counterpart response requires an explicit accept decision")
+	}
+	withdraw := findDomainAction(t, "shift-request", "withdraw-mine")
+	if len(withdraw.Flags) != 1 || withdraw.Flags[0].QueryName != "concurrencyToken" || !withdraw.Flags[0].Required {
+		t.Fatal("own withdrawal requires the latest concurrency token")
+	}
+}
