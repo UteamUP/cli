@@ -10,11 +10,16 @@ func TestReliabilityRiskUsesGuidFirstEvidenceRoute(t *testing.T) {
 	if domain.APIPath != "/api/analytics/reliability" {
 		t.Fatalf("API path = %q", domain.APIPath)
 	}
-	if len(domain.Actions) != 10 {
-		t.Fatalf("actions = %d, want 10", len(domain.Actions))
+	if len(domain.Actions) != 12 {
+		t.Fatalf("actions = %d, want 12", len(domain.Actions))
 	}
 
-	action := domain.Actions[0]
+	var action Action
+	for _, candidate := range domain.Actions {
+		if candidate.Name == "risk" {
+			action = candidate
+		}
+	}
 	if action.Name != "risk" ||
 		action.ToolName != "UteamupReliabilityRiskGet" ||
 		action.HTTPMethod != "GET" ||
@@ -160,6 +165,36 @@ func TestReliabilityStrategyUsesReviewOnlyGuidFirstProposalRoute(t *testing.T) {
 	for _, forbidden := range []string{"id", "asset-id"} {
 		if _, exists := flags[forbidden]; exists {
 			t.Fatalf("integer-style identity flag %q must not be exposed", forbidden)
+		}
+	}
+}
+
+func TestReliabilityRecurrenceRoutesUseGuidBindingsAndMeasuredEvidence(t *testing.T) {
+	domain := findDomain("reliability")
+	for _, action := range domain.Actions {
+		if action.Name != "recurrence" && action.Name != "review-action" {
+			continue
+		}
+		if action.HTTPMethod != "GET" {
+			t.Fatalf("evidence action must be read-only: %+v", action)
+		}
+		path, _ := buildRESTPath(domain, action, map[string]any{
+			"rcaGuid": "11111111-1111-4111-8111-111111111111", "actionGuid": "22222222-2222-4222-8222-222222222222",
+		})
+		expected := "/api/analytics/reliability/recurrence"
+		if action.Name == "review-action" {
+			expected += "/rca/11111111-1111-4111-8111-111111111111/actions/22222222-2222-4222-8222-222222222222"
+		}
+		if path != expected {
+			t.Fatalf("path = %q, expected %q", path, expected)
+		}
+		for _, flag := range action.Flags {
+			if flag.Name == "minimum-exposure" && flag.BodyName != "minimumExposure" {
+				t.Fatalf("exposure must preserve source field")
+			}
+			if flag.Name == "asset-id" || flag.Name == "action-id" || flag.Name == "rca-id" {
+				t.Fatalf("integer identity leaked: %+v", flag)
+			}
 		}
 	}
 }

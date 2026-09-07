@@ -45,7 +45,7 @@ func findCAPAAction(t *testing.T, domain *Domain, name string) Action {
 	return Action{}
 }
 
-func TestCAPADomainMirrorsTheNineGovernedOperations(t *testing.T) {
+func TestCAPADomainMirrorsGovernedOperationsAndImplementationOwner(t *testing.T) {
 	t.Parallel()
 	domain := findCAPADomain(t)
 
@@ -64,6 +64,11 @@ func TestCAPADomainMirrorsTheNineGovernedOperations(t *testing.T) {
 		domainBase bool
 	}
 	want := map[string]actionContract{
+		"implementation-get":     {tool: "UteamupCapaImplementationGet", method: "GET", restPath: "{correctivePreventiveActionGuid}/implementation"},
+		"implementation-execute": {tool: "UteamupCapaImplementationExecute", method: "POST", restPath: "{correctivePreventiveActionGuid}/implementation"},
+		"project-references":     {tool: "UteamupCapaProjectReferences", method: "GET", restPath: "improvement-projects"},
+		"project-from-rca":       {tool: "UteamupCapaProjectFromRca", method: "POST", restPath: "improvement-projects/from-rca/{rcaGuid}"},
+
 		"search": {
 			tool:       "UteamupCorrectivePreventiveActionSearch",
 			method:     "GET",
@@ -466,5 +471,20 @@ func assertCAPAValidationError(t *testing.T, action Action, args []string, want 
 	command := &cobra.Command{}
 	if err := validateActionInput(command, args, action); err == nil || !strings.Contains(err.Error(), want) {
 		t.Fatalf("validateActionInput() error = %v, want containing %q", err, want)
+	}
+}
+
+func TestCAPAImplementationRequiresExactConcurrencyAndExplicitConfirmation(t *testing.T) {
+	domain := findCAPADomain(t)
+	action := findCAPAAction(t, domain, "implementation-execute")
+	flags := map[string]FlagDef{}
+	for _, flag := range action.Flags {
+		flags[flag.Name] = flag
+	}
+	if !flags["confirm"].MustBeTrue || !flags["confirm"].LocalOnly || !flags["request-file"].RootJSONObjectFile {
+		t.Fatal("implementation must require explicit reviewed DTO confirmation")
+	}
+	if flags["concurrency-token"].HeaderName != "If-Match" || !flags["concurrency-token"].StrongETag || flags["idempotency-key"].HeaderName != "Idempotency-Key" {
+		t.Fatal("implementation mutation must preserve CAPA retry and concurrency headers")
 	}
 }

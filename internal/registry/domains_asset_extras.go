@@ -31,7 +31,7 @@ func init() {
 	Register(&Domain{
 		Name:        "asset-rental",
 		Description: "Manage asset rentals",
-		Actions: append(crudActions("AssetRental"),
+		Actions: append(assetRentalLifecycleActions(),
 			Action{
 				Name:        "available",
 				Description: "List rental-configured assets currently available",
@@ -77,7 +77,23 @@ func init() {
 		Description: "Manage GUID-first asset calendar bookings",
 		Actions: []Action{
 			{
+				Name: "availability", Description: "Read reconciled future asset availability", ToolName: "UteamupAssetAvailabilityGet",
+				HTTPMethod: "GET", RESTBasePath: "/api/v1/assets", RESTPath: "availability",
+				Args: []ArgDef{
+					{Name: "fromUtc", Description: "UTC horizon start", Required: true, Type: "string"},
+					{Name: "toUtc", Description: "UTC horizon end", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "asset-guid", BodyName: "assetGuid", QueryName: "assetGuids[0]", Description: "Limit to one asset GUID", Type: "string"},
+					{Name: "depot-guid", BodyName: "depotGuid", QueryName: "depotGuid", Description: "Depot location GUID", Type: "string"},
+					{Name: "page", Description: "Asset page", Type: "int", Default: 1},
+					{Name: "page-size", BodyName: "pageSize", QueryName: "pageSize", Description: "Assets per page, at most 50", Type: "int", Default: 20},
+					{Name: "time-zone", BodyName: "timeZone", QueryName: "timeZone", Description: "IANA planning timezone", Type: "string", Default: "UTC"},
+				},
+			},
+			{
 				Name: "list", Description: "List bookings for an asset", ToolName: "UteamupAssetCalendarBookingList",
+				HTTPMethod: "GET", RESTBasePath: "/api/v1/assets", RESTPath: "{assetGuid}/bookings",
 				Args: []ArgDef{{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "string"}},
 				Flags: []FlagDef{
 					{Name: "from", Description: "Optional UTC period start", Type: "string"},
@@ -86,6 +102,7 @@ func init() {
 			},
 			{
 				Name: "conflicts", Description: "Check an asset booking window", ToolName: "UteamupAssetCalendarBookingGetConflicts",
+				HTTPMethod: "GET", RESTBasePath: "/api/v1/assets", RESTPath: "{assetGuid}/bookings/conflicts",
 				Args: []ArgDef{
 					{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "string"},
 					{Name: "start", Description: "Proposed UTC start", Required: true, Type: "string"},
@@ -95,11 +112,13 @@ func init() {
 			},
 			{
 				Name: "create", Description: "Create an asset booking", ToolName: "UteamupAssetCalendarBookingCreate",
+				HTTPMethod: "POST", RESTBasePath: "/api/v1/assets", RESTPath: "{assetGuid}/bookings",
 				Args:  []ArgDef{{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "string"}},
 				Flags: []FlagDef{jsonFlag()},
 			},
 			{
 				Name: "delete", Description: "Delete an asset booking", ToolName: "UteamupAssetCalendarBookingDelete",
+				HTTPMethod: "DELETE", RESTBasePath: "/api/v1/assets", RESTPath: "{assetGuid}/bookings/{bookingGuid}",
 				Args: []ArgDef{
 					{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "string"},
 					{Name: "bookingGuid", Description: "Public booking GUID", Required: true, Type: "string"},

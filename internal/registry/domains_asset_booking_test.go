@@ -16,10 +16,11 @@ func assetBookingDomain(t *testing.T) *Domain {
 func TestAssetBookingDomainMirrorsGuidFirstMcpTools(t *testing.T) {
 	domain := assetBookingDomain(t)
 	wantTools := map[string]string{
-		"list":      "UteamupAssetCalendarBookingList",
-		"conflicts": "UteamupAssetCalendarBookingGetConflicts",
-		"create":    "UteamupAssetCalendarBookingCreate",
-		"delete":    "UteamupAssetCalendarBookingDelete",
+		"availability": "UteamupAssetAvailabilityGet",
+		"list":         "UteamupAssetCalendarBookingList",
+		"conflicts":    "UteamupAssetCalendarBookingGetConflicts",
+		"create":       "UteamupAssetCalendarBookingCreate",
+		"delete":       "UteamupAssetCalendarBookingDelete",
 	}
 
 	if len(domain.Actions) != len(wantTools) {

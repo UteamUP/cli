@@ -8,6 +8,34 @@ func init() {
 		APIPath:     "/api/analytics/reliability",
 		Actions: []Action{
 			{
+				Name: "recurrence", Description: "Compare recorded faults using measured km or engine hours",
+				ToolName: "UteamupReliabilityRecurrenceGet", HTTPMethod: "GET", RESTPath: "recurrence",
+				Flags: []FlagDef{
+					{Name: "from-utc", BodyName: "fromUtc", Description: "UTC evidence-window start", Type: "string", Required: true},
+					{Name: "to-utc", BodyName: "toUtc", Description: "UTC evidence-window end", Type: "string", Required: true},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Optional public asset GUID", Type: "uuid"},
+					{Name: "failure-category-guid", BodyName: "failureCategoryGuid", Description: "Optional recorded fault category GUID", Type: "uuid"},
+					{Name: "exposure-basis", BodyName: "exposureBasis", Description: "distance or engineHours", Type: "string", Default: "distance"},
+					{Name: "page", BodyName: "page", Description: "Page after measured rates are ranked", Type: "int", Default: 1},
+					{Name: "page-size", BodyName: "pageSize", Description: "Page size 1-100", Type: "int", Default: 25},
+				},
+			},
+			{
+				Name: "review-action", Description: "Review recurrence after a completed RCA action without closing CAPA",
+				ToolName: "UteamupReliabilityActionRecurrenceReview", HTTPMethod: "GET", RESTPath: "recurrence/rca/{rcaGuid}/actions/{actionGuid}",
+				Flags: []FlagDef{
+					{Name: "rca-guid", BodyName: "rcaGuid", Description: "Public RCA GUID", Type: "uuid", Required: true},
+					{Name: "action-guid", BodyName: "actionGuid", Description: "Public RCA action GUID", Type: "uuid", Required: true},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Public linked asset GUID", Type: "uuid", Required: true},
+					{Name: "baseline-start-utc", BodyName: "baselineStartUtc", Description: "UTC baseline start before completion", Type: "string", Required: true},
+					{Name: "review-end-utc", BodyName: "reviewEndUtc", Description: "UTC review end after completion", Type: "string", Required: true},
+					{Name: "failure-category-guid", BodyName: "failureCategoryGuid", Description: "Optional recorded fault category GUID", Type: "uuid"},
+					{Name: "exposure-basis", BodyName: "exposureBasis", Description: "distance or engineHours", Type: "string", Default: "distance"},
+					{Name: "minimum-review-days", BodyName: "minimumReviewDays", Description: "Required observation interval in days", Type: "int", Default: 30},
+					{Name: "minimum-exposure", BodyName: "minimumExposure", Description: "Required measured km or engine hours", Type: "float", Default: 0},
+				},
+			},
+			{
 				Name:        "risk",
 				Description: "Rank evidence-backed asset reliability risks and bad actors",
 				ToolName:    "UteamupReliabilityRiskGet",

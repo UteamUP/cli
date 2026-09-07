@@ -63,3 +63,39 @@ func TestAssetRentalRevenueActionUsesOnlyDateRange(t *testing.T) {
 	}
 	t.Fatal("asset-rental revenue action is not registered")
 }
+
+func TestAssetRentalLifecycleUsesGuidArgumentsAndTypedRequestFiles(t *testing.T) {
+	domain := findDomain("asset-rental")
+	expected := map[string]string{"info": "GetByAsset", "history": "GetHistory", "configure": "CreateOrUpdate", "reserve": "Start", "extend": "Extend", "cancel": "Cancel", "checkout": "Checkout", "return": "End", "ready": "Ready"}
+	for _, action := range domain.Actions {
+		suffix, exists := expected[action.Name]
+		if !exists {
+			continue
+		}
+		if action.ToolName != "UteamupAssetrental"+suffix || len(action.Args) != 1 || action.Args[0].Type != "uuid" {
+			t.Fatalf("unsafe or broken rental action: %+v", action)
+		}
+		if action.HTTPMethod == "POST" && (len(action.Flags) != 1 || !action.Flags[0].JSONFile || action.Flags[0].BodyName != "model") {
+			t.Fatalf("rental action must preserve structured evidence: %+v", action)
+		}
+		delete(expected, action.Name)
+	}
+	if len(expected) != 0 {
+		t.Fatalf("missing rental actions: %v", expected)
+	}
+}
+
+func TestAssetReadinessUsesGuidEvidenceActions(t *testing.T) {
+	domain := findDomain("asset-readiness")
+	if domain == nil || len(domain.Actions) != 6 {
+		t.Fatal("six readiness actions must be registered")
+	}
+	for _, action := range domain.Actions {
+		if len(action.Args) != 1 || action.Args[0].Type != "uuid" {
+			t.Fatalf("readiness action leaks an internal identifier: %+v", action)
+		}
+		if action.HTTPMethod == "POST" && (len(action.Flags) != 1 || !action.Flags[0].JSONFile || action.Flags[0].BodyName != "model") {
+			t.Fatalf("readiness evidence must remain structured: %+v", action)
+		}
+	}
+}

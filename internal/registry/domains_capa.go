@@ -23,6 +23,18 @@ func init() {
 		Description: "Manage governed corrective and preventive actions, exact evidence, and source NCR provenance",
 		APIPath:     "/api/quality/corrective-preventive-actions",
 		Actions: []Action{
+			{Name: "implementation-get", Description: "Read the CAPA-linked implementation project and actions", ToolName: "UteamupCapaImplementationGet", HTTPMethod: "GET", RESTPath: "{correctivePreventiveActionGuid}/implementation", Args: []ArgDef{correctivePreventiveActionGUIDArgument()}},
+			{Name: "implementation-execute", Description: "Execute one reviewed implementation operation with CAPA concurrency and audit", ToolName: "UteamupCapaImplementationExecute", HTTPMethod: "POST", RESTPath: "{correctivePreventiveActionGuid}/implementation", Args: []ArgDef{correctivePreventiveActionGUIDArgument()}, Flags: correctivePreventiveActionExistingMutationFlags(true)},
+			{Name: "project-references", Description: "Search named implementation project references through Quality", ToolName: "UteamupCapaProjectReferences", HTTPMethod: "GET", RESTPath: "improvement-projects", Flags: []FlagDef{
+				{Name: "query", QueryName: "query", Type: "string", Description: "Project title search"},
+				{Name: "selected-guid", QueryName: "selectedGuid", Type: "uuid", Description: "Keep the selected project in the result"},
+				{Name: "limit", QueryName: "limit", Type: "int", Default: 50, Description: "Result limit up to 100; refine when HasMore is true"},
+			}},
+			{Name: "project-from-rca", Description: "Create a proposed project from a completed RCA after reviewing its title", ToolName: "UteamupCapaProjectFromRca", HTTPMethod: "POST", RESTPath: "improvement-projects/from-rca/{rcaGuid}", Args: []ArgDef{{Name: "rcaGuid", Type: "uuid", Required: true, Description: "Completed RCA public GUID"}}, Flags: []FlagDef{
+				{Name: "request-guid", BodyName: "requestGuid", Type: "uuid", Required: true, Description: "Caller-generated GUID reused only for an exact retry"},
+				{Name: "title", BodyName: "title", Type: "string", Required: true, Description: "Reviewed implementation project title"},
+			}},
+
 			{
 				Name:              "search",
 				Description:       "Search the permission-filtered CAPA collection",
