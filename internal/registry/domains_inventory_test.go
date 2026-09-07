@@ -3,6 +3,7 @@ package registry
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -1192,6 +1193,9 @@ func TestStockPoFromReceiptActionWired(t *testing.T) {
 	if file.BodyName != "lines" {
 		t.Errorf("po-from-receipt file BodyName = %q, want lines (backend binds CreatePurchaseOrderFromReceiptRequestModel.Lines)", file.BodyName)
 	}
+	if !strings.Contains(file.Description, "unitOfMeasure") {
+		t.Error("receipt line file documentation must require the reviewed purchase unit")
+	}
 
 	for _, name := range []string{"vendor-guid", "currency-guid"} {
 		if f := stockActionFlag(t, "po-from-receipt", name); f.Required || f.Type != "string" {
@@ -1803,5 +1807,15 @@ func TestStockQuarantineReceiptSelection(t *testing.T) {
 		if flag.Type != "string" || flag.Required || flag.BodyName != "purchaseOrderItemGuid" {
 			t.Errorf("%s receipt GUID mapping mismatch: %+v", name, flag)
 		}
+	}
+}
+
+func TestStockStartCountActionWired(t *testing.T) {
+	action := findStockAction(t, "start-count")
+	if action.ToolName != "UteamupStockStartStockTake" || action.RESTPath != "takes/{stockTakeGuid}/start" || action.HTTPMethod != "POST" {
+		t.Fatalf("start-count must call the GUID start transition, got %+v", action)
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "stockTakeGuid" || !action.Args[0].Required || action.Args[0].Type != "string" {
+		t.Fatalf("start-count requires one GUID argument, got %+v", action.Args)
 	}
 }

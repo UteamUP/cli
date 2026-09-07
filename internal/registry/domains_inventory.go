@@ -537,6 +537,14 @@ func init() {
 				Flags:       paginationFlags(),
 			},
 			Action{
+				Name:        "start-count",
+				Description: "Start a pending inventory count without changing stock balances",
+				ToolName:    "UteamupStockStartStockTake",
+				RESTPath:    "takes/{stockTakeGuid}/start",
+				HTTPMethod:  "POST",
+				Args:        []ArgDef{{Name: "stockTakeGuid", Description: "Stock count GUID", Required: true, Type: "string"}},
+			},
+			Action{
 				Name:        "variance",
 				Description: "Get the variance analysis of a stock take (expected vs counted, quantity and value deltas)",
 				ToolName:    "UteamupStockTakeVariance",
@@ -717,12 +725,12 @@ func init() {
 			},
 			Action{
 				Name:        "po-from-receipt",
-				Description: "Create a Draft purchase order from reviewed receipt lines (lines come from a JSON file; the AI parse step is web-app only)",
+				Description: "Create a Draft purchase order from reviewed receipt lines; quantity and unit price must use the catalog purchase unit",
 				ToolName:    "UteamupStockCreatePoFromReceipt",
 				HTTPMethod:  "POST",
 				RESTPath:    "purchase-orders/from-receipt",
 				Flags: []FlagDef{
-					{Name: "file", Short: "f", Description: "Path to a JSON file with the lines: [{\"description\":\"…\",\"quantity\":N,\"unitPrice\":N,\"stockItemGuid\":\"…\"}]", Required: true, Type: "string", JSONFile: true, BodyName: "lines"},
+					{Name: "file", Short: "f", Description: "Path to a JSON file with the lines: [{\"description\":\"…\",\"quantity\":N,\"unitPrice\":N,\"unitOfMeasure\":\"kg\",\"stockItemGuid\":\"…\"}]", Required: true, Type: "string", JSONFile: true, BodyName: "lines"},
 					{Name: "vendor-guid", Description: "Vendor GUID to attach (optional)", Type: "string"},
 					{Name: "currency-guid", Description: "Currency GUID for the order (optional)", Type: "string"},
 				},
