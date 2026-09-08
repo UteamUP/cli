@@ -142,11 +142,12 @@ func TestStockSearchActionWired(t *testing.T) {
 	}
 
 	expectedFlags := map[string]string{
-		"q":          "string",
-		"type":       "string",
-		"stock-guid": "string",
-		"page":       "int",
-		"page-size":  "int",
+		"q":                 "string",
+		"type":              "string",
+		"stock-guid":        "string",
+		"same-item-as-guid": "string",
+		"page":              "int",
+		"page-size":         "int",
 	}
 	gotFlags := make(map[string]string)
 	for _, f := range action.Flags {
