@@ -4,7 +4,23 @@ func init() {
 	// APIPath is explicit because buildRESTPath would otherwise derive "/api/contract" from the
 	// singular domain name, while ContractsController is [Route("api/[controller]")] and so
 	// serves the PLURAL "/api/contracts" — every command 404'd.
-	Register(&Domain{Name: "contract", Aliases: []string{"contracts"}, APIPath: "/api/contracts", Description: "Manage contracts", Actions: crudActions("Contract")})
+	Register(&Domain{
+		Name:        "contract",
+		Aliases:     []string{"contracts"},
+		APIPath:     "/api/contracts",
+		Description: "Manage contracts",
+		Actions: append(crudActions("Contract"), Action{
+			Name:        "list-for-entity",
+			Description: "List contracts linked to an inventory entity public GUID",
+			ToolName:    "UteamupContractListForEntity",
+			RESTPath:    "{entityType}/by-guid/{entityGuid}",
+			HTTPMethod:  "GET",
+			Args: []ArgDef{
+				{Name: "entityType", Description: "asset, tool, part, or chemical", Required: true, Type: "string", AllowedValues: []string{"asset", "tool", "part", "chemical"}},
+				{Name: "entityGuid", Description: "Inventory entity public GUID", Required: true, Type: "uuid"},
+			},
+		}),
+	})
 	Register(&Domain{
 		Name:        "contractor",
 		Aliases:     []string{"contractors"},
@@ -178,6 +194,22 @@ func init() {
 	Register(&Domain{Name: "rental-rate", Description: "Manage rental rates", Actions: crudActions("RentalRate")})
 	// Same plural-controller mismatch as "contract" above: WarrantiesController serves
 	// "/api/warranties", not the derived "/api/warranty".
-	Register(&Domain{Name: "warranty", Aliases: []string{"warranties"}, APIPath: "/api/warranties", Description: "Manage warranties", Actions: crudActions("Warranty")})
+	Register(&Domain{
+		Name:        "warranty",
+		Aliases:     []string{"warranties"},
+		APIPath:     "/api/warranties",
+		Description: "Manage warranties",
+		Actions: append(crudActions("Warranty"), Action{
+			Name:        "list-for-entity",
+			Description: "List warranties linked to an inventory entity public GUID",
+			ToolName:    "UteamupWarrantyListForEntity",
+			RESTPath:    "{entityType}/by-guid/{entityGuid}",
+			HTTPMethod:  "GET",
+			Args: []ArgDef{
+				{Name: "entityType", Description: "asset, tool, part, or chemical", Required: true, Type: "string", AllowedValues: []string{"asset", "tool", "part", "chemical"}},
+				{Name: "entityGuid", Description: "Inventory entity public GUID", Required: true, Type: "uuid"},
+			},
+		}),
+	})
 	Register(&Domain{Name: "commission", Aliases: []string{"commissions"}, Description: "Manage commissions", Actions: crudActions("Commission")})
 }

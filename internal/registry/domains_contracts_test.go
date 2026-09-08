@@ -107,5 +107,19 @@ func TestContractAndWarrantyDomainsUsePluralControllerPaths(t *testing.T) {
 			t.Errorf("%s APIPath = %q, want %q (an empty APIPath derives the singular path and 404s)",
 				name, domain.APIPath, wantPath)
 		}
+
+		var listForEntity *Action
+		for i := range domain.Actions {
+			if domain.Actions[i].Name == "list-for-entity" {
+				listForEntity = &domain.Actions[i]
+				break
+			}
+		}
+		if listForEntity == nil {
+			t.Fatalf("%s is missing list-for-entity", name)
+		}
+		if listForEntity.RESTPath != "{entityType}/by-guid/{entityGuid}" || listForEntity.HTTPMethod != "GET" {
+			t.Errorf("%s list-for-entity = %s %s", name, listForEntity.HTTPMethod, listForEntity.RESTPath)
+		}
 	}
 }
