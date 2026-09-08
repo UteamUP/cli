@@ -5,6 +5,15 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.21.0](https://github.com/UteamUP/cli/compare/2.20.0...2.21.0) (2026-09-08)
+
+
+### Features
+
+* **agreements:** add list-for-entity CLI actions ([9a2cc2e](https://github.com/UteamUP/cli/commit/9a2cc2e86a27d43ad25b149bcff461a33a6e8304))
+* **journal:** add tool, part, and chemical mention-search actions ([54e05b1](https://github.com/UteamUP/cli/commit/54e05b1202c113a0d16210b329e458afecbd8475))
+* **teamsintegration:** add read-only Teams integration domain ([d56d369](https://github.com/UteamUP/cli/commit/d56d369b6b43fc9a12e7aeb2b15375750ffd39c1))
+
 ## [2.20.0](https://github.com/UteamUP/cli/compare/2.19.0...2.20.0) (2026-09-07)
 
 
