@@ -72,6 +72,7 @@ func init() {
 				Name:        "tenant-alerts",
 				Description: "List tenant-wide stock alerts with location grant filtering",
 				ToolName:    "UteamupStockGetTenantAlerts",
+				RESTPath:    "alerts",
 				Flags: []FlagDef{
 					{Name: "page", Description: "Page number", Default: 1, Type: "int"},
 					{Name: "page-size", Description: "Page size", Default: 50, Type: "int"},
@@ -79,6 +80,7 @@ func init() {
 					{Name: "severity", Description: "Critical | Warning | Info", Type: "string"},
 					{Name: "alert-type", Description: "Alert type filter", Type: "string"},
 					{Name: "include-acknowledged", Description: "Include acknowledged history", Type: "bool"},
+					{Name: "acknowledged", Description: "True: acknowledged only; false: active only. Overrides include-acknowledged when set", Type: "bool"},
 					{Name: "stock-guid", Description: "Optional stock location GUID", Type: "uuid"},
 				},
 			},

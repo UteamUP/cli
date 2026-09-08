@@ -37,6 +37,23 @@ func TestStockDomainRegistered(t *testing.T) {
 	}
 }
 
+func TestStockAlertInboxRoutesAndAcknowledgementFilter(t *testing.T) {
+	action := findStockAction(t, "tenant-alerts")
+	path, consumed := buildRESTPath(findStockDomain(t), *action, map[string]any{"acknowledged": false})
+	if path != "/api/stock/alerts" || len(consumed) != 0 {
+		t.Fatalf("stock alert inbox route = %q, consumed = %v", path, consumed)
+	}
+	for _, flag := range action.Flags {
+		if flag.Name == "acknowledged" {
+			if flag.Type != "bool" || flag.Required || flag.Default != nil {
+				t.Fatalf("acknowledged must be an optional explicit boolean: %+v", flag)
+			}
+			return
+		}
+	}
+	t.Fatal("stock alert inbox must expose the acknowledgement-state filter")
+}
+
 func TestStockReservationExposesTheBodyRetryKey(t *testing.T) {
 	action := findStockAction(t, "reserve")
 	for _, flag := range action.Flags {

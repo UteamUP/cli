@@ -1522,6 +1522,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * add Release Please automated versioning ([06f7362](https://github.com/UteamUP/cli/commit/06f736281a7103163b6ecd8c6be04d88eefe30ac))
 
 ## [Unreleased]
+- fix(stock): route tenant-alerts to /api/stock/alerts and support an explicit optional --acknowledged filter for active alerts or history.
 
 ### Added
 - **`uteamup workorder list --asset-guid <guid>` filter.** Added an optional `asset-guid` string flag to the `workorder list` action in `domains_workorder.go` (kebab → camelCase `assetGuid`) so the list can be scoped to a single asset's work orders — the watch NFC → asset → its workorders flow. New contract test `TestWorkorderListHasAssetGuidFlag` in `domains_workorder_test.go` asserts the flag is present, typed `string`, and optional.
