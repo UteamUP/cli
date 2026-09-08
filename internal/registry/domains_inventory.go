@@ -352,7 +352,7 @@ func init() {
 			},
 			Action{
 				Name:        "reserve",
-				Description: "Reserve stock for a workorder, project, or ad-hoc hold (returns Reserved or Backordered)",
+				Description: "Reserve stock for a workorder, project, or ad-hoc hold; insufficient availability is rejected",
 				ToolName:    "UteamupStockCreateReservation",
 				HTTPMethod:  "POST",
 				RESTPath:    "reservations",
@@ -363,6 +363,7 @@ func init() {
 					{Name: "project-guid", Description: "Project GUID that owns the hold", Type: "string"},
 					{Name: "unit-guid", Description: "Specific serialized unit GUID to reserve (quantity must be 1)", Type: "string"},
 					{Name: "reserved-until", Description: "Expiry of the hold, RFC3339 (required when no workorder/project owns it)", Type: "string"},
+					{Name: "idempotency-key", Description: "Reuse this request GUID with unchanged terms after an interrupted response", Type: "uuid"},
 				},
 			},
 			Action{

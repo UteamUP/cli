@@ -37,6 +37,23 @@ func TestStockDomainRegistered(t *testing.T) {
 	}
 }
 
+func TestStockReservationExposesTheBodyRetryKey(t *testing.T) {
+	action := findStockAction(t, "reserve")
+	for _, flag := range action.Flags {
+		if flag.Name != "idempotency-key" {
+			continue
+		}
+		if flag.Type != "uuid" || flag.HeaderName != "" || flag.Required {
+			t.Fatalf("reservation retry key must be an optional body GUID: %+v", flag)
+		}
+		if flag.BodyName != "" && flag.BodyName != "idempotencyKey" {
+			t.Fatalf("reservation key body name = %q", flag.BodyName)
+		}
+		return
+	}
+	t.Fatal("stock reserve must expose the existing server retry-key contract")
+}
+
 func TestStockCrudActionsAreGuidFirstAndLocationScoped(t *testing.T) {
 	expected := map[string]struct {
 		method  string
