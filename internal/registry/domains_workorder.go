@@ -51,6 +51,7 @@ func init() {
 					{Name: "priority", Description: "Priority from 1 to 5", Default: 3, Type: "int"},
 					{Name: "asset-guid", Description: "Optional asset GUID", Type: "uuid"},
 					{Name: "primary-assignee-guid", Description: "Optional primary assignee GUID", Type: "uuid"},
+					{Name: "asset-group-guid", BodyName: "assetGroupGuids", Description: "Optional asset group GUID, repeatable — every active member is linked to the workorder as an asset carrying the group as its origin", Type: "stringSlice"},
 				},
 			},
 			{
@@ -86,6 +87,7 @@ func init() {
 					{Name: "title", Description: "New title", Type: "string"},
 					{Name: "status", Description: "New status", Type: "string"},
 					{Name: "priority", Description: "New priority (1=Low, 2=Medium, 3=High, 4=Urgent, 5=Critical)", Type: "string"},
+					{Name: "asset-group-guid", BodyName: "assetGroupGuids", Description: "Asset group GUID, repeatable — every active member is linked to the workorder as an asset carrying the group as its origin", Type: "stringSlice"},
 					{Name: "from-json", Description: "JSON file with update data", Type: "string"},
 				},
 			},

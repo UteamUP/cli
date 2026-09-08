@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -52,6 +53,23 @@ func TestCodeResolveActionWired(t *testing.T) {
 	}
 	if len(action.Args) != 1 || action.Args[0].Name != "value" || !action.Args[0].Required || action.Args[0].Type != "string" {
 		t.Fatalf("resolve expected single required string positional arg 'value', got %+v", action.Args)
+	}
+}
+
+// The resolver's target vocabulary is the operator's only clue about what a scan can
+// return. CodeResolveResponseModel.TargetType gained assetGroup when asset groups
+// shipped; a description that still stops at `asset` teaches the wrong answer.
+func TestCodeResolveDescriptionListsEveryTargetType(t *testing.T) {
+	d := findCodeDomain(t)
+	action := findAction(d, "resolve")
+	if action == nil {
+		t.Fatal("expected `resolve` action on code domain")
+	}
+
+	for _, target := range []string{"stockItem", "stockItemUnit", "stockBin", "asset", "assetGroup", "unknown"} {
+		if !strings.Contains(action.Description, target) {
+			t.Errorf("resolve description is missing the %q target type: %q", target, action.Description)
+		}
 	}
 }
 

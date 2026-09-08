@@ -105,6 +105,11 @@ type FlagDef struct {
 	// StrongETag accepts the opaque token returned by an API response and sends
 	// it as one validated, quoted strong ETag header value.
 	StrongETag bool
+	// AllowedValues constrains a string flag to exact, stable values. It is
+	// required for a flag that fills a `{name}` placeholder in RESTPath — the
+	// expansion does not escape, so an unconstrained flag there would let a
+	// caller reshape the route.
+	AllowedValues []string
 }
 
 var uuidValuePattern = regexp.MustCompile(
@@ -171,6 +176,17 @@ type Action struct {
 	// DisableResponseExport prevents the profile-level JSON export feature
 	// from persisting secret-bearing responses such as transfer challenges.
 	DisableResponseExport bool
+	// PollWaitFlag names a LocalOnly boolean flag that turns an action which queues
+	// background work into a blocking one. After the action's own call returns, the CLI
+	// re-reads the queued record until PollStatusField holds one of
+	// PollTerminalStatuses. PollPath is a `{name}`-templated suffix under the domain
+	// base path whose single placeholder is filled from PollIdentifierField on the
+	// first response. Without the flag the action stays fire-and-forget.
+	PollWaitFlag         string
+	PollPath             string
+	PollIdentifierField  string
+	PollStatusField      string
+	PollTerminalStatuses []string
 }
 
 // Domain represents an entity domain with its available actions.
@@ -380,6 +396,16 @@ func validateActionInput(cmd *cobra.Command, args []string, action Action) error
 				return fmt.Errorf("invalid --%s: %w", flag.Name, err)
 			}
 		}
+		if len(flag.AllowedValues) > 0 {
+			value, _ := cmd.Flags().GetString(flag.Name)
+			if !containsExact(flag.AllowedValues, strings.TrimSpace(value)) {
+				return fmt.Errorf(
+					"invalid --%s: must be one of %s",
+					flag.Name,
+					strings.Join(flag.AllowedValues, ", "),
+				)
+			}
+		}
 	}
 
 	return nil
@@ -433,26 +459,51 @@ func validateActionDefinition(action Action) error {
 				argument.Name,
 			)
 		}
-		seen := make(map[string]struct{}, len(argument.AllowedValues))
-		for _, value := range argument.AllowedValues {
-			if value == "" || strings.TrimSpace(value) != value || strings.ContainsAny(value, "/\\?#") {
-				return fmt.Errorf(
-					"invalid action %s: %s contains an unsafe allowed route value",
-					action.Name,
-					argument.Name,
-				)
-			}
-			if _, exists := seen[value]; exists {
-				return fmt.Errorf(
-					"invalid action %s: %s contains duplicate allowed values",
-					action.Name,
-					argument.Name,
-				)
-			}
-			seen[value] = struct{}{}
+		if err := validateAllowedRouteValues(action.Name, argument.Name, argument.AllowedValues); err != nil {
+			return err
 		}
 	}
 
+	for _, flag := range action.Flags {
+		if len(flag.AllowedValues) == 0 {
+			continue
+		}
+		if flag.Type != "string" {
+			return fmt.Errorf(
+				"invalid action %s: --%s allowed values require a string flag",
+				action.Name,
+				flag.Name,
+			)
+		}
+		if err := validateAllowedRouteValues(action.Name, "--"+flag.Name, flag.AllowedValues); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// validateAllowedRouteValues rejects an allowed-value set that could not be spliced into
+// a URL path safely. Path expansion does not escape, so the constraint IS the escaping.
+func validateAllowedRouteValues(actionName, label string, values []string) error {
+	seen := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		if value == "" || strings.TrimSpace(value) != value || strings.ContainsAny(value, "/\\?#") {
+			return fmt.Errorf(
+				"invalid action %s: %s contains an unsafe allowed route value",
+				actionName,
+				label,
+			)
+		}
+		if _, exists := seen[value]; exists {
+			return fmt.Errorf(
+				"invalid action %s: %s contains duplicate allowed values",
+				actionName,
+				label,
+			)
+		}
+		seen[value] = struct{}{}
+	}
 	return nil
 }
 
@@ -684,6 +735,17 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		}
 	}
 
+	if action.PollWaitFlag != "" {
+		wait, _ := cmd.Flags().GetBool(action.PollWaitFlag)
+		if wait {
+			polled, pollErr := pollUntilTerminal(apiClient, domain, action, result, logger)
+			if pollErr != nil {
+				return pollErr
+			}
+			result = polled
+		}
+	}
+
 	if action.DownloadURLField != "" {
 		var payload map[string]any
 		if err := json.Unmarshal(result, &payload); err != nil {
@@ -715,6 +777,85 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 
 	format := output.ParseFormat(*outputFormat)
 	return output.Print(format, result)
+}
+
+// pollWaitInterval and pollWaitTimeout bound a --wait run. The interval is long enough
+// not to hammer the API and short enough that a job finishing in seconds still feels
+// immediate; the timeout is the caller's guarantee that --wait always returns.
+const (
+	pollWaitInterval = 3 * time.Second
+	pollWaitTimeout  = 10 * time.Minute
+)
+
+// pollUntilTerminal re-reads the record the action just queued until its status field
+// reaches a terminal value, and returns that last read. A response that carries no
+// identifier, or that is already terminal, is returned untouched — the caller is not
+// made to wait for work that is already done.
+func pollUntilTerminal(
+	apiClient *client.APIClient,
+	domain *Domain,
+	action Action,
+	first json.RawMessage,
+	logger *logging.Logger,
+) (json.RawMessage, error) {
+	var payload map[string]any
+	if err := json.Unmarshal(first, &payload); err != nil {
+		return nil, fmt.Errorf("reading queued response: %w", err)
+	}
+	identifier, ok := payload[action.PollIdentifierField].(string)
+	if !ok || strings.TrimSpace(identifier) == "" {
+		return first, nil
+	}
+	if isTerminalStatus(payload[action.PollStatusField], action.PollTerminalStatuses) {
+		return first, nil
+	}
+
+	basePath := domain.APIPath
+	if basePath == "" {
+		basePath = "/api/" + strings.ReplaceAll(domain.Name, "-", "")
+	}
+	suffix, _ := expandPathTemplate(action.PollPath, map[string]any{action.PollIdentifierField: identifier})
+	pollPath := basePath + "/" + suffix
+
+	ctx, cancel := context.WithTimeout(context.Background(), pollWaitTimeout)
+	defer cancel()
+
+	latest := first
+	for {
+		select {
+		case <-ctx.Done():
+			return latest, fmt.Errorf("timed out after %s waiting for %s to finish", pollWaitTimeout, identifier)
+		case <-time.After(pollWaitInterval):
+		}
+
+		next, err := apiClient.CallREST(ctx, "GET", pollPath, nil, nil, action.Name)
+		if err != nil {
+			return nil, err
+		}
+		latest = next
+
+		var polled map[string]any
+		if err := json.Unmarshal(next, &polled); err != nil {
+			return nil, fmt.Errorf("reading polled response: %w", err)
+		}
+		if isTerminalStatus(polled[action.PollStatusField], action.PollTerminalStatuses) {
+			return next, nil
+		}
+		logger.Debug("waiting for %s: status %v", identifier, polled[action.PollStatusField])
+	}
+}
+
+func isTerminalStatus(value any, terminal []string) bool {
+	status, ok := value.(string)
+	if !ok {
+		return false
+	}
+	for _, candidate := range terminal {
+		if strings.EqualFold(status, candidate) {
+			return true
+		}
+	}
+	return false
 }
 
 func formatStrongETag(value string) (string, error) {

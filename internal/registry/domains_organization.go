@@ -15,7 +15,7 @@ func init() {
 		Actions: append(crudActions("Code"),
 			Action{
 				Name:        "resolve",
-				Description: "Resolve a scanned value (code, serial number, or bin code) to its typed target: stockItem | stockItemUnit | stockBin | asset | unknown",
+				Description: "Resolve a scanned value (code, serial number, or bin code) to its typed target: stockItem | stockItemUnit | stockBin | asset | assetGroup | unknown",
 				ToolName:    "UteamupCodeResolve",
 				RESTPath:    "resolve/{value}",
 				Args:        []ArgDef{{Name: "value", Description: "Scanned/typed value to resolve", Required: true, Type: "string"}},
