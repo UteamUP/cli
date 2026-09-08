@@ -520,7 +520,7 @@ func init() {
 			},
 			{
 				Name:        "update",
-				Description: "Full update of a BOM line (PUT — supply every field you want kept)",
+				Description: "Edit a material plan; read the line first and retain its item identity and recorded stock usage",
 				ToolName:    "UteamupProjectBomUpdate",
 				RESTPath:    "{projectGuid}/bom/{itemGuid}",
 				Args: []ArgDef{
@@ -536,13 +536,13 @@ func init() {
 					{Name: "item-type", Description: "Item type: StockItem, Chemical, Part, Tool, or Asset", Required: true, Type: "string"},
 					{Name: "item-guid", Description: "External GUID of the referenced catalog item (of the matching item type)", Required: true, Type: "string"},
 					{Name: "quantity-required", Description: "Quantity of this item required for the project", Required: true, Type: "float"},
-					{Name: "quantity-actual", Description: "Actual quantity consumed/used so far", Default: 0.0, Type: "float"},
-					{Name: "is-consumed", Description: "Whether this line has been fully consumed/allocated", Default: false, Type: "bool"},
+					{Name: "quantity-actual", Description: "Current recorded stock usage (copy from get); manually editable only for Asset allocations", Default: 0.0, Type: "float"},
+					{Name: "is-consumed", Description: "Advisory only; completion is derived from actual and required quantities", Default: false, Type: "bool"},
 				},
 			},
 			{
 				Name:        "delete",
-				Description: "Delete a BOM line from a project",
+				Description: "Delete an unused BOM line; lines with usage, reservation history or assigned units are retained",
 				ToolName:    "UteamupProjectBomDelete",
 				RESTPath:    "{projectGuid}/bom/{itemGuid}",
 				Args: []ArgDef{
