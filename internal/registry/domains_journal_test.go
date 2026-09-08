@@ -43,6 +43,9 @@ func TestJournalDomainActions(t *testing.T) {
 		"create-from-image": "UteamupJournalCreateFromImage",
 		"search-assets":     "UteamupAssetMentionSearch",
 		"search-workorders": "UteamupWorkorderMentionSearch",
+		"search-tools":      "UteamupToolMentionSearch",
+		"search-parts":      "UteamupPartMentionSearch",
+		"search-chemicals":  "UteamupChemicalMentionSearch",
 	}
 
 	actionMap := make(map[string]string)
@@ -281,6 +284,9 @@ func TestJournalMentionSearchActionsUseControllerRoutes(t *testing.T) {
 	}{
 		{name: "search-assets", basePath: "/api/asset"},
 		{name: "search-workorders", basePath: "/api/workorder"},
+		{name: "search-tools", basePath: "/api/tool"},
+		{name: "search-parts", basePath: "/api/part"},
+		{name: "search-chemicals", basePath: "/api/chemical"},
 	} {
 		action := findAction(d, tc.name)
 		if action == nil {

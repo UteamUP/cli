@@ -128,6 +128,42 @@ func init() {
 					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int", QueryName: "limit"},
 				},
 			},
+			{
+				Name:         "search-tools",
+				Description:  "Search tools for journal mention linking (tenant-scoped)",
+				ToolName:     "UteamupToolMentionSearch",
+				RESTBasePath: "/api/tool",
+				RESTPath:     "mention-search",
+				HTTPMethod:   "GET",
+				Args:         []ArgDef{{Name: "query", Description: "Search query (min 1 char)", Required: true, Type: "string", QueryName: "query"}},
+				Flags: []FlagDef{
+					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int", QueryName: "limit"},
+				},
+			},
+			{
+				Name:         "search-parts",
+				Description:  "Search parts for journal mention linking (tenant-scoped)",
+				ToolName:     "UteamupPartMentionSearch",
+				RESTBasePath: "/api/part",
+				RESTPath:     "mention-search",
+				HTTPMethod:   "GET",
+				Args:         []ArgDef{{Name: "query", Description: "Search query (min 1 char)", Required: true, Type: "string", QueryName: "query"}},
+				Flags: []FlagDef{
+					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int", QueryName: "limit"},
+				},
+			},
+			{
+				Name:         "search-chemicals",
+				Description:  "Search chemicals for journal mention linking (tenant-scoped)",
+				ToolName:     "UteamupChemicalMentionSearch",
+				RESTBasePath: "/api/chemical",
+				RESTPath:     "mention-search",
+				HTTPMethod:   "GET",
+				Args:         []ArgDef{{Name: "query", Description: "Search query (min 1 char)", Required: true, Type: "string", QueryName: "query"}},
+				Flags: []FlagDef{
+					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int", QueryName: "limit"},
+				},
+			},
 		},
 	})
 }
