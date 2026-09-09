@@ -13,13 +13,13 @@ func init() {
 			{Name: "nameFilter", Description: "Partial, case-insensitive name filter", Type: "string"},
 			{Name: "pageNumber", Description: "Page number (default 1)", Type: "int"},
 			{Name: "pageSize", Description: "Page size (default 10, max 100)", Type: "int"},
-		}},
+		}, Flags: []FlagDef{{Name: "project-guid", Description: "Only workflows owned by this project", Type: "non-empty-uuid"}}},
 		{Name: "get", HTTPMethod: "GET", Description: "Get one automation", ToolName: "UteamupAutomationGet", RESTPath: "by-guid/{externalGuid}", Args: []ArgDef{automationGuid}},
 		{Name: "workflow-get", HTTPMethod: "GET", Description: "Get the draft workflow graph", ToolName: "UteamupAutomationWorkflowGet", RESTPath: "by-guid/{externalGuid}/workflow", Args: []ArgDef{automationGuid}},
 		{Name: "workflow-save", HTTPMethod: "PUT", Description: "Save the draft workflow graph", ToolName: "UteamupAutomationWorkflowSave", RESTPath: "by-guid/{externalGuid}/workflow", Args: []ArgDef{
 			automationGuid,
 			{Name: "workflowDefinitionJson", Description: "Workflow graph JSON", Required: true, Type: "string"},
-		}},
+		}, Flags: []FlagDef{{Name: "expected-updated-at", Description: "Latest draft revision; rejects concurrent edits", Type: "string"}}},
 		{Name: "workflow-validate", HTTPMethod: "POST", Description: "Validate the draft without publishing", ToolName: "UteamupAutomationWorkflowValidate", RESTPath: "by-guid/{externalGuid}/validate", Args: []ArgDef{
 			automationGuid,
 			{Name: "workflowDefinitionJson", Description: "Graph JSON to validate instead of the saved draft", Type: "string"},
@@ -27,7 +27,7 @@ func init() {
 		{Name: "workflow-publish", HTTPMethod: "POST", Description: "Publish the draft so the runtime executes it", ToolName: "UteamupAutomationWorkflowPublish", RESTPath: "by-guid/{externalGuid}/publish", Args: []ArgDef{
 			automationGuid,
 			{Name: "note", Description: "Version note", Type: "string"},
-		}},
+		}, Flags: []FlagDef{{Name: "expected-updated-at", Description: "Latest reviewed draft revision", Type: "string"}}},
 		{Name: "state", HTTPMethod: "GET", Description: "Published version, failures and secrets state", ToolName: "UteamupAutomationState", RESTPath: "by-guid/{externalGuid}/state", Args: []ArgDef{automationGuid}},
 		{Name: "versions", HTTPMethod: "GET", Description: "Published version history", ToolName: "UteamupAutomationVersions", RESTPath: "by-guid/{externalGuid}/versions", Args: []ArgDef{automationGuid}},
 		{Name: "trigger", HTTPMethod: "POST", Description: "Start one automation by hand", ToolName: "UteamupAutomationTrigger", RESTPath: "by-guid/{externalGuid}/trigger", Args: []ArgDef{
