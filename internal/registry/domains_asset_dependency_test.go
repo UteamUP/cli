@@ -105,6 +105,7 @@ func TestAssetDependencyCreateCarriesTheEdgeAndItsMirror(t *testing.T) {
 		typ      string
 		required bool
 	}{
+		"asset-group-guid":     {"assetGroupGuid", "non-empty-uuid", false},
 		"source-asset-guid":    {"sourceAssetGuid", "non-empty-uuid", true},
 		"target-asset-guid":    {"targetAssetGuid", "non-empty-uuid", true},
 		"dependency-type":      {"dependencyType", "string", false},

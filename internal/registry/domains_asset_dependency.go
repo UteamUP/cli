@@ -25,6 +25,7 @@ func init() {
 				Description: "Create an edge and, with --create-reverse, its mirror",
 				ToolName:    "UteamupAssetDependencyCreate",
 				Flags: []FlagDef{
+					{Name: "asset-group-guid", BodyName: "assetGroupGuid", Description: "Group whose diagram owns this rule", Type: "non-empty-uuid"},
 					{Name: "source-asset-guid", BodyName: "sourceAssetGuid", Description: "Asset the edge starts at", Required: true, Type: "non-empty-uuid"},
 					{Name: "target-asset-guid", BodyName: "targetAssetGuid", Description: "Asset the edge points at", Required: true, Type: "non-empty-uuid"},
 					{Name: "dependency-type", BodyName: "dependencyType", Description: "DependsOn (default), Feeds, Powers, Controls, Cools, Protects, Communicates or Other", Default: "DependsOn", Type: "string"},
