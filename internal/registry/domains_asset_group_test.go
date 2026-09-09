@@ -38,6 +38,7 @@ func TestAssetGroupDomainRoutesUnderAssetgroup(t *testing.T) {
 func TestAssetGroupActionsMatchBackendContract(t *testing.T) {
 	d := assetGroupDomain(t)
 	cases := []struct{ name, tool, method, path string }{
+		{"maintenance-acknowledge", "UteamupAssetGroupMaintenanceAcknowledge", "POST", "by-guid/{groupGuid}/maintenance/acknowledge"},
 		{"list", "UteamupAssetGroupList", "", ""},
 		{"get", "UteamupAssetGroupGet", "", "by-guid/{groupGuid}"},
 		{"create", "UteamupAssetGroupCreate", "", ""},

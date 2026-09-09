@@ -14,6 +14,9 @@ func init() {
 		Description: "Group assets, draw how they are connected, and simulate what a failure does",
 		APIPath:     "/api/assetgroup",
 		Actions: []Action{
+			{Name: "maintenance-acknowledge", Description: "Record awareness of the exact planned maintenance revision returned by live-status",
+				ToolName: "UteamupAssetGroupMaintenanceAcknowledge", HTTPMethod: "POST", RESTPath: "by-guid/{groupGuid}/maintenance/acknowledge",
+				Args: []ArgDef{groupGuid}, Flags: []FlagDef{{Name: "revision", Description: "Reviewed maintenance revision (dates and affected assets)", Required: true, Type: "string"}}},
 			{
 				Name:        "list",
 				Description: "List the tenant's asset groups with member and dependency counts",

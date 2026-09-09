@@ -112,6 +112,7 @@ func TestAssetDependencyCreateCarriesTheEdgeAndItsMirror(t *testing.T) {
 		"failure-impact":       {"failureImpact", "string", false},
 		"impact-delay-minutes": {"impactDelayMinutes", "int", false},
 		"create-reverse":       {"createReverse", "string", false},
+		"conditions":           {"conditions", "string", false},
 	} {
 		flag, ok := flags[name]
 		if !ok {

@@ -30,6 +30,7 @@ func init() {
 					{Name: "target-asset-guid", BodyName: "targetAssetGuid", Description: "Asset the edge points at", Required: true, Type: "non-empty-uuid"},
 					{Name: "dependency-type", BodyName: "dependencyType", Description: "DependsOn (default), Feeds, Powers, Controls, Cools, Protects, Communicates or Other", Default: "DependsOn", Type: "string"},
 					{Name: "failure-impact", BodyName: "failureImpact", Description: "What the target experiences when the source fails: None (default), Degraded, Stopped or SafetyRisk", Default: "None", Type: "string"},
+					{Name: "conditions", BodyName: "conditions", Description: "AND/OR observations: {match: all|any, items: [{assetGuid, state}]}", Type: "string", JSONFile: true},
 					{Name: "impact-delay-minutes", BodyName: "impactDelayMinutes", Description: "How long the target survives before the impact lands", Type: "int"},
 					{Name: "notes", Description: "Why the two assets are connected", Type: "string"},
 					{Name: "create-reverse", Description: "JSON object for the mirrored target-to-source edge: {dependencyType, failureImpact, impactDelayMinutes}", Type: "string", JSONFile: true, BodyName: "createReverse"},
@@ -44,6 +45,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "dependency-type", BodyName: "dependencyType", Description: "DependsOn, Feeds, Powers, Controls, Cools, Protects, Communicates or Other", Type: "string"},
 					{Name: "failure-impact", BodyName: "failureImpact", Description: "None, Degraded, Stopped or SafetyRisk", Type: "string"},
+					{Name: "conditions", BodyName: "conditions", Description: "AND/OR observations: {match: all|any, items: [{assetGuid, state}]}", Type: "string", JSONFile: true},
 					{Name: "impact-delay-minutes", BodyName: "impactDelayMinutes", Description: "How long the target survives before the impact lands", Type: "int"},
 					{Name: "notes", Description: "Why the two assets are connected", Type: "string"},
 				},
