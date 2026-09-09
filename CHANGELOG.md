@@ -5,6 +5,27 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.22.0](https://github.com/UteamUP/cli/compare/2.21.0...2.22.0) (2026-09-09)
+
+
+### Features
+
+* **cli:** asset group, dependency, dossier and share domains ([732bdb6](https://github.com/UteamUP/cli/commit/732bdb6bc759caf2207cba6946473880be5830a2))
+* expose asset maintenance conditions ([d018bf8](https://github.com/UteamUP/cli/commit/d018bf8edb8006e5e8a1ad87262ea45c9fc74379))
+* filter stock search by source catalog identity ([91fead9](https://github.com/UteamUP/cli/commit/91fead9f1082f1a632957e20242dc1342ae16a18))
+
+
+### Bug Fixes
+
+* expose stock reservation retry keys ([17b9974](https://github.com/UteamUP/cli/commit/17b9974e11e53bffe79f8838c9de8651a4b5e50a))
+* scope asset dependency creation to groups ([8f014a4](https://github.com/UteamUP/cli/commit/8f014a4a63097422c26d346b7d113cdd5186ae7e))
+* **stock:** route tenant alerts and expose history filter ([25a6f5d](https://github.com/UteamUP/cli/commit/25a6f5d66dd09a012672c18e4e1a21552982b2a2))
+
+
+### Documentation
+
+* clarify project material plan update and deletion rules ([57a94ec](https://github.com/UteamUP/cli/commit/57a94ec2ee4a0c5dd33c9a360489c9400577af5d))
+
 ## [2.21.0](https://github.com/UteamUP/cli/compare/2.20.0...2.21.0) (2026-09-08)
 
 
