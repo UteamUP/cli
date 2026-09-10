@@ -23,6 +23,12 @@ package registry
 //	PUT    /api/projects/{projectGuid}/stages/reorder               — reorder (body: stageGuids)
 //	PUT    /api/projects/{projectGuid}/stages/{stageGuid}/status    — status-only transition
 //
+//	GET    /api/projects/{projectGuid}/stages/{stageGuid}/criteria                  — list gate criteria
+//	POST   /api/projects/{projectGuid}/stages/{stageGuid}/criteria                  — add a criterion
+//	PUT    /api/projects/{projectGuid}/stages/{stageGuid}/criteria/{criterionGuid}  — full update
+//	DELETE /api/projects/{projectGuid}/stages/{stageGuid}/criteria/{criterionGuid}  — delete criterion
+//	PUT    /api/projects/{projectGuid}/stages/{stageGuid}/criteria/reorder          — reorder (body: criterionGuids)
+//
 //	GET    /api/projects/{projectGuid}/outputitems                    — list output items
 //	GET    /api/projects/{projectGuid}/outputitems/{itemGuid}         — fetch one item
 //	POST   /api/projects/{projectGuid}/outputitems                    — create item
@@ -56,7 +62,7 @@ func init() {
 	Register(&Domain{
 		Name:        "project-stage",
 		Aliases:     []string{"project-stages", "stages"},
-		Description: "Manage project stages: gated phases with ordering, milestones, and status transitions",
+		Description: "Manage project stages: gated phases with ordering, milestones, gate criteria, and status derived from their work orders",
 		APIPath:     "/api/projects",
 		Actions: []Action{
 			{
@@ -85,7 +91,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "name", Description: "Stage display name", Required: true, Type: "string"},
 					{Name: "order", Description: "Ordering position (1 = first)", Required: true, Type: "int"},
-					{Name: "gate-criteria-json", Description: "Optional JSON-encoded gate criteria that must be met before advancing past this stage", Type: "string"},
+					{Name: "gate-criteria-json", Description: "Deprecated and ignored on write — manage criteria with `ut project-stage add-criterion`", Type: "string"},
 					{Name: "start-date", Description: "Optional planned start date (ISO 8601, e.g. 2026-07-01)", Type: "string"},
 					{Name: "due-date", Description: "Optional planned due date / milestone (ISO 8601)", Type: "string"},
 				},
@@ -102,8 +108,8 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "name", Description: "Stage display name", Required: true, Type: "string"},
 					{Name: "order", Description: "Ordering position (1 = first)", Required: true, Type: "int"},
-					{Name: "status", Description: "Stage status: NotStarted, InProgress, Completed, Blocked, or Skipped", Required: true, Type: "string"},
-					{Name: "gate-criteria-json", Description: "Optional JSON-encoded gate criteria", Type: "string"},
+					{Name: "status", Description: "Stage status: NotStarted, InProgress, Completed, Blocked, Skipped, or Cancelled", Required: true, Type: "string"},
+					{Name: "gate-criteria-json", Description: "Deprecated and ignored on write — manage criteria with `ut project-stage update-criterion`", Type: "string"},
 					{Name: "start-date", Description: "Optional planned start date (ISO 8601)", Type: "string"},
 					{Name: "due-date", Description: "Optional planned due date / milestone (ISO 8601)", Type: "string"},
 				},
@@ -151,12 +157,12 @@ func init() {
 					{Name: "stageGuid", Description: "Stage GUID", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
-					{Name: "status", Description: "New status: NotStarted, InProgress, Completed, Blocked, or Skipped", Required: true, Type: "string"},
+					{Name: "status", Description: "New status: NotStarted, InProgress, Completed, Blocked, Skipped, or Cancelled", Required: true, Type: "string"},
 				},
 			},
 			{
 				Name:        "assign-workorder",
-				Description: "Assign a work order to this stage (the work order must already belong to the project)",
+				Description: "Assign a work order to this stage; one on no project is adopted onto the project, one on a different project is refused",
 				ToolName:    "UteamupProjectStageAssignWorkorder",
 				HTTPMethod:  "PUT",
 				RESTPath:    "{projectGuid}/stages/{stageGuid}/workorders/{workorderGuid}",
@@ -176,6 +182,77 @@ func init() {
 					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
 					{Name: "stageGuid", Description: "Stage GUID", Required: true, Type: "string"},
 					{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "criteria",
+				Description: "List a stage's gate criteria — isMet true (met), false (unmet, blocks the gate), or null (never assessed, does not block)",
+				ToolName:    "UteamupProjectStageCriteriaList",
+				RESTPath:    "{projectGuid}/stages/{stageGuid}/criteria",
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
+					{Name: "stageGuid", Description: "Stage GUID", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "add-criterion",
+				Description: "Add a gate criterion to a stage; pass --workorder-guid to have it met by a work order's completion instead of a checkbox",
+				ToolName:    "UteamupProjectStageCriterionCreate",
+				HTTPMethod:  "POST",
+				RESTPath:    "{projectGuid}/stages/{stageGuid}/criteria",
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
+					{Name: "stageGuid", Description: "Stage GUID", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "label", Description: "What has to be true, e.g. 'Drawings approved'", Required: true, Type: "string"},
+					{Name: "order", Description: "Position within the stage; omit or 0 to append", Type: "int"},
+					{Name: "is-met", Description: "Met state for a hand-ticked criterion. Ignored when --workorder-guid is set", Type: "bool"},
+					{Name: "workorder-guid", Description: "Optional work order that answers this criterion; it is then met only when that work order completes", Type: "string"},
+				},
+			},
+			{
+				Name:        "update-criterion",
+				Description: "Full update of a gate criterion (PUT). Marking one met is refused while its linked work order is unfinished",
+				ToolName:    "UteamupProjectStageCriterionUpdate",
+				HTTPMethod:  "PUT",
+				RESTPath:    "{projectGuid}/stages/{stageGuid}/criteria/{criterionGuid}",
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
+					{Name: "stageGuid", Description: "Stage GUID", Required: true, Type: "string"},
+					{Name: "criterionGuid", Description: "Criterion GUID", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "label", Description: "What has to be true", Required: true, Type: "string"},
+					{Name: "order", Description: "Position within the stage; omit or 0 to leave unchanged", Type: "int"},
+					{Name: "is-met", Description: "Met state for a hand-ticked criterion", Type: "bool"},
+					{Name: "workorder-guid", Description: "Work order that answers this criterion; pass an empty GUID to unlink it", Type: "string"},
+				},
+			},
+			{
+				Name:        "delete-criterion",
+				Description: "Delete a gate criterion (the linked work order, if any, is left alone)",
+				ToolName:    "UteamupProjectStageCriterionDelete",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "{projectGuid}/stages/{stageGuid}/criteria/{criterionGuid}",
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
+					{Name: "stageGuid", Description: "Stage GUID", Required: true, Type: "string"},
+					{Name: "criterionGuid", Description: "Criterion GUID", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "reorder-criteria",
+				Description: "Reorder a stage's gate criteria — pass exactly the stage's criterion GUIDs in the desired order",
+				ToolName:    "UteamupProjectStageCriteriaReorder",
+				HTTPMethod:  "PUT",
+				RESTPath:    "{projectGuid}/stages/{stageGuid}/criteria/reorder",
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "string"},
+					{Name: "stageGuid", Description: "Stage GUID", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "criterion-guids", Description: "Criterion GUIDs in the desired order (comma-separated or repeated)", Required: true, Type: "stringSlice"},
 				},
 			},
 		},

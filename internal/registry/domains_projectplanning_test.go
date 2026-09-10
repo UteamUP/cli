@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -150,6 +151,78 @@ func TestProjectStageSetStatusFlag(t *testing.T) {
 	f := findFlag(a, "status")
 	if f == nil || !f.Required || f.Type != "string" {
 		t.Errorf("set-status must have a required string `status` flag, got %+v", f)
+	}
+	// Cancelled joined the enum when stage status started following the work orders;
+	// a stage whose every work order was cancelled reports Cancelled, not Skipped.
+	if !strings.Contains(f.Description, "Cancelled") {
+		t.Errorf("set-status status flag must document Cancelled, got %q", f.Description)
+	}
+}
+
+// --- project-stage gate criteria ---
+
+func TestProjectStageCriteriaActionRouteTemplates(t *testing.T) {
+	cases := []struct {
+		action   string
+		tool     string
+		method   string
+		restPath string
+	}{
+		{"criteria", "UteamupProjectStageCriteriaList", "", "{projectGuid}/stages/{stageGuid}/criteria"},
+		{"add-criterion", "UteamupProjectStageCriterionCreate", "POST", "{projectGuid}/stages/{stageGuid}/criteria"},
+		{"update-criterion", "UteamupProjectStageCriterionUpdate", "PUT", "{projectGuid}/stages/{stageGuid}/criteria/{criterionGuid}"},
+		{"delete-criterion", "UteamupProjectStageCriterionDelete", "DELETE", "{projectGuid}/stages/{stageGuid}/criteria/{criterionGuid}"},
+		{"reorder-criteria", "UteamupProjectStageCriteriaReorder", "PUT", "{projectGuid}/stages/{stageGuid}/criteria/reorder"},
+	}
+	for _, c := range cases {
+		a := findDomainAction(t, "project-stage", c.action)
+		if a.ToolName != c.tool || a.HTTPMethod != c.method || a.RESTPath != c.restPath {
+			t.Errorf("project-stage %s: want tool=%s method=%q path=%s, got tool=%s method=%q path=%s",
+				c.action, c.tool, c.method, c.restPath, a.ToolName, a.HTTPMethod, a.RESTPath)
+		}
+		// Every positional arg must literally match a {placeholder} in the path, or the
+		// runtime builds a URL with an unsubstituted token.
+		for _, arg := range a.Args {
+			if !strings.Contains(c.restPath, "{"+arg.Name+"}") {
+				t.Errorf("project-stage %s: arg %q has no {%s} placeholder in %s",
+					c.action, arg.Name, arg.Name, c.restPath)
+			}
+		}
+	}
+}
+
+func TestProjectStageAddCriterionFlags(t *testing.T) {
+	a := findDomainAction(t, "project-stage", "add-criterion")
+
+	label := findFlag(a, "label")
+	if label == nil || !label.Required || label.Type != "string" {
+		t.Fatalf("add-criterion must have a required string `label` flag, got %+v", label)
+	}
+
+	// The optional work order link is what makes a criterion answer itself.
+	wo := findFlag(a, "workorder-guid")
+	if wo == nil || wo.Required || wo.Type != "string" {
+		t.Fatalf("add-criterion must have an optional string `workorder-guid` flag, got %+v", wo)
+	}
+
+	// Tri-state met lives on the wire as a bool the backend may ignore; it must not be
+	// required, or every criterion would be forced to declare a met state it never had.
+	met := findFlag(a, "is-met")
+	if met == nil || met.Required || met.Type != "bool" {
+		t.Fatalf("add-criterion must have an optional bool `is-met` flag, got %+v", met)
+	}
+}
+
+func TestProjectStageReorderCriteriaFlag(t *testing.T) {
+	a := findDomainAction(t, "project-stage", "reorder-criteria")
+	f := findFlag(a, "criterion-guids")
+	if f == nil || !f.Required || f.Type != "stringSlice" {
+		t.Fatalf("reorder-criteria must have a required stringSlice `criterion-guids` flag, got %+v", f)
+	}
+	// camelCase(criterion-guids) = criterionGuids matches the backend
+	// ProjectStageGateCriterionReorderModel.CriterionGuids binding.
+	if f.BodyName != "" {
+		t.Errorf("criterion-guids should rely on default camelCase body name, got BodyName=%q", f.BodyName)
 	}
 }
 
