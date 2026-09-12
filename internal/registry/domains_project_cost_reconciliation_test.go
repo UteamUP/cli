@@ -2,6 +2,16 @@ package registry
 
 import "testing"
 
+func TestManualProjectCostCreateKeepsCompleteRetryPayload(t *testing.T) {
+	action := findDomainAction(t, "project-cost", "create")
+	if action.ToolName != "UteamupProjectCostRecordCreate" || action.HTTPMethod != "POST" || action.RESTPath != "{projectGuid}/cost-records" {
+		t.Fatalf("manual cost creation must use its existing backend route and tool: %+v", action)
+	}
+	if action.Args[0].Name != "projectGuid" || len(action.Flags) != 1 || action.Flags[0].Name != "json" {
+		t.Fatal("manual cost creation must preserve project GUID and the complete payload with stable requestGuid")
+	}
+}
+
 func TestProjectCostReconciliationRoutesPreserveEvidence(t *testing.T) {
 	for _, scenario := range []struct{ action, method, path, tool string }{
 		{"preview", "", "{projectGuid}/cost-records/reconciliation", "UteamupProjectCostReconciliation"},
