@@ -506,6 +506,15 @@ func TestProjectInsightsPortfolioActionWired(t *testing.T) {
 	if status == nil || status.Required || status.Type != "int" || status.Default != nil {
 		t.Errorf("portfolio `status` must be an optional int flag with no default, got %+v", status)
 	}
+	for name, flagType := range map[string]string{
+		"search": "string", "sort-by": "string", "sort-descending": "bool",
+		"owner-guid": "string", "priority": "int", "overdue-only": "bool",
+	} {
+		flag := findFlag(a, name)
+		if flag == nil || flag.Required || flag.Type != flagType {
+			t.Errorf("portfolio %s must be an optional %s flag, got %+v", name, flagType, flag)
+		}
+	}
 }
 
 // --- cost-budget-threshold ---
