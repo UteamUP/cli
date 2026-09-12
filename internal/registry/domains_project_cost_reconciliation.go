@@ -8,6 +8,11 @@ func init() {
 		APIPath:     "/api/projects",
 		Actions: []Action{
 			{
+				Name: "get-plan", Description: "Read direct stored inputs and updatedAt before editing; not subtree totals",
+				ToolName: "UteamupProjectDeliverableCostPlanGet", RESTPath: "{projectGuid}/outputitems/{deliverableGuid}/costs/plan",
+				Args: projectResourceArguments("deliverableGuid", "Deliverable GUID"),
+			},
+			{
 				Name: "summary", Description: "Cost summary for the deliverable subtree",
 				ToolName: "UteamupProjectCostSummary", RESTPath: "{projectGuid}/outputitems/{deliverableGuid}/costs",
 				Args: projectResourceArguments("deliverableGuid", "Deliverable GUID"),

@@ -36,3 +36,11 @@ func TestProjectDeliverableCostPlanRoutePreservesFullPayload(t *testing.T) {
 		t.Fatal("cost-plan updates require exact deliverable identity and the complete concurrency-aware payload")
 	}
 }
+
+func TestProjectDeliverableCostPlanReadIsDistinctFromSubtreeSummary(t *testing.T) {
+	action := findDomainAction(t, "project-deliverable-cost", "get-plan")
+	if action.HTTPMethod != "" || action.RESTPath != "{projectGuid}/outputitems/{deliverableGuid}/costs/plan" ||
+		action.ToolName != "UteamupProjectDeliverableCostPlanGet" || action.Args[1].Name != "deliverableGuid" {
+		t.Fatalf("direct cost-plan read must preserve its project, deliverable and read-only REST/MCP contract: %+v", action)
+	}
+}
