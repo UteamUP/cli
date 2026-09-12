@@ -11,6 +11,8 @@ func TestProjectGovernanceDomainsAreGuidFirst(t *testing.T) {
 		"project-comment",
 		"project-baseline",
 		"project-change-request",
+		"project-source-line",
+		"project-requirement",
 	}
 
 	for _, domainName := range domains {
@@ -61,6 +63,11 @@ func TestProjectGovernanceMutationRoutes(t *testing.T) {
 		{"project-baseline", "capture", "POST", "{projectGuid}/baselines", "UteamupProjectBaselinesCapture"},
 		{"project-baseline", "scope", "", "{projectGuid}/baselines/{baselineGuid}/scope", "UteamupProjectBaselineScopeGet"},
 		{"project-change-request", "apply", "POST", "{projectGuid}/change-requests/{requestGuid}/apply", "UteamupProjectChangeRequestsApply"},
+		{"project-change-request", "get", "", "{projectGuid}/change-requests/{requestGuid}", "UteamupProjectChangeRequestsGet"},
+		{"project-change-request", "history", "", "{projectGuid}/change-requests/{requestGuid}/history", "UteamupProjectChangeRequestsHistory"},
+		{"project-source-line", "list", "", "{projectGuid}/intake/lines", "UteamupProjectSourceLinesList"},
+		{"project-requirement", "get", "", "{projectGuid}/requirements/{requirementGuid}", "UteamupProjectRequirementGet"},
+		{"project-requirement", "verification", "", "{projectGuid}/requirements/verification-reference/{stepGuid}", "UteamupProjectVerificationReferenceGet"},
 	}
 
 	for _, testCase := range cases {
@@ -68,6 +75,21 @@ func TestProjectGovernanceMutationRoutes(t *testing.T) {
 		if action.HTTPMethod != testCase.method || action.RESTPath != testCase.path || action.ToolName != testCase.tool {
 			t.Errorf("%s %s: want %s %s %s, got %s %s %s", testCase.domain, testCase.action,
 				testCase.method, testCase.path, testCase.tool, action.HTTPMethod, action.RESTPath, action.ToolName)
+		}
+	}
+}
+
+func TestProjectChangeDecisionsAcceptVersionedPayload(t *testing.T) {
+	for _, name := range []string{"submit", "approve", "reject", "apply"} {
+		action := findDomainAction(t, "project-change-request", name)
+		found := false
+		for _, flag := range action.Flags {
+			if flag.Name == "json" {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("%s must accept requestGuid, expectedUpdatedAt and the inspected review fingerprint", name)
 		}
 	}
 }

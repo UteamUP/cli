@@ -95,11 +95,13 @@ func init() {
 		APIPath:     "/api/projects",
 		Actions: []Action{
 			{Name: "list", Description: "List project change requests", ToolName: "UteamupProjectChangeRequestsList", RESTPath: "{projectGuid}/change-requests", Args: projectGUIDArgument},
+			{Name: "get", Description: "Review exact before and after scope with current evidence access", ToolName: "UteamupProjectChangeRequestsGet", RESTPath: "{projectGuid}/change-requests/{requestGuid}", Args: projectResourceArguments("requestGuid", "Change request GUID")},
+			{Name: "history", Description: "Read immutable change decisions and retry identities", ToolName: "UteamupProjectChangeRequestsHistory", RESTPath: "{projectGuid}/change-requests/{requestGuid}/history", Args: projectResourceArguments("requestGuid", "Change request GUID")},
 			{Name: "create", Description: "Create a draft project change request", ToolName: "UteamupProjectChangeRequestsCreate", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests", Args: projectGUIDArgument, Flags: []FlagDef{jsonFlag()}},
-			{Name: "submit", Description: "Submit a draft change request", ToolName: "UteamupProjectChangeRequestsSubmit", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{requestGuid}/submit", Args: projectResourceArguments("requestGuid", "Change request GUID")},
-			{Name: "approve", Description: "Approve a submitted change request", ToolName: "UteamupProjectChangeRequestsApprove", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{requestGuid}/approve", Args: projectResourceArguments("requestGuid", "Change request GUID")},
-			{Name: "reject", Description: "Reject a submitted change request", ToolName: "UteamupProjectChangeRequestsReject", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{requestGuid}/reject", Args: projectResourceArguments("requestGuid", "Change request GUID")},
-			{Name: "apply", Description: "Apply an approved change request", ToolName: "UteamupProjectChangeRequestsApply", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{requestGuid}/apply", Args: projectResourceArguments("requestGuid", "Change request GUID")},
+			{Name: "submit", Description: "Submit a draft with its stable mutation and version", ToolName: "UteamupProjectChangeRequestsSubmit", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{requestGuid}/submit", Args: projectResourceArguments("requestGuid", "Change request GUID"), Flags: []FlagDef{jsonFlag()}},
+			{Name: "approve", Description: "Approve the exact inspected scope and evidence", ToolName: "UteamupProjectChangeRequestsApprove", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{requestGuid}/approve", Args: projectResourceArguments("requestGuid", "Change request GUID"), Flags: []FlagDef{jsonFlag()}},
+			{Name: "reject", Description: "Reject a submitted request without changing approved values", ToolName: "UteamupProjectChangeRequestsReject", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{requestGuid}/reject", Args: projectResourceArguments("requestGuid", "Change request GUID"), Flags: []FlagDef{jsonFlag()}},
+			{Name: "apply", Description: "Apply reviewed scope and capture its immutable successor baseline", ToolName: "UteamupProjectChangeRequestsApply", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{requestGuid}/apply", Args: projectResourceArguments("requestGuid", "Change request GUID"), Flags: []FlagDef{jsonFlag()}},
 		},
 	})
 }
