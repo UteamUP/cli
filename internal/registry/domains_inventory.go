@@ -85,6 +85,16 @@ func init() {
 				},
 			},
 			Action{
+				Name:         "business-central",
+				Description:  "Read a linked BC company quantity (Enterprise only; last-known on-hand, not available-to-promise)",
+				ToolName:     "UteamupStockGetBusinessCentral",
+				RESTBasePath: "/api/businesscentral",
+				RESTPath:     "stock/{stockItemGuid}",
+				Args: []ArgDef{
+					{Name: "stockItemGuid", Description: "Local stock item GUID", Required: true, Type: "uuid"},
+				},
+			},
+			Action{
 				Name:        "locations",
 				Description: "List tenant stock locations and current inventory totals",
 				ToolName:    "UteamupStockListLocations",
