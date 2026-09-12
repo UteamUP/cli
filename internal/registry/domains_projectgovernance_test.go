@@ -59,6 +59,7 @@ func TestProjectGovernanceMutationRoutes(t *testing.T) {
 		{"project-dependency", "remove", "DELETE", "{projectGuid}/dependencies/{dependencyGuid}", "UteamupProjectDependenciesRemove"},
 		{"project-comment", "update", "PUT", "{projectGuid}/comments/{commentGuid}", "UteamupProjectCommentsUpdate"},
 		{"project-baseline", "capture", "POST", "{projectGuid}/baselines", "UteamupProjectBaselinesCapture"},
+		{"project-baseline", "scope", "", "{projectGuid}/baselines/{baselineGuid}/scope", "UteamupProjectBaselineScopeGet"},
 		{"project-change-request", "apply", "POST", "{projectGuid}/change-requests/{requestGuid}/apply", "UteamupProjectChangeRequestsApply"},
 	}
 

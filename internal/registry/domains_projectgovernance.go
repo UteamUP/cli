@@ -82,6 +82,7 @@ func init() {
 		APIPath:     "/api/projects",
 		Actions: []Action{
 			{Name: "list", Description: "List project baselines", ToolName: "UteamupProjectBaselinesList", RESTPath: "{projectGuid}/baselines", Args: projectGUIDArgument},
+			{Name: "scope", Description: "Read exact retained baseline scope with current evidence permissions", ToolName: "UteamupProjectBaselineScopeGet", RESTPath: "{projectGuid}/baselines/{baselineGuid}/scope", Args: projectResourceArguments("baselineGuid", "Baseline GUID")},
 			{Name: "capture", Description: "Capture an immutable project baseline", ToolName: "UteamupProjectBaselinesCapture", HTTPMethod: "POST", RESTPath: "{projectGuid}/baselines", Args: projectGUIDArgument, Flags: []FlagDef{jsonFlag()}},
 			{Name: "variance", Description: "Get variance from the latest or selected baseline", ToolName: "UteamupProjectVarianceGet", HTTPMethod: "GET", RESTPath: "{projectGuid}/variance", Args: projectGUIDArgument, Flags: []FlagDef{{Name: "baseline-guid", Description: "Optional baseline GUID", Type: "string"}}},
 		},
