@@ -174,6 +174,15 @@ func init() {
 		APIPath:     "/api/workforcecapacity",
 		Actions: []Action{
 			{
+				Name: "project-reservations", Description: "Read current project bookings and authorized tentative entries for an exact window",
+				ToolName: "UteamupWorkforceProjectReservations", HTTPMethod: "GET", RESTPath: "projects/{projectGuid}/reservations",
+				Args: []ArgDef{{Name: "projectGuid", Description: "Readable project GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "from-utc", BodyName: "fromUtc", QueryName: "from", Description: "Inclusive UTC window start", Required: true, Type: "string"},
+					{Name: "to-utc", BodyName: "toUtc", QueryName: "to", Description: "Exclusive UTC window end, up to 366 days later", Required: true, Type: "string"},
+				},
+			},
+			{
 				Name:        "availability",
 				Description: "Resolve all availability effects for one tenant worker",
 				ToolName:    "UteamupWorkforceAvailabilityCheck",
