@@ -84,7 +84,7 @@ func TestProjectChangeDecisionsAcceptVersionedPayload(t *testing.T) {
 		action := findDomainAction(t, "project-change-request", name)
 		found := false
 		for _, flag := range action.Flags {
-			if flag.Name == "json" {
+			if flag.Name == "from-json" {
 				found = true
 			}
 		}

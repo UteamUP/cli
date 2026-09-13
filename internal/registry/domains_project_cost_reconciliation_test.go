@@ -7,7 +7,7 @@ func TestManualProjectCostCreateKeepsCompleteRetryPayload(t *testing.T) {
 	if action.ToolName != "UteamupProjectCostRecordCreate" || action.HTTPMethod != "POST" || action.RESTPath != "{projectGuid}/cost-records" {
 		t.Fatalf("manual cost creation must use its existing backend route and tool: %+v", action)
 	}
-	if action.Args[0].Name != "projectGuid" || len(action.Flags) != 1 || action.Flags[0].Name != "json" {
+	if action.Args[0].Name != "projectGuid" || len(action.Flags) != 1 || action.Flags[0].Name != "from-json" {
 		t.Fatal("manual cost creation must preserve project GUID and the complete payload with stable requestGuid")
 	}
 }
@@ -31,7 +31,7 @@ func TestProjectCostReconciliationRoutesPreserveEvidence(t *testing.T) {
 		t.Fatal("history must scope the query to the exact stock source GUID")
 	}
 	review := findDomainAction(t, "project-cost-reconciliation", "review")
-	if len(review.Flags) != 1 || review.Flags[0].Name != "json" {
+	if len(review.Flags) != 1 || review.Flags[0].Name != "from-json" {
 		t.Fatal("review must accept the complete reviewed payload, including stable request identity and fingerprints")
 	}
 }
@@ -42,7 +42,7 @@ func TestProjectDeliverableCostPlanRoutePreservesFullPayload(t *testing.T) {
 		action.ToolName != "UteamupProjectDeliverableCostPlanUpdate" {
 		t.Fatalf("cost-plan action has mismatched REST/MCP wiring: %+v", action)
 	}
-	if action.Args[1].Name != "deliverableGuid" || len(action.Flags) != 1 || action.Flags[0].Name != "json" {
+	if action.Args[1].Name != "deliverableGuid" || len(action.Flags) != 1 || action.Flags[0].Name != "from-json" {
 		t.Fatal("cost-plan updates require exact deliverable identity and the complete concurrency-aware payload")
 	}
 }
