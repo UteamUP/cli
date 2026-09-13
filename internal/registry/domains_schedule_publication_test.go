@@ -118,3 +118,22 @@ func flagsByName(flags []FlagDef) map[string]*FlagDef {
 	}
 	return result
 }
+
+func TestProjectReservationsRequireExactReviewedWorkAndStableRetryIdentity(t *testing.T) {
+	capacity := findDomain("workforce-capacity")
+	create := findAction(capacity, "reservation-create")
+	readiness := findAction(capacity, "reservation-readiness")
+	flags := flagsByName(create.Flags)
+	for name, body := range map[string]string{"workorder-guid": "workorderGuid", "idempotency-key": "idempotencyKey", "expected-review-fingerprint": "expectedReviewFingerprint"} {
+		if flags[name] == nil || !flags[name].Required || flags[name].BodyName != body {
+			t.Fatalf("missing reviewed reservation field %s", name)
+		}
+	}
+	ack := flags["acknowledged-planning-issue-code"]
+	if ack == nil || ack.BodyName != "acknowledgedPlanningIssueCodes" || ack.Type != "stringSlice" {
+		t.Fatal("dependency warnings need an explicit repeatable acknowledgment")
+	}
+	if flagsByName(readiness.Flags)["workorder-guid"].Required {
+		t.Fatal("project-only readiness must remain available before selecting a reservation target")
+	}
+}

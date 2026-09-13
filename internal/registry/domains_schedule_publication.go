@@ -197,7 +197,7 @@ func init() {
 			},
 			{
 				Name:        "reservation-create",
-				Description: "Revalidate and reserve partial project capacity transactionally",
+				Description: "Confirm selected work against reviewed availability; retain request identity and body on retry",
 				ToolName:    "UteamupWorkforceReservationCreate",
 				HTTPMethod:  "POST",
 				RESTPath:    "reservations",
@@ -237,7 +237,7 @@ func workforceReservationFlags(includeCreateFields bool) []FlagDef {
 	flags := []FlagDef{
 		{Name: "worker-guid", BodyName: "workerGuid", Description: "Tenant worker GUID", Required: true, Type: "string"},
 		{Name: "project-guid", BodyName: "projectGuid", Description: "Tenant project GUID", Required: true, Type: "string"},
-		{Name: "workorder-guid", BodyName: "workorderGuid", Description: "Optional project workorder GUID", Type: "string"},
+		{Name: "workorder-guid", BodyName: "workorderGuid", Description: "Selected project workorder GUID; required to confirm", Required: includeCreateFields, Type: "string"},
 		{Name: "start-utc", BodyName: "start", Description: "Reservation start in UTC", Required: true, Type: "string"},
 		{Name: "end-utc", BodyName: "end", Description: "Reservation end in UTC", Required: true, Type: "string"},
 		{Name: "allocation-percent", BodyName: "allocationPercent", Description: "Capacity claimed from 0.01 to 100 percent", Required: true, Type: "float"},
@@ -246,7 +246,10 @@ func workforceReservationFlags(includeCreateFields bool) []FlagDef {
 		flags = append(
 			flags,
 			FlagDef{Name: "team-guid", BodyName: "teamGuid", Description: "Optional tenant team GUID", Type: "string"},
-			FlagDef{Name: "handoff-notes", BodyName: "handoffNotes", Description: "Optional reservation handoff notes", Type: "string"},
+			FlagDef{Name: "handoff-notes", BodyName: "handoffNotes", Description: "Optional reservation handoff notes, up to 2000 characters", Type: "string"},
+			FlagDef{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Stable request GUID; retain it with the original body for uncertain retries", Required: true, Type: "string"},
+			FlagDef{Name: "expected-review-fingerprint", BodyName: "expectedReviewFingerprint", Description: "Exact fingerprint returned by reservation-readiness", Required: true, Type: "string"},
+			FlagDef{Name: "acknowledged-planning-issue-code", BodyName: "acknowledgedPlanningIssueCodes", Description: "Unverified prerequisite warnings explicitly reviewed and acknowledged", Type: "stringSlice"},
 		)
 	}
 	return flags
