@@ -33,8 +33,11 @@ func TestDocumentReviewOriginalReceiptUsesExactGUIDPath(t *testing.T) {
 	if action == nil || action.HTTPMethod != http.MethodGet || action.ToolName != "UteamupDocumentReviewAcknowledgment" {
 		t.Fatalf("missing receipt read action: %+v", action)
 	}
-	assertRequiredUUIDArg(t, action, "documentGuid")
-	assertRequiredUUIDArg(t, action, "acknowledgmentGuid")
+	if len(action.Args) != 2 ||
+		action.Args[0].Name != "documentGuid" || action.Args[0].Type != "uuid" || !action.Args[0].Required ||
+		action.Args[1].Name != "acknowledgmentGuid" || action.Args[1].Type != "uuid" || !action.Args[1].Required {
+		t.Fatalf("receipt args = %+v, want required uuid documentGuid and acknowledgmentGuid", action.Args)
+	}
 	path, _ := buildRESTPath(domain, *action, map[string]any{"documentGuid": documentGUID, "acknowledgmentGuid": ackGUID})
 	if path != "/api/documentreview/"+documentGUID+"/acknowledgments/"+ackGUID {
 		t.Fatalf("receipt path = %s", path)
