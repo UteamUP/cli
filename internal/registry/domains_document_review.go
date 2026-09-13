@@ -24,7 +24,7 @@ func init() {
 			},
 			{
 				Name:        "acknowledge",
-				Description: "Acknowledge a document as reviewed and return acknowledgement and reviewer GUIDs",
+				Description: "Record peer review of an exact document version; this is not technical acceptance",
 				ToolName:    "UteamupDocumentReviewAcknowledge",
 				HTTPMethod:  "POST",
 				RESTPath:    "{documentGuid}/acknowledge",
@@ -33,6 +33,17 @@ func init() {
 				},
 				Flags: []FlagDef{
 					{Name: "comment", Short: "c", BodyName: "comment", Description: "Optional reviewer comment", Type: "string"},
+					{Name: "document-version-guid", BodyName: "documentVersionGuid", Description: "Exact observed version GUID, required for versioned documents", Type: "uuid"},
+					{Name: "expected-document-updated-at", BodyName: "expectedDocumentUpdatedAt", Description: "Observed document timestamp, required with an exact version", Type: "string"},
+				},
+			},
+			{
+				Name: "receipt", Description: "Read the original active or archived exact peer-review receipt",
+				ToolName: "UteamupDocumentReviewAcknowledgment", HTTPMethod: "GET",
+				RESTPath: "{documentGuid}/acknowledgments/{acknowledgmentGuid}",
+				Args: []ArgDef{
+					{Name: "documentGuid", Description: "Tenant-scoped document GUID", Required: true, Type: "uuid"},
+					{Name: "acknowledgmentGuid", Description: "Original acknowledgment GUID", Required: true, Type: "uuid"},
 				},
 			},
 		},
