@@ -270,7 +270,7 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 
 	// For GET/DELETE, encode params as query string; for POST/PUT, send as JSON body
 	fullURL := c.baseURL + path
-	var bodyReader io.Reader
+	var bodyBytes []byte
 
 	if method == "GET" || method == "DELETE" {
 		query := buildQueryString(params, actionName)
@@ -284,17 +284,22 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 			}
 		}
 		if len(bodyParams) > 0 {
-			bodyBytes, err := json.Marshal(bodyParams)
+			bodyBytes, err = json.Marshal(bodyParams)
 			if err != nil {
 				return nil, fmt.Errorf("marshaling body: %w", err)
 			}
-			bodyReader = bytes.NewReader(bodyBytes)
 		}
 	}
 
 	var result json.RawMessage
 
 	err = RetryWithBackoff(ctx, c.logger, fmt.Sprintf("REST %s %s", method, path), c.retryOpts, func() error {
+		// Each attempt must start at byte zero. Reusing a consumed reader turns
+		// an otherwise idempotent retry into an empty or truncated request.
+		var bodyReader io.Reader
+		if len(bodyBytes) > 0 {
+			bodyReader = bytes.NewReader(bodyBytes)
+		}
 		req, err := http.NewRequestWithContext(ctx, method, fullURL, bodyReader)
 		if err != nil {
 			return fmt.Errorf("creating request: %w", err)

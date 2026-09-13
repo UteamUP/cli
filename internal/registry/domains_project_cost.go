@@ -6,7 +6,7 @@ func init() {
 		Actions: []Action{{
 			Name: "create", Description: "Create one manual line; reuse the exact requestGuid and payload after a timeout",
 			ToolName: "UteamupProjectCostRecordCreate", HTTPMethod: "POST", RESTPath: "{projectGuid}/cost-records",
-			Args: projectGUIDArgument, Flags: []FlagDef{jsonFlag()},
+			Args: projectGUIDArgument, Flags: []FlagDef{projectRequestFile()},
 		}},
 	})
 }

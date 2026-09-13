@@ -35,8 +35,8 @@ func init() {
 		APIPath:     "/api/projects",
 		Actions: []Action{
 			{Name: "list", Description: "List project members", ToolName: "UteamupProjectMembersList", RESTPath: "{projectGuid}/members", Args: projectGUIDArgument},
-			{Name: "add", Description: "Add a project member", ToolName: "UteamupProjectMembersAdd", HTTPMethod: "POST", RESTPath: "{projectGuid}/members", Args: projectGUIDArgument, Flags: []FlagDef{jsonFlag()}},
-			{Name: "update", Description: "Update a project member", ToolName: "UteamupProjectMembersUpdate", HTTPMethod: "PUT", RESTPath: "{projectGuid}/members/{memberGuid}", Args: projectResourceArguments("memberGuid", "Project member GUID"), Flags: []FlagDef{jsonFlag()}},
+			{Name: "add", Description: "Add a project member", ToolName: "UteamupProjectMembersAdd", HTTPMethod: "POST", RESTPath: "{projectGuid}/members", Args: projectGUIDArgument, Flags: []FlagDef{projectRequestFile()}},
+			{Name: "update", Description: "Update a project member", ToolName: "UteamupProjectMembersUpdate", HTTPMethod: "PUT", RESTPath: "{projectGuid}/members/{memberGuid}", Args: projectResourceArguments("memberGuid", "Project member GUID"), Flags: []FlagDef{projectRequestFile()}},
 			{Name: "remove", Description: "Remove a project member", ToolName: "UteamupProjectMembersRemove", HTTPMethod: "DELETE", RESTPath: "{projectGuid}/members/{memberGuid}", Args: projectResourceArguments("memberGuid", "Project member GUID")},
 		},
 	})
@@ -48,7 +48,7 @@ func init() {
 		APIPath:     "/api/projects",
 		Actions: []Action{
 			{Name: "list", Description: "List project dependencies", ToolName: "UteamupProjectDependenciesList", RESTPath: "{projectGuid}/dependencies", Args: projectGUIDArgument},
-			{Name: "add", Description: "Add a project dependency", ToolName: "UteamupProjectDependenciesAdd", HTTPMethod: "POST", RESTPath: "{projectGuid}/dependencies", Args: projectGUIDArgument, Flags: []FlagDef{jsonFlag()}},
+			{Name: "add", Description: "Add a project dependency", ToolName: "UteamupProjectDependenciesAdd", HTTPMethod: "POST", RESTPath: "{projectGuid}/dependencies", Args: projectGUIDArgument, Flags: []FlagDef{projectRequestFile()}},
 			{Name: "remove", Description: "Remove a project dependency", ToolName: "UteamupProjectDependenciesRemove", HTTPMethod: "DELETE", RESTPath: "{projectGuid}/dependencies/{dependencyGuid}", Args: projectResourceArguments("dependencyGuid", "Project dependency GUID")},
 		},
 	})
@@ -69,8 +69,8 @@ func init() {
 		APIPath:     "/api/projects",
 		Actions: []Action{
 			{Name: "list", Description: "List project comments", ToolName: "UteamupProjectCommentsList", RESTPath: "{projectGuid}/comments", Args: projectGUIDArgument},
-			{Name: "add", Description: "Add a project comment or decision", ToolName: "UteamupProjectCommentsAdd", HTTPMethod: "POST", RESTPath: "{projectGuid}/comments", Args: projectGUIDArgument, Flags: []FlagDef{jsonFlag()}},
-			{Name: "update", Description: "Update a project comment or decision", ToolName: "UteamupProjectCommentsUpdate", HTTPMethod: "PUT", RESTPath: "{projectGuid}/comments/{commentGuid}", Args: projectResourceArguments("commentGuid", "Project comment GUID"), Flags: []FlagDef{jsonFlag()}},
+			{Name: "add", Description: "Add a project comment or decision", ToolName: "UteamupProjectCommentsAdd", HTTPMethod: "POST", RESTPath: "{projectGuid}/comments", Args: projectGUIDArgument, Flags: []FlagDef{projectRequestFile()}},
+			{Name: "update", Description: "Update a project comment or decision", ToolName: "UteamupProjectCommentsUpdate", HTTPMethod: "PUT", RESTPath: "{projectGuid}/comments/{commentGuid}", Args: projectResourceArguments("commentGuid", "Project comment GUID"), Flags: []FlagDef{projectRequestFile()}},
 			{Name: "remove", Description: "Remove a project comment", ToolName: "UteamupProjectCommentsRemove", HTTPMethod: "DELETE", RESTPath: "{projectGuid}/comments/{commentGuid}", Args: projectResourceArguments("commentGuid", "Project comment GUID")},
 		},
 	})
@@ -83,7 +83,7 @@ func init() {
 		Actions: []Action{
 			{Name: "list", Description: "List project baselines", ToolName: "UteamupProjectBaselinesList", RESTPath: "{projectGuid}/baselines", Args: projectGUIDArgument},
 			{Name: "scope", Description: "Read exact retained baseline scope with current evidence permissions", ToolName: "UteamupProjectBaselineScopeGet", RESTPath: "{projectGuid}/baselines/{baselineGuid}/scope", Args: projectResourceArguments("baselineGuid", "Baseline GUID")},
-			{Name: "capture", Description: "Capture an immutable project baseline", ToolName: "UteamupProjectBaselinesCapture", HTTPMethod: "POST", RESTPath: "{projectGuid}/baselines", Args: projectGUIDArgument, Flags: []FlagDef{jsonFlag()}},
+			{Name: "capture", Description: "Capture an immutable project baseline", ToolName: "UteamupProjectBaselinesCapture", HTTPMethod: "POST", RESTPath: "{projectGuid}/baselines", Args: projectGUIDArgument, Flags: []FlagDef{projectRequestFile()}},
 			{Name: "variance", Description: "Get variance from the latest or selected baseline", ToolName: "UteamupProjectVarianceGet", HTTPMethod: "GET", RESTPath: "{projectGuid}/variance", Args: projectGUIDArgument, Flags: []FlagDef{{Name: "baseline-guid", Description: "Optional baseline GUID", Type: "string"}}},
 		},
 	})
@@ -97,11 +97,11 @@ func init() {
 			{Name: "list", Description: "List project change requests", ToolName: "UteamupProjectChangeRequestsList", RESTPath: "{projectGuid}/change-requests", Args: projectGUIDArgument},
 			{Name: "get", Description: "Review exact before and after scope with current evidence access", ToolName: "UteamupProjectChangeRequestsGet", RESTPath: "{projectGuid}/change-requests/{requestGuid}", Args: projectResourceArguments("requestGuid", "Change request GUID")},
 			{Name: "history", Description: "Read immutable change decisions and retry identities", ToolName: "UteamupProjectChangeRequestsHistory", RESTPath: "{projectGuid}/change-requests/{requestGuid}/history", Args: projectResourceArguments("requestGuid", "Change request GUID")},
-			{Name: "create", Description: "Create a draft project change request", ToolName: "UteamupProjectChangeRequestsCreate", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests", Args: projectGUIDArgument, Flags: []FlagDef{jsonFlag()}},
-			{Name: "submit", Description: "Submit a draft with its stable mutation and version", ToolName: "UteamupProjectChangeRequestsSubmit", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{requestGuid}/submit", Args: projectResourceArguments("requestGuid", "Change request GUID"), Flags: []FlagDef{jsonFlag()}},
-			{Name: "approve", Description: "Approve the exact inspected scope and evidence", ToolName: "UteamupProjectChangeRequestsApprove", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{requestGuid}/approve", Args: projectResourceArguments("requestGuid", "Change request GUID"), Flags: []FlagDef{jsonFlag()}},
-			{Name: "reject", Description: "Reject a submitted request without changing approved values", ToolName: "UteamupProjectChangeRequestsReject", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{requestGuid}/reject", Args: projectResourceArguments("requestGuid", "Change request GUID"), Flags: []FlagDef{jsonFlag()}},
-			{Name: "apply", Description: "Apply reviewed scope and capture its immutable successor baseline", ToolName: "UteamupProjectChangeRequestsApply", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{requestGuid}/apply", Args: projectResourceArguments("requestGuid", "Change request GUID"), Flags: []FlagDef{jsonFlag()}},
+			{Name: "create", Description: "Create a draft project change request", ToolName: "UteamupProjectChangeRequestsCreate", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests", Args: projectGUIDArgument, Flags: []FlagDef{projectRequestFile()}},
+			{Name: "submit", Description: "Submit a draft with its stable mutation and version", ToolName: "UteamupProjectChangeRequestsSubmit", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{changeRequestGuid}/submit", Args: projectResourceArguments("changeRequestGuid", "Change request GUID"), Flags: []FlagDef{projectRequestFile()}},
+			{Name: "approve", Description: "Approve the exact inspected scope and evidence", ToolName: "UteamupProjectChangeRequestsApprove", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{changeRequestGuid}/approve", Args: projectResourceArguments("changeRequestGuid", "Change request GUID"), Flags: []FlagDef{projectRequestFile()}},
+			{Name: "reject", Description: "Reject a submitted request without changing approved values", ToolName: "UteamupProjectChangeRequestsReject", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{changeRequestGuid}/reject", Args: projectResourceArguments("changeRequestGuid", "Change request GUID"), Flags: []FlagDef{projectRequestFile()}},
+			{Name: "apply", Description: "Apply reviewed scope and capture its immutable successor baseline", ToolName: "UteamupProjectChangeRequestsApply", HTTPMethod: "POST", RESTPath: "{projectGuid}/change-requests/{changeRequestGuid}/apply", Args: projectResourceArguments("changeRequestGuid", "Change request GUID"), Flags: []FlagDef{projectRequestFile()}},
 		},
 	})
 }

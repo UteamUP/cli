@@ -21,7 +21,7 @@ func init() {
 				Name: "plan", Description: "Update supplied plan fields with expectedUpdatedAt; parent amounts include descendants",
 				ToolName: "UteamupProjectDeliverableCostPlanUpdate", HTTPMethod: "PUT",
 				RESTPath: "{projectGuid}/outputitems/{deliverableGuid}/costs/plan",
-				Args:     projectResourceArguments("deliverableGuid", "Deliverable GUID"), Flags: []FlagDef{jsonFlag()},
+				Args:     projectResourceArguments("deliverableGuid", "Deliverable GUID"), Flags: []FlagDef{projectRequestFile()},
 			},
 		},
 	})
@@ -46,7 +46,7 @@ func init() {
 			{
 				Name: "review", Description: "Record Independent or CoveredByReceipt evidence; reuse the request GUID and payload for retries",
 				ToolName: "UteamupProjectCostReconcile", HTTPMethod: "POST", RESTPath: "{projectGuid}/cost-records/reconciliation",
-				Args: projectGUIDArgument, Flags: []FlagDef{jsonFlag()},
+				Args: projectGUIDArgument, Flags: []FlagDef{projectRequestFile()},
 			},
 		},
 	})

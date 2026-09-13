@@ -17,10 +17,10 @@ func init() {
 					{Name: "page-size", Description: "Rows per page, 1 to 100", Type: "int", Default: 25}}},
 			{Name: "preview", Description: "Review complete rules and exact stage name/order changes without writing",
 				ToolName: "UteamupProjectProcessPreview", HTTPMethod: "POST", RESTPath: "{projectGuid}/process/preview",
-				Args: projectGUIDArgument, Flags: []FlagDef{jsonFlag()}},
+				Args: projectGUIDArgument, Flags: []FlagDef{projectRequestFile()}},
 			{Name: "adopt", Description: "Adopt the human-reviewed proposal; retain requestGuid and expectedReviewFingerprint for retries",
 				ToolName: "UteamupProjectProcessAdopt", HTTPMethod: "POST", RESTPath: "{projectGuid}/process/adopt",
-				Args: projectGUIDArgument, Flags: []FlagDef{jsonFlag()}},
+				Args: projectGUIDArgument, Flags: []FlagDef{projectRequestFile()}},
 		},
 	})
 }

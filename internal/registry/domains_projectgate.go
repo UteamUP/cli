@@ -7,10 +7,10 @@ func init() {
 		Actions: []Action{
 			{Name: "preview", Description: "Preview scoped criteria, exact sources, conditions and named signers without saving",
 				ToolName: "UteamupProjectGateSubmissionPreview", HTTPMethod: "POST", RESTPath: "{projectGuid}/stages/{stageGuid}/decisions/submissions/preview",
-				Args: stageArgs, Flags: []FlagDef{jsonFlag()}},
+				Args: stageArgs, Flags: []FlagDef{projectRequestFile()}},
 			{Name: "submit", Description: "Retain reviewed requestGuid and expectedReviewFingerprint; sends no messages and releases no work",
 				ToolName: "UteamupProjectGateSubmissionSubmit", HTTPMethod: "POST", RESTPath: "{projectGuid}/stages/{stageGuid}/decisions/submissions",
-				Args: stageArgs, Flags: []FlagDef{jsonFlag()}},
+				Args: stageArgs, Flags: []FlagDef{projectRequestFile()}},
 			{Name: "get", Description: "Read an exact immutable gate review and its controlled signer requirements",
 				ToolName: "UteamupProjectGateSubmissionGet", HTTPMethod: "GET", RESTPath: "{projectGuid}/stages/{stageGuid}/decisions/submissions/{submissionGuid}",
 				Args: []ArgDef{{Name: "projectGuid", Description: "Project GUID", Required: true}, {Name: "stageGuid", Description: "Stage GUID", Required: true},
@@ -23,7 +23,7 @@ func init() {
 				ToolName: "UteamupProjectGateDecisionList", HTTPMethod: "GET", RESTPath: "{projectGuid}/stages/{stageGuid}/decisions", Args: stageArgs},
 			{Name: "decide", Description: "Record the exact reviewed outcome; adopted rules require requestGuid, submissionGuid and expectedReviewFingerprint",
 				ToolName: "UteamupProjectGateDecisionRecord", HTTPMethod: "POST", RESTPath: "{projectGuid}/stages/{stageGuid}/decisions",
-				Args: stageArgs, Flags: []FlagDef{jsonFlag()}},
+				Args: stageArgs, Flags: []FlagDef{projectRequestFile()}},
 		},
 	})
 }

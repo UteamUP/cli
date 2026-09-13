@@ -6,7 +6,7 @@ func init() {
 		{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "non-empty-uuid"},
 		{Name: "dependencyGuid", Description: "Existing dependency GUID", Required: true, Type: "non-empty-uuid"},
 	}
-	reviewPayload := jsonFlag()
+	reviewPayload := projectRequestFile()
 	reviewPayload.Required = true
 	reviewPayload.Description = "Complete reviewed request file, including stable requestGuid and current fingerprints when applying changes"
 	Register(&Domain{Name: "project-schedule", Description: "Review project dates, working calendars and operational dependencies", APIPath: "/api/projects", Actions: []Action{

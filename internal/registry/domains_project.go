@@ -5,16 +5,15 @@ func init() {
 		Name:        "project",
 		Aliases:     []string{"projects"},
 		Description: "Manage projects",
-		// GUID-first CRUD: get/update/delete take the project ExternalGuid
-		// positional arg and hit the backend /project/{externalGuid:guid}
-		// routes. The int-keyed twins are [Obsolete] on the backend and are
-		// not surfaced by the CLI (per Guidelines/ApiGuidelines.md
-		// §id→guid — GUIDs In, Integer IDs Out).
+		// GUID-first CRUD: reads and deletion use the existing REST routes.
+		// Creation and update use the typed MCP model because the corresponding
+		// REST actions require multipart forms. Public identities remain GUIDs.
 		Actions: []Action{
 			{Name: "list", Description: "List projects", ToolName: "UteamupProjectList", Flags: paginationFlags()},
 			{Name: "get", Description: "Get a project by GUID", ToolName: "UteamupProjectGet", Args: externalGUIDArg()},
-			{Name: "create", Description: "Create a project", ToolName: "UteamupProjectCreate", Flags: []FlagDef{jsonFlag()}},
-			{Name: "update", Description: "Update a project by GUID", ToolName: "UteamupProjectUpdate", Args: externalGUIDArg(), Flags: []FlagDef{jsonFlag()}},
+			{Name: "create", Description: "Create a project from its complete model", ToolName: "UteamupProjectCreate", MCPOnly: true, Flags: []FlagDef{projectMCPModelFile()}},
+			{Name: "update", Description: "Update a project by GUID with its complete model", ToolName: "UteamupProjectUpdate", MCPOnly: true,
+				Args: []ArgDef{{Name: "externalGuid", BodyName: "projectGuid", Description: "Project GUID", Required: true, Type: "string"}}, Flags: []FlagDef{projectMCPModelFile()}},
 			{Name: "delete", Description: "Delete a project by GUID", ToolName: "UteamupProjectDelete", Args: externalGUIDArg()},
 			{Name: "search", Description: "Search projects", ToolName: "UteamupProjectSearch", Args: queryArg(), Flags: paginationFlags()},
 			// my-projects mirrors GET /api/project/my-projects — lists projects
