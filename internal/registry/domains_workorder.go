@@ -51,6 +51,9 @@ func init() {
 					{Name: "priority", Description: "Priority from 1 to 5", Default: 3, Type: "int"},
 					{Name: "asset-guid", Description: "Optional asset GUID", Type: "uuid"},
 					{Name: "primary-assignee-guid", Description: "Optional primary assignee GUID", Type: "uuid"},
+					{Name: "project-guid", BodyName: "projectGuid", Description: "Owning project GUID", Type: "uuid"},
+					{Name: "project-stage-guid", BodyName: "projectStageGuid", Description: "Lifecycle stage GUID in the selected project", Type: "uuid"},
+					{Name: "project-output-item-guid", BodyName: "projectOutputItemGuid", Description: "Responsible deliverable GUID in the selected project", Type: "uuid"},
 					{Name: "asset-group-guid", BodyName: "assetGroupGuids", Description: "Optional asset group GUID, repeatable — every active member is linked to the workorder as an asset carrying the group as its origin", Type: "stringSlice"},
 				},
 			},
@@ -82,6 +85,7 @@ func init() {
 				Description: "Update an existing work order by GUID",
 				ToolName:    "UteamupWorkorderUpdate",
 				RESTPath:    "by-guid/{workorderGuid}",
+				HTTPMethod:  "PUT",
 				Args:        []ArgDef{{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "uuid"}},
 				Flags: []FlagDef{
 					{Name: "title", Description: "New title", Type: "string"},
@@ -89,6 +93,9 @@ func init() {
 					{Name: "priority", Description: "New priority (1=Low, 2=Medium, 3=High, 4=Urgent, 5=Critical)", Type: "string"},
 					{Name: "asset-group-guid", BodyName: "assetGroupGuids", Description: "Asset group GUID, repeatable — every active member is linked to the workorder as an asset carrying the group as its origin", Type: "stringSlice"},
 					{Name: "from-json", Description: "JSON file with update data", Type: "string"},
+					{Name: "project-guid", BodyName: "projectGuid", Description: "Owning project GUID; an empty GUID clears the link", Type: "uuid"},
+					{Name: "project-stage-guid", BodyName: "projectStageGuid", Description: "Lifecycle stage GUID; an empty GUID clears the link", Type: "uuid"},
+					{Name: "project-output-item-guid", BodyName: "projectOutputItemGuid", Description: "Responsible deliverable GUID; an empty GUID explicitly clears it", Type: "uuid"},
 				},
 			},
 			{
