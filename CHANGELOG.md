@@ -5,6 +5,38 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.25.0](https://github.com/UteamUP/cli/compare/2.24.0...2.25.0) (2026-09-13)
+
+
+### Features
+
+* connect project intake and requirement commands ([d031ff9](https://github.com/UteamUP/cli/commit/d031ff901f9220a0b8314206e9e5be031477a2cb))
+* expose direct deliverable cost plan reads ([7267eb8](https://github.com/UteamUP/cli/commit/7267eb8f6cb7970ef0304be49eb250b020c8c89f))
+* expose enterprise Business Central stock lookup ([981adf2](https://github.com/UteamUP/cli/commit/981adf20051ae541ff58162496e5d363d691820f))
+* expose exact document review and retained receipts ([ccd48cc](https://github.com/UteamUP/cli/commit/ccd48cccd0b20723278fd14418061211e105a1c9))
+* expose project baseline scope snapshots in CLI ([7f20f83](https://github.com/UteamUP/cli/commit/7f20f835657bd6b3b96871ee12a95bffde1ddd44))
+* expose project portfolio server filters ([f17bb9f](https://github.com/UteamUP/cli/commit/f17bb9f1328127ed253598495e2aa4333efc53e3))
+* expose project reservation windows in the CLI ([1719f62](https://github.com/UteamUP/cli/commit/1719f62a3455fa0a99d87d7805552aca13f2cd4f))
+* expose responsible project scope in work-order commands ([e1d69ca](https://github.com/UteamUP/cli/commit/e1d69cadaaf379df8b5be12fd1c03662678414bb))
+* expose retryable manual project cost creation ([074a52c](https://github.com/UteamUP/cli/commit/074a52cfa5d1ac9262d2c75518305a2ff55722e3))
+* expose reviewed project cost operations in CLI ([a9dcd81](https://github.com/UteamUP/cli/commit/a9dcd815ce9a68277a4b69aff6e5be5f143dde57))
+* expose reviewed project gate operations in CLI ([96a84ee](https://github.com/UteamUP/cli/commit/96a84eea211f903ad912c31d54e2ab984b20a9a6))
+* expose reviewed project process adoption commands ([705968c](https://github.com/UteamUP/cli/commit/705968c57dc0ea02966904477759957acd25fdf6))
+* expose reviewed project schedule operations in cli ([d9e9e5c](https://github.com/UteamUP/cli/commit/d9e9e5c0c5cc88cc8a1e69697dc7867b86e879c1))
+* expose reviewed project scope changes and exact references ([04abb7e](https://github.com/UteamUP/cli/commit/04abb7ebc9e6c9a96852c5d87bdcfc8ae8aed361))
+* expose reviewed work-order project scope commands ([19f28b8](https://github.com/UteamUP/cli/commit/19f28b847076e11fe33a0f66dced53dfff5a34f4))
+* require reviewed project reservation requests in CLI ([c65dc69](https://github.com/UteamUP/cli/commit/c65dc69940be07ac0062290ee6b2a226667a9398))
+
+
+### Bug Fixes
+
+* preserve reviewed project request bodies through CLI transport ([32a4262](https://github.com/UteamUP/cli/commit/32a426205333f9d7ce3e807c1e4aceefd2b17015))
+
+
+### Tests
+
+* assert both GUID args on the document review receipt action ([4c64ef9](https://github.com/UteamUP/cli/commit/4c64ef95022bf6ca141735bd10a21ff63ab9441e))
+
 ## [2.24.0](https://github.com/UteamUP/cli/compare/2.23.0...2.24.0) (2026-09-10)
 
 
