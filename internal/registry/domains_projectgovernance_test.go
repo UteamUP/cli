@@ -66,8 +66,8 @@ func TestProjectGovernanceMutationRoutes(t *testing.T) {
 		{"project-change-request", "get", "", "{projectGuid}/change-requests/{requestGuid}", "UteamupProjectChangeRequestsGet"},
 		{"project-change-request", "history", "", "{projectGuid}/change-requests/{requestGuid}/history", "UteamupProjectChangeRequestsHistory"},
 		{"project-source-line", "list", "", "{projectGuid}/intake/lines", "UteamupProjectSourceLinesList"},
-		{"project-requirement", "get", "", "{projectGuid}/requirements/{requirementGuid}", "UteamupProjectRequirementGet"},
-		{"project-requirement", "verification", "", "{projectGuid}/requirements/verification-reference/{stepGuid}", "UteamupProjectVerificationReferenceGet"},
+		{"project-requirement", "get", "GET", "{projectGuid}/requirements/{requirementGuid}", "UteamupProjectRequirementGet"},
+		{"project-requirement", "verification", "GET", "{projectGuid}/requirements/verification-reference/{stepGuid}", "UteamupProjectVerificationReferenceGet"},
 	}
 
 	for _, testCase := range cases {
