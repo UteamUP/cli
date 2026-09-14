@@ -31,8 +31,14 @@ func TestITManagementDomainMirrorsMCPTools(t *testing.T) {
 		t.Errorf("missing itmanagement action %q", missing)
 	}
 	for _, alias := range []string{"it", "it-management"} {
-		if findDomain(alias) == nil {
-			t.Errorf("alias %q should resolve to the itmanagement domain", alias)
+		found := false
+		for _, a := range domain.Aliases {
+			if a == alias {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("alias %q should be declared on the itmanagement domain", alias)
 		}
 	}
 }
