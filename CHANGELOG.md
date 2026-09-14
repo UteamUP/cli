@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.27.0](https://github.com/UteamUP/cli/compare/2.26.1...2.27.0) (2026-09-14)
+
+
+### Features
+
+* **project:** add project template commands ([5440e95](https://github.com/UteamUP/cli/commit/5440e95f652a08c02f46cd1fad9c881aa910bb12))
+
 ## [2.26.1](https://github.com/UteamUP/cli/compare/2.26.0...2.26.1) (2026-09-14)
 
 
