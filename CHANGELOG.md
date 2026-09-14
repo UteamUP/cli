@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.26.1](https://github.com/UteamUP/cli/compare/2.26.0...2.26.1) (2026-09-14)
+
+
+### Bug Fixes
+
+* **itmanagement:** route CLI actions to the real IT Management controller paths ([a6d0e14](https://github.com/UteamUP/cli/commit/a6d0e140d8ad8d29ebbac14c2ee6d156fb811a63))
+
 ## [2.26.0](https://github.com/UteamUP/cli/compare/2.25.0...2.26.0) (2026-09-14)
 
 
