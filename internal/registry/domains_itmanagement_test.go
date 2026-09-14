@@ -2,6 +2,21 @@ package registry
 
 import "testing"
 
+func itManagementAction(t *testing.T, name string) Action {
+	t.Helper()
+	domain := findDomain("itmanagement")
+	if domain == nil {
+		t.Fatal("expected itmanagement domain to be registered")
+	}
+	for _, action := range domain.Actions {
+		if action.Name == name {
+			return action
+		}
+	}
+	t.Fatalf("missing itmanagement action %q", name)
+	return Action{}
+}
+
 func TestITManagementDomainMirrorsMCPTools(t *testing.T) {
 	domain := findDomain("itmanagement")
 	if domain == nil {
@@ -43,57 +58,80 @@ func TestITManagementDomainMirrorsMCPTools(t *testing.T) {
 	}
 }
 
-func TestITManagementAlertsUseGuidFiltersAndBoundedLimit(t *testing.T) {
+// Every action must land on a real controller route. The released 2.26.0 derived
+// GET /api/itmanagement for all of them, which is not a route, so each command returned 404.
+func TestITManagementActionsRouteToTheBackendControllers(t *testing.T) {
 	domain := findDomain("itmanagement")
-	var alerts Action
-	for _, action := range domain.Actions {
-		if action.Name == "alerts" {
-			alerts = action
-		}
+	const guid = "11111111-2222-3333-4444-555555555555"
+	cases := []struct {
+		action string
+		method string
+		path   string
+		args   map[string]any
+	}{
+		{"dashboard", "GET", "/api/itmanagement/dashboard", map[string]any{}},
+		{"alerts", "GET", "/api/itmanagement/alerts", map[string]any{"state": "open"}},
+		{"alert", "GET", "/api/itmanagement/alerts/" + guid, map[string]any{"alertGuid": guid}},
+		{"alert-ack", "POST", "/api/itmanagement/alerts/" + guid + "/acknowledge", map[string]any{"alertGuid": guid, "reasonCode": "fixed"}},
+		{"alert-resolve", "POST", "/api/itmanagement/alerts/" + guid + "/resolve", map[string]any{"alertGuid": guid, "reasonCode": "fixed"}},
+		{"rules", "GET", "/api/itmanagement/rules", map[string]any{}},
+		{"connections", "GET", "/api/itmanagement/connections", map[string]any{}},
+		{"resources", "GET", "/api/itmanagement/resources", map[string]any{"mapped": false}},
+		{"servicemap", "GET", "/api/itmanagement/servicemap", map[string]any{"windowHours": 24}},
+		{"flows", "GET", "/api/itmanagement/network/flows", map[string]any{"windowHours": 24}},
 	}
-	flags := map[string]FlagDef{}
-	for _, flag := range alerts.Flags {
-		flags[flag.Name] = flag
-	}
-	for _, name := range []string{"asset-guid", "rule-guid"} {
-		if flags[name].Type != "string" {
-			t.Errorf("%s must be a GUID string flag", name)
-		}
-		if flags[name].BodyName == "" {
-			t.Errorf("%s must map to its camelCase MCP argument", name)
-		}
-	}
-	if flags["limit"].BodyName != "pageSize" || flags["limit"].Default != 50 {
-		t.Errorf("limit must map to pageSize with default 50, got %+v", flags["limit"])
-	}
-	for _, name := range []string{"alerts", "alert", "alert-ack", "alert-resolve", "resources", "flows"} {
-		for _, action := range domain.Actions {
-			if action.Name != name {
-				continue
+	for _, tc := range cases {
+		t.Run(tc.action, func(t *testing.T) {
+			action := itManagementAction(t, tc.action)
+			if action.HTTPMethod != tc.method {
+				t.Errorf("method = %q, want %q", action.HTTPMethod, tc.method)
 			}
-			for _, flag := range action.Flags {
-				if flag.Name == "id" || flag.BodyName == "id" {
-					t.Errorf("%s exposes an integer id flag", name)
-				}
+			path, consumed := buildRESTPath(domain, action, tc.args)
+			if path != tc.path {
+				t.Errorf("path = %q, want %q", path, tc.path)
 			}
-		}
+			if _, usesGuid := tc.args["alertGuid"]; usesGuid && (len(consumed) != 1 || consumed[0] != "alertGuid") {
+				t.Errorf("consumed = %v, want the alert GUID removed from the body", consumed)
+			}
+		})
 	}
 }
 
-func TestITManagementMutationsRequireTheAlertGuid(t *testing.T) {
-	domain := findDomain("itmanagement")
-	for _, action := range domain.Actions {
-		if action.Name != "alert-ack" && action.Name != "alert-resolve" && action.Name != "alert" {
-			continue
-		}
-		found := false
+func TestITManagementQueryFlagsUseTheBackendParameterNames(t *testing.T) {
+	want := map[string]map[string]string{
+		"alerts":    {"severity": "minimumSeverity", "asset-guid": "assetGuid", "rule-guid": "ruleGuid", "limit": "pageSize"},
+		"resources": {"include-stale": "includeStale", "type": "resourceType", "limit": "pageSize"},
+		"flows":     {"asset-guid": "assetGuid", "window-hours": "windowHours", "denied-only": "deniedOnly", "limit": "pageSize"},
+	}
+	for actionName, flags := range want {
+		action := itManagementAction(t, actionName)
+		byName := map[string]FlagDef{}
 		for _, flag := range action.Flags {
-			if flag.Name == "alert-guid" && flag.Required && flag.BodyName == "alertGuid" {
-				found = true
+			byName[flag.Name] = flag
+			if flag.Name == "id" || flag.BodyName == "id" {
+				t.Errorf("%s exposes an integer id flag", actionName)
 			}
 		}
-		if !found {
-			t.Errorf("%s must require --alert-guid mapped to alertGuid", action.Name)
+		for flag, body := range flags {
+			if byName[flag].BodyName != body {
+				t.Errorf("%s --%s sends %q, backend binds %q", actionName, flag, byName[flag].BodyName, body)
+			}
+		}
+	}
+	if flag := itManagementAction(t, "alerts").Flags; flag[len(flag)-2].Default != 50 {
+		t.Errorf("alerts --limit must default to 50")
+	}
+}
+
+func TestITManagementAlertActionsTakeAValidatedAlertGuid(t *testing.T) {
+	for _, name := range []string{"alert", "alert-ack", "alert-resolve"} {
+		action := itManagementAction(t, name)
+		if len(action.Args) != 1 {
+			t.Fatalf("%s args = %+v, want one alert GUID", name, action.Args)
+		}
+		arg := action.Args[0]
+		if arg.Name != "alert-guid" || arg.BodyName != "alertGuid" || arg.Type != "non-empty-uuid" || !arg.Required {
+			t.Errorf("%s alert selector = %+v, want a required non-empty GUID mapped to alertGuid", name, arg)
 		}
 	}
 }
