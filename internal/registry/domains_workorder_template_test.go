@@ -98,3 +98,36 @@ func TestWorkorderTemplateDomainHasApprovedActiveRead(t *testing.T) {
 		t.Errorf("page-size = %+v, want int default 20", flag)
 	}
 }
+
+// The list action filters by project ownership. Without --project-guid the
+// general library is listed, which excludes workorder templates owned by a
+// project template; with it, only that project's or project template's own
+// templates come back. The REST route and the UteamupWorkorderTemplateList tool
+// both bind the filter as projectGuid.
+func TestWorkorderTemplateListFiltersByProjectGuid(t *testing.T) {
+	action := findDomainAction(t, "workorder-template", "list")
+	if action.ToolName != "UteamupWorkorderTemplateList" {
+		t.Errorf("list: expected tool UteamupWorkorderTemplateList, got %q", action.ToolName)
+	}
+	if action.MCPOnly || action.HTTPMethod != "" || action.RESTPath != "" || len(action.Args) != 0 {
+		t.Errorf("list route = mcpOnly %v method %q path %q args %+v, want the plain GET collection route",
+			action.MCPOnly, action.HTTPMethod, action.RESTPath, action.Args)
+	}
+
+	flag := findFlag(action, "project-guid")
+	if flag == nil {
+		t.Fatal("list must expose an optional --project-guid filter")
+	}
+	// uuid validation matters here because GET flags are copied into the query
+	// string unescaped. A default would filter every call and hide the library.
+	if flag.BodyName != "projectGuid" || flag.Type != "uuid" || flag.Required || flag.Default != nil {
+		t.Errorf("--project-guid = %+v, want optional uuid sent as projectGuid with no default", *flag)
+	}
+
+	// The filter joins the standard pagination flags instead of replacing them.
+	for _, name := range []string{"page", "page-size"} {
+		if findFlag(action, name) == nil {
+			t.Errorf("list lost its --%s pagination flag", name)
+		}
+	}
+}

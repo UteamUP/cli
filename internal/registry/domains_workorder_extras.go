@@ -1,7 +1,17 @@
 package registry
 
 func init() {
-	Register(&Domain{Name: "workorder-template", Aliases: []string{"wot"}, Description: "Manage work order templates", Actions: append(crudActions("WorkorderTemplate"),
+	// The template list filters by project ownership: --project-guid returns only
+	// the templates owned by that project or project template, and without it the
+	// general library, which excludes template-owned workorder templates, is listed.
+	workorderTemplateActions := crudActions("WorkorderTemplate")
+	for index := range workorderTemplateActions {
+		if workorderTemplateActions[index].Name == "list" {
+			workorderTemplateActions[index].Flags = append(workorderTemplateActions[index].Flags,
+				FlagDef{Name: "project-guid", BodyName: "projectGuid", Description: "Only templates owned by this project or project template (GUID); omit to list the general template library", Type: "uuid"})
+		}
+	}
+	Register(&Domain{Name: "workorder-template", Aliases: []string{"wot"}, Description: "Manage work order templates", Actions: append(workorderTemplateActions,
 		Action{
 			Name:        "active",
 			Description: "List bounded active tenant workorder templates",

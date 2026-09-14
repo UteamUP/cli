@@ -56,6 +56,61 @@ func init() {
 					{Name: "ownerGuid", Description: "New owner's user GUID", Required: true, Type: "string"},
 				},
 			},
+			// Project templates. The typed MCP tools own this flow and expose no REST
+			// adapter, so these commands call the tools directly: every positional arg
+			// and flag maps to the tool's exact camelCase argument name, and identities
+			// cross the boundary as public GUIDs only.
+			{Name: "templates", Description: "List project templates", ToolName: "UteamupProjectTemplateList", MCPOnly: true},
+			{
+				Name:        "from-template",
+				Description: "Create a project from a project template, including workorders from the template's workorder templates",
+				ToolName:    "UteamupProjectCreateFromTemplate",
+				MCPOnly:     true,
+				Args: []ArgDef{
+					{Name: "templateGuid", Description: "Project template GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "name", Description: "Name of the new project", Required: true, Type: "string"},
+					{Name: "start-date-utc", BodyName: "startDateUtc", Description: "Project start as an ISO-8601 UTC date-time, for example 2026-10-01T08:00:00Z", Required: true, Type: "string"},
+					{Name: "owner-guid", BodyName: "ownerGuid", Description: "Project owner's user GUID", Required: true, Type: "uuid"},
+					{Name: "description", Description: "Optional project description", Type: "string"},
+					{Name: "project-code", BodyName: "projectCode", Description: "Optional project code", Type: "string"},
+					{Name: "end-date-utc", BodyName: "endDateUtc", Description: "Optional project end as an ISO-8601 UTC date-time", Type: "string"},
+					{Name: "priority", Description: "Project priority (1=Low, 2=Medium, 3=High, 4=Urgent, 5=Critical)", Default: 0, Type: "int"},
+					{Name: "budget", Description: "Project budget", Default: 0.0, Type: "float"},
+					{Name: "customer-guid", BodyName: "customerGuid", Description: "Optional customer GUID", Type: "uuid"},
+					{Name: "location-guid", BodyName: "locationGuid", Description: "Optional location GUID", Type: "uuid"},
+					{Name: "asset-group-guid", BodyName: "assetGroupGuid", Description: "Optional asset group GUID", Type: "uuid"},
+				},
+			},
+			{
+				Name:        "save-as-template",
+				Description: "Save a copy of a project as a new project template, keeping the selected workorders as template workorders",
+				ToolName:    "UteamupProjectSaveAsTemplate",
+				MCPOnly:     true,
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "name", Description: "Name of the new project template", Required: true, Type: "string"},
+					{Name: "project-code", BodyName: "projectCode", Description: "Optional project template code", Type: "string"},
+					{Name: "description", Description: "Optional project template description", Type: "string"},
+					{Name: "workorder-guids", BodyName: "workorderGuids", Description: "Workorder GUIDs to keep as template workorders (repeatable or comma-separated)", Type: "stringSlice"},
+				},
+			},
+			{
+				Name:        "template-add-workorder-templates",
+				Description: "Copy library workorder templates into a project template",
+				ToolName:    "UteamupProjectTemplateAddWorkorderTemplates",
+				MCPOnly:     true,
+				Args: []ArgDef{
+					{Name: "projectGuid", Description: "Project template GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "from-json", BodyName: "model", Description: "File containing the model: items of workorderTemplateGuid with optional projectStartOffsetDays and projectStageOrder (without a model wrapper)",
+						Type: "string", Required: true, JSONFile: true},
+				},
+			},
 		},
 	})
 }
