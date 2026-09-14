@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.26.0](https://github.com/UteamUP/cli/compare/2.25.0...2.26.0) (2026-09-14)
+
+
+### Features
+
+* **itmanagement:** CLI domain mirroring the IT Management MCP tools ([dd31b38](https://github.com/UteamUP/cli/commit/dd31b38ccb71969ba151398bca434fc6c1b07c7a))
+
+
+### Tests
+
+* **itmanagement:** assert aliases on the domain declaration ([9a3ade4](https://github.com/UteamUP/cli/commit/9a3ade4360eb7acd449633055251271311d69907))
+
 ## [2.25.0](https://github.com/UteamUP/cli/compare/2.24.0...2.25.0) (2026-09-13)
 
 
