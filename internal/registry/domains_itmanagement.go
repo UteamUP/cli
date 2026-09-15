@@ -82,10 +82,17 @@ func init() {
 			},
 			{
 				Name:        "connections",
-				Description: "Show Azure connection health (status only, never secrets)",
+				Description: "Show Azure connection health (status only, never secrets). Each row is named after its Entra directory.",
 				ToolName:    "UteamupITManagementConnectionsList",
 				HTTPMethod:  "GET",
 				RESTPath:    "connections",
+			},
+			{
+				Name:        "connections-quota",
+				Description: "How many Entra directories this tenant may still connect",
+				ToolName:    "UteamupITManagementConnectionsQuota",
+				HTTPMethod:  "GET",
+				RESTPath:    "connections/quota",
 			},
 			{
 				Name:        "resources",
