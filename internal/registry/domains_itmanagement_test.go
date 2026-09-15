@@ -100,7 +100,7 @@ func TestITManagementActionsRouteToTheBackendControllers(t *testing.T) {
 func TestITManagementQueryFlagsUseTheBackendParameterNames(t *testing.T) {
 	want := map[string]map[string]string{
 		"alerts":    {"severity": "minimumSeverity", "asset-guid": "assetGuid", "rule-guid": "ruleGuid", "limit": "pageSize"},
-		"resources": {"include-stale": "includeStale", "type": "resourceType", "limit": "pageSize"},
+		"resources": {"include-stale": "includeStale", "type": "resourceType", "asset-guid": "assetGuid", "limit": "pageSize"},
 		"flows":     {"asset-guid": "assetGuid", "window-hours": "windowHours", "denied-only": "deniedOnly", "limit": "pageSize"},
 	}
 	for actionName, flags := range want {
@@ -133,5 +133,21 @@ func TestITManagementAlertActionsTakeAValidatedAlertGuid(t *testing.T) {
 		if arg.Name != "alert-guid" || arg.BodyName != "alertGuid" || arg.Type != "non-empty-uuid" || !arg.Required {
 			t.Errorf("%s alert selector = %+v, want a required non-empty GUID mapped to alertGuid", name, arg)
 		}
+	}
+}
+
+// The asset page asks which Azure resource an asset is linked to: the GUID is a query filter, never a path segment.
+func TestITManagementResourcesAssetGuidIsAQueryFilter(t *testing.T) {
+	domain := findDomain("itmanagement")
+	action := itManagementAction(t, "resources")
+	const guid = "11111111-2222-3333-4444-555555555555"
+	for _, flag := range action.Flags {
+		if flag.Name == "asset-guid" && flag.Type != "string" {
+			t.Errorf("--asset-guid type = %q, want string like the alerts flag", flag.Type)
+		}
+	}
+	path, consumed := buildRESTPath(domain, action, map[string]any{"assetGuid": guid})
+	if path != "/api/itmanagement/resources" || len(consumed) != 0 {
+		t.Errorf("path = %q, consumed = %v, want the asset GUID left for the query string", path, consumed)
 	}
 }

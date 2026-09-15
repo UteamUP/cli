@@ -98,6 +98,7 @@ func init() {
 					{Name: "include-stale", BodyName: "includeStale", Description: "Include resources not seen for 30 days", Type: "bool"},
 					{Name: "type", BodyName: "resourceType", Description: "Azure resource type filter", Type: "string"},
 					{Name: "search", Description: "Name, resource group or computer contains", Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Only the resource linked to this asset GUID", Type: "string"},
 					{Name: "limit", BodyName: "pageSize", Description: "Page size (1-200)", Type: "int", Default: 50},
 					{Name: "page", Description: "Page number", Type: "int", Default: 1},
 				},
