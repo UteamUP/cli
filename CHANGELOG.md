@@ -5,6 +5,15 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.28.0](https://github.com/UteamUP/cli/compare/2.27.0...2.28.0) (2026-09-15)
+
+
+### Features
+
+* **codingsystem:** set-designation-format action for tenant designation formats ([49835d2](https://github.com/UteamUP/cli/commit/49835d266d38f5ee1133881eddcc2b8d3da8431b))
+* **itmanagement:** activity command for the Azure activity log ([319f8d3](https://github.com/UteamUP/cli/commit/319f8d35b8f0dbf3da24a960aa7f0d93fee1d048))
+* **itmanagement:** filter IT resources by asset with --asset-guid ([0f6e25d](https://github.com/UteamUP/cli/commit/0f6e25da05c2a2d8d45f2850612311a8d5beabac))
+
 ## [2.27.0](https://github.com/UteamUP/cli/compare/2.26.1...2.27.0) (2026-09-14)
 
 
