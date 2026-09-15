@@ -81,6 +81,16 @@ func init() {
 					{Name: "parent-guid", Short: "p", BodyName: "parentEntryGuid", Description: "Already-materialised parent entry GUID; omit for a register root (Plant and Function tiers are both roots)", Type: "uuid"},
 				},
 			},
+			{
+				Name:        "set-designation-format",
+				Description: "Give the tenant's active coding system its own level separator and level names (e.g. '.' for =LB1.M2.M2.CL1.QMA01); the first change moves the tenant's own codes to a tenant-owned copy of the system",
+				ToolName:    "UteamupTenantcodingSetDesignationFormat",
+				MCPOnly:     true,
+				Flags: []FlagDef{
+					{Name: "separator", BodyName: "separatorChar", Description: "One character joining code levels; not a letter, digit, space or = + - :", Required: true, Type: "string"},
+					{Name: "levels", BodyName: "levelNames", Description: "Level names by depth, root first — repeatable or comma-separated (1-10 names)", Required: true, Type: "stringSlice"},
+				},
+			},
 		},
 	})
 }

@@ -51,6 +51,7 @@ func TestCodingSystemDomainActions(t *testing.T) {
 		"workorders":                "UteamupCodingsystemWorkorders",
 		"create-workorder":          "UteamupCodingsystemCreateWorkorder",
 		"materialize-register-code": "UteamupCodingsystemMaterializeRegisterCode",
+		"set-designation-format":    "UteamupTenantcodingSetDesignationFormat",
 	}
 
 	actionMap := make(map[string]string)
@@ -64,6 +65,45 @@ func TestCodingSystemDomainActions(t *testing.T) {
 		} else if actual != tool {
 			t.Errorf("action %q: expected tool %q, got %q", name, tool, actual)
 		}
+	}
+}
+
+func TestCodingSystemSetDesignationFormatFlags(t *testing.T) {
+	var action *Action
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name != "codingsystem" {
+			continue
+		}
+		for i := range d.Actions {
+			if d.Actions[i].Name == "set-designation-format" {
+				action = &d.Actions[i]
+			}
+		}
+	}
+	if action == nil {
+		t.Fatal("expected codingsystem set-designation-format action")
+	}
+	if !action.MCPOnly {
+		t.Error("set-designation-format must call the MCP tool")
+	}
+
+	want := map[string]struct{ bodyName, flagType string }{
+		"separator": {"separatorChar", "string"},
+		"levels":    {"levelNames", "stringSlice"},
+	}
+	for _, flag := range action.Flags {
+		expected, ok := want[flag.Name]
+		if !ok {
+			t.Errorf("unexpected flag %q", flag.Name)
+			continue
+		}
+		if flag.BodyName != expected.bodyName || flag.Type != expected.flagType || !flag.Required {
+			t.Errorf("flag %q: body %q type %q required %v", flag.Name, flag.BodyName, flag.Type, flag.Required)
+		}
+		delete(want, flag.Name)
+	}
+	if len(want) > 0 {
+		t.Errorf("missing flags: %v", want)
 	}
 }
 
