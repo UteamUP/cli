@@ -130,6 +130,22 @@ func init() {
 					{Name: "page", Description: "Page number", Type: "int", Default: 1},
 				},
 			},
+			{
+				Name:        "activity",
+				Description: "Show the Azure activity log for the connected subscriptions (callers masked)",
+				ToolName:    "UteamupITManagementActivityLog",
+				HTTPMethod:  "GET",
+				RESTPath:    "logs/activity",
+				Flags: []FlagDef{
+					{Name: "from", BodyName: "fromUtc", Description: "UTC range start (ISO-8601)", Type: "string"},
+					{Name: "to", BodyName: "toUtc", Description: "UTC range end (ISO-8601)", Type: "string"},
+					{Name: "failed-only", BodyName: "failedOnly", Description: "Only failed operations", Type: "bool"},
+					{Name: "search", BodyName: "textContains", Description: "Free-text filter (max 200 characters)", Type: "string"},
+					{Name: "resource-group", BodyName: "resourceGroup", Description: "Resource group filter", Type: "string"},
+					{Name: "subscription-id", BodyName: "subscriptionId", Description: "Azure subscription GUID filter", Type: "string"},
+					{Name: "limit", BodyName: "rowLimit", Description: "Maximum rows (1-500)", Type: "int", Default: 200},
+				},
+			},
 		},
 	})
 }

@@ -33,6 +33,7 @@ func TestITManagementDomainMirrorsMCPTools(t *testing.T) {
 		"resources":     "UteamupITManagementResourcesList",
 		"servicemap":    "UteamupITManagementServiceMapSummary",
 		"flows":         "UteamupITManagementFlowsSummary",
+		"activity":      "UteamupITManagementActivityLog",
 	}
 	for _, action := range domain.Actions {
 		if tool, ok := expected[action.Name]; ok {
@@ -79,6 +80,7 @@ func TestITManagementActionsRouteToTheBackendControllers(t *testing.T) {
 		{"resources", "GET", "/api/itmanagement/resources", map[string]any{"mapped": false}},
 		{"servicemap", "GET", "/api/itmanagement/servicemap", map[string]any{"windowHours": 24}},
 		{"flows", "GET", "/api/itmanagement/network/flows", map[string]any{"windowHours": 24}},
+		{"activity", "GET", "/api/itmanagement/logs/activity", map[string]any{"failedOnly": true, "rowLimit": 200}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.action, func(t *testing.T) {
@@ -102,6 +104,7 @@ func TestITManagementQueryFlagsUseTheBackendParameterNames(t *testing.T) {
 		"alerts":    {"severity": "minimumSeverity", "asset-guid": "assetGuid", "rule-guid": "ruleGuid", "limit": "pageSize"},
 		"resources": {"include-stale": "includeStale", "type": "resourceType", "asset-guid": "assetGuid", "limit": "pageSize"},
 		"flows":     {"asset-guid": "assetGuid", "window-hours": "windowHours", "denied-only": "deniedOnly", "limit": "pageSize"},
+		"activity":  {"from": "fromUtc", "to": "toUtc", "failed-only": "failedOnly", "search": "textContains", "resource-group": "resourceGroup", "subscription-id": "subscriptionId", "limit": "rowLimit"},
 	}
 	for actionName, flags := range want {
 		action := itManagementAction(t, actionName)
@@ -120,6 +123,15 @@ func TestITManagementQueryFlagsUseTheBackendParameterNames(t *testing.T) {
 	}
 	if flag := itManagementAction(t, "alerts").Flags; flag[len(flag)-2].Default != 50 {
 		t.Errorf("alerts --limit must default to 50")
+	}
+	activity := itManagementAction(t, "activity")
+	if activity.MCPOnly {
+		t.Errorf("activity must use the REST logs/activity route like the other IT actions")
+	}
+	if flag := activity.Flags; len(flag) != 7 {
+		t.Errorf("activity flags = %+v, want the seven ITActivityLogQuery filters", flag)
+	} else if limit, isInt := flag[6].Default.(int); flag[6].Name != "limit" || !isInt || limit != 200 {
+		t.Errorf("activity --limit must default to int 200, got %+v", flag[6])
 	}
 }
 

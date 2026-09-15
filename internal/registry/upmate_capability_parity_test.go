@@ -19,6 +19,7 @@ func TestEnabledUpmateCapabilitiesHaveCLIRegistrations(t *testing.T) {
 		"UteamupITManagementResourcesList",
 		"UteamupITManagementServiceMapSummary",
 		"UteamupITManagementFlowsSummary",
+		"UteamupITManagementActivityLog",
 		"UteamupDocumentListVersionsByGuid",
 		"UteamupDocumentGetMetadata",
 		"UteamupFleetDashboardGet",
