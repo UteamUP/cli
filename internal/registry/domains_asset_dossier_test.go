@@ -53,13 +53,15 @@ func TestAssetDossierActionsMatchBackendContract(t *testing.T) {
 func TestAssetDossierRoutesExpandFromTheirArgs(t *testing.T) {
 	d := assetDossierDomain(t)
 	cases := []struct {
-		action string
-		args   map[string]any
-		want   string
+		action   string
+		args     map[string]any
+		want     string
+		consumes int
 	}{
-		{"get", map[string]any{"jobGuid": "j-1"}, "/api/assetdossier/jobs/j-1"},
-		{"list", map[string]any{"subjectType": "Part", "subjectGuid": "p-1"}, "/api/assetdossier/by-subject/Part/p-1"},
-		{"cancel", map[string]any{"jobGuid": "j-1"}, "/api/assetdossier/jobs/j-1/cancel"},
+		{"get", map[string]any{"jobGuid": "j-1"}, "/api/assetdossier/jobs/j-1", 1},
+		// The subject route is keyed by kind as well as GUID, so it spends two path args.
+		{"list", map[string]any{"subjectType": "Part", "subjectGuid": "p-1"}, "/api/assetdossier/by-subject/Part/p-1", 2},
+		{"cancel", map[string]any{"jobGuid": "j-1"}, "/api/assetdossier/jobs/j-1/cancel", 1},
 	}
 
 	for _, c := range cases {
@@ -71,8 +73,8 @@ func TestAssetDossierRoutesExpandFromTheirArgs(t *testing.T) {
 		if got != c.want {
 			t.Errorf("%s path = %q, want %q", c.action, got, c.want)
 		}
-		if len(consumed) != 1 {
-			t.Errorf("%s consumed = %v, want one path arg", c.action, consumed)
+		if len(consumed) != c.consumes {
+			t.Errorf("%s consumed = %v, want %d path arg(s)", c.action, consumed, c.consumes)
 		}
 	}
 }
