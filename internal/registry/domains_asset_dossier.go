@@ -9,7 +9,7 @@ func init() {
 	Register(&Domain{
 		Name:        "asset-dossier",
 		Aliases:     []string{"dossier", "asset-dossiers"},
-		Description: "Generate and follow the UPMate PDF dossier that documents one asset",
+		Description: "Generate and follow the UPMate PDF dossier that documents one asset, part, tool, chemical or IT resource",
 		APIPath:     "/api/assetdossier",
 		Actions: []Action{
 			{
@@ -19,7 +19,8 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "jobs",
 				Flags: []FlagDef{
-					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset to document", Required: true, Type: "non-empty-uuid"},
+					{Name: "subject-guid", BodyName: "subjectGuid", Description: "Asset, part, tool, chemical or IT resource to document", Required: true, Type: "non-empty-uuid"},
+					{Name: "subject-type", BodyName: "subjectType", Description: "Asset, Part, Tool, Chemical or ITResource", Default: "Asset", Type: "string"},
 					{Name: "request-guid", BodyName: "requestGuid", Description: "Caller-generated GUID; re-sending it returns the existing job instead of charging again", Required: true, Type: "non-empty-uuid"},
 					{Name: "options", Description: "JSON object with sections[], includeWebResearch, includeDiagram and language", Type: "string", JSONFile: true},
 					{Name: "wait", Description: "Block until the job reaches completed, failed or cancelled", Type: "bool", LocalOnly: true},
@@ -39,10 +40,13 @@ func init() {
 			},
 			{
 				Name:        "list",
-				Description: "One asset's recent dossier jobs, newest first",
+				Description: "One subject's recent dossier jobs, newest first",
 				ToolName:    "UteamupAssetDossierListByAsset",
-				RESTPath:    "by-asset/{assetGuid}",
-				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset GUID", Required: true, Type: "non-empty-uuid"}},
+				RESTPath:    "by-subject/{subjectType}/{subjectGuid}",
+				Args: []ArgDef{
+					{Name: "subjectType", Description: "Asset, Part, Tool, Chemical or ITResource", Required: true, Type: "string"},
+					{Name: "subjectGuid", Description: "Subject GUID", Required: true, Type: "non-empty-uuid"},
+				},
 				Flags: []FlagDef{
 					{Name: "take", QueryName: "take", Description: "How many recent jobs to return", Default: 10, Type: "int"},
 				},

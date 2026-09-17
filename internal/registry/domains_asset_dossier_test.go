@@ -28,7 +28,7 @@ func TestAssetDossierActionsMatchBackendContract(t *testing.T) {
 	cases := []struct{ name, tool, method, path string }{
 		{"request", "UteamupAssetDossierRequest", "POST", "jobs"},
 		{"get", "UteamupAssetDossierGet", "", "jobs/{jobGuid}"},
-		{"list", "UteamupAssetDossierListByAsset", "", "by-asset/{assetGuid}"},
+		{"list", "UteamupAssetDossierListByAsset", "", "by-subject/{subjectType}/{subjectGuid}"},
 		{"cancel", "UteamupAssetDossierCancel", "POST", "jobs/{jobGuid}/cancel"},
 	}
 
@@ -58,7 +58,7 @@ func TestAssetDossierRoutesExpandFromTheirArgs(t *testing.T) {
 		want   string
 	}{
 		{"get", map[string]any{"jobGuid": "j-1"}, "/api/assetdossier/jobs/j-1"},
-		{"list", map[string]any{"assetGuid": "a-1"}, "/api/assetdossier/by-asset/a-1"},
+		{"list", map[string]any{"subjectType": "Part", "subjectGuid": "p-1"}, "/api/assetdossier/by-subject/Part/p-1"},
 		{"cancel", map[string]any{"jobGuid": "j-1"}, "/api/assetdossier/jobs/j-1/cancel"},
 	}
 
@@ -87,9 +87,15 @@ func TestAssetDossierRequestRequiresItsIdempotencyKey(t *testing.T) {
 	}
 
 	flags := flagsToMap(request.Flags)
-	asset, ok := flags["asset-guid"]
-	if !ok || !asset.Required || asset.BodyName != "assetGuid" || asset.Type != "non-empty-uuid" {
-		t.Errorf("--asset-guid must be a required non-empty GUID mapped to assetGuid, got %+v", asset)
+	subject, ok := flags["subject-guid"]
+	if !ok || !subject.Required || subject.BodyName != "subjectGuid" || subject.Type != "non-empty-uuid" {
+		t.Errorf("--subject-guid must be a required non-empty GUID mapped to subjectGuid, got %+v", subject)
+	}
+	// The dossier documents five kinds of thing, and the type must reach the body or every
+	// request would silently ask for an asset.
+	subjectType, ok := flags["subject-type"]
+	if !ok || subjectType.BodyName != "subjectType" || subjectType.Default != "Asset" {
+		t.Errorf("--subject-type must map to subjectType and default to Asset, got %+v", subjectType)
 	}
 	key, ok := flags["request-guid"]
 	if !ok || !key.Required || key.BodyName != "requestGuid" || key.Type != "non-empty-uuid" {
