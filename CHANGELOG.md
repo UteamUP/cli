@@ -5,6 +5,21 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.29.0](https://github.com/UteamUP/cli/compare/2.28.0...2.29.0) (2026-09-17)
+
+
+### Features
+
+* **dossier:** document any subject from the CLI ([3c256aa](https://github.com/UteamUP/cli/commit/3c256aaaf7f44bdea320754e837077e44c1a4663))
+* **itmanagement:** add connections-quota action for Entra directory connection limits ([f7e5502](https://github.com/UteamUP/cli/commit/f7e550285f4b6dc5af2a8334b0a736c2b9ebeb1a))
+* **itmanagement:** add servicemap scope flags ([c7f5ac7](https://github.com/UteamUP/cli/commit/c7f5ac748be2d922b6a6c2c56ec8770ffd1d5abd))
+* **registry:** mirror the IT resource-children and asset-proposal tools ([93f2780](https://github.com/UteamUP/cli/commit/93f27808d422b8d0b77afaffb6767a5208241529))
+
+
+### Bug Fixes
+
+* **dossier:** the subject route spends two path args, not one ([10e58ca](https://github.com/UteamUP/cli/commit/10e58ca1a4684ed0f2a0344ea43acccb900aad2f))
+
 ## [2.28.0](https://github.com/UteamUP/cli/compare/2.27.0...2.28.0) (2026-09-15)
 
 
