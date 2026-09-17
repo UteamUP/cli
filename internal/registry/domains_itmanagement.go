@@ -111,6 +111,26 @@ func init() {
 				},
 			},
 			{
+				Name:        "resource-children",
+				Description: "List the disks, network cards and public IPs that hang off one discovered resource",
+				ToolName:    "UteamupITManagementResourceChildren",
+				HTTPMethod:  "GET",
+				RESTPath:    "resources/{resourceGuid}/children",
+				Flags: []FlagDef{
+					{Name: "resource-guid", BodyName: "resourceGuid", Description: "The parent resource GUID", Type: "string", Required: true},
+				},
+			},
+			{
+				Name:        "resource-proposals",
+				Description: "Read UPMate's verdicts on which discovered resources should become assets",
+				ToolName:    "UteamupITManagementResourceProposals",
+				HTTPMethod:  "GET",
+				RESTPath:    "resources/proposals",
+				Flags: []FlagDef{
+					{Name: "connection-guid", BodyName: "connectionGuid", Description: "Limit to one connection GUID", Type: "string"},
+				},
+			},
+			{
 				Name:        "servicemap",
 				Description: "Show the service map: mapped assets, accepted and proposed connections with flow evidence",
 				ToolName:    "UteamupITManagementServiceMapSummary",

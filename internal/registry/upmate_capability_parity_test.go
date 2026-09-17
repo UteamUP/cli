@@ -17,6 +17,8 @@ func TestEnabledUpmateCapabilitiesHaveCLIRegistrations(t *testing.T) {
 		"UteamupITManagementRulesList",
 		"UteamupITManagementConnectionsList",
 		"UteamupITManagementResourcesList",
+		"UteamupITManagementResourceChildren",
+		"UteamupITManagementResourceProposals",
 		"UteamupITManagementServiceMapSummary",
 		"UteamupITManagementFlowsSummary",
 		"UteamupITManagementActivityLog",

@@ -23,18 +23,20 @@ func TestITManagementDomainMirrorsMCPTools(t *testing.T) {
 		t.Fatal("expected itmanagement domain to be registered")
 	}
 	expected := map[string]string{
-		"dashboard":     "UteamupITManagementDashboard",
-		"alerts":        "UteamupITManagementAlertsList",
-		"alert":         "UteamupITManagementAlertGet",
-		"alert-ack":     "UteamupITManagementAlertAcknowledge",
-		"alert-resolve": "UteamupITManagementAlertResolve",
-		"rules":         "UteamupITManagementRulesList",
-		"connections":         "UteamupITManagementConnectionsList",
-		"connections-quota":   "UteamupITManagementConnectionsQuota",
-		"resources":     "UteamupITManagementResourcesList",
-		"servicemap":    "UteamupITManagementServiceMapSummary",
-		"flows":         "UteamupITManagementFlowsSummary",
-		"activity":      "UteamupITManagementActivityLog",
+		"dashboard":          "UteamupITManagementDashboard",
+		"alerts":             "UteamupITManagementAlertsList",
+		"alert":              "UteamupITManagementAlertGet",
+		"alert-ack":          "UteamupITManagementAlertAcknowledge",
+		"alert-resolve":      "UteamupITManagementAlertResolve",
+		"rules":              "UteamupITManagementRulesList",
+		"connections":        "UteamupITManagementConnectionsList",
+		"connections-quota":  "UteamupITManagementConnectionsQuota",
+		"resources":          "UteamupITManagementResourcesList",
+		"resource-children":  "UteamupITManagementResourceChildren",
+		"resource-proposals": "UteamupITManagementResourceProposals",
+		"servicemap":         "UteamupITManagementServiceMapSummary",
+		"flows":              "UteamupITManagementFlowsSummary",
+		"activity":           "UteamupITManagementActivityLog",
 	}
 	for _, action := range domain.Actions {
 		if tool, ok := expected[action.Name]; ok {
@@ -163,5 +165,44 @@ func TestITManagementResourcesAssetGuidIsAQueryFilter(t *testing.T) {
 	path, consumed := buildRESTPath(domain, action, map[string]any{"assetGuid": guid})
 	if path != "/api/itmanagement/resources" || len(consumed) != 0 {
 		t.Errorf("path = %q, consumed = %v, want the asset GUID left for the query string", path, consumed)
+	}
+}
+
+func TestITManagementResourceGraphActions(t *testing.T) {
+	children := itManagementAction(t, "resource-children")
+	if children.RESTPath != "resources/{resourceGuid}/children" {
+		t.Errorf("resource-children REST path is %q", children.RESTPath)
+	}
+	if children.HTTPMethod != "GET" {
+		t.Errorf("resource-children should be a read, got %q", children.HTTPMethod)
+	}
+	var guid *FlagDef
+	for i := range children.Flags {
+		if children.Flags[i].Name == "resource-guid" {
+			guid = &children.Flags[i]
+		}
+	}
+	if guid == nil {
+		t.Fatal("resource-children must take --resource-guid")
+	}
+	if !guid.Required {
+		t.Error("--resource-guid must be required; there is no sensible default parent")
+	}
+	if guid.BodyName != "resourceGuid" {
+		t.Errorf("--resource-guid maps to %q, want resourceGuid", guid.BodyName)
+	}
+
+	proposals := itManagementAction(t, "resource-proposals")
+	if proposals.RESTPath != "resources/proposals" {
+		t.Errorf("resource-proposals REST path is %q", proposals.RESTPath)
+	}
+	if proposals.HTTPMethod != "GET" {
+		t.Errorf("reading a verdict must not mutate; got %q", proposals.HTTPMethod)
+	}
+	// Deciding a proposal creates an asset, so it is deliberately not exposed as a CLI action.
+	for _, action := range findDomain("itmanagement").Actions {
+		if action.Name == "resource-proposal-decide" {
+			t.Error("deciding a proposal is a human review step, not a CLI action")
+		}
 	}
 }
