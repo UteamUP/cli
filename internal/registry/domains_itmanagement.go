@@ -138,6 +138,11 @@ func init() {
 				RESTPath:    "servicemap",
 				Flags: []FlagDef{
 					{Name: "window-hours", BodyName: "windowHours", Description: "Flow window in hours (1-168)", Type: "int", Default: 24},
+					{Name: "subscription-id", BodyName: "subscriptionIds", Description: "Azure subscription to build the map from, repeatable", Type: "stringSlice"},
+					{Name: "resource-group", BodyName: "resourceGroups", Description: "Azure resource group to build the map from, repeatable", Type: "stringSlice"},
+					{Name: "location", BodyName: "locations", Description: "Azure region to build the map from, repeatable", Type: "stringSlice"},
+					{Name: "resource-guid", BodyName: "resourceGuids", Description: "Resource GUID to build the map around; the map is these plus what they talk to, repeatable", Type: "stringSlice"},
+					{Name: "max-nodes", BodyName: "maxNodes", Description: "Node cap applied after scoping (10-2000)", Type: "int", Default: 300},
 				},
 			},
 			{

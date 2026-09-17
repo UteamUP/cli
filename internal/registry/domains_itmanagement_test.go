@@ -206,3 +206,34 @@ func TestITManagementResourceGraphActions(t *testing.T) {
 		}
 	}
 }
+
+// The service map is BUILT from its scope server-side, before the node cap, so the CLI has to be able
+// to send each scope as a repeatable flag rather than a single joined value.
+func TestITManagementServiceMapScopeFlags(t *testing.T) {
+	action := itManagementAction(t, "servicemap")
+	want := map[string]string{
+		"subscription-id": "subscriptionIds",
+		"resource-group":  "resourceGroups",
+		"location":        "locations",
+		"resource-guid":   "resourceGuids",
+	}
+	found := map[string]bool{}
+	for _, flag := range action.Flags {
+		body, ok := want[flag.Name]
+		if !ok {
+			continue
+		}
+		if flag.BodyName != body {
+			t.Errorf("flag %q sends %q, want %q", flag.Name, flag.BodyName, body)
+		}
+		if flag.Type != "stringSlice" {
+			t.Errorf("flag %q is %q, want stringSlice so it can be repeated", flag.Name, flag.Type)
+		}
+		found[flag.Name] = true
+	}
+	for name := range want {
+		if !found[name] {
+			t.Errorf("servicemap is missing the %q scope flag", name)
+		}
+	}
+}
