@@ -22,6 +22,18 @@ func init() {
 				ToolName:    "UteamupUserGet",
 				Args:        []ArgDef{{Name: "id", Description: "User ID", Required: true, Type: "string"}},
 			},
+			{
+				Name:         "emergency-contacts",
+				Description:  "Read a colleague's emergency contacts. Every read is logged and shown to the person it is about.",
+				ToolName:     "UteamupEmergencycontactListForUser",
+				RESTBasePath: "/api/emergencycontact",
+				RESTPath:     "by-user/{guid}",
+				HTTPMethod:   "GET",
+				Args:         []ArgDef{{Name: "guid", Description: "The subject's public user GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "reason", Description: "Why you are reading them — shown to the subject", Type: "string", QueryName: "reason"},
+				},
+			},
 		},
 	})
 }

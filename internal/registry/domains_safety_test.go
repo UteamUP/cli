@@ -24,6 +24,15 @@ func TestSafetyDomainActions(t *testing.T) {
 		"create":     "UteamupSafetyincidentCreate",
 		"classify":   "UteamupSafetyincidentClassify",
 		"ita-export": "UteamupOshaItaExport",
+
+		// Added with the people-and-legal change. The MCP tool and the CLI action must move
+		// together or the CLI silently drifts from what an agent can do.
+		"contacts":           "UteamupSafetyincidentContactsList",
+		"link-contact":       "UteamupSafetyincidentContactsLink",
+		"unlink-contact":     "UteamupSafetyincidentContactsUnlink",
+		"legal-reports":      "UteamupSafetyincidentLegalreportList",
+		"legal-report":       "UteamupSafetyincidentLegalreportCreate",
+		"draft-legal-report": "UteamupSafetyincidentLegalreportDraft",
 	}
 
 	actionMap := make(map[string]string)
@@ -83,4 +92,59 @@ func TestSafetyItaExportIncludeCasesFlag(t *testing.T) {
 	if v, ok := flag.Default.(bool); !ok || v {
 		t.Errorf("include-cases default = %v (%T), want false", flag.Default, flag.Default)
 	}
+}
+
+// The unlink route takes the link GUID and the incident GUID, in that order. Passing the contact
+// GUID where the link GUID belongs would delete nothing and report success, so the arg names are
+// worth pinning.
+func TestSafetyUnlinkContactTakesBothGuids(t *testing.T) {
+	d := findDomain("safety")
+	if d == nil {
+		t.Fatal("expected safety domain to be registered")
+	}
+
+	var action *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "unlink-contact" {
+			action = &d.Actions[i]
+			break
+		}
+	}
+	if action == nil {
+		t.Fatal("expected unlink-contact action")
+	}
+
+	if len(action.Args) != 2 {
+		t.Fatalf("unlink-contact args = %d, want 2", len(action.Args))
+	}
+	if action.Args[0].Name != "guid" || action.Args[1].Name != "linkGuid" {
+		t.Errorf("unlink-contact args = %q/%q, want guid/linkGuid",
+			action.Args[0].Name, action.Args[1].Name)
+	}
+	if action.RESTPath != "by-guid/{guid}/contacts/{linkGuid}" {
+		t.Errorf("unlink-contact RESTPath = %q", action.RESTPath)
+	}
+}
+
+// Drafting spends tenant AI credits, so it must be a POST that carries no body of its own — the
+// incident is the entire input.
+func TestSafetyDraftLegalReportIsAPostWithNoBody(t *testing.T) {
+	d := findDomain("safety")
+	if d == nil {
+		t.Fatal("expected safety domain to be registered")
+	}
+
+	for _, a := range d.Actions {
+		if a.Name != "draft-legal-report" {
+			continue
+		}
+		if a.HTTPMethod != "POST" {
+			t.Errorf("draft-legal-report HTTPMethod = %q, want POST", a.HTTPMethod)
+		}
+		if len(a.Flags) != 0 {
+			t.Errorf("draft-legal-report should take no flags, got %d", len(a.Flags))
+		}
+		return
+	}
+	t.Fatal("expected draft-legal-report action")
 }
