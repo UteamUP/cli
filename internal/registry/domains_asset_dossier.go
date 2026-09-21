@@ -9,7 +9,7 @@ func init() {
 	Register(&Domain{
 		Name:        "asset-dossier",
 		Aliases:     []string{"dossier", "asset-dossiers"},
-		Description: "Generate and follow the UPMate PDF dossier that documents one asset, part, tool, chemical or IT resource",
+		Description: "Generate and follow the UPMate PDF dossier for an asset, asset group, part, tool, chemical or IT resource",
 		APIPath:     "/api/assetdossier",
 		Actions: []Action{
 			{
@@ -19,10 +19,10 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "jobs",
 				Flags: []FlagDef{
-					{Name: "subject-guid", BodyName: "subjectGuid", Description: "Asset, part, tool, chemical or IT resource to document", Required: true, Type: "non-empty-uuid"},
-					{Name: "subject-type", BodyName: "subjectType", Description: "Asset, Part, Tool, Chemical or ITResource", Default: "Asset", Type: "string"},
+					{Name: "subject-guid", BodyName: "subjectGuid", Description: "Asset, asset group, part, tool, chemical or IT resource to document", Required: true, Type: "non-empty-uuid"},
+					{Name: "subject-type", BodyName: "subjectType", Description: "Asset, AssetGroup, Part, Tool, Chemical or ITResource", Default: "Asset", Type: "string"},
 					{Name: "request-guid", BodyName: "requestGuid", Description: "Caller-generated GUID; re-sending it returns the existing job instead of charging again", Required: true, Type: "non-empty-uuid"},
-					{Name: "options", Description: "JSON object with sections[], includeWebResearch, includeDiagram and language", Type: "string", JSONFile: true},
+					{Name: "options", Description: "JSON object with sections[], includeWebResearch, includeDiagram, createAsInfographic, attachToAsset and language", Type: "string", JSONFile: true},
 					{Name: "wait", Description: "Block until the job reaches completed, failed or cancelled", Type: "bool", LocalOnly: true},
 				},
 				PollWaitFlag:         "wait",
@@ -44,7 +44,7 @@ func init() {
 				ToolName:    "UteamupAssetDossierListByAsset",
 				RESTPath:    "by-subject/{subjectType}/{subjectGuid}",
 				Args: []ArgDef{
-					{Name: "subjectType", Description: "Asset, Part, Tool, Chemical or ITResource", Required: true, Type: "string"},
+					{Name: "subjectType", Description: "Asset, AssetGroup, Part, Tool, Chemical or ITResource", Required: true, Type: "string"},
 					{Name: "subjectGuid", Description: "Subject GUID", Required: true, Type: "non-empty-uuid"},
 				},
 				Flags: []FlagDef{

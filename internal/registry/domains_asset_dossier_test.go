@@ -1,6 +1,9 @@
 package registry
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // The asset-dossier domain mirrors AssetDossierController (/api/assetdossier/*).
 // Generation is asynchronous and spends AI credits, so two things are load-bearing:
@@ -93,11 +96,14 @@ func TestAssetDossierRequestRequiresItsIdempotencyKey(t *testing.T) {
 	if !ok || !subject.Required || subject.BodyName != "subjectGuid" || subject.Type != "non-empty-uuid" {
 		t.Errorf("--subject-guid must be a required non-empty GUID mapped to subjectGuid, got %+v", subject)
 	}
-	// The dossier documents five kinds of thing, and the type must reach the body or every
+	// The dossier documents six kinds of thing, and the type must reach the body or every
 	// request would silently ask for an asset.
 	subjectType, ok := flags["subject-type"]
 	if !ok || subjectType.BodyName != "subjectType" || subjectType.Default != "Asset" {
 		t.Errorf("--subject-type must map to subjectType and default to Asset, got %+v", subjectType)
+	}
+	if !strings.Contains(subjectType.Description, "AssetGroup") {
+		t.Errorf("--subject-type must advertise AssetGroup support, got %q", subjectType.Description)
 	}
 	key, ok := flags["request-guid"]
 	if !ok || !key.Required || key.BodyName != "requestGuid" || key.Type != "non-empty-uuid" {
@@ -106,6 +112,11 @@ func TestAssetDossierRequestRequiresItsIdempotencyKey(t *testing.T) {
 	options, ok := flags["options"]
 	if !ok || !options.JSONFile {
 		t.Errorf("--options must be a JSON file flag, got %+v", options)
+	}
+	for _, field := range []string{"includeWebResearch", "includeDiagram", "createAsInfographic", "attachToAsset"} {
+		if !strings.Contains(options.Description, field) {
+			t.Errorf("--options description is missing %s: %q", field, options.Description)
+		}
 	}
 }
 
