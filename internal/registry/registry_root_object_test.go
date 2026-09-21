@@ -143,6 +143,85 @@ func TestRootObjectAndLocalOnlyDefinitionsFailClosed(t *testing.T) {
 	}
 }
 
+func TestJSONFlagReadsRootObjectFileInsteadOfSendingItsPath(t *testing.T) {
+	requestPath := writeRegistryJSONFixture(t, `{
+		"title":"Pump seal investigation",
+		"problemStatement":"Seal temperature exceeded the reviewed limit"
+	}`)
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	if err := auth.SaveToken(&auth.TokenData{
+		AccessToken: "json-helper-contract-token",
+		ExpiresAt:   time.Now().Add(time.Hour),
+		TenantGUID:  "55555555-5555-4555-8555-555555555555",
+	}); err != nil {
+		t.Fatalf("save test token: %v", err)
+	}
+
+	server := httptest.NewTLSServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodPost {
+			t.Errorf("method = %s, want POST", request.Method)
+		}
+		if request.URL.Path != "/api/json-helper" {
+			t.Errorf("path = %q, want /api/json-helper", request.URL.Path)
+		}
+		bodyBytes, err := io.ReadAll(request.Body)
+		if err != nil {
+			t.Errorf("read body: %v", err)
+		}
+		var body map[string]any
+		if err := json.Unmarshal(bodyBytes, &body); err != nil {
+			t.Errorf("decode body: %v", err)
+		}
+		want := map[string]any{
+			"title":            "Pump seal investigation",
+			"problemStatement": "Seal temperature exceeded the reviewed limit",
+		}
+		if !reflect.DeepEqual(body, want) {
+			t.Errorf("body = %#v, want %#v", body, want)
+		}
+		if body["fromJson"] == requestPath {
+			t.Errorf("local file path leaked into request body: %#v", body)
+		}
+		response.Header().Set("Content-Type", "application/json")
+		_, _ = response.Write([]byte(`{}`))
+	}))
+	t.Cleanup(server.Close)
+
+	domain := &Domain{
+		Name:    "json-helper",
+		APIPath: "/api/json-helper",
+		Actions: []Action{{
+			Name:       "create",
+			HTTPMethod: http.MethodPost,
+			Flags:      []FlagDef{jsonFlag()},
+		}},
+	}
+	apiClient := client.NewAPIClient(
+		server.URL,
+		time.Second,
+		true,
+		client.RetryOptions{MaxRetries: 0},
+		logging.New(logging.LevelError),
+	)
+	format := "json"
+	command := buildDomainCommand(
+		domain,
+		func() (*client.APIClient, error) { return apiClient, nil },
+		logging.New(logging.LevelError),
+		&format,
+		&ExportConfig{},
+	)
+	command.SilenceErrors = true
+	command.SilenceUsage = true
+	command.SetArgs([]string{"create", "--from-json", requestPath})
+
+	if err := command.Execute(); err != nil {
+		t.Fatalf("create command error = %v", err)
+	}
+}
+
 func TestExplicitDomainBaseRoutingIsNarrowAndCannotEscape(t *testing.T) {
 	domain := &Domain{Name: "sample-record", APIPath: "/api/quality/sample-records"}
 

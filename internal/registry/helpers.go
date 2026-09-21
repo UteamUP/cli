@@ -32,7 +32,12 @@ func externalGUIDArg() []ArgDef {
 
 // jsonFlag returns the --from-json flag for JSON file input.
 func jsonFlag() FlagDef {
-	return FlagDef{Name: "from-json", Description: "JSON file with request data", Type: "string"}
+	return FlagDef{
+		Name:               "from-json",
+		Description:        "JSON file with request data",
+		Type:               "string",
+		RootJSONObjectFile: true,
+	}
 }
 
 // crudActions returns standard CRUD actions for a domain using the legacy
