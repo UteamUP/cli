@@ -6,21 +6,22 @@ func init() {
 		Aliases:     []string{"users"},
 		Description: "Manage users",
 		Actions: []Action{
+			// There is no /api/user list or single-user route; members are read through the
+			// tenant's user routes, scoped to the X-Tenant-Guid the client sends.
 			{
-				Name:        "list",
-				Description: "List all users with pagination",
-				ToolName:    "UteamupUserList",
-				Flags: []FlagDef{
-					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
-					{Name: "page-size", Short: "s", Description: "Items per page", Default: 25, Type: "int"},
-					{Name: "filter", Short: "f", Description: "Filter by name or email", Type: "string"},
-				},
+				Name:         "list",
+				Description:  "List the members of your current tenant, with their user GUIDs",
+				ToolName:     "UteamupUserList",
+				RESTBasePath: "/api/tenant",
+				RESTPath:     "users",
 			},
 			{
-				Name:        "get",
-				Description: "Get user details by ID",
-				ToolName:    "UteamupUserGet",
-				Args:        []ArgDef{{Name: "id", Description: "User ID", Required: true, Type: "string"}},
+				Name:         "get",
+				Description:  "Get one member of your current tenant by user GUID",
+				ToolName:     "UteamupUserGet",
+				RESTBasePath: "/api/tenant",
+				RESTPath:     "users/{guid}",
+				Args:         []ArgDef{{Name: "guid", Description: "The member's public user GUID (from ut user list)", Required: true, Type: "non-empty-uuid"}},
 			},
 			{
 				Name:         "emergency-contacts",
