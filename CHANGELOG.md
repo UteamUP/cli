@@ -5,6 +5,21 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.31.0](https://github.com/UteamUP/cli/compare/2.30.0...2.31.0) (2026-09-21)
+
+
+### Features
+
+* **asset-group:** expose document draft commands ([da2c756](https://github.com/UteamUP/cli/commit/da2c75629074adabd09d049302362bd6627054f9))
+* **contacts,tenant:** add contact-type domain, ICE assignments, and tenant configuration actions ([eec97ba](https://github.com/UteamUP/cli/commit/eec97ba2e0732304dbce0b386b560db8126317c1))
+
+
+### Bug Fixes
+
+* **cli:** read shared from-json flags as root objects ([759c469](https://github.com/UteamUP/cli/commit/759c469fbeabd531e7750a26a7dee9c59fc63f7b))
+* expose complete dossier options in CLI ([67d7532](https://github.com/UteamUP/cli/commit/67d7532f36eae744dcd3732fb666f8c9c008d049))
+* **iot:** route the IoT read commands to their real backend endpoints ([d617167](https://github.com/UteamUP/cli/commit/d6171677079acfb39a0f42b50cb6ab9798dfd66a))
+
 ## [2.30.0](https://github.com/UteamUP/cli/compare/2.29.0...2.30.0) (2026-09-21)
 
 
