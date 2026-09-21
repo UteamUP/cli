@@ -23,7 +23,7 @@ func init() {
 					{Name: "email", Description: "Email of an existing UteamUP user (omit for an anonymous link)", Type: "string"},
 					{Name: "access-level", BodyName: "accessLevel", Description: "Ceiling: read (default), update (edit existing) or write (also create and delete). No section may exceed it", Default: "read", Type: "string"},
 					{Name: "workorder-access-level", BodyName: "workorderAccessLevel", Description: "What the recipient may do on the project's workorders: none (default), read, update or write. Capped by the workorders section", Default: "none", Type: "string"},
-					{Name: "section", BodyName: "sections", Description: "Per-section scope as section=level, repeatable (e.g. --section stages=update --section budget=none). Omit for the safe default: everything at the ceiling except budget, bom and team", Type: "stringSlice"},
+					{Name: "section", BodyName: "sections", Description: "Per-section scope as section=level, repeatable (e.g. --section stages=update --section budget=none). Omit for the safe default: everything at the ceiling except budget, bom, team and baselines", Type: "stringSlice"},
 					{Name: "expires-in-days", BodyName: "expiresInDays", Description: "Days until the share expires, 1-365 (default 30)", Type: "int"},
 					{Name: "note", Description: "Optional note shown to the recipient", Type: "string"},
 				},
