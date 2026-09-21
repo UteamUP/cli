@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.30.0](https://github.com/UteamUP/cli/compare/2.29.0...2.30.0) (2026-09-21)
+
+
+### Features
+
+* **cli:** safety contacts, legal reports and emergency-contact actions ([5255bbc](https://github.com/UteamUP/cli/commit/5255bbc77274f75d2bdcb7b3eed85afbbc19e7af))
+
 ## [2.29.0](https://github.com/UteamUP/cli/compare/2.28.0...2.29.0) (2026-09-17)
 
 
