@@ -23,7 +23,6 @@ func init() {
 		),
 	})
 	Register(&Domain{Name: "tag", Aliases: []string{"tags"}, Description: "Manage tags", Actions: crudActions("Tag")})
-	Register(&Domain{Name: "tenant", Aliases: []string{"tenants"}, Description: "Manage tenants", Actions: listGetActions("Tenant")})
 	Register(&Domain{Name: "tenant-holiday", Description: "Manage tenant holidays", Actions: []Action{
 		{Name: "year", Description: "List tenant holidays for a year", ToolName: "UteamupTenantHolidayGetByYear", RESTPath: "year/{year}", Args: []ArgDef{{Name: "year", Description: "Holiday year", Required: true, Type: "int"}}},
 		{Name: "create", Description: "Create a tenant holiday", ToolName: "UteamupTenantHolidayCreate", Flags: []FlagDef{jsonFlag()}},

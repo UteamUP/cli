@@ -5,7 +5,40 @@ func init() {
 		Name:        "tenant",
 		Aliases:     []string{"tenants"},
 		Description: "Manage tenants (organizations)",
-		Actions: []Action{
+		Actions: append(listGetActions("Tenant"), []Action{
+			{
+				Name:        "industry-profiles-get",
+				Description: "Get the active tenant's primary and additional industry profiles",
+				ToolName:    "UteamupTenantIndustryProfilesGet",
+				MCPOnly:     true,
+			},
+			{
+				Name:        "additional-industries-set",
+				Description: "Replace the active tenant's additional industry profiles without changing its primary coding profile",
+				ToolName:    "UteamupTenantAdditionalIndustryProfilesSet",
+				MCPOnly:     true,
+				Flags: []FlagDef{
+					{Name: "industry-profile-guid", BodyName: "additionalIndustryProfileGuids", Description: "Complete additional industry-profile GUID set; repeatable, omit all values to clear", Type: "stringSlice", Default: []string{}},
+				},
+			},
+			{
+				Name:        "modules-get",
+				Description: "List active-tenant module families, plan availability, and effective state",
+				ToolName:    "UteamupTenantModulesGet",
+				MCPOnly:     true,
+			},
+			{
+				Name:        "module-set",
+				Description: "Enable or disable one active-tenant module family within the plan entitlement ceiling",
+				ToolName:    "UteamupTenantModuleSet",
+				MCPOnly:     true,
+				Args: []ArgDef{
+					{Name: "familyKey", Description: "Lower-case module family key, for example fleet", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "enabled", BodyName: "isEnabled", Description: "Enable or disable the family", Required: true, Type: "bool"},
+				},
+			},
 			{
 				Name:        "invite-defaults-get",
 				Description: "Get the per-tenant invite-defaults configuration (auto-assign license + role)",
@@ -41,6 +74,6 @@ func init() {
 					{Name: "note", Description: "Audit note stored with the extension", Type: "string"},
 				},
 			},
-		},
+		}...),
 	})
 }
