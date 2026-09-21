@@ -137,6 +137,58 @@ func TestIoTCommandRoutesUseGuidOnlyPublicIdentities(t *testing.T) {
 	}
 }
 
+// Every IoT action's URL is pinned to its backend [Route]. The four read actions used to
+// declare no path, so each fell through to the bare domain base /api/iot, which no
+// controller serves — `ut iot status` answered 404 for every tenant. A new action must be
+// added here, or this test fails.
+func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
+	domain := findDomain("iot")
+	expected := map[string]string{
+		"status":                     "/api/iot/environment",                 // TenantIoTSelfServiceController.GetStatus
+		"monitoring":                 "/api/iot/monitoring",                  // IoTMonitoringController dashboard
+		"telemetry":                  "/api/iot/monitoring/telemetry/points", // IoTMonitoringController.GetTelemetryPoints
+		"rules":                      "/api/iot/rules",                       // IoTRuleController.Get
+		"command-definitions":        "/api/iot/commands/definitions",
+		"command-definition-history": "/api/iot/commands/definitions/history",
+		"command-definition-create":  "/api/iot/commands/definitions",
+		"command-definition-update":  "/api/iot/commands/definitions/definition-guid",
+		"command-control":            "/api/iot/commands/control",
+		"command-control-update":     "/api/iot/commands/control",
+		"command-preview":            "/api/iot/commands/requests/preview",
+		"command-requests":           "/api/iot/commands/requests",
+		"command-request":            "/api/iot/commands/requests/request-guid",
+		"command-confirm":            "/api/iot/commands/requests/request-guid/confirm",
+		"command-approve":            "/api/iot/commands/requests/request-guid/approve",
+		"command-reject":             "/api/iot/commands/requests/request-guid/reject",
+		"command-cancel":             "/api/iot/commands/requests/request-guid/cancel",
+		"command-monitoring":         "/api/iot/commands/monitoring",
+	}
+
+	for _, action := range domain.Actions {
+		want, ok := expected[action.Name]
+		if !ok {
+			t.Errorf("iot action %q has no pinned route; add it to this table", action.Name)
+			continue
+		}
+		args := map[string]any{"definitionGuid": "definition-guid", "requestGuid": "request-guid"}
+		if path, _ := buildRESTPath(domain, action, args); path != want {
+			t.Errorf("%s routes to %q, want %q", action.Name, path, want)
+		}
+		delete(expected, action.Name)
+	}
+	for missing := range expected {
+		t.Errorf("missing iot action %q", missing)
+	}
+}
+
+func TestIoTReadActionsAreGets(t *testing.T) {
+	for _, name := range []string{"status", "monitoring", "telemetry", "rules"} {
+		if method := findIoTAction(t, name).HTTPMethod; method != "GET" {
+			t.Errorf("%s HTTPMethod = %q, want GET", name, method)
+		}
+	}
+}
+
 func TestIoTCommandMutationsMirrorIdempotencyHeaderInBody(t *testing.T) {
 	for _, actionName := range []string{
 		"command-definition-create",
