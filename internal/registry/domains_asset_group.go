@@ -212,6 +212,18 @@ func init() {
 				Args:        []ArgDef{generationGuid},
 			},
 			{
+				Name:        "document-draft-generate",
+				Description: "Ask UPMate to propose a new group, existing members and cause/effect links from tenant documents",
+				ToolName:    "UteamupAssetGroupDocumentDraftGenerate",
+				HTTPMethod:  "POST",
+				RESTPath:    "document-drafts/generate",
+				Flags: []FlagDef{
+					{Name: "prompt", Description: "System boundary and failure effects to identify (10-4000 chars)", Required: true, Type: "string"},
+					{Name: "document-guid", BodyName: "documentGuids", Description: "Tenant document GUID to read, one to five, repeatable", Required: true, Type: "stringSlice"},
+					{Name: "request-guid", BodyName: "requestGuid", Description: "Caller-generated GUID that deduplicates a retried generation", Required: true, Type: "non-empty-uuid"},
+				},
+			},
+			{
 				Name:        "links-apply",
 				Description: "Write the proposals a human accepted from one stored generation",
 				ToolName:    "UteamupAssetGroupLinksApply",
@@ -221,6 +233,22 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "accepted-link-id", BodyName: "acceptedLinkIds", Description: "Proposal id to write, repeatable; anything not listed is discarded", Type: "stringSlice"},
 					{Name: "from-json", Description: "JSON object with acceptedLinkIds[] and the optional per-link overrides[]", Type: "string", RootJSONObjectFile: true},
+				},
+			},
+			{
+				Name:        "document-draft-apply",
+				Description: "Create the reviewed subset of a stored document-backed group proposal",
+				ToolName:    "UteamupAssetGroupDocumentDraftApply",
+				HTTPMethod:  "POST",
+				RESTPath:    "document-drafts/from-generation/{generationGuid}",
+				Args:        []ArgDef{generationGuid},
+				Flags: []FlagDef{
+					{Name: "name", Description: "Reviewed group name", Required: true, Type: "string"},
+					{Name: "description", Description: "Reviewed group description", Type: "string"},
+					{Name: "kind", Description: "System, ProductionLine, Area, Fleet, Utility, SafetySystem or Custom", Default: "Custom", Type: "string"},
+					{Name: "accepted-member-guid", BodyName: "acceptedMemberGuids", Description: "Proposed asset GUID to include, repeatable", Required: true, Type: "stringSlice"},
+					{Name: "accepted-link-id", BodyName: "acceptedLinkIds", Description: "Proposed connection id to include, repeatable", Type: "stringSlice"},
+					{Name: "from-json", Description: "Optional reviewed fields such as per-link overrides[]; merged with the required name and member flags", Type: "string", RootJSONObjectFile: true},
 				},
 			},
 		},

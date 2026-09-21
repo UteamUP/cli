@@ -59,7 +59,9 @@ func TestAssetGroupActionsMatchBackendContract(t *testing.T) {
 		{"label", "UteamupAssetGroupLabelPayload", "", "by-guid/{groupGuid}/label-payload"},
 		{"links-generate", "UteamupAssetGroupLinksGenerate", "POST", "links/generate"},
 		{"links-get", "UteamupAssetGroupLinksGenerationGet", "", "links/generations/{generationGuid}"},
+		{"document-draft-generate", "UteamupAssetGroupDocumentDraftGenerate", "POST", "document-drafts/generate"},
 		{"links-apply", "UteamupAssetGroupLinksApply", "POST", "links/from-generation/{generationGuid}"},
+		{"document-draft-apply", "UteamupAssetGroupDocumentDraftApply", "POST", "document-drafts/from-generation/{generationGuid}"},
 	}
 
 	for _, c := range cases {
@@ -105,6 +107,7 @@ func TestAssetGroupRoutesExpandFromTheirArgs(t *testing.T) {
 		{"auto-layout", map[string]any{"groupGuid": "g-1"}, "/api/assetgroup/by-guid/g-1/diagram/auto-layout"},
 		{"dependency-delete", map[string]any{"dependencyGuid": "d-1"}, "/api/assetgroup/dependencies/d-1"},
 		{"links-apply", map[string]any{"generationGuid": "x-1"}, "/api/assetgroup/links/from-generation/x-1"},
+		{"document-draft-apply", map[string]any{"generationGuid": "x-1"}, "/api/assetgroup/document-drafts/from-generation/x-1"},
 		{"map", map[string]any{}, "/api/assetgroup/map"},
 	}
 
@@ -169,6 +172,24 @@ func TestAssetGroupLinksGenerateCarriesPromptAndIdempotencyKey(t *testing.T) {
 	documents, ok := flags["document-guid"]
 	if !ok || documents.BodyName != "documentGuids" || documents.Type != "stringSlice" {
 		t.Errorf("--document-guid must be a repeatable slice mapped to documentGuids, got %+v", documents)
+	}
+}
+
+func TestAssetGroupDocumentDraftRequiresEvidenceAndIdempotencyKey(t *testing.T) {
+	d := assetGroupDomain(t)
+	generate := findAction(d, "document-draft-generate")
+	if generate == nil {
+		t.Fatal("expected document-draft-generate action on asset-group")
+	}
+
+	flags := flagsToMap(generate.Flags)
+	documents, ok := flags["document-guid"]
+	if !ok || !documents.Required || documents.BodyName != "documentGuids" || documents.Type != "stringSlice" {
+		t.Errorf("--document-guid must be a required repeatable slice mapped to documentGuids, got %+v", documents)
+	}
+	request, ok := flags["request-guid"]
+	if !ok || !request.Required || request.BodyName != "requestGuid" || request.Type != "non-empty-uuid" {
+		t.Errorf("--request-guid must be a required non-empty GUID mapped to requestGuid, got %+v", request)
 	}
 }
 
