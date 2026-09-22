@@ -53,6 +53,7 @@ func TestCodingSystemDomainActions(t *testing.T) {
 		"materialize-register-code": "UteamupCodingsystemMaterializeRegisterCode",
 		"set-designation-format":    "UteamupTenantcodingSetDesignationFormat",
 		"profile-validate":          "UteamupTenantcodingProfileValidate",
+		"profile-propose":           "UteamupTenantcodingProfileProposeFromDocuments",
 		"profile-apply":             "UteamupTenantcodingProfileApply",
 	}
 
@@ -70,13 +71,16 @@ func TestCodingSystemDomainActions(t *testing.T) {
 	}
 }
 
-func TestCodingSystemProfileActionsUseReviewedJSONFiles(t *testing.T) {
+func TestCodingSystemProfileActionsUseGovernedMCPArguments(t *testing.T) {
 	want := map[string]struct {
 		flagName string
 		bodyName string
+		flagType string
+		jsonFile bool
 	}{
-		"profile-validate": {flagName: "profile-file", bodyName: "profile"},
-		"profile-apply":    {flagName: "review-file", bodyName: "review"},
+		"profile-validate": {flagName: "profile-file", bodyName: "profile", flagType: "string", jsonFile: true},
+		"profile-propose":  {flagName: "document-guids", bodyName: "documentGuids", flagType: "stringSlice"},
+		"profile-apply":    {flagName: "review-file", bodyName: "review", flagType: "string", jsonFile: true},
 	}
 
 	for _, d := range DefaultRegistry.Domains() {
@@ -95,7 +99,8 @@ func TestCodingSystemProfileActionsUseReviewedJSONFiles(t *testing.T) {
 				t.Fatalf("%s flags = %d, want 1", action.Name, len(action.Flags))
 			}
 			flag := action.Flags[0]
-			if flag.Name != expected.flagName || flag.BodyName != expected.bodyName || !flag.Required || !flag.JSONFile {
+			if flag.Name != expected.flagName || flag.BodyName != expected.bodyName ||
+				flag.Type != expected.flagType || !flag.Required || flag.JSONFile != expected.jsonFile {
 				t.Errorf("%s flag = %#v", action.Name, flag)
 			}
 			delete(want, action.Name)

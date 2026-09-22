@@ -92,6 +92,15 @@ func init() {
 				},
 			},
 			{
+				Name:        "profile-propose",
+				Description: "Ask UPMate for a review-only RDS/KKS profile proposal from existing tenant Documents",
+				ToolName:    "UteamupTenantcodingProfileProposeFromDocuments",
+				MCPOnly:     true,
+				Flags: []FlagDef{
+					{Name: "document-guids", BodyName: "documentGuids", Description: "One to ten existing tenant Document GUIDs, repeatable or comma-separated", Required: true, Type: "stringSlice"},
+				},
+			},
+			{
 				Name:        "profile-validate",
 				Description: "Validate and fingerprint a tenant-owned RDS/KKS designation profile without saving it",
 				ToolName:    "UteamupTenantcodingProfileValidate",
