@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.33.0](https://github.com/UteamUP/cli/compare/2.32.0...2.33.0) (2026-09-22)
+
+
+### Features
+
+* **industry-coding:** propose custom profiles from tenant documents ([ffff840](https://github.com/UteamUP/cli/commit/ffff84092f87a382e54c7524575d8fbd8b333637))
+* **property-damage:** add property damage domain actions ([a2cb4fc](https://github.com/UteamUP/cli/commit/a2cb4fc4e5093c952eb652b00ff8773c9294970d))
+
 ## [2.32.0](https://github.com/UteamUP/cli/compare/2.31.1...2.32.0) (2026-09-22)
 
 
