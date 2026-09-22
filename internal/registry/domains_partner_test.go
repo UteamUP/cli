@@ -54,6 +54,51 @@ func TestPartnerActionsWired(t *testing.T) {
 	}
 }
 
+// The CLI calls REST, and an action without a RESTPath falls back to GET /api/partner: on
+// 2026-09-22 `partner get --guid` and `partner tenants --partner-guid` printed the partner list.
+// Each action's args are built from its own flags, as runCommand builds them, so a placeholder
+// that does not match its flag's camelCase name fails here too.
+func TestPartnerActionsRouteToTheirOwnEndpoints(t *testing.T) {
+	d := findPartnerDomain()
+	if d == nil {
+		t.Fatal("expected partner domain to be registered")
+	}
+	want := map[string]string{
+		"list":             "/api/partner",
+		"get":              "/api/partner/<guid>",
+		"applications":     "/api/partner/application",
+		"tenants":          "/api/partner/<partner-guid>/tenant",
+		"earnings":         "/api/partner/<partner-guid>/earning",
+		"program-defaults": "/api/partner/program-defaults",
+		"application-get":  "/api/partner/me/application",
+		"checklist":        "/api/partner/application/<application-guid>/checks",
+		"meetings":         "/api/partner/application/<application-guid>/meetings",
+		"referral-codes":   "/api/partner/me/referral-codes",
+		"tenant-manager":   "/api/partner/my-tenant-manager",
+	}
+	for _, action := range d.Actions {
+		expected, ok := want[action.Name]
+		if !ok {
+			t.Errorf("partner action %q has no expected route here", action.Name)
+			continue
+		}
+		args := map[string]any{}
+		for _, flag := range action.Flags {
+			args[toCamelCase(flag.Name)] = "<" + flag.Name + ">"
+		}
+		got, consumed := buildRESTPath(d, action, args)
+		if got != expected {
+			t.Errorf("%s path = %q, want %q", action.Name, got, expected)
+		}
+		if len(consumed) != len(action.Flags) {
+			t.Errorf("%s consumed %v, want every GUID flag in the path", action.Name, consumed)
+		}
+	}
+	if len(d.Actions) != len(want) {
+		t.Errorf("partner has %d actions, want %d", len(d.Actions), len(want))
+	}
+}
+
 func TestPartnerNewActionsHaveNoSpoofingFlags(t *testing.T) {
 	d := findPartnerDomain()
 	if d == nil {
