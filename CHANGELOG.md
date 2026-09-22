@@ -5,6 +5,19 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.32.0](https://github.com/UteamUP/cli/compare/2.31.1...2.32.0) (2026-09-22)
+
+
+### Features
+
+* add lifecycle workspace CLI actions ([16d2a91](https://github.com/UteamUP/cli/commit/16d2a914f6f3d7549f79781045a45e517a89c663))
+* **codingsystem:** add profile-validate and profile-apply actions ([f7a4b2c](https://github.com/UteamUP/cli/commit/f7a4b2c9184557d7dcecd24af4d327c431c3ef57))
+
+
+### Bug Fixes
+
+* **partner:** route partner get, tenants and earnings to their own endpoints ([b8d3d12](https://github.com/UteamUP/cli/commit/b8d3d1255a3d7ad50d71b33b0d45faaa0cfa7451))
+
 ## [2.31.1](https://github.com/UteamUP/cli/compare/2.31.0...2.31.1) (2026-09-22)
 
 
