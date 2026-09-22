@@ -91,6 +91,38 @@ func init() {
 					{Name: "levels", BodyName: "levelNames", Description: "Level names by depth, root first — repeatable or comma-separated (1-10 names)", Required: true, Type: "stringSlice"},
 				},
 			},
+			{
+				Name:        "profile-validate",
+				Description: "Validate and fingerprint a tenant-owned RDS/KKS designation profile without saving it",
+				ToolName:    "UteamupTenantcodingProfileValidate",
+				MCPOnly:     true,
+				Flags: []FlagDef{
+					{
+						Name:        "profile-file",
+						BodyName:    "profile",
+						Description: "JSON file containing profileName, context, baseCodingSystemGuid and aspect definitions",
+						Required:    true,
+						Type:        "string",
+						JSONFile:    true,
+					},
+				},
+			},
+			{
+				Name:        "profile-apply",
+				Description: "Apply an exact reviewed tenant designation profile using its fingerprint and review token",
+				ToolName:    "UteamupTenantcodingProfileApply",
+				MCPOnly:     true,
+				Flags: []FlagDef{
+					{
+						Name:        "review-file",
+						BodyName:    "review",
+						Description: "JSON file containing the normalized profile, fingerprint and tenant/actor-bound review token",
+						Required:    true,
+						Type:        "string",
+						JSONFile:    true,
+					},
+				},
+			},
 		},
 	})
 }

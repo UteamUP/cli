@@ -52,6 +52,8 @@ func TestCodingSystemDomainActions(t *testing.T) {
 		"create-workorder":          "UteamupCodingsystemCreateWorkorder",
 		"materialize-register-code": "UteamupCodingsystemMaterializeRegisterCode",
 		"set-designation-format":    "UteamupTenantcodingSetDesignationFormat",
+		"profile-validate":          "UteamupTenantcodingProfileValidate",
+		"profile-apply":             "UteamupTenantcodingProfileApply",
 	}
 
 	actionMap := make(map[string]string)
@@ -65,6 +67,42 @@ func TestCodingSystemDomainActions(t *testing.T) {
 		} else if actual != tool {
 			t.Errorf("action %q: expected tool %q, got %q", name, tool, actual)
 		}
+	}
+}
+
+func TestCodingSystemProfileActionsUseReviewedJSONFiles(t *testing.T) {
+	want := map[string]struct {
+		flagName string
+		bodyName string
+	}{
+		"profile-validate": {flagName: "profile-file", bodyName: "profile"},
+		"profile-apply":    {flagName: "review-file", bodyName: "review"},
+	}
+
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name != "codingsystem" {
+			continue
+		}
+		for _, action := range d.Actions {
+			expected, ok := want[action.Name]
+			if !ok {
+				continue
+			}
+			if !action.MCPOnly {
+				t.Errorf("%s must call the governed MCP tool", action.Name)
+			}
+			if len(action.Flags) != 1 {
+				t.Fatalf("%s flags = %d, want 1", action.Name, len(action.Flags))
+			}
+			flag := action.Flags[0]
+			if flag.Name != expected.flagName || flag.BodyName != expected.bodyName || !flag.Required || !flag.JSONFile {
+				t.Errorf("%s flag = %#v", action.Name, flag)
+			}
+			delete(want, action.Name)
+		}
+	}
+	if len(want) > 0 {
+		t.Errorf("missing reviewed profile actions: %v", want)
 	}
 }
 
