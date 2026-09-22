@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.31.1](https://github.com/UteamUP/cli/compare/2.31.0...2.31.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **project-share:** list baselines among the default-withheld sections ([62e14ca](https://github.com/UteamUP/cli/commit/62e14caad773794208decac6f83228409133d96d))
+* **user:** call the tenant user routes ([b9b48b3](https://github.com/UteamUP/cli/commit/b9b48b3478f66029d912f7b1258c8ac9fb07bb7d))
+
 ## [2.31.0](https://github.com/UteamUP/cli/compare/2.30.0...2.31.0) (2026-09-21)
 
 
