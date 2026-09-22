@@ -56,6 +56,17 @@ func init() {
 				},
 			},
 			{
+				Name:        "person-add",
+				Description: "Add an injured person with a separate injury case to an existing event",
+				ToolName:    "UteamupSafetyincidentPersonAdd",
+				RESTPath:    "by-guid/{guid}/injured-person",
+				HTTPMethod:  "POST",
+				Args:        []ArgDef{{Name: "guid", Description: "Existing incident GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "from-json", BodyName: "model", Description: "JSON file containing SafetyIncidentAddPersonModel", Required: true, Type: "string", JSONFile: true},
+				},
+			},
+			{
 				Name:        "classify",
 				Description: "Human-classify OSHA 1904 recordability. Never auto-decides.",
 				ToolName:    "UteamupSafetyincidentClassify",

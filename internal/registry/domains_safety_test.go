@@ -24,6 +24,7 @@ func TestSafetyDomainActions(t *testing.T) {
 		"create":       "UteamupSafetyincidentCreate",
 		"group-get":    "UteamupSafetyincidentGroupGet",
 		"group-create": "UteamupSafetyincidentGroupCreate",
+		"person-add":   "UteamupSafetyincidentPersonAdd",
 		"classify":     "UteamupSafetyincidentClassify",
 		"ita-export":   "UteamupOshaItaExport",
 
@@ -87,6 +88,24 @@ func TestSafetyGroupActionsUseSharedEventGuidAndJsonModel(t *testing.T) {
 	if create == nil || create.RESTPath != "group" || create.HTTPMethod != "POST" ||
 		len(create.Flags) != 1 || create.Flags[0].BodyName != "model" {
 		t.Fatalf("group-create action = %+v", create)
+	}
+}
+
+func TestSafetyPersonAddUsesIncidentGuidAndJsonModel(t *testing.T) {
+	d := findDomain("safety")
+	if d == nil {
+		t.Fatal("expected safety domain")
+	}
+	add := findAction(d, "person-add")
+	if add == nil || add.HTTPMethod != "POST" || len(add.Flags) != 1 ||
+		add.Flags[0].BodyName != "model" {
+		t.Fatalf("person-add action = %+v", add)
+	}
+	path, _ := buildRESTPath(d, *add, map[string]any{
+		"guid": "11111111-1111-1111-1111-111111111111",
+	})
+	if path != "/api/safetyincident/by-guid/11111111-1111-1111-1111-111111111111/injured-person" {
+		t.Fatalf("person-add path = %q", path)
 	}
 }
 
