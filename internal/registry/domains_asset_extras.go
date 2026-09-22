@@ -6,6 +6,30 @@ func init() {
 		Description: "Manage asset lifecycle events",
 		Actions: append(crudActions("AssetLifecycleEvent"),
 			Action{
+				Name: "workspace", Description: "Read lifecycle attention, plans, monitoring health and coverage",
+				ToolName: "UteamupAssetLifecycleWorkspaceGet", HTTPMethod: "GET",
+				RESTBasePath: "/api/asset-lifecycle-workspace", UseDomainBasePath: true,
+			},
+			Action{
+				Name: "setup-get", Description: "Read reviewed lifecycle setup for one asset GUID",
+				ToolName: "UteamupAssetLifecycleSetupGet", HTTPMethod: "GET",
+				RESTBasePath: "/api/assetlifecyclesetup", RESTPath: "asset/{assetGuid}",
+				Args: []ArgDef{{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "uuid"}},
+			},
+			Action{
+				Name: "setup-apply", Description: "Apply one reviewed lifecycle setup with version and idempotency controls",
+				ToolName: "UteamupAssetLifecycleSetupApply", HTTPMethod: "PUT",
+				RESTBasePath: "/api/assetlifecyclesetup", RESTPath: "asset/{assetGuid}",
+				Args:  []ArgDef{{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{{Name: "request-file", Short: "f", Description: "Reviewed lifecycle setup JSON", Required: true, Type: "string", RootJSONObjectFile: true}},
+			},
+			Action{
+				Name: "setup-bulk-apply", Description: "Apply reviewed lifecycle setup to a bounded frozen asset list",
+				ToolName: "UteamupAssetLifecycleSetupBulkApply", HTTPMethod: "POST",
+				RESTBasePath: "/api/assetlifecyclesetup", RESTPath: "bulk",
+				Flags: []FlagDef{{Name: "request-file", Short: "f", Description: "Bulk lifecycle setup JSON", Required: true, Type: "string", RootJSONObjectFile: true}},
+			},
+			Action{
 				Name:        "by-type",
 				Description: "List lifecycle events by event type",
 				ToolName:    "UteamupAssetlifecycleGetByType",
