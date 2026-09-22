@@ -19,11 +19,13 @@ func TestSafetyDomainActions(t *testing.T) {
 	}
 
 	expected := map[string]string{
-		"list":       "UteamupSafetyincidentList",
-		"get":        "UteamupSafetyincidentGet",
-		"create":     "UteamupSafetyincidentCreate",
-		"classify":   "UteamupSafetyincidentClassify",
-		"ita-export": "UteamupOshaItaExport",
+		"list":         "UteamupSafetyincidentList",
+		"get":          "UteamupSafetyincidentGet",
+		"create":       "UteamupSafetyincidentCreate",
+		"group-get":    "UteamupSafetyincidentGroupGet",
+		"group-create": "UteamupSafetyincidentGroupCreate",
+		"classify":     "UteamupSafetyincidentClassify",
+		"ita-export":   "UteamupOshaItaExport",
 
 		// Added with the people-and-legal change. The MCP tool and the CLI action must move
 		// together or the CLI silently drifts from what an agent can do.
@@ -63,6 +65,28 @@ func TestSafetyGetUsesGuidPath(t *testing.T) {
 	})
 	if path != "/api/safetyincident/by-guid/11111111-1111-1111-1111-111111111111" {
 		t.Fatalf("safety get path = %q", path)
+	}
+}
+
+func TestSafetyGroupActionsUseSharedEventGuidAndJsonModel(t *testing.T) {
+	d := findDomain("safety")
+	if d == nil {
+		t.Fatal("expected safety domain")
+	}
+	get := findAction(d, "group-get")
+	if get == nil {
+		t.Fatal("expected group-get action")
+	}
+	path, _ := buildRESTPath(d, *get, map[string]any{
+		"eventGroupGuid": "11111111-1111-1111-1111-111111111111",
+	})
+	if path != "/api/safetyincident/group/by-guid/11111111-1111-1111-1111-111111111111" {
+		t.Fatalf("group-get path = %q", path)
+	}
+	create := findAction(d, "group-create")
+	if create == nil || create.RESTPath != "group" || create.HTTPMethod != "POST" ||
+		len(create.Flags) != 1 || create.Flags[0].BodyName != "model" {
+		t.Fatalf("group-create action = %+v", create)
 	}
 }
 

@@ -38,6 +38,24 @@ func init() {
 				},
 			},
 			{
+				Name:        "group-get",
+				Description: "Get every injured person's case for one event",
+				ToolName:    "UteamupSafetyincidentGroupGet",
+				RESTPath:    "group/by-guid/{eventGroupGuid}",
+				HTTPMethod:  "GET",
+				Args:        []ArgDef{{Name: "eventGroupGuid", Description: "Shared event GUID", Required: true, Type: "uuid"}},
+			},
+			{
+				Name:        "group-create",
+				Description: "Create one event with a separate case for each injured person",
+				ToolName:    "UteamupSafetyincidentGroupCreate",
+				RESTPath:    "group",
+				HTTPMethod:  "POST",
+				Flags: []FlagDef{
+					{Name: "from-json", BodyName: "model", Description: "JSON file containing SafetyIncidentGroupCreateModel", Required: true, Type: "string", JSONFile: true},
+				},
+			},
+			{
 				Name:        "classify",
 				Description: "Human-classify OSHA 1904 recordability. Never auto-decides.",
 				ToolName:    "UteamupSafetyincidentClassify",
