@@ -5,6 +5,16 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.34.0](https://github.com/UteamUP/cli/compare/2.33.0...2.34.0) (2026-09-23)
+
+
+### Features
+
+* **farm:** expose read-only farm units in CLI ([7f21b78](https://github.com/UteamUP/cli/commit/7f21b78256afc3d3a32632c5a267a4f018078d64))
+* **safety:** add injured person action for saved incidents ([dd212d6](https://github.com/UteamUP/cli/commit/dd212d6418f0287ae48f4f64950d89f4510e1851))
+* **safety:** add multi-person incident CLI actions ([f3897fe](https://github.com/UteamUP/cli/commit/f3897fe62ad4d2b07389811267bbb0f80665cc9e))
+* **system-status:** add system-status get command ([cd112a0](https://github.com/UteamUP/cli/commit/cd112a05119702f0a1f8414083e247b5547a7b4c))
+
 ## [2.33.0](https://github.com/UteamUP/cli/compare/2.32.0...2.33.0) (2026-09-22)
 
 
