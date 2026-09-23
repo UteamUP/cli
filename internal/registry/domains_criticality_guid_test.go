@@ -29,3 +29,33 @@ func TestCriticalityDomainIsUniqueAndGuidFirst(t *testing.T) {
 	assertGUIDFlag(t, domain, "matrix", "location-guid", false)
 	assertGUIDFlag(t, domain, "matrix", "asset-type-guid", false)
 }
+
+func TestCriticalityAssessAcceptsConsequenceBreakdown(t *testing.T) {
+	var domain *Domain
+	for _, candidate := range DefaultRegistry.Domains() {
+		if candidate.Name == "criticality" {
+			domain = candidate
+		}
+	}
+	if domain == nil {
+		t.Fatal("criticality domain not registered")
+	}
+	for _, action := range domain.Actions {
+		if action.Name != "assess" {
+			continue
+		}
+		for _, flag := range action.Flags {
+			if flag.Name == "consequence-breakdown-json" {
+				if flag.Type != "string" || flag.Required {
+					t.Fatalf("consequence-breakdown-json = %+v, want an optional string", flag)
+				}
+				if got := toCamelCase(flag.Name); got != "consequenceBreakdownJson" {
+					t.Fatalf("body field = %q, want consequenceBreakdownJson", got)
+				}
+				return
+			}
+		}
+		t.Fatal("assess has no consequence-breakdown-json flag")
+	}
+	t.Fatal("criticality has no assess action")
+}

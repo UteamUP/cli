@@ -15,8 +15,9 @@ func init() {
 				HTTPMethod:  "POST",
 				Flags: []FlagDef{
 					{Name: "asset-guid", Description: "Public asset GUID", Required: true, Type: "string"},
-					{Name: "consequence-score", Description: "Consequence score", Required: true, Type: "int"},
-					{Name: "probability-score", Description: "Probability score", Required: true, Type: "int"},
+					{Name: "consequence-score", Description: "Consequence score (1-5); the highest breakdown dimension replaces it", Required: true, Type: "int"},
+					{Name: "consequence-breakdown-json", Description: "Dimension scores 1-5 as JSON: safety, environmental, production, cost, biological", Type: "string"},
+					{Name: "probability-score", Description: "Probability score (1-5)", Required: true, Type: "int"},
 					{Name: "notes", Description: "Assessment notes", Type: "string"},
 				},
 			},
