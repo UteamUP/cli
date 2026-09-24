@@ -61,6 +61,7 @@ func TestEnabledUpmateCapabilitiesHaveCLIRegistrations(t *testing.T) {
 		"UteamupUpmatePortalRequestClassify",
 		"UteamupUpmateServiceBillingReview",
 		"UteamupVendorGetCatalog",
+		"UteamupWeatherSiteWindows",
 		"UteamupWorkorderPrepareCloseoutByGuid",
 		"UteamupWorkorderCompleteCloseoutByGuid",
 		"UteamupWorkorderCreate",

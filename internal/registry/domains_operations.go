@@ -69,5 +69,22 @@ func init() {
 	Register(&Domain{Name: "notification", Aliases: []string{"notifications"}, Description: "Manage notifications", Actions: crudActions("Notification")})
 	Register(&Domain{Name: "helpdesk", Description: "Manage helpdesk", Actions: crudActions("Helpdesk")})
 	Register(&Domain{Name: "extension", Aliases: []string{"extensions"}, Description: "Manage extensions", Actions: listGetActions("Extension")})
-	Register(&Domain{Name: "weather", Description: "Get weather data", Actions: listGetActions("Weather")})
+	// Weather mirrors WeatherController (Weather.Read plus the Weather Monitoring feature). The
+	// derived /api/weather base is right, but the old list/get actions resolved to /api/weather
+	// and /api/weather/{id}, neither of which exists.
+	Register(&Domain{
+		Name:        "weather",
+		Description: "Get weather for tenant locations and sea-site work windows",
+		APIPath:     "/api/weather",
+		Actions: []Action{
+			{Name: "list", Description: "Current weather for every location with coordinates", ToolName: "UteamupWeatherGetAll", HTTPMethod: "GET", RESTPath: "locations"},
+			{Name: "get", Description: "Current weather for one location by GUID", ToolName: "UteamupWeatherGetForLocation", HTTPMethod: "GET", RESTPath: "locations/{locationGuid}", Args: []ArgDef{
+				{Name: "locationGuid", Description: "Public location GUID", Required: true, Type: "non-empty-uuid"},
+			}},
+			{Name: "alerts", Description: "Active, unacknowledged severe weather alerts", ToolName: "UteamupWeatherGetAlerts", HTTPMethod: "GET", RESTPath: "alerts"},
+			{Name: "windows", Description: "Next 72 hours of work windows for sites with weather limits (MET Norway, CC BY 4.0)", ToolName: "UteamupWeatherSiteWindows", HTTPMethod: "GET", RESTPath: "windows", Flags: []FlagDef{
+				{Name: "location-guid", Description: "Evaluate one location by public GUID", Type: "non-empty-uuid", QueryName: "locationGuid"},
+			}},
+		},
+	})
 }
