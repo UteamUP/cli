@@ -5,6 +5,22 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.35.0](https://github.com/UteamUP/cli/compare/2.34.0...2.35.0) (2026-09-24)
+
+
+### Features
+
+* **asset-failure:** read the incident evidence pack from the CLI ([591fa19](https://github.com/UteamUP/cli/commit/591fa190fa4632124b88c8c0966d1259ed1a8081))
+* **asset:** patch action that sends only the passed flags ([5b06b71](https://github.com/UteamUP/cli/commit/5b06b71445d0d082db88929271a8dbf1408454b7))
+* **criticality:** accept a consequence breakdown on criticality assess ([15a00ca](https://github.com/UteamUP/cli/commit/15a00cadfb8a0f9810973eff5c8d4feeed7fcbf3))
+* **stock:** add stock level, sort and sheet flags to stock search ([56208d1](https://github.com/UteamUP/cli/commit/56208d179d32632b6eb4f84e17ea581537efe03e))
+* **workpermit:** add biosecurity-status and biosecurity-entry commands ([6841d95](https://github.com/UteamUP/cli/commit/6841d95a8f693a28ae51f8ecaf68b33746fb1d97))
+
+
+### Bug Fixes
+
+* **weather:** point the weather commands at real routes and add weather windows ([dda0082](https://github.com/UteamUP/cli/commit/dda0082f06851fd53e12a3c201a9190ec7fffe1d))
+
 ## [2.34.0](https://github.com/UteamUP/cli/compare/2.33.0...2.34.0) (2026-09-23)
 
 
