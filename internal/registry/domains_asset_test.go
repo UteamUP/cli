@@ -112,6 +112,60 @@ func TestAssetSetResponsibleOwnersAction(t *testing.T) {
 	}
 }
 
+func TestAssetPatchAction(t *testing.T) {
+	action := findAssetAction(t, "patch")
+
+	if action.ToolName != "UteamupAssetPatch" {
+		t.Errorf("patch ToolName = %q, want %q", action.ToolName, "UteamupAssetPatch")
+	}
+	if action.HTTPMethod != "PATCH" || action.RESTPath != "by-guid/{assetGuid}" {
+		t.Errorf("patch route = %s %s, want PATCH by-guid/{assetGuid}", action.HTTPMethod, action.RESTPath)
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "assetGuid" || action.Args[0].Type != "non-empty-uuid" || !action.Args[0].Required {
+		t.Fatalf("patch expected one required non-empty-uuid arg 'assetGuid', got %+v", action.Args)
+	}
+
+	// Every flag is optional and has no default: an unpassed flag must stay out of the body,
+	// otherwise the PATCH would overwrite that field.
+	want := map[string]struct {
+		typ  string
+		body string
+	}{
+		"name":                    {"string", "name"},
+		"serial-number":           {"string", "serialNumber"},
+		"reference-number":        {"string", "referenceNumber"},
+		"model-number":            {"string", "modelNumber"},
+		"category-guid":           {"uuid", "categoryGuid"},
+		"location-guid":           {"uuid", "locationGuid"},
+		"location-floor-guid":     {"uuid", "locationFloorGuid"},
+		"is-active":               {"bool", "isActive"},
+		"expected-updated-at-utc": {"string", "expectedUpdatedAtUtc"},
+	}
+	if len(action.Flags) != len(want) {
+		t.Errorf("patch has %d flags, want %d", len(action.Flags), len(want))
+	}
+	for _, flag := range action.Flags {
+		expected, ok := want[flag.Name]
+		if !ok {
+			t.Errorf("unexpected patch flag %q", flag.Name)
+			continue
+		}
+		if flag.Type != expected.typ {
+			t.Errorf("%s flag type = %q, want %q", flag.Name, flag.Type, expected.typ)
+		}
+		if flag.Required || flag.Default != nil {
+			t.Errorf("%s flag must be optional with no default (leave-unchanged semantics)", flag.Name)
+		}
+		body := flag.BodyName
+		if body == "" {
+			body = toCamelCase(flag.Name)
+		}
+		if body != expected.body {
+			t.Errorf("%s flag body field = %q, want %q", flag.Name, body, expected.body)
+		}
+	}
+}
+
 func TestAssetEditCodeAssignmentAction(t *testing.T) {
 	action := findAssetAction(t, "edit-code-assignment")
 

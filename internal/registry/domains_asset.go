@@ -85,6 +85,27 @@ func init() {
 				},
 			},
 			{
+				// Unlike update (a full replace), patch sends only the flags you pass.
+				Name:        "patch",
+				Description: "Change only the fields you pass on an asset by public GUID. An empty string clears a text field; 00000000-0000-0000-0000-000000000000 clears a category, location or floor.",
+				ToolName:    "UteamupAssetPatch",
+				HTTPMethod:  "PATCH",
+				RESTPath:    "by-guid/{assetGuid}",
+				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset public GUID", Required: true, Type: "non-empty-uuid"}},
+				Flags: []FlagDef{
+					{Name: "name", Description: "New asset name (2 to 512 characters)", Type: "string"},
+					{Name: "serial-number", Description: "New serial number (empty clears it)", Type: "string"},
+					{Name: "reference-number", Description: "New reference number (empty clears it)", Type: "string"},
+					{Name: "model-number", Description: "New model number (empty clears it)", Type: "string"},
+					{Name: "category-guid", Description: "Category GUID (the empty GUID clears it)", Type: "uuid"},
+					{Name: "location-guid", Description: "Location GUID (the empty GUID clears it; without --location-floor-guid the floor is cleared)", Type: "uuid"},
+					{Name: "location-floor-guid", Description: "Floor or room GUID within the location (the empty GUID clears it)", Type: "uuid"},
+					// No Default: a bool flag with a default is always sent, which would flip the asset.
+					{Name: "is-active", Description: "Set active (true) or inactive (false)", Type: "bool"},
+					{Name: "expected-updated-at-utc", Description: "The asset's updatedAt as last read; a newer stored value fails with asset_changed", Type: "string"},
+				},
+			},
+			{
 				Name:        "get-specs",
 				Description: "Get the effective attribute definitions (operating specs) for an asset, grouped per asset type",
 				ToolName:    "UteamupAssetGetEffectiveAttributeDefinitions",
