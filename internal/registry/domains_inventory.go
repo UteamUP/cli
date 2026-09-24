@@ -48,7 +48,7 @@ func init() {
 		},
 			Action{
 				Name:        "search",
-				Description: "Search stock items across locations (low-stock lookups included)",
+				Description: "Search stock items across locations, filter by stock level and sort server-side",
 				ToolName:    "UteamupStockSearchItems",
 				RESTPath:    "items/search",
 				Flags: append([]FlagDef{
@@ -57,6 +57,30 @@ func init() {
 					{Name: "stock-guid", Description: "Stock location GUID filter", Type: "string"},
 					{Name: "same-item-as-guid", Description: "Match this stock item's catalog identity across readable locations", Type: "string"},
 					{Name: "condition", Description: "Condition grade filter (New, Used, Refurbished, OpenBox)", Type: "string"},
+					{
+						Name:          "stock-status",
+						Description:   "Stock status: low, out, available, issuable, healthy, unavailable, quarantined, near, over, attention (out, below or near minimum)",
+						Type:          "string",
+						AllowedValues: []string{"low", "out", "available", "issuable", "healthy", "unavailable", "quarantined", "near", "over", "attention"},
+					},
+					{
+						Name:          "sort-by",
+						Description:   "Sort column: name, sku, type, location (storeroom), category, onhand, min, max, value, level (most urgent first), lastmovement",
+						Type:          "string",
+						AllowedValues: []string{"name", "sku", "type", "location", "category", "onhand", "min", "max", "value", "level", "lastmovement"},
+					},
+					{
+						Name:          "sort-direction",
+						Description:   "Sort direction: asc or desc",
+						Type:          "string",
+						AllowedValues: []string{"asc", "desc"},
+					},
+					{
+						Name:          "sheet",
+						Description:   "Sheet applied after the other filters: all, attention, out, over",
+						Type:          "string",
+						AllowedValues: []string{"all", "attention", "out", "over"},
+					},
 				}, paginationFlags()...),
 			},
 			Action{

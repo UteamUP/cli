@@ -163,6 +163,10 @@ func TestStockSearchActionWired(t *testing.T) {
 		"type":              "string",
 		"stock-guid":        "string",
 		"same-item-as-guid": "string",
+		"stock-status":      "string",
+		"sort-by":           "string",
+		"sort-direction":    "string",
+		"sheet":             "string",
 		"page":              "int",
 		"page-size":         "int",
 	}
@@ -179,6 +183,47 @@ func TestStockSearchActionWired(t *testing.T) {
 		if got != ty {
 			t.Errorf("search action flag %q type = %q, want %q", name, got, ty)
 		}
+	}
+}
+
+func TestStockSearchLevelSortAndSheetFlagsAreAllowListed(t *testing.T) {
+	domain := findStockDomain(t)
+	action := findStockAction(t, "search")
+
+	for name, want := range map[string]string{
+		"stock-status":   "low,out,available,issuable,healthy,unavailable,quarantined,near,over,attention",
+		"sort-by":        "name,sku,type,location,category,onhand,min,max,value,level,lastmovement",
+		"sort-direction": "asc,desc",
+		"sheet":          "all,attention,out,over",
+	} {
+		flag := actionFlagByName(t, action, name)
+		if flag.Required || flag.Type != "string" || flag.Default != nil {
+			t.Errorf("flag %q must be an optional string without a default, got %+v", name, *flag)
+		}
+		if got := strings.Join(flag.AllowedValues, ","); got != want {
+			t.Errorf("flag %q AllowedValues = %q, want %q", name, got, want)
+		}
+	}
+
+	command := buildActionCommand(domain, *action, nil, nil, nil, nil)
+	if err := command.Flags().Set("sort-by", "price"); err != nil {
+		t.Fatalf("set sort-by: %v", err)
+	}
+	if err := validateActionInput(command, nil, *action); err == nil || !strings.Contains(err.Error(), "--sort-by") {
+		t.Fatalf("unknown sort column accepted: %v", err)
+	}
+	if err := command.Flags().Set("sort-by", "level"); err != nil {
+		t.Fatalf("set sort-by: %v", err)
+	}
+	if err := validateActionInput(command, nil, *action); err != nil {
+		t.Fatalf("level sort rejected: %v", err)
+	}
+
+	url, consumed := buildRESTPath(domain, *action, map[string]any{
+		"stockStatus": "attention", "sortBy": "level", "sortDirection": "desc", "sheet": "attention",
+	})
+	if url != "/api/stock/items/search" || len(consumed) != 0 {
+		t.Errorf("search URL = %q consumed=%v, want /api/stock/items/search with every flag left for the query", url, consumed)
 	}
 }
 
