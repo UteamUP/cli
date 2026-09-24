@@ -46,6 +46,27 @@ func init() {
 					Name: "failureGuid", Description: "Public failure GUID", Required: true, Type: "uuid",
 				}},
 			},
+			{
+				Name:        "evidence-pack",
+				Description: "Get the facts-only incident evidence pack for the hours around a failure (no AI, nothing stored)",
+				ToolName:    "UteamupAssetFailureEvidencePack",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-guid/{failureGuid}/evidence-pack",
+				Flags: []FlagDef{
+					{
+						Name: "guid", BodyName: "failureGuid",
+						Description: "Public failure GUID", Required: true, Type: "non-empty-uuid",
+					},
+					{
+						Name: "hours-before", QueryName: "hoursBefore",
+						Description: "Hours before the failure time, 1-168 (default 24)", Type: "int",
+					},
+					{
+						Name: "hours-after", QueryName: "hoursAfter",
+						Description: "Hours after the failure time, 1-168 (default 6)", Type: "int",
+					},
+				},
+			},
 			{Name: "create", Description: "Create a failure record", ToolName: "UteamupAssetfailureCreate", Flags: []FlagDef{jsonFlag()}},
 			{
 				Name:        "update",
