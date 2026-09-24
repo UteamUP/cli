@@ -54,6 +54,12 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "by-guid/{workorderGuid}/complete",
 				Args:        []ArgDef{{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "idempotency-key", HeaderName: "Idempotency-Key", Description: "Caller-generated GUID reused only for a retry of the same completion", Type: "non-empty-uuid"},
+					{Name: "report-json", BodyName: "report", JSONFile: true, Type: "string",
+						Description: "JSON file with the close-out report filed in the same step: description (required), closeOutNotes, reportDate, " +
+							"timeSpent, costIncurred, additionalWorkerGuids, externalWorkerEmails (at most 10), notifyExternalWorkers, meterReadingSkipReason"},
+				},
 			},
 			{
 				Name:        "create",

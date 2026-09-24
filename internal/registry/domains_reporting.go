@@ -52,9 +52,11 @@ func init() {
 					{Name: "close-out-notes", Description: "Optional close-out notes", Type: "string"},
 					{Name: "time-spent", Description: "Optional hours spent", Type: "float"},
 					{Name: "cost-incurred", Description: "Optional cost incurred", Type: "float"},
-					{Name: "primary-reporter-id", Description: "Optional identity user key", Type: "string"},
-					{Name: "additional-worker-ids", Description: "Optional identity user keys", Type: "stringSlice"},
-					{Name: "external-worker-emails", Description: "Optional external worker emails", Type: "stringSlice"},
+					{Name: "primary-reporter-guid", Description: "Optional primary reporter user GUID (defaults to you)", Type: "uuid"},
+					{Name: "additional-worker-guids", BodyName: "additionalWorkerGuids", Description: "Optional additional worker user GUIDs, repeatable", Type: "stringSlice"},
+					{Name: "external-worker-emails", Description: "Optional external worker emails (at most 10)", Type: "stringSlice"},
+					{Name: "notify-external-workers", Description: "Email the report to the external workers", Type: "bool"},
+					{Name: "idempotency-key", HeaderName: "Idempotency-Key", Description: "Caller-generated GUID reused only for a retry of the same report", Type: "non-empty-uuid"},
 				},
 			},
 			{
@@ -67,7 +69,6 @@ func init() {
 					{Name: "reportGuid", Description: "Stable public report GUID", Required: true, Type: "uuid"},
 				},
 			},
-			// TODO(debug): V02 - expose GUID report update when the CLI supports this route's multipart form model.
 		},
 	})
 	Register(&Domain{
@@ -84,8 +85,9 @@ func init() {
 				RESTPath:    "analytics",
 				Flags: []FlagDef{
 					{Name: "start-date", Description: "Inclusive start date (YYYY-MM-DD)", Required: true, Type: "string"},
-					{Name: "end-date", Description: "Inclusive end date (YYYY-MM-DD)", Required: true, Type: "string"},
-					{Name: "group-by", Description: "Grouping: day, week, month, quarter, or year", Default: "month", Type: "string"},
+					{Name: "end-date", Description: "Inclusive end date (whole day, YYYY-MM-DD)", Required: true, Type: "string"},
+					{Name: "group-by", Description: "Grouping: day, week (ISO-8601), month, quarter, or year", Default: "month", Type: "string",
+						AllowedValues: []string{"day", "week", "month", "quarter", "year"}},
 				},
 			},
 		},
@@ -108,7 +110,7 @@ func init() {
 					{Name: "start-date", Description: "Optional inclusive start date", Type: "string"},
 					{Name: "end-date", Description: "Optional inclusive end date", Type: "string"},
 					{Name: "page", Description: "Page number", Default: 1, Type: "int"},
-					{Name: "page-size", Description: "Page size", Default: 20, Type: "int"},
+					{Name: "page-size", Description: "Page size (1-100)", Default: 20, Type: "int"},
 				},
 			},
 		},

@@ -137,8 +137,28 @@ func TestWorkorderCompleteUsesGuidOnlyStatusFreeContract(t *testing.T) {
 		if len(action.Args) != 1 || action.Args[0].Name != "workorderGuid" || action.Args[0].Type != "uuid" {
 			t.Fatalf("complete args = %+v, want one workorderGuid uuid", action.Args)
 		}
-		if len(action.Flags) != 0 {
-			t.Fatalf("complete flags = %+v, want no caller-selected status", action.Flags)
+		if len(action.Flags) != 2 {
+			t.Fatalf("complete flags = %+v, want exactly idempotency-key and report-json", action.Flags)
+		}
+		for _, flag := range action.Flags {
+			if flag.Name == "status" || flag.BodyName == "status" || flag.QueryName != "" {
+				t.Fatalf("complete must not expose a caller-selected status or query flag: %+v", flag)
+			}
+			if flag.Required {
+				t.Fatalf("complete flag --%s must stay optional so a bare complete is unchanged", flag.Name)
+			}
+			switch flag.Name {
+			case "idempotency-key":
+				if flag.HeaderName != "Idempotency-Key" || flag.Type != "non-empty-uuid" || flag.MirrorHeaderInBody {
+					t.Fatalf("idempotency-key = %+v, want header-only non-empty GUID", flag)
+				}
+			case "report-json":
+				if !flag.JSONFile || flag.Type != "string" || flag.BodyName != "report" || flag.HeaderName != "" {
+					t.Fatalf("report-json = %+v, want a JSON file sent as the report body field", flag)
+				}
+			default:
+				t.Fatalf("unexpected complete flag --%s", flag.Name)
+			}
 		}
 		return
 	}
