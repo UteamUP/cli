@@ -1,6 +1,10 @@
 package registry
 
-import "testing"
+import (
+	"net/http"
+	"reflect"
+	"testing"
+)
 
 // The workorder-share domain mirrors the backend WorkorderShareController
 // (api/workorder/shares/*) and the three MCP share tools. Its routes and tool
@@ -88,5 +92,50 @@ func TestWorkorderShareIsGuidFirstAndReadOnlyByDefault(t *testing.T) {
 		if f.Type == "int" && name != "expires-in-days" {
 			t.Errorf("create: integer flag %q looks like an id at the boundary", name)
 		}
+	}
+}
+
+func TestShareCreateSendsIncludeCompletionSummary(t *testing.T) {
+	create := findAction(workorderShareDomain(t), "create")
+	if create == nil {
+		t.Fatal("expected create action")
+	}
+	flag := actionFlagByName(t, create, "include-completion-summary")
+	if flag.Type != "bool" || flag.BodyName != "includeCompletionSummary" || flag.Default != false || flag.Required {
+		t.Fatalf("include-completion-summary = %+v, want an optional bool body flag defaulting to false", *flag)
+	}
+
+	const workorderGUID = "2c4e6a8b-1d3f-4a5b-8c7d-9e0f1a2b3c4d"
+	cases := []struct {
+		name    string
+		extra   []string
+		include bool
+	}{
+		{"opted in", []string{"--include-completion-summary"}, true},
+		{"default off", nil, false},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			args := append([]string{"create", "--workorder-guid", workorderGUID}, test.extra...)
+			requests, err := runRegisteredDomainCommand(t, "workorder-share", args...)
+			if err != nil {
+				t.Fatalf("create error = %v", err)
+			}
+			if len(requests) != 1 {
+				t.Fatalf("requests = %d, want 1", len(requests))
+			}
+			request := requests[0]
+			if request.method != http.MethodPost || request.path != "/api/workorder/shares" {
+				t.Errorf("route = %s %s, want POST /api/workorder/shares", request.method, request.path)
+			}
+			wantBody := map[string]any{
+				"workorderGuid":            workorderGUID,
+				"accessLevel":              "readOnly",
+				"includeCompletionSummary": test.include,
+			}
+			if !reflect.DeepEqual(request.body, wantBody) {
+				t.Errorf("body = %#v, want %#v", request.body, wantBody)
+			}
+		})
 	}
 }

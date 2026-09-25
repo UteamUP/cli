@@ -24,6 +24,7 @@ func init() {
 					{Name: "access-level", BodyName: "accessLevel", Description: "readOnly (default) or edit; edit allows status changes and comments", Default: "readOnly", Type: "string"},
 					{Name: "expires-in-days", BodyName: "expiresInDays", Description: "Days until the share expires, 1-365 (default 30)", Type: "int"},
 					{Name: "note", Description: "Optional note shown to the recipient", Type: "string"},
+					{Name: "include-completion-summary", BodyName: "includeCompletionSummary", Description: "Show the completion summary (without costs) on the shared page; needs Report.Export", Type: "bool", Default: false},
 				},
 			},
 			{

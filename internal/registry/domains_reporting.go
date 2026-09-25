@@ -79,6 +79,7 @@ func init() {
 					{Name: "primary-reporter-guid", Description: "Primary reporter user GUID", Type: "uuid"},
 					{Name: "additional-worker-guids", BodyName: "additionalWorkerGuids", Description: "Additional worker user GUIDs, repeatable (kept when omitted)", Type: "stringSlice"},
 					{Name: "external-worker-emails", Description: "External worker emails, at most 10 (kept when omitted)", Type: "stringSlice"},
+					{Name: "override-reason", BodyName: "overrideReason", Description: "Why a finalized report is changed (10-500 characters; needs Report.All)", Type: "string"},
 				},
 			},
 			{
@@ -87,6 +88,89 @@ func init() {
 				ToolName:    "UteamupWorkReportDelete",
 				HTTPMethod:  "DELETE",
 				RESTPath:    "by-guid/{reportGuid}",
+				Args: []ArgDef{
+					{Name: "reportGuid", Description: "Stable public report GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "override-reason", QueryName: "overrideReason", Description: "Why a finalized report is deleted (10-500 characters; needs Report.All)", Type: "string"},
+				},
+			},
+			{
+				Name:        "pdf",
+				Description: "Save one completion report as a PDF file (needs Report.Export)",
+				ToolName:    "UteamupWorkReportPdf",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-guid/{reportGuid}/pdf",
+				Args: []ArgDef{
+					{Name: "reportGuid", Description: "Stable public report GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "include-costs", QueryName: "includeCosts", Description: "Include labour, material and tool costs", Default: true, Type: "bool"},
+					{Name: "out", Description: "Output file; an existing file is never overwritten (default work-report-<reportGuid>.pdf)", Type: "string"},
+				},
+				DownloadResponseBody: true,
+				DownloadOutputFlag:   "out",
+				DownloadDefaultName:  "work-report-{reportGuid}.pdf",
+			},
+			{
+				Name:        "workorder-pdf",
+				Description: "Save every completion report of a workorder as one PDF file (needs Report.Export)",
+				ToolName:    "UteamupWorkReportWorkorderPdf",
+				HTTPMethod:  "GET",
+				RESTPath:    "workorder/by-guid/{workorderGuid}/pdf",
+				Args: []ArgDef{
+					{Name: "workorderGuid", Description: "Stable public workorder GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "include-costs", QueryName: "includeCosts", Description: "Include labour, material and tool costs", Default: true, Type: "bool"},
+					{Name: "out", Description: "Output file; an existing file is never overwritten (default workorder-reports-<workorderGuid>.pdf)", Type: "string"},
+				},
+				DownloadResponseBody: true,
+				DownloadOutputFlag:   "out",
+				DownloadDefaultName:  "workorder-reports-{workorderGuid}.pdf",
+			},
+			{
+				Name: "export",
+				Description: "Save the report list you can see as a CSV or Excel file (needs Report.Export). " +
+					"Filters come from --from-json, for example nameFilter, workorderGuidFilter, reportDateFrom and reportDateTo",
+				ToolName:   "UteamupWorkReportExport",
+				HTTPMethod: "POST",
+				RESTPath:   "export",
+				Flags: []FlagDef{
+					{Name: "format", Description: "File format: csv or xlsx", Default: "csv", Type: "string", AllowedValues: []string{"csv", "xlsx"}},
+					{Name: "out", Description: "Output file; an existing file is never overwritten (default reports.<format>)", Type: "string"},
+					jsonFlag(),
+				},
+				DownloadResponseBody: true,
+				DownloadOutputFlag:   "out",
+				DownloadDefaultName:  "reports.{format}",
+			},
+			{
+				Name: "send",
+				Description: "Email a completion report to recipients and optionally publish it to the customer portal " +
+					"(needs Report.Export). Sending finalizes the report",
+				ToolName:   "UteamupWorkReportSend",
+				HTTPMethod: "POST",
+				RESTPath:   "by-guid/{reportGuid}/send",
+				Args: []ArgDef{
+					{Name: "reportGuid", Description: "Stable public report GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "recipients", Description: "Recipient email, repeatable", Type: "stringSlice"},
+					{Name: "message", Description: "Optional message shown above the report", Type: "string"},
+					{Name: "include-costs", Description: "Include costs in the sent report", Type: "bool"},
+					{Name: "publish-to-portal", Description: "Publish the report to the customer portal (cannot be undone)", Type: "bool"},
+					{Name: "allow-external-recipients", Description: "Allow addresses that are not tenant users or known contacts", Type: "bool"},
+					{Name: "confirm", Description: "Confirm the send, the lock and any portal publish", Required: true, MustBeTrue: true, Type: "bool"},
+					{Name: "idempotency-key", HeaderName: "Idempotency-Key", Description: "Caller-generated GUID; reuse it only to retry the same send", Required: true, Type: "non-empty-uuid"},
+				},
+			},
+			{
+				Name:        "finalize",
+				Description: "Finalize a completion report so it can no longer be edited or deleted without Report.All",
+				ToolName:    "UteamupWorkReportFinalize",
+				HTTPMethod:  "POST",
+				RESTPath:    "by-guid/{reportGuid}/finalize",
 				Args: []ArgDef{
 					{Name: "reportGuid", Description: "Stable public report GUID", Required: true, Type: "uuid"},
 				},

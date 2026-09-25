@@ -1,7 +1,9 @@
 package registry
 
 import (
+	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -137,8 +139,8 @@ func TestWorkorderCompleteUsesGuidOnlyStatusFreeContract(t *testing.T) {
 		if len(action.Args) != 1 || action.Args[0].Name != "workorderGuid" || action.Args[0].Type != "uuid" {
 			t.Fatalf("complete args = %+v, want one workorderGuid uuid", action.Args)
 		}
-		if len(action.Flags) != 2 {
-			t.Fatalf("complete flags = %+v, want exactly idempotency-key and report-json", action.Flags)
+		if len(action.Flags) != 3 {
+			t.Fatalf("complete flags = %+v, want exactly idempotency-key, report-json and from-json", action.Flags)
 		}
 		for _, flag := range action.Flags {
 			if flag.Name == "status" || flag.BodyName == "status" || flag.QueryName != "" {
@@ -155,6 +157,10 @@ func TestWorkorderCompleteUsesGuidOnlyStatusFreeContract(t *testing.T) {
 			case "report-json":
 				if !flag.JSONFile || flag.Type != "string" || flag.BodyName != "report" || flag.HeaderName != "" {
 					t.Fatalf("report-json = %+v, want a JSON file sent as the report body field", flag)
+				}
+			case "from-json":
+				if !flag.RootJSONObjectFile || flag.Type != "string" || flag.BodyName != "" || flag.HeaderName != "" {
+					t.Fatalf("from-json = %+v, want a root JSON object file carrying report and failure", flag)
 				}
 			default:
 				t.Fatalf("unexpected complete flag --%s", flag.Name)
@@ -391,4 +397,64 @@ func TestWorkorderQuickCloseHasNoPositionalArgs(t *testing.T) {
 		return
 	}
 	t.Fatal("expected quick-close action on the workorder domain")
+}
+
+func TestCompleteAcceptsFailureInRootJson(t *testing.T) {
+	const (
+		workorderGUID  = "11111111-1111-4111-8111-111111111111"
+		assetGUID      = "4b6d8f0a-2c4e-4a6b-8d0f-1a3c5e7a9b1d"
+		idempotencyKey = "9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b"
+	)
+	action := findDomainAction(t, "workorder", "complete")
+	if !strings.Contains(action.Description, "failure") || !strings.Contains(action.Description, "--from-json") {
+		t.Errorf("complete help = %q, want it to document failure in --from-json", action.Description)
+	}
+
+	payload := writeRegistryJSONFixture(t, `{
+		"report": {"description": "Replaced the pump seal", "timeSpent": 2.5},
+		"failure": {
+			"assetGuids": ["`+assetGUID+`"],
+			"failureDescription": "Seal leaked under load",
+			"downtimeMinutes": 90,
+			"isRepeatFailure": false
+		}
+	}`)
+	requests, err := runRegisteredDomainCommand(t, "workorder",
+		"complete", workorderGUID, "--from-json", payload, "--idempotency-key", idempotencyKey,
+	)
+	if err != nil {
+		t.Fatalf("complete error = %v", err)
+	}
+	if len(requests) != 1 {
+		t.Fatalf("requests = %d, want 1", len(requests))
+	}
+	request := requests[0]
+	wantPath := "/api/workorder/by-guid/" + workorderGUID + "/complete"
+	if request.method != http.MethodPost || request.path != wantPath {
+		t.Errorf("route = %s %s, want POST %s", request.method, request.path, wantPath)
+	}
+	if got := request.header.Get("Idempotency-Key"); got != idempotencyKey {
+		t.Errorf("Idempotency-Key = %q, want %q", got, idempotencyKey)
+	}
+	wantBody := map[string]any{
+		"report": map[string]any{"description": "Replaced the pump seal", "timeSpent": 2.5},
+		"failure": map[string]any{
+			"assetGuids":         []any{assetGUID},
+			"failureDescription": "Seal leaked under load",
+			"downtimeMinutes":    float64(90),
+			"isRepeatFailure":    false,
+		},
+	}
+	if !reflect.DeepEqual(request.body, wantBody) {
+		t.Errorf("body = %#v, want the unwrapped report and failure %#v", request.body, wantBody)
+	}
+
+	reportFile := writeRegistryJSONFixture(t, `{"description": "A second report"}`)
+	requests, err = runRegisteredDomainCommand(t, "workorder",
+		"complete", workorderGUID, "--report-json", reportFile, "--from-json", payload,
+	)
+	if err == nil || !strings.Contains(err.Error(), "report") || len(requests) != 0 {
+		t.Errorf("report in both --report-json and --from-json: requests = %d, error = %v; want a local rejection",
+			len(requests), err)
+	}
 }

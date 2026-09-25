@@ -48,17 +48,20 @@ func init() {
 					Type: "string", Required: true, RootJSONObjectFile: true}},
 			},
 			{
-				Name:        "complete",
-				Description: "Complete a work order by GUID using the server-owned completion policy",
-				ToolName:    "UteamupWorkorderComplete",
-				HTTPMethod:  "POST",
-				RESTPath:    "by-guid/{workorderGuid}/complete",
-				Args:        []ArgDef{{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "uuid"}},
+				Name: "complete",
+				Description: "Complete a work order by GUID using the server-owned completion policy. " +
+					"--from-json takes a root object with report and failure (assetGuids, failureCodeGuid, failureDescription, " +
+					"symptoms, rootCause, resolution, downtimeMinutes, failureStartedAt, severity, isRepeatFailure)",
+				ToolName:   "UteamupWorkorderComplete",
+				HTTPMethod: "POST",
+				RESTPath:   "by-guid/{workorderGuid}/complete",
+				Args:       []ArgDef{{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "uuid"}},
 				Flags: []FlagDef{
 					{Name: "idempotency-key", HeaderName: "Idempotency-Key", Description: "Caller-generated GUID reused only for a retry of the same completion", Type: "non-empty-uuid"},
 					{Name: "report-json", BodyName: "report", JSONFile: true, Type: "string",
 						Description: "JSON file with the close-out report filed in the same step: description (required), closeOutNotes, reportDate, " +
 							"timeSpent, costIncurred, additionalWorkerGuids, externalWorkerEmails (at most 10), notifyExternalWorkers, meterReadingSkipReason"},
+					jsonFlag(),
 				},
 			},
 			{
