@@ -9,9 +9,10 @@ func init() {
 		Actions: []Action{
 			{
 				Name:        "list",
-				Description: "List completion reports",
-				ToolName:    "UteamupReportList",
+				Description: "List the completion reports you can see (GUID-only items)",
+				ToolName:    "UteamupWorkReportList",
 				HTTPMethod:  "GET",
+				RESTPath:    "worker",
 				Flags: append(paginationFlags(),
 					FlagDef{Name: "name-filter", Description: "Filter by report description", Type: "string"},
 					FlagDef{Name: "workorder-guid", Description: "Filter by stable workorder GUID", Type: "uuid"},
@@ -19,10 +20,10 @@ func init() {
 			},
 			{
 				Name:        "get",
-				Description: "Get a completion report by stable public GUID",
-				ToolName:    "UteamupReportGet",
+				Description: "Get a completion report by stable public GUID (GUID-only people)",
+				ToolName:    "UteamupWorkReportGet",
 				HTTPMethod:  "GET",
-				RESTPath:    "by-guid/{reportGuid}",
+				RESTPath:    "worker/by-guid/{reportGuid}",
 				Args: []ArgDef{
 					{Name: "reportGuid", Description: "Stable public report GUID", Required: true, Type: "uuid"},
 				},
@@ -30,7 +31,7 @@ func init() {
 			{
 				Name:        "detail",
 				Description: "Get enriched report review detail by stable public GUID",
-				ToolName:    "UteamupReportDetail",
+				ToolName:    "UteamupWorkReportDetail",
 				HTTPMethod:  "GET",
 				RESTPath:    "detail/by-guid/{reportGuid}",
 				Args: []ArgDef{
@@ -40,7 +41,7 @@ func init() {
 			{
 				Name:        "create",
 				Description: "Create a completion report for a workorder GUID",
-				ToolName:    "UteamupReportCreate",
+				ToolName:    "UteamupWorkReportCreate",
 				HTTPMethod:  "POST",
 				RESTPath:    "workorder/by-guid/{workorderGuid}",
 				Args: []ArgDef{
@@ -60,9 +61,30 @@ func init() {
 				},
 			},
 			{
+				Name: "update",
+				Description: "Replace a completion report by stable public GUID. Omitted close-out notes, " +
+					"time spent and cost incurred are cleared; omitted worker lists are kept",
+				ToolName:   "UteamupWorkReportUpdate",
+				HTTPMethod: "PUT",
+				RESTPath:   "by-guid/{reportGuid}",
+				Args: []ArgDef{
+					{Name: "reportGuid", Description: "Stable public report GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "description", Description: "Completion report description (replaces the current one)", Required: true, Type: "string"},
+					{Name: "report-date", Description: "Report timestamp (replaces the current one)", Required: true, Type: "string"},
+					{Name: "close-out-notes", Description: "Close-out notes (cleared when omitted)", Type: "string"},
+					{Name: "time-spent", Description: "Hours spent (cleared when omitted)", Type: "float"},
+					{Name: "cost-incurred", Description: "Cost incurred (cleared when omitted)", Type: "float"},
+					{Name: "primary-reporter-guid", Description: "Primary reporter user GUID", Type: "uuid"},
+					{Name: "additional-worker-guids", BodyName: "additionalWorkerGuids", Description: "Additional worker user GUIDs, repeatable (kept when omitted)", Type: "stringSlice"},
+					{Name: "external-worker-emails", Description: "External worker emails, at most 10 (kept when omitted)", Type: "stringSlice"},
+				},
+			},
+			{
 				Name:        "delete",
 				Description: "Delete a completion report by stable public GUID",
-				ToolName:    "UteamupReportDelete",
+				ToolName:    "UteamupWorkReportDelete",
 				HTTPMethod:  "DELETE",
 				RESTPath:    "by-guid/{reportGuid}",
 				Args: []ArgDef{

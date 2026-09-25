@@ -74,6 +74,12 @@ func TestEnabledUpmateCapabilitiesHaveCLIRegistrations(t *testing.T) {
 		"UteamupUpmateAgentsList",
 		"UteamupUpmateAgentGet",
 		"UteamupUpmateAgentRun",
+		"UteamupWorkReportList",
+		"UteamupWorkReportGet",
+		"UteamupWorkReportDetail",
+		"UteamupWorkReportCreate",
+		"UteamupWorkReportUpdate",
+		"UteamupWorkReportDelete",
 	}
 
 	registered := make(map[string]bool)

@@ -91,9 +91,10 @@ func TestCompletionReportActionsUseGuidContracts(t *testing.T) {
 		path   string
 		arg    string
 	}{
-		{action: "get", method: "GET", path: "by-guid/{reportGuid}", arg: "reportGuid"},
+		{action: "get", method: "GET", path: "worker/by-guid/{reportGuid}", arg: "reportGuid"},
 		{action: "detail", method: "GET", path: "detail/by-guid/{reportGuid}", arg: "reportGuid"},
 		{action: "create", method: "POST", path: "workorder/by-guid/{workorderGuid}", arg: "workorderGuid"},
+		{action: "update", method: "PUT", path: "by-guid/{reportGuid}", arg: "reportGuid"},
 		{action: "delete", method: "DELETE", path: "by-guid/{reportGuid}", arg: "reportGuid"},
 	}
 
@@ -227,5 +228,151 @@ func TestReportAnalyticsGroupByAllowedValues(t *testing.T) {
 	pageSize := actionFlagByName(t, findDomainAction(t, "asset-reports", "get"), "page-size")
 	if !strings.Contains(pageSize.Description, "1-100") {
 		t.Errorf("asset-reports page-size help = %q, want the 1-100 bound", pageSize.Description)
+	}
+}
+
+func TestWorkReportToolNamesMatchMcp(t *testing.T) {
+	expected := map[string]string{
+		"list":   "UteamupWorkReportList",
+		"get":    "UteamupWorkReportGet",
+		"detail": "UteamupWorkReportDetail",
+		"create": "UteamupWorkReportCreate",
+		"update": "UteamupWorkReportUpdate",
+		"delete": "UteamupWorkReportDelete",
+	}
+	for actionName, toolName := range expected {
+		if got := findDomainAction(t, "report", actionName).ToolName; got != toolName {
+			t.Errorf("report %s ToolName = %q, want %q", actionName, got, toolName)
+		}
+	}
+
+	for _, action := range findDomain("report").Actions {
+		if strings.HasPrefix(action.ToolName, "UteamupReport") {
+			t.Errorf("report %s uses the registered-catalog prefix: %q", action.Name, action.ToolName)
+		}
+	}
+	if got := findDomainAction(t, "registered-report", "list").ToolName; got != "UteamupReportList" {
+		t.Errorf("registered-report list ToolName = %q, want UteamupReportList", got)
+	}
+}
+
+func TestReportListUsesWorkerRoute(t *testing.T) {
+	action := findDomainAction(t, "report", "list")
+
+	if action.HTTPMethod != "GET" || action.RESTPath != "worker" {
+		t.Fatalf("list route = %s %s, want GET worker", action.HTTPMethod, action.RESTPath)
+	}
+	if len(action.Args) != 0 {
+		t.Fatalf("list args = %+v, want none", action.Args)
+	}
+
+	workorder := actionFlagByName(t, action, "workorder-guid")
+	if workorder.Type != "uuid" || workorder.Required {
+		t.Errorf("workorder-guid = %+v, want optional uuid", *workorder)
+	}
+	if name := actionFlagByName(t, action, "name-filter"); name.Type != "string" || name.Required {
+		t.Errorf("name-filter = %+v, want optional string", *name)
+	}
+	for _, name := range []string{"page", "page-size"} {
+		if flag := actionFlagByName(t, action, name); flag.Type != "int" {
+			t.Errorf("%s = %+v, want int pagination flag", name, *flag)
+		}
+	}
+}
+
+func TestReportGetUsesWorkerDetailRoute(t *testing.T) {
+	action := findDomainAction(t, "report", "get")
+
+	if action.HTTPMethod != "GET" || action.RESTPath != "worker/by-guid/{reportGuid}" {
+		t.Fatalf("get route = %s %s, want GET worker/by-guid/{reportGuid}", action.HTTPMethod, action.RESTPath)
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "reportGuid" || action.Args[0].Type != "uuid" {
+		t.Fatalf("get args = %+v, want one reportGuid uuid", action.Args)
+	}
+	if len(action.Flags) != 0 {
+		t.Errorf("get flags = %+v, want none", action.Flags)
+	}
+}
+
+func TestReportUpdateRequiresDescriptionAndReportDate(t *testing.T) {
+	domain := findDomain("report")
+	action := findDomainAction(t, "report", "update")
+
+	if action.HTTPMethod != "PUT" || action.RESTPath != "by-guid/{reportGuid}" {
+		t.Fatalf("update route = %s %s, want PUT by-guid/{reportGuid}", action.HTTPMethod, action.RESTPath)
+	}
+	for _, name := range []string{"description", "report-date"} {
+		if flag := actionFlagByName(t, action, name); !flag.Required || flag.Type != "string" {
+			t.Errorf("%s = %+v, want required string", name, *flag)
+		}
+	}
+	optional := map[string]string{
+		"close-out-notes":         "string",
+		"time-spent":              "float",
+		"cost-incurred":           "float",
+		"primary-reporter-guid":   "uuid",
+		"additional-worker-guids": "stringSlice",
+		"external-worker-emails":  "stringSlice",
+	}
+	for name, flagType := range optional {
+		if flag := actionFlagByName(t, action, name); flag.Required || flag.Type != flagType {
+			t.Errorf("%s = %+v, want optional %s", name, *flag, flagType)
+		}
+	}
+	if workers := actionFlagByName(t, action, "additional-worker-guids"); workers.BodyName != "additionalWorkerGuids" {
+		t.Errorf("additional-worker-guids BodyName = %q, want additionalWorkerGuids", workers.BodyName)
+	}
+	for _, removed := range []string{"primary-reporter-id", "additional-worker-ids"} {
+		for _, flag := range action.Flags {
+			if flag.Name == removed {
+				t.Fatalf("report update exposes identity-key flag --%s", removed)
+			}
+		}
+	}
+	if !strings.Contains(action.Description, "cleared") || !strings.Contains(action.Description, "kept") {
+		t.Errorf("update help = %q, want it to state what is cleared and what is kept", action.Description)
+	}
+
+	command := buildActionCommand(domain, *action, nil, nil, nil, nil)
+	if err := command.Flags().Set("time-spent", "3.5"); err != nil {
+		t.Fatalf("set time-spent: %v", err)
+	}
+	err := command.ValidateRequiredFlags()
+	if err == nil {
+		t.Fatal("update without --description and --report-date passed required-flag validation")
+	}
+	for _, name := range []string{"description", "report-date"} {
+		if !strings.Contains(err.Error(), name) {
+			t.Errorf("required-flag error %q does not name --%s", err, name)
+		}
+	}
+
+	for name, value := range map[string]string{"description": "Replaced seal", "report-date": "2026-09-20"} {
+		if err := command.Flags().Set(name, value); err != nil {
+			t.Fatalf("set %s: %v", name, err)
+		}
+	}
+	if err := command.ValidateRequiredFlags(); err != nil {
+		t.Fatalf("update with the required flags failed validation: %v", err)
+	}
+	if err := validateActionInput(command, []string{"7b7f0c2a-4b3e-4f5a-9c7d-1e2f3a4b5c6d"}, *action); err != nil {
+		t.Fatalf("valid update input rejected: %v", err)
+	}
+}
+
+func TestReportUpdateFloatFlagsHaveNoIntDefaults(t *testing.T) {
+	action := findDomainAction(t, "report", "update")
+
+	for _, name := range []string{"time-spent", "cost-incurred"} {
+		flag := actionFlagByName(t, action, name)
+		if flag.Type != "float" {
+			t.Errorf("%s type = %q, want float", name, flag.Type)
+		}
+		if flag.Default == nil {
+			continue
+		}
+		if _, ok := flag.Default.(float64); !ok {
+			t.Errorf("%s default = %#v (%T), want a float literal", name, flag.Default, flag.Default)
+		}
 	}
 }
