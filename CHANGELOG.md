@@ -5,6 +5,23 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0](https://github.com/UteamUP/cli/compare/3.0.0...4.0.0) (2026-09-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **report:** report list and get read /api/report/worker (GUID-only items)
+
+### Features
+
+* **cli:** add report-schedule domain ([09fde32](https://github.com/UteamUP/cli/commit/09fde325972a448519e9a778237b1a6029f8c506))
+* **cli:** add report-template domain ([c4a7660](https://github.com/UteamUP/cli/commit/c4a7660d2a7563ff43875af1ec875517b79367bf))
+* expose authorized radio transmission transcripts ([a73c926](https://github.com/UteamUP/cli/commit/a73c926285aed8d109198242f14fcf021badc143))
+* expose read-only connector radio status ([97099ba](https://github.com/UteamUP/cli/commit/97099baeb9e45924ed838c68d6903aaf7cc69d1f))
+* **registry:** save raw response bodies through the download feature ([c42ccca](https://github.com/UteamUP/cli/commit/c42cccaf8e10caf2725cba631a4b860881068cf3))
+* **report:** align report commands with work report tools and add update ([d5e5ab6](https://github.com/UteamUP/cli/commit/d5e5ab63781500e059129448543c5d0bbc3d3b7a))
+* **report:** cli pdf, export, send and finalize; share summary; completion failure ([b3a543b](https://github.com/UteamUP/cli/commit/b3a543be6a0099ec886efffa92778ea0b21b9f82))
+
 ## [3.0.0](https://github.com/UteamUP/cli/compare/2.35.0...3.0.0) (2026-09-25)
 
 
