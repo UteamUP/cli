@@ -5,6 +5,19 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0](https://github.com/UteamUP/cli/compare/2.35.0...3.0.0) (2026-09-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **report:** report create no longer accepts --primary-reporter-id or --additional-worker-ids.
+
+### Features
+
+* add radio administration and history commands ([7aa4689](https://github.com/UteamUP/cli/commit/7aa46897673f12ad93e79af70660ad0d6451c8da))
+* expose retained radio transmission history ([2ddcb24](https://github.com/UteamUP/cli/commit/2ddcb2428ac02ec6c443f4fdba28c7893b6f933f))
+* **report:** GUID people flags and completion report input ([d4dbd29](https://github.com/UteamUP/cli/commit/d4dbd29a19cc8019bd35d911bed4c26450f12d31))
+
 ## [2.35.0](https://github.com/UteamUP/cli/compare/2.34.0...2.35.0) (2026-09-24)
 
 
