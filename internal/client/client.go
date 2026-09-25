@@ -354,35 +354,15 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 }
 
 // DownloadFile streams a backend-issued HTTPS download URL to a new local
-// file. Existing files are never overwritten, and partial downloads are
-// removed when the request fails or exceeds the attachment size limit.
+// file through WriteDownloadFile.
 func (c *APIClient) DownloadFile(ctx context.Context, rawURL, outputPath string) (int64, error) {
 	parsed, err := url.Parse(rawURL)
 	if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil {
 		return 0, fmt.Errorf("download URL must be an absolute HTTPS URL")
 	}
-	if strings.TrimSpace(outputPath) == "" {
-		return 0, fmt.Errorf("download output path is required")
+	if err := EnsureDownloadOutputIsFree(outputPath); err != nil {
+		return 0, err
 	}
-	if _, err := os.Stat(outputPath); err == nil {
-		return 0, fmt.Errorf("download output already exists: %s", outputPath)
-	} else if !os.IsNotExist(err) {
-		return 0, fmt.Errorf("checking download output: %w", err)
-	}
-
-	dir := filepath.Dir(outputPath)
-	temporary, err := os.CreateTemp(dir, ".uteamup-download-*.part")
-	if err != nil {
-		return 0, fmt.Errorf("creating temporary download: %w", err)
-	}
-	temporaryPath := temporary.Name()
-	keepTemporary := false
-	defer func() {
-		_ = temporary.Close()
-		if !keepTemporary {
-			_ = os.Remove(temporaryPath)
-		}
-	}()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, parsed.String(), nil)
 	if err != nil {
@@ -400,19 +380,60 @@ func (c *APIClient) DownloadFile(ctx context.Context, rawURL, outputPath string)
 	if resp.ContentLength > maxDownloadBytes {
 		return 0, fmt.Errorf("download exceeds the %d byte limit", maxDownloadBytes)
 	}
+	return WriteDownloadFile(outputPath, resp.Body)
+}
 
-	written, err := io.Copy(temporary, io.LimitReader(resp.Body, maxDownloadBytes+1))
-	if err != nil {
-		return 0, fmt.Errorf("writing attachment: %w", err)
+// WriteDownloadFile copies r to a new local file. Existing files are never
+// overwritten, and the partial temporary file is removed when the copy fails
+// or exceeds the download size limit.
+func WriteDownloadFile(outputPath string, r io.Reader) (int64, error) {
+	return writeDownloadFileWithLimit(outputPath, r, maxDownloadBytes)
+}
+
+// EnsureDownloadOutputIsFree fails when outputPath is blank or already exists,
+// so callers can refuse before spending a request on a download.
+func EnsureDownloadOutputIsFree(outputPath string) error {
+	if strings.TrimSpace(outputPath) == "" {
+		return fmt.Errorf("download output path is required")
 	}
-	if written > maxDownloadBytes {
-		return 0, fmt.Errorf("download exceeds the %d byte limit", maxDownloadBytes)
+	if _, err := os.Stat(outputPath); err == nil {
+		return fmt.Errorf("download output already exists: %s", outputPath)
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("checking download output: %w", err)
+	}
+	return nil
+}
+
+func writeDownloadFileWithLimit(outputPath string, r io.Reader, limit int64) (int64, error) {
+	if err := EnsureDownloadOutputIsFree(outputPath); err != nil {
+		return 0, err
+	}
+
+	temporary, err := os.CreateTemp(filepath.Dir(outputPath), ".uteamup-download-*.part")
+	if err != nil {
+		return 0, fmt.Errorf("creating temporary download: %w", err)
+	}
+	temporaryPath := temporary.Name()
+	keepTemporary := false
+	defer func() {
+		_ = temporary.Close()
+		if !keepTemporary {
+			_ = os.Remove(temporaryPath)
+		}
+	}()
+
+	written, err := io.Copy(temporary, io.LimitReader(r, limit+1))
+	if err != nil {
+		return 0, fmt.Errorf("writing download: %w", err)
+	}
+	if written > limit {
+		return 0, fmt.Errorf("download exceeds the %d byte limit", limit)
 	}
 	if err := temporary.Close(); err != nil {
-		return 0, fmt.Errorf("closing attachment: %w", err)
+		return 0, fmt.Errorf("closing download: %w", err)
 	}
 	if err := os.Rename(temporaryPath, outputPath); err != nil {
-		return 0, fmt.Errorf("finalizing attachment: %w", err)
+		return 0, fmt.Errorf("finalizing download: %w", err)
 	}
 	keepTemporary = true
 	return written, nil

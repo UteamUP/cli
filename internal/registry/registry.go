@@ -173,6 +173,12 @@ type Action struct {
 	DownloadURLField   string
 	DownloadOutputFlag string
 	DownloadDefaultArg string
+	// DownloadResponseBody writes the raw REST response body (a PDF, CSV or
+	// XLSX) to the DownloadOutputFlag path instead of fetching a URL from it.
+	// DownloadDefaultName is the file name used without that flag; its
+	// `{argOrFlag}` placeholders expand like RESTPath, e.g. "reports.{format}".
+	DownloadResponseBody bool
+	DownloadDefaultName  string
 	// DisableResponseExport prevents the profile-level JSON export feature
 	// from persisting secret-bearing responses such as transfer challenges.
 	DisableResponseExport bool
@@ -412,6 +418,20 @@ func validateActionInput(cmd *cobra.Command, args []string, action Action) error
 }
 
 func validateActionDefinition(action Action) error {
+	if action.DownloadResponseBody {
+		if action.DownloadURLField != "" {
+			return fmt.Errorf(
+				"invalid action %s: a response-body download cannot also read a download URL field",
+				action.Name,
+			)
+		}
+		if !declaresStringFlag(action.Flags, action.DownloadOutputFlag) {
+			return fmt.Errorf(
+				"invalid action %s: a response-body download needs DownloadOutputFlag to name a string flag",
+				action.Name,
+			)
+		}
+	}
 	if action.UseDomainBasePath && (action.RESTBasePath != "" || action.RESTPath != "") {
 		return fmt.Errorf(
 			"invalid action %s: domain-base routing cannot use REST path overrides",
@@ -505,6 +525,18 @@ func validateAllowedRouteValues(actionName, label string, values []string) error
 		seen[value] = struct{}{}
 	}
 	return nil
+}
+
+func declaresStringFlag(flags []FlagDef, name string) bool {
+	if name == "" {
+		return false
+	}
+	for _, flag := range flags {
+		if flag.Name == name {
+			return flag.Type == "" || flag.Type == "string"
+		}
+	}
+	return false
 }
 
 func containsExact(values []string, candidate string) bool {
@@ -689,6 +721,17 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 
 	var result json.RawMessage
 	var err error
+	if action.DownloadResponseBody {
+		if downloadOutputPath == "" {
+			downloadOutputPath, err = defaultResponseBodyPath(action, toolArgs, queryParams)
+			if err != nil {
+				return err
+			}
+		}
+		if err := client.EnsureDownloadOutputIsFree(downloadOutputPath); err != nil {
+			return err
+		}
+	}
 	if action.MCPOnly {
 		if len(headers) > 0 || len(queryParams) > 0 || uploadPath != "" {
 			return fmt.Errorf("MCP-only action %s cannot use REST headers, query flags, or uploads", action.Name)
@@ -766,6 +809,19 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		if err != nil {
 			return fmt.Errorf("formatting download result: %w", err)
 		}
+	}
+
+	if action.DownloadResponseBody {
+		written, err := client.WriteDownloadFile(downloadOutputPath, bytes.NewReader(result))
+		if err != nil {
+			return err
+		}
+		summary, err := json.Marshal(map[string]any{"path": downloadOutputPath, "bytes": written})
+		if err != nil {
+			return fmt.Errorf("formatting download result: %w", err)
+		}
+		// The body is a file, not JSON, so the profile JSON export is skipped.
+		return output.Print(output.ParseFormat(*outputFormat), summary)
 	}
 
 	// Export JSON to file if enabled
@@ -882,6 +938,25 @@ func formatStrongETag(value string) (string, error) {
 		return "", fmt.Errorf("contains an invalid opaque ETag token")
 	}
 	return "\"" + opaque + "\"", nil
+}
+
+// defaultResponseBodyPath expands DownloadDefaultName against the request
+// values. The result must be a bare file name in the working directory.
+func defaultResponseBodyPath(action Action, toolArgs, queryParams map[string]any) (string, error) {
+	values := make(map[string]any, len(toolArgs)+len(queryParams))
+	for key, value := range queryParams {
+		values[key] = value
+	}
+	for key, value := range toolArgs {
+		values[key] = value
+	}
+	name, _ := expandPathTemplate(action.DownloadDefaultName, values)
+	name = strings.TrimSpace(name)
+	if name == "" || name == "." || name == ".." || strings.ContainsAny(name, "{}") ||
+		filepath.Base(name) != name {
+		return "", fmt.Errorf("cannot name the download file; pass --%s", action.DownloadOutputFlag)
+	}
+	return name, nil
 }
 
 func defaultDownloadPath(base, rawURL string) string {
