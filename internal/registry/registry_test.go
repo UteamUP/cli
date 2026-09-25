@@ -554,3 +554,34 @@ func TestBugAttachmentDownloadStreamsTheSignedURL(t *testing.T) {
 
 	t.Fatal("attachments-download action not found")
 }
+
+// TestReportDomainAliasesAreUniqueAcrossRegistry is scoped to the report template
+// and schedule domains: the registry already carries unrelated duplicates
+// (codes, automations) that belong to other changes.
+func TestReportDomainAliasesAreUniqueAcrossRegistry(t *testing.T) {
+	reportDomains := map[string]bool{"report-template": true, "report-schedule": true}
+	owners := map[string]string{}
+	for _, name := range []string{"report-template", "report-schedule"} {
+		domain := findDomain(name)
+		if domain == nil {
+			t.Fatalf("expected %s domain to be registered", name)
+		}
+		for _, token := range append([]string{domain.Name}, domain.Aliases...) {
+			if owner, taken := owners[token]; taken {
+				t.Errorf("%q is used by both %s and %s", token, owner, name)
+			}
+			owners[token] = name
+		}
+	}
+
+	for _, domain := range DefaultRegistry.Domains() {
+		if reportDomains[domain.Name] {
+			continue
+		}
+		for _, token := range append([]string{domain.Name}, domain.Aliases...) {
+			if owner, taken := owners[token]; taken {
+				t.Errorf("%q of domain %s collides with the %s domain", token, domain.Name, owner)
+			}
+		}
+	}
+}
