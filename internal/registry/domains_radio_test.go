@@ -18,7 +18,7 @@ func TestRadioRoutesUseActiveTenantAndPublicGuids(t *testing.T) {
 	if domain.APIPath != "/api/radio" {
 		t.Fatal("radio must use its explicit REST boundary")
 	}
-	expected := map[string]string{"transmissions": "channels/{channelGuid}/transmissions", "status": "environment", "policy": "policy", "channels": "history-channels", "recordings": "recordings", "get": "recordings/{recordingGuid}", "playback": "recordings/{recordingGuid}/playback"}
+	expected := map[string]string{"transcript": "channels/{channelGuid}/transmissions/{transmissionGuid}/transcript", "transmissions": "channels/{channelGuid}/transmissions", "status": "environment", "policy": "policy", "channels": "history-channels", "recordings": "recordings", "get": "recordings/{recordingGuid}", "playback": "recordings/{recordingGuid}/playback"}
 	for _, action := range domain.Actions {
 		if action.RESTPath != expected[action.Name] {
 			t.Errorf("wrong route for %s: %s", action.Name, action.RESTPath)
@@ -27,7 +27,7 @@ func TestRadioRoutesUseActiveTenantAndPublicGuids(t *testing.T) {
 			t.Errorf("missing MCP equivalent for %s", action.Name)
 		}
 		for _, arg := range action.Args {
-			if (arg.Name != "recordingGuid" && arg.Name != "channelGuid") || arg.Type != "non-empty-uuid" {
+			if (arg.Name != "recordingGuid" && arg.Name != "channelGuid" && arg.Name != "transmissionGuid") || arg.Type != "non-empty-uuid" {
 				t.Errorf("unexpected public argument %s", arg.Name)
 			}
 		}

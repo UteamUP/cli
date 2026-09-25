@@ -6,6 +6,8 @@ func init() {
 	Register(&Domain{
 		Name: "radio", Description: "Manage tenant radio policy and read authorized recording history", APIPath: "/api/radio",
 		Actions: []Action{
+			{Name: "transcript", Description: "Read an authorized speaking-turn transcript, including unarchived audio", ToolName: "UteamupRadioTransmissionTranscriptGet", HTTPMethod: "GET", RESTPath: "channels/{channelGuid}/transmissions/{transmissionGuid}/transcript",
+				Args: []ArgDef{{Name: "channelGuid", Description: "Public channel GUID", Type: "non-empty-uuid", Required: true}, {Name: "transmissionGuid", Description: "Public transmission GUID", Type: "non-empty-uuid", Required: true}}},
 			{Name: "transmissions", Description: "Read authorized speaking-turn history, including unrecorded turns", ToolName: "UteamupRadioTransmissionsList", HTTPMethod: "GET", RESTPath: "channels/{channelGuid}/transmissions",
 				Args:  []ArgDef{{Name: "channelGuid", Description: "Public channel GUID", Type: "non-empty-uuid", Required: true}},
 				Flags: []FlagDef{{Name: "skip", Description: "Skip count", Type: "int", Default: 0}, {Name: "take", Description: "Page size (1–100)", Type: "int", Default: 50}}},
