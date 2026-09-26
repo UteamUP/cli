@@ -2,10 +2,22 @@ package registry
 
 // Radio administration and retained history use the same active-tenant REST boundary as mobile.
 func init() {
+	Register(&Domain{
+		Name: "radio-admin", Description: "Configured Global Admin controls for the selected tenant's Cloud Radio pilot", APIPath: "/api/admin/radio",
+		Actions: []Action{
+			{Name: "status", Description: "Read the selected tenant's Radio environment without participant access", ToolName: "UteamupRadioAdministrationGet", HTTPMethod: "GET", RESTPath: "environment"},
+			{Name: "grant", Description: "Grant a complimentary 25-listener pilot with 30-day retention and 50 GiB storage; queues provisioning without an invoice", ToolName: "UteamupRadioComplimentaryGrant", HTTPMethod: "POST", RESTPath: "complimentary",
+				Flags: []FlagDef{{Name: "file", Description: "JSON containing requestGuid, expiresAt (null until manually disabled), and reason", Type: "string", Required: true, RootJSONObjectFile: true}}},
+			{Name: "revoke", Description: "Revoke a named pilot grant and drain compute while preserving retained recordings", ToolName: "UteamupRadioComplimentaryRevoke", HTTPMethod: "POST", RESTPath: "complimentary/revoke",
+				Flags: []FlagDef{{Name: "file", Description: "JSON containing grantGuid and reason", Type: "string", Required: true, RootJSONObjectFile: true}}},
+		},
+	})
 	recording := ArgDef{Name: "recordingGuid", Description: "Public recording GUID", Type: "non-empty-uuid", Required: true}
 	Register(&Domain{
 		Name: "radio", Description: "Manage tenant radio policy and read authorized recording history", APIPath: "/api/radio",
 		Actions: []Action{
+			{Name: "stop-pilot", Description: "Stop the selected tenant's named complimentary pilot and safely remove audio servers; retained recordings are kept", ToolName: "UteamupRadioPilotStop", HTTPMethod: "POST", RESTPath: "complimentary/revoke",
+				Flags: []FlagDef{{Name: "file", Description: "JSON containing grantGuid and reason; requires Radio.Manage and tenant membership", Type: "string", Required: true, RootJSONObjectFile: true}}},
 			{Name: "transcript", Description: "Read an authorized speaking-turn transcript, including unarchived audio", ToolName: "UteamupRadioTransmissionTranscriptGet", HTTPMethod: "GET", RESTPath: "channels/{channelGuid}/transmissions/{transmissionGuid}/transcript",
 				Args: []ArgDef{{Name: "channelGuid", Description: "Public channel GUID", Type: "non-empty-uuid", Required: true}, {Name: "transmissionGuid", Description: "Public transmission GUID", Type: "non-empty-uuid", Required: true}}},
 			{Name: "transmissions", Description: "Read authorized speaking-turn history, including unrecorded turns", ToolName: "UteamupRadioTransmissionsList", HTTPMethod: "GET", RESTPath: "channels/{channelGuid}/transmissions",
