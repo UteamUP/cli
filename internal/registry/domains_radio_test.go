@@ -13,7 +13,7 @@ func TestRadioPilotAdministrationUsesExplicitSelectedTenantBoundary(t *testing.T
 		if domain.APIPath != "/api/admin/radio" {
 			t.Fatal("pilot administration requires its platform-only boundary")
 		}
-		expected := map[string]string{"status": "environment", "grant": "complimentary", "revoke": "complimentary/revoke"}
+		expected := map[string]string{"validate": "validate", "status": "environment", "grant": "complimentary", "revoke": "complimentary/revoke"}
 		for _, action := range domain.Actions {
 			if action.RESTPath != expected[action.Name] {
 				t.Fatalf("wrong admin route for %s", action.Name)
@@ -24,6 +24,10 @@ func TestRadioPilotAdministrationUsesExplicitSelectedTenantBoundary(t *testing.T
 			if action.Name == "status" {
 				if action.HTTPMethod != "GET" {
 					t.Fatal("status is read-only")
+				}
+			} else if action.Name == "validate" {
+				if action.HTTPMethod != "POST" || len(action.Flags) != 0 || action.ToolName != "UteamupRadioAdministrationValidate" {
+					t.Fatal("validation must use the selected-tenant platform probe without identity overrides")
 				}
 			} else if action.HTTPMethod != "POST" || len(action.Flags) != 1 || !action.Flags[0].Required || !action.Flags[0].RootJSONObjectFile {
 				t.Fatal("pilot changes require an explicit reviewed JSON request")
@@ -51,7 +55,7 @@ func TestRadioRoutesUseActiveTenantAndPublicGuids(t *testing.T) {
 	if domain.APIPath != "/api/radio" {
 		t.Fatal("radio must use its explicit REST boundary")
 	}
-	expected := map[string]string{"stop-pilot": "complimentary/revoke", "transcript": "channels/{channelGuid}/transmissions/{transmissionGuid}/transcript", "transmissions": "channels/{channelGuid}/transmissions", "status": "environment", "policy": "policy", "channels": "history-channels", "recordings": "recordings", "get": "recordings/{recordingGuid}", "playback": "recordings/{recordingGuid}/playback"}
+	expected := map[string]string{"validate": "validate", "stop-pilot": "complimentary/revoke", "transcript": "channels/{channelGuid}/transmissions/{transmissionGuid}/transcript", "transmissions": "channels/{channelGuid}/transmissions", "status": "environment", "policy": "policy", "channels": "history-channels", "recordings": "recordings", "get": "recordings/{recordingGuid}", "playback": "recordings/{recordingGuid}/playback"}
 	for _, action := range domain.Actions {
 		if action.RESTPath != expected[action.Name] {
 			t.Errorf("wrong route for %s: %s", action.Name, action.RESTPath)
@@ -71,6 +75,9 @@ func TestRadioRoutesUseActiveTenantAndPublicGuids(t *testing.T) {
 		}
 		if action.Name == "playback" && !action.DisableResponseExport {
 			t.Error("playback URLs must not enter automatic exports")
+		}
+		if action.Name == "validate" && (action.HTTPMethod != "POST" || len(action.Args) != 0 || len(action.Flags) != 0 || action.ToolName != "UteamupRadioValidate") {
+			t.Error("validation must use the membership-bound probe without identity overrides")
 		}
 		if action.Name == "policy" && (action.HTTPMethod != "PUT" || !action.Flags[0].RootJSONObjectFile) {
 			t.Error("complete reviewed policy must use a root JSON object")

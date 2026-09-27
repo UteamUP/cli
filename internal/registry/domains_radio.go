@@ -5,6 +5,7 @@ func init() {
 	Register(&Domain{
 		Name: "radio-admin", Description: "Configured Global Admin controls for the selected tenant's Cloud Radio pilot", APIPath: "/api/admin/radio",
 		Actions: []Action{
+			{Name: "validate", Description: "Explicitly probe the selected tenant's Radio services and recording storage; never starts audio capture", ToolName: "UteamupRadioAdministrationValidate", HTTPMethod: "POST", RESTPath: "validate"},
 			{Name: "status", Description: "Read the selected tenant's Radio environment without participant access", ToolName: "UteamupRadioAdministrationGet", HTTPMethod: "GET", RESTPath: "environment"},
 			{Name: "grant", Description: "Grant a complimentary 25-listener pilot with 30-day retention and 50 GiB storage; queues provisioning without an invoice", ToolName: "UteamupRadioComplimentaryGrant", HTTPMethod: "POST", RESTPath: "complimentary",
 				Flags: []FlagDef{{Name: "file", Description: "JSON containing requestGuid, expiresAt (null until manually disabled), and reason", Type: "string", Required: true, RootJSONObjectFile: true}}},
@@ -16,6 +17,7 @@ func init() {
 	Register(&Domain{
 		Name: "radio", Description: "Manage tenant radio policy and read authorized recording history", APIPath: "/api/radio",
 		Actions: []Action{
+			{Name: "validate", Description: "Radio.Manage: explicitly probe services and recording storage; reports unverified device checks separately", ToolName: "UteamupRadioValidate", HTTPMethod: "POST", RESTPath: "validate"},
 			{Name: "stop-pilot", Description: "Stop the selected tenant's named complimentary pilot and safely remove audio servers; retained recordings are kept", ToolName: "UteamupRadioPilotStop", HTTPMethod: "POST", RESTPath: "complimentary/revoke",
 				Flags: []FlagDef{{Name: "file", Description: "JSON containing grantGuid and reason; requires Radio.Manage and tenant membership", Type: "string", Required: true, RootJSONObjectFile: true}}},
 			{Name: "transcript", Description: "Read an authorized speaking-turn transcript, including unarchived audio", ToolName: "UteamupRadioTransmissionTranscriptGet", HTTPMethod: "GET", RESTPath: "channels/{channelGuid}/transmissions/{transmissionGuid}/transcript",
