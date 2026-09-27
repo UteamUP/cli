@@ -17,6 +17,7 @@ func init() {
 	Register(&Domain{
 		Name: "radio", Description: "Manage tenant radio policy and read authorized recording history", APIPath: "/api/radio",
 		Actions: []Action{
+			{Name: "backup-sharepoint", Description: "Radio.Manage: read the selected tenant's SharePoint backup availability", ToolName: "UteamupRadioBackupSharePointAvailability", HTTPMethod: "GET", RESTPath: "backup-destinations/sharepoint"},
 			{Name: "validate", Description: "Radio.Manage: explicitly probe services and recording storage; reports unverified device checks separately", ToolName: "UteamupRadioValidate", HTTPMethod: "POST", RESTPath: "validate"},
 			{Name: "stop-pilot", Description: "Stop the selected tenant's named complimentary pilot and safely remove audio servers; retained recordings are kept", ToolName: "UteamupRadioPilotStop", HTTPMethod: "POST", RESTPath: "complimentary/revoke",
 				Flags: []FlagDef{{Name: "file", Description: "JSON containing grantGuid and reason; requires Radio.Manage and tenant membership", Type: "string", Required: true, RootJSONObjectFile: true}}},
