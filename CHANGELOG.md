@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0](https://github.com/UteamUP/cli/compare/4.0.0...4.1.0) (2026-09-28)
+
+
+### Features
+
+* add radio-license domain (list/assign/remove) ([5d7da75](https://github.com/UteamUP/cli/commit/5d7da75bd6f4452d0b0c58d394c10999dff107a6))
+
 ## [4.0.0](https://github.com/UteamUP/cli/compare/3.0.0...4.0.0) (2026-09-27)
 
 
