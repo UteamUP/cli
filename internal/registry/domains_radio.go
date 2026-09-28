@@ -13,6 +13,19 @@ func init() {
 				Flags: []FlagDef{{Name: "file", Description: "JSON containing grantGuid and reason", Type: "string", Required: true, RootJSONObjectFile: true}}},
 		},
 	})
+	tenant := FlagDef{Name: "tenant", Short: "t", BodyName: "tenantGuid", Description: "Public GUID of the tenant", Required: true, Type: "non-empty-uuid"}
+	member := FlagDef{Name: "user-guid", BodyName: "userGuid", Description: "Public GUID of the tenant member", Required: true, Type: "non-empty-uuid"}
+	Register(&Domain{
+		Name: "radio-license", Description: "Tenant.Update: Radio seats per member (seats = the tenant's Radio listener capacity)", APIPath: "/api/tenant",
+		Actions: []Action{
+			{Name: "list", Description: "List members holding a Radio seat; backfilled seats came from the rollout grant", ToolName: "UteamupRadioLicenseList", HTTPMethod: "GET", RESTPath: "{tenantGuid}/radio-license-users",
+				Flags: []FlagDef{tenant}},
+			{Name: "assign", Description: "Give a member a Radio seat; fails with RADIO_LICENSE_POOL_EXHAUSTED when all seats are used", ToolName: "UteamupRadioLicenseAssign", HTTPMethod: "POST", RESTPath: "{tenantGuid}/radio-licenses/assign",
+				Flags: []FlagDef{tenant, member}},
+			{Name: "remove", Description: "Remove a member's Radio seat; their live Radio stops within seconds, recordings are kept", ToolName: "UteamupRadioLicenseRemove", HTTPMethod: "POST", RESTPath: "{tenantGuid}/radio-licenses/remove",
+				Flags: []FlagDef{tenant, member}},
+		},
+	})
 	recording := ArgDef{Name: "recordingGuid", Description: "Public recording GUID", Type: "non-empty-uuid", Required: true}
 	Register(&Domain{
 		Name: "radio", Description: "Manage tenant radio policy and read authorized recording history", APIPath: "/api/radio",

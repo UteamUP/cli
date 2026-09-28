@@ -206,3 +206,48 @@ func TestRadioBackupSharePointUsesSelectedTenantAndPreservesAvailability(t *test
 		})
 	}
 }
+
+func TestRadioLicenseCommandsRequireExplicitTenantAndMemberGuids(t *testing.T) {
+	var domain *Domain
+	for _, candidate := range DefaultRegistry.Domains() {
+		if candidate.Name == "radio-license" {
+			domain = candidate
+		}
+	}
+	if domain == nil {
+		t.Fatal("radio-license domain missing")
+	}
+	if domain.APIPath != "/api/tenant" {
+		t.Fatalf("unexpected API path %q", domain.APIPath)
+	}
+	expected := map[string]struct{ method, path, tool string }{
+		"list":   {"GET", "{tenantGuid}/radio-license-users", "UteamupRadioLicenseList"},
+		"assign": {"POST", "{tenantGuid}/radio-licenses/assign", "UteamupRadioLicenseAssign"},
+		"remove": {"POST", "{tenantGuid}/radio-licenses/remove", "UteamupRadioLicenseRemove"},
+	}
+	for _, action := range domain.Actions {
+		want, ok := expected[action.Name]
+		if !ok {
+			t.Fatalf("unexpected action %q", action.Name)
+		}
+		if action.HTTPMethod != want.method || action.RESTPath != want.path || action.ToolName != want.tool {
+			t.Fatalf("%s: got %s %s %s", action.Name, action.HTTPMethod, action.RESTPath, action.ToolName)
+		}
+		flags := map[string]FlagDef{}
+		for _, flag := range action.Flags {
+			flags[flag.Name] = flag
+		}
+		if tenant := flags["tenant"]; !tenant.Required || tenant.BodyName != "tenantGuid" || tenant.Type != "non-empty-uuid" {
+			t.Fatalf("%s must require the tenant GUID", action.Name)
+		}
+		if action.Name != "list" {
+			if member := flags["user-guid"]; !member.Required || member.BodyName != "userGuid" || member.Type != "non-empty-uuid" {
+				t.Fatalf("%s must require the member GUID", action.Name)
+			}
+		}
+		delete(expected, action.Name)
+	}
+	if len(expected) != 0 {
+		t.Fatalf("missing actions: %v", expected)
+	}
+}
