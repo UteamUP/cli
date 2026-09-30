@@ -30,6 +30,8 @@ func init() {
 	Register(&Domain{
 		Name: "radio", Description: "Manage tenant radio policy and read authorized recording history", APIPath: "/api/radio",
 		Actions: []Action{
+			{Name: "team-eligibility", Description: "Team.View and Radio.Manage: read a saved Unit team's Radio eligibility without assigning seats", ToolName: "UteamupRadioTeamEligibilityGet", HTTPMethod: "GET", RESTPath: "teams/{teamGuid}/eligibility",
+				Args: []ArgDef{{Name: "teamGuid", Description: "Public Unit team GUID", Type: "non-empty-uuid", Required: true}}},
 			{Name: "backup-sharepoint", Description: "Radio.Manage: read the selected tenant's SharePoint backup availability", ToolName: "UteamupRadioBackupSharePointAvailability", HTTPMethod: "GET", RESTPath: "backup-destinations/sharepoint"},
 			{Name: "validate", Description: "Radio.Manage: explicitly probe services and recording storage; reports unverified device checks separately", ToolName: "UteamupRadioValidate", HTTPMethod: "POST", RESTPath: "validate"},
 			{Name: "stop-pilot", Description: "Stop the selected tenant's named complimentary pilot and safely remove audio servers; retained recordings are kept", ToolName: "UteamupRadioPilotStop", HTTPMethod: "POST", RESTPath: "complimentary/revoke",
