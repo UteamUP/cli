@@ -5,6 +5,16 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0](https://github.com/UteamUP/cli/compare/4.1.0...4.2.0) (2026-10-01)
+
+
+### Features
+
+* expose field checks through CLI ([fcdd07f](https://github.com/UteamUP/cli/commit/fcdd07f2bd10da2cd8181b25d9963f70278d02ca))
+* expose saved Radio team eligibility ([e632c15](https://github.com/UteamUP/cli/commit/e632c15d57bd36ef5168e675db8f3daeede22aea))
+* **itcost:** cloud cost commands and asset TCO ([bc98eb1](https://github.com/UteamUP/cli/commit/bc98eb18c738c1117b5acf297c1fa523606d8252))
+* **itcost:** cloud cost commands and asset TCO ([bd106df](https://github.com/UteamUP/cli/commit/bd106dfdf74e39cb6e09d0d2ec03628c8824a20e))
+
 ## [4.1.0](https://github.com/UteamUP/cli/compare/4.0.0...4.1.0) (2026-09-28)
 
 
