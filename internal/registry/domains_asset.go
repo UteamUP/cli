@@ -42,6 +42,19 @@ func init() {
 				Args:        []ArgDef{{Name: "guid", Description: "Asset ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
 			},
 			{
+				Name:        "tco",
+				Description: "Total cost of ownership: purchase cost, book value, labour, materials, cloud and contracts (needs AssetCost.View)",
+				ToolName:    "UteamupAssetTco",
+				HTTPMethod:  "GET",
+				RESTPath:    "{assetGuid}/tco",
+				Args: []ArgDef{
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset GUID", Type: "non-empty-uuid", Required: true},
+				},
+				Flags: []FlagDef{
+					{Name: "months", Description: "How many months back (1-120)", Type: "int", Default: 12},
+				},
+			},
+			{
 				Name:        "duplicate",
 				Description: "Duplicate a coded asset — deep-copies it and assigns the next code instance (e.g. GE0101 → GE0102). Requires Asset.Create permission.",
 				ToolName:    "UteamupAssetDuplicate",
