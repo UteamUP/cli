@@ -122,6 +122,9 @@ func TestTenantFeatureMaturitySetFlags(t *testing.T) {
 	if mobile := flags["mobile"]; mobile.Type != "int" || mobile.BodyName != "mobileMaxFeatureMaturity" || mobile.Required || mobile.Default != nil {
 		t.Fatalf("--mobile flag = %+v; it must be optional with no default so an omitted value keeps the stored level", mobile)
 	}
+	if same := flags["mobile-same-as-web"]; same.Type != "bool" || same.BodyName != "mobileSameAsWeb" || same.Required || same.Default != nil {
+		t.Fatalf("--mobile-same-as-web flag = %+v; it must be an optional bool that is only sent when given", same)
+	}
 }
 
 func TestUserPreferencesMobileFeatureOptInFlag(t *testing.T) {

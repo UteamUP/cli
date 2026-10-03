@@ -47,12 +47,13 @@ func init() {
 			},
 			{
 				Name:        "feature-maturity-set",
-				Description: "Set the active tenant's web feature level and, optionally, its mobile app level (never above web). Each mobile user still opts in from the app's Settings",
+				Description: "Set the active tenant's web feature level and, optionally, a lower mobile app limit (the app follows the web level by default). Each mobile user still opts in from their Profile in the app",
 				ToolName:    "UteamupTenantFeatureMaturitySet",
 				MCPOnly:     true,
 				Flags: []FlagDef{
 					{Name: "max", BodyName: "maxFeatureMaturity", Description: "Web feature level 0-3 (3 Internal is for configured global admins only)", Required: true, Type: "int"},
-					{Name: "mobile", BodyName: "mobileMaxFeatureMaturity", Description: "Mobile app feature level 0-3, at most --max; omit to keep the current value", Type: "int"},
+					{Name: "mobile", BodyName: "mobileMaxFeatureMaturity", Description: "Mobile app limit 0-3, at most --max; omit to keep the current value", Type: "int"},
+					{Name: "mobile-same-as-web", BodyName: "mobileSameAsWeb", Description: "Remove the mobile app limit so the app follows the web level (not with --mobile)", Type: "bool"},
 				},
 			},
 			{
