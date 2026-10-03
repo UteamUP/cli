@@ -783,10 +783,7 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		logger.Debug("calling %s %s (tool: %s) with args %v headers %v", httpMethod, restPath, action.ToolName, loggedArgs, loggedHeaders)
 
 		if action.DownloadResponseBody {
-			if httpMethod != "GET" {
-				return fmt.Errorf("response-body download requires GET")
-			}
-			written, downloadErr := apiClient.CallRESTDownload(ctx, restPath, downloadOutputPath, toolArgs, headers, action.Name)
+			written, downloadErr := apiClient.CallRESTDownload(ctx, httpMethod, restPath, downloadOutputPath, toolArgs, headers, action.Name)
 			if downloadErr != nil {
 				return downloadErr
 			}

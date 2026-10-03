@@ -130,7 +130,7 @@ func TestConstructionGetActionsAreGuidFirst(t *testing.T) {
 		if a.Args[0].Name != "externalGuid" {
 			t.Errorf("%s get: expected positional arg %q, got %q", domainName, "externalGuid", a.Args[0].Name)
 		}
-		if a.Args[0].Type != "string" {
+		if a.Args[0].Type != "uuid" {
 			t.Errorf("%s get: identity arg must be string (guid), got %q", domainName, a.Args[0].Type)
 		}
 		if !a.Args[0].Required {
@@ -164,7 +164,7 @@ func TestConstructionSubRouteActionsWired(t *testing.T) {
 			t.Errorf("%s %s: want tool=%s method=POST path=%s, got tool=%s method=%q path=%s",
 				c.domain, c.action, c.tool, c.restPath, a.ToolName, a.HTTPMethod, a.RESTPath)
 		}
-		if len(a.Args) != 1 || a.Args[0].Name != "externalGuid" || !a.Args[0].Required || a.Args[0].Type != "string" {
+		if len(a.Args) != 1 || a.Args[0].Name != "externalGuid" || !a.Args[0].Required || a.Args[0].Type != "uuid" {
 			t.Errorf("%s %s: first arg must be required string 'externalGuid' (matching the RESTPath placeholder), got %+v",
 				c.domain, c.action, a.Args)
 		}

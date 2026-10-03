@@ -33,6 +33,16 @@ func ExtractGPS(path string) (data Data, found bool, err error) {
 		return Data{}, false, fmt.Errorf("stat file: %w", err)
 	}
 
+	var header [8]byte
+	if _, err := f.ReadAt(header[:], 0); err != nil {
+		return Data{}, false, nil
+	}
+	switch string(header[4:8]) {
+	case "ftyp", "moov", "mdat", "free", "skip", "wide":
+	default:
+		return Data{}, false, nil
+	}
+
 	// Try structured approach: parse moov -> udta -> ©xyz
 	data, found, err = parseBoxes(f, info.Size(), []string{"moov"})
 	if err != nil {

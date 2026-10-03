@@ -16,7 +16,7 @@ func TestLogbookImportGetUsesGuidRoute(t *testing.T) {
 		t.Fatalf("get args = %+v, want one GUID positional arg", action.Args)
 	}
 	argument := action.Args[0]
-	if argument.Name != "externalGuid" || argument.Type != "string" || !argument.Required {
+	if argument.Name != "externalGuid" || argument.Type != "uuid" || !argument.Required {
 		t.Fatalf("get identity = %+v, want required externalGuid string", argument)
 	}
 	if len(action.Flags) != 0 {

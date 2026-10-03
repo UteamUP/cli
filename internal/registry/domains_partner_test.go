@@ -65,14 +65,14 @@ func TestPartnerActionsRouteToTheirOwnEndpoints(t *testing.T) {
 	}
 	want := map[string]string{
 		"list":             "/api/partner",
-		"get":              "/api/partner/<guid>",
+		"get":              "/api/partner/11111111-1111-1111-1111-111111111111",
 		"applications":     "/api/partner/application",
-		"tenants":          "/api/partner/<partner-guid>/tenant",
-		"earnings":         "/api/partner/<partner-guid>/earning",
+		"tenants":          "/api/partner/11111111-1111-1111-1111-111111111111/tenant",
+		"earnings":         "/api/partner/11111111-1111-1111-1111-111111111111/earning",
 		"program-defaults": "/api/partner/program-defaults",
 		"application-get":  "/api/partner/me/application",
-		"checklist":        "/api/partner/application/<application-guid>/checks",
-		"meetings":         "/api/partner/application/<application-guid>/meetings",
+		"checklist":        "/api/partner/application/11111111-1111-1111-1111-111111111111/checks",
+		"meetings":         "/api/partner/application/11111111-1111-1111-1111-111111111111/meetings",
 		"referral-codes":   "/api/partner/me/referral-codes",
 		"tenant-manager":   "/api/partner/my-tenant-manager",
 	}
@@ -84,7 +84,7 @@ func TestPartnerActionsRouteToTheirOwnEndpoints(t *testing.T) {
 		}
 		args := map[string]any{}
 		for _, flag := range action.Flags {
-			args[toCamelCase(flag.Name)] = "<" + flag.Name + ">"
+			args[toCamelCase(flag.Name)] = "11111111-1111-1111-1111-111111111111"
 		}
 		got, consumed := buildRESTPath(d, action, args)
 		if got != expected {

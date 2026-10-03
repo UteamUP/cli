@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/tls"
+	"github.com/uteamup/cli/internal/security"
 	"net/http"
 	"testing"
 )
@@ -76,7 +77,11 @@ func TestSkipTLSVerifyHandlesUnparseableBaseURL(t *testing.T) {
 func TestTenantHTTPClientEnforcesMinimumTLSVersion(t *testing.T) {
 	client := tenantHTTPClient("https://api.uteamup.com", false)
 
-	transport, ok := client.Transport.(*http.Transport)
+	boundary, ok := client.Transport.(security.Transport)
+	if !ok {
+		t.Fatalf("transport = %T, want origin-bound transport", client.Transport)
+	}
+	transport, ok := boundary.Base.(*http.Transport)
 	if !ok {
 		t.Fatalf("transport = %T, want *http.Transport", client.Transport)
 	}

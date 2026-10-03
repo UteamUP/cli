@@ -778,7 +778,7 @@ func appendQueryString(rawURL, query string) string {
 func (c *APIClient) WithProfile(profile string) *APIClient { c.profile = profile; return c }
 
 // CallRESTDownload keeps authenticated file bodies out of the JSON response buffer.
-func (c *APIClient) CallRESTDownload(ctx context.Context, path, outputPath string, params map[string]any, headers map[string]string, action string) (int64, error) {
+func (c *APIClient) CallRESTDownload(ctx context.Context, method, path, outputPath string, params map[string]any, headers map[string]string, action string) (int64, error) {
 	token, err := auth.LoadTokenForOrigin(c.baseURL, c.profile)
 	if err != nil {
 		return 0, err
@@ -786,9 +786,29 @@ func (c *APIClient) CallRESTDownload(ctx context.Context, path, outputPath strin
 	if !token.IsValid() {
 		return 0, &clierrors.NotAuthenticatedError{}
 	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, appendQueryString(c.baseURL+path, buildQueryString(params, action)), nil)
+	fullURL := c.baseURL + path
+	var body io.Reader
+	if method == http.MethodGet || method == http.MethodDelete {
+		fullURL = appendQueryString(fullURL, buildQueryString(params, action))
+	} else {
+		bodyParams := make(map[string]any)
+		for key, value := range params {
+			if key != "id" {
+				bodyParams[key] = value
+			}
+		}
+		encoded, err := json.Marshal(bodyParams)
+		if err != nil {
+			return 0, fmt.Errorf("marshaling download request: %w", err)
+		}
+		body = bytes.NewReader(encoded)
+	}
+	request, err := http.NewRequestWithContext(ctx, method, fullURL, body)
 	if err != nil {
 		return 0, err
+	}
+	if body != nil {
+		request.Header.Set("Content-Type", "application/json")
 	}
 	for name, value := range headers {
 		request.Header.Set(name, value)

@@ -87,7 +87,7 @@ func TestProjectCrudIsGuidFirst(t *testing.T) {
 		if a.Args[0].Name != "externalGuid" {
 			t.Errorf("action %q: expected positional arg %q, got %q", name, "externalGuid", a.Args[0].Name)
 		}
-		if a.Args[0].Type != "string" {
+		if a.Args[0].Type != "uuid" {
 			t.Errorf("action %q: identity arg must be string (guid), got %q", name, a.Args[0].Type)
 		}
 	}

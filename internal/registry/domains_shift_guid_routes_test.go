@@ -27,7 +27,7 @@ func TestShiftCrudIsGuidFirst(t *testing.T) {
 		if len(action.Args) != 1 || action.Args[0].Name != "externalGuid" {
 			t.Fatalf("shift %s args = %+v, want single externalGuid arg", name, action.Args)
 		}
-		if action.Args[0].Type != "string" {
+		if action.Args[0].Type != "uuid" {
 			t.Fatalf("shift %s externalGuid type = %q, want string", name, action.Args[0].Type)
 		}
 		if action.RESTPath != "by-guid/{externalGuid}" {

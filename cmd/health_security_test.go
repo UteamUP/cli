@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"crypto/tls"
+	"github.com/uteamup/cli/internal/security"
 	"net/http"
 	"testing"
 )
@@ -9,7 +10,11 @@ import (
 func healthTransport(t *testing.T, baseURL string) *http.Transport {
 	t.Helper()
 	client := newHealthClient(baseURL)
-	transport, ok := client.Transport.(*http.Transport)
+	boundary, ok := client.Transport.(security.Transport)
+	if !ok {
+		t.Fatalf("transport = %T, want origin-bound transport", client.Transport)
+	}
+	transport, ok := boundary.Base.(*http.Transport)
 	if !ok || transport.TLSClientConfig == nil {
 		t.Fatal("health client must use an explicit TLS transport")
 	}

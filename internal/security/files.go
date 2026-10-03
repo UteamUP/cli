@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -59,6 +60,18 @@ func openDirectory(path string) (*os.Root, error) {
 	absolute, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
+	}
+	// macOS ships these root-owned aliases; all user-controlled components still
+	// undergo descriptor-anchored, no-symlink traversal below.
+	if runtime.GOOS == "darwin" {
+		for _, alias := range []string{"/var", "/tmp"} {
+			if absolute == alias || strings.HasPrefix(absolute, alias+"/") {
+				target, err := os.Readlink(alias)
+				if err == nil && target == "private"+alias {
+					absolute = "/private" + absolute
+				}
+			}
+		}
 	}
 	volume := filepath.VolumeName(absolute)
 	root, err := os.OpenRoot(volume + string(filepath.Separator))

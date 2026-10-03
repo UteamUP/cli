@@ -27,7 +27,7 @@ func TestGeofenceZoneCrudIsGuidFirst(t *testing.T) {
 			continue
 		}
 		argument := action.Args[0]
-		if argument.Name != "externalGuid" || argument.Type != "string" {
+		if argument.Name != "externalGuid" || argument.Type != "uuid" {
 			t.Errorf("%s identity = %+v, want externalGuid string", name, argument)
 		}
 		if action.RESTPath != "by-guid/{externalGuid}" {

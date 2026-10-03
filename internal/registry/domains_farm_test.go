@@ -17,7 +17,7 @@ func TestFarmUnitDomainUsesGuidAndExactRESTPath(t *testing.T) {
 	if get == nil || get.ToolName != "UteamupFarmUnitGet" {
 		t.Fatal("get action must mirror the farm unit MCP tool")
 	}
-	if len(get.Args) != 1 || get.Args[0].Name != "externalGuid" || get.Args[0].Type != "string" {
+	if len(get.Args) != 1 || get.Args[0].Name != "externalGuid" || get.Args[0].Type != "uuid" {
 		t.Errorf("get action must take one public GUID: %+v", get.Args)
 	}
 }

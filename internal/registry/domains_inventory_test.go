@@ -129,7 +129,7 @@ func TestChemicalDomainIsGuidFirst(t *testing.T) {
 		if len(action.Args) != 1 || action.Args[0].Name != "externalGuid" {
 			t.Errorf("chemical %s args = %+v, want a single externalGuid positional (GUIDs-in rule)", name, action.Args)
 		}
-		if action.Args[0].Type != "string" {
+		if action.Args[0].Type != "uuid" {
 			t.Errorf("chemical %s arg type = %q, want string (a GUID, never an int id)", name, action.Args[0].Type)
 		}
 		if action.RESTPath != "by-guid/{externalGuid}" {
