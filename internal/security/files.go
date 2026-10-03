@@ -34,7 +34,7 @@ func OpenRegular(path string, maximum int64) (*os.File, error) {
 	if !before.Mode().IsRegular() || before.Size() > maximum {
 		return nil, fmt.Errorf("source is not a bounded regular file")
 	}
-	file, err := os.Open(path)
+	file, err := openSource(path)
 	if err != nil {
 		return nil, err
 	}
