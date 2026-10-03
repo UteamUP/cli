@@ -13,7 +13,7 @@ func init() {
 			{Name: "get", Description: "Get a project by GUID", ToolName: "UteamupProjectGet", Args: externalGUIDArg()},
 			{Name: "create", Description: "Create a project from its complete model", ToolName: "UteamupProjectCreate", MCPOnly: true, Flags: []FlagDef{projectMCPModelFile()}},
 			{Name: "update", Description: "Update a project by GUID with its complete model", ToolName: "UteamupProjectUpdate", MCPOnly: true,
-				Args: []ArgDef{{Name: "externalGuid", BodyName: "projectGuid", Description: "Project GUID", Required: true, Type: "string"}}, Flags: []FlagDef{projectMCPModelFile()}},
+				Args: []ArgDef{{Name: "externalGuid", BodyName: "projectGuid", Description: "Project GUID", Required: true, Type: "uuid"}}, Flags: []FlagDef{projectMCPModelFile()}},
 			{Name: "delete", Description: "Delete a project by GUID", ToolName: "UteamupProjectDelete", Args: externalGUIDArg()},
 			{Name: "search", Description: "Search projects", ToolName: "UteamupProjectSearch", Args: queryArg(), Flags: paginationFlags()},
 			// my-projects mirrors GET /api/project/my-projects — lists projects
