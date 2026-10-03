@@ -25,6 +25,8 @@ func TestTenantConfigurationActionsMirrorMCPTools(t *testing.T) {
 		"additional-industries-set": "UteamupTenantAdditionalIndustryProfilesSet",
 		"modules-get":               "UteamupTenantModulesGet",
 		"module-set":                "UteamupTenantModuleSet",
+		"feature-maturity-get":      "UteamupTenantFeatureMaturityGet",
+		"feature-maturity-set":      "UteamupTenantFeatureMaturitySet",
 	}
 	for _, action := range domain.Actions {
 		toolName, wanted := wantTools[action.Name]
@@ -88,4 +90,60 @@ func TestTenantConfigurationMutationArguments(t *testing.T) {
 	if enabledFlag.Type != "bool" || enabledFlag.BodyName != "isEnabled" || !enabledFlag.Required {
 		t.Fatalf("module enabled flag = %+v", enabledFlag)
 	}
+}
+
+func TestTenantFeatureMaturitySetFlags(t *testing.T) {
+	t.Parallel()
+
+	var action *Action
+	for _, domain := range DefaultRegistry.Domains() {
+		if domain.Name != "tenant" {
+			continue
+		}
+		for index := range domain.Actions {
+			if domain.Actions[index].Name == "feature-maturity-set" {
+				action = &domain.Actions[index]
+			}
+		}
+	}
+	if action == nil {
+		t.Fatal("feature-maturity-set is not registered")
+	}
+	if len(action.Args) != 0 {
+		t.Fatalf("feature-maturity-set must not take a tenant argument; the tenant comes from the session: %+v", action.Args)
+	}
+	flags := map[string]FlagDef{}
+	for _, flag := range action.Flags {
+		flags[flag.Name] = flag
+	}
+	if web := flags["max"]; web.Type != "int" || web.BodyName != "maxFeatureMaturity" || !web.Required {
+		t.Fatalf("--max flag = %+v", web)
+	}
+	if mobile := flags["mobile"]; mobile.Type != "int" || mobile.BodyName != "mobileMaxFeatureMaturity" || mobile.Required || mobile.Default != nil {
+		t.Fatalf("--mobile flag = %+v; it must be optional with no default so an omitted value keeps the stored level", mobile)
+	}
+}
+
+func TestUserPreferencesMobileFeatureOptInFlag(t *testing.T) {
+	t.Parallel()
+
+	for _, domain := range DefaultRegistry.Domains() {
+		if domain.Name != "user-ui-state" {
+			continue
+		}
+		for _, action := range domain.Actions {
+			if action.Name != "set-preferences" {
+				continue
+			}
+			for _, flag := range action.Flags {
+				if flag.Name == "mobile-feature-opt-in" {
+					if flag.Type != "int" || flag.Required || flag.Default != nil {
+						t.Fatalf("--mobile-feature-opt-in = %+v; it must be an optional int with no default", flag)
+					}
+					return
+				}
+			}
+		}
+	}
+	t.Fatal("user-ui-state set-preferences has no --mobile-feature-opt-in flag")
 }

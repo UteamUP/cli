@@ -40,6 +40,22 @@ func init() {
 				},
 			},
 			{
+				Name:        "feature-maturity-get",
+				Description: "Show the active tenant's effective web and mobile app feature levels (0 General, 1 Preview, 2 Beta, 3 Internal)",
+				ToolName:    "UteamupTenantFeatureMaturityGet",
+				MCPOnly:     true,
+			},
+			{
+				Name:        "feature-maturity-set",
+				Description: "Set the active tenant's web feature level and, optionally, its mobile app level (never above web). Each mobile user still opts in from the app's Settings",
+				ToolName:    "UteamupTenantFeatureMaturitySet",
+				MCPOnly:     true,
+				Flags: []FlagDef{
+					{Name: "max", BodyName: "maxFeatureMaturity", Description: "Web feature level 0-3 (3 Internal is for configured global admins only)", Required: true, Type: "int"},
+					{Name: "mobile", BodyName: "mobileMaxFeatureMaturity", Description: "Mobile app feature level 0-3, at most --max; omit to keep the current value", Type: "int"},
+				},
+			},
+			{
 				Name:        "invite-defaults-get",
 				Description: "Get the per-tenant invite-defaults configuration (auto-assign license + role)",
 				ToolName:    "UteamupTenantInviteDefaultsGet",

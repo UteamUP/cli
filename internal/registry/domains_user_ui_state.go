@@ -36,6 +36,7 @@ func init() {
 					{Name: "enable-feature-preview-widget", Description: "Enable/disable the Feature Preview widget (bounded by tenant plan cap)", Type: "bool"},
 					{Name: "show-restore-banner", Description: "Show the 'restored from last session' banner after silent restore", Type: "bool"},
 					{Name: "enable-session-restore", Description: "Master toggle for session restore. When off, routes are not recorded and login goes straight to the default landing", Type: "bool"},
+					{Name: "mobile-feature-opt-in", Description: "Preview/Beta features in the mobile app for this user: 0 off, 1 Preview, 2 Beta (capped by the tenant's mobile level)", Type: "int"},
 				},
 			},
 			{
