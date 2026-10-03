@@ -2,7 +2,7 @@ package cleanup
 
 import (
 	"fmt"
-	"os"
+	"github.com/uteamup/cli/internal/security"
 	"sort"
 	"strings"
 	"time"
@@ -171,7 +171,7 @@ func WriteMarkdown(in ReportInput, summaries []TypeSummary, outPath string) erro
 		}
 	}
 
-	return os.WriteFile(outPath, []byte(b.String()), 0o644)
+	return security.WriteFile(outPath, []byte(b.String()))
 }
 
 func observationWindow(b *strings.Builder, in ReportInput) bool {

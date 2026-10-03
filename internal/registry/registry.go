@@ -20,6 +20,7 @@ import (
 	"github.com/uteamup/cli/internal/client"
 	"github.com/uteamup/cli/internal/logging"
 	"github.com/uteamup/cli/internal/output"
+	"github.com/uteamup/cli/internal/security"
 )
 
 // Peer Sync is device-only (Nearby on the phone). There is no CLI domain and no MCP tool.
@@ -266,6 +267,9 @@ func buildActionCommand(domain *Domain, action Action, apiClientFactory APIClien
 		Use:   use,
 		Short: action.Description,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := prepareSensitiveFlags(cmd, action); err != nil {
+				return err
+			}
 			if err := validateActionInput(cmd, args, action); err != nil {
 				return err
 			}
@@ -335,7 +339,11 @@ func buildActionCommand(domain *Domain, action Action, apiClientFactory APIClien
 			}
 		}
 
-		if flag.Required {
+		if flag.Sensitive {
+			cmd.Flags().String(flag.Name+"-file", "", "Owner-only input file for "+flag.Name)
+			cmd.Flags().Bool(flag.Name+"-stdin", false, "Read "+flag.Name+" from stdin")
+		}
+		if flag.Required && !flag.Sensitive {
 			_ = cmd.MarkFlagRequired(flag.Name)
 		}
 	}
@@ -353,6 +361,9 @@ func validateActionInput(cmd *cobra.Command, args []string, action Action) error
 			continue
 		}
 		value := strings.TrimSpace(args[index])
+		if (strings.Contains(action.RESTPath, "{"+argument.Name+"}") || argument.Name == "id" || argument.Name == "externalGuid") && (value == "." || value == ".." || strings.ContainsAny(value, "/\\?#%")) {
+			return fmt.Errorf("invalid %s: route delimiters are not allowed", argument.Name)
+		}
 		if argument.Type == "uuid" || argument.Type == "non-empty-uuid" {
 			if !uuidValuePattern.MatchString(value) {
 				return fmt.Errorf("invalid %s: must be a GUID", argument.Name)
@@ -745,6 +756,9 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		// Build REST endpoint path from domain and action. Path-template placeholders
 		// consumed during substitution are stripped from the body so they don't double-
 		// leak as JSON fields on POST/PUT/PATCH.
+		if err := validateRouteValues(action, toolArgs); err != nil {
+			return err
+		}
 		restPath, consumed := buildRESTPath(domain, action, toolArgs)
 		restPath = appendQueryParameters(restPath, queryParams)
 		for _, name := range consumed {
@@ -768,6 +782,17 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		loggedArgs, loggedHeaders := redactSensitiveActionValues(action, toolArgs, headers)
 		logger.Debug("calling %s %s (tool: %s) with args %v headers %v", httpMethod, restPath, action.ToolName, loggedArgs, loggedHeaders)
 
+		if action.DownloadResponseBody {
+			if httpMethod != "GET" {
+				return fmt.Errorf("response-body download requires GET")
+			}
+			written, downloadErr := apiClient.CallRESTDownload(ctx, restPath, downloadOutputPath, toolArgs, headers, action.Name)
+			if downloadErr != nil {
+				return downloadErr
+			}
+			summary, _ := json.Marshal(map[string]any{"path": downloadOutputPath, "bytes": written})
+			return output.Print(output.ParseFormat(*outputFormat), summary)
+		}
 		if uploadPath != "" {
 			result, err = apiClient.CallRESTUpload(ctx, httpMethod, restPath, uploadField, uploadPath, toolArgs, headers, action.Name)
 		} else {
@@ -1212,7 +1237,7 @@ func exportJSON(export *ExportConfig, domainName, actionName string, data json.R
 
 	filename := fmt.Sprintf("%s_%s.json", domainName, actionName)
 	path := filepath.Join(dir, filename)
-	if err := os.WriteFile(path, pretty, 0640); err != nil {
+	if err := security.WriteFile(path, pretty); err != nil {
 		return fmt.Errorf("writing export: %w", err)
 	}
 
@@ -1261,7 +1286,7 @@ func buildRESTPath(domain *Domain, action Action, args map[string]any) (string, 
 	switch action.Name {
 	case "get", "update", "delete":
 		if hasID {
-			return fmt.Sprintf("%s/%v", basePath, idValue), []string{idArgName}
+			return fmt.Sprintf("%s/%s", basePath, url.PathEscape(fmt.Sprint(idValue))), []string{idArgName}
 		}
 	case "update-status":
 		// PATCH /api/<domain>/{id}/status is the convention established by
@@ -1269,7 +1294,7 @@ func buildRESTPath(domain *Domain, action Action, args map[string]any) (string, 
 		// get their own sub-route so they can't be conflated with a full
 		// update (PUT /<id>). Domains that reuse this verb must match.
 		if hasID {
-			return fmt.Sprintf("%s/%v/status", basePath, idValue), []string{idArgName}
+			return fmt.Sprintf("%s/%s/status", basePath, url.PathEscape(fmt.Sprint(idValue))), []string{idArgName}
 		}
 	case "search":
 		return basePath + "/search", nil
@@ -1283,7 +1308,7 @@ func buildRESTPath(domain *Domain, action Action, args map[string]any) (string, 
 		if hasID && strings.HasPrefix(action.Name, "update-") {
 			suffix := strings.TrimPrefix(action.Name, "update-")
 			if suffix != "" {
-				return fmt.Sprintf("%s/%v/%s", basePath, idValue, suffix), []string{idArgName}
+				return fmt.Sprintf("%s/%s/%s", basePath, url.PathEscape(fmt.Sprint(idValue)), suffix), []string{idArgName}
 			}
 		}
 	}
@@ -1315,7 +1340,7 @@ func expandPathTemplate(tmpl string, args map[string]any) (string, []string) {
 			// sees the raw token and can diagnose the registry typo.
 			break
 		}
-		out = out[:start] + fmt.Sprintf("%v", value) + out[end+1:]
+		out = out[:start] + url.PathEscape(fmt.Sprint(value)) + out[end+1:]
 		consumed = append(consumed, name)
 	}
 	return out, consumed
@@ -1347,4 +1372,58 @@ func toCamelCase(s string) string {
 // Domains returns all registered domains (for documentation generation).
 func (r *Registry) Domains() []*Domain {
 	return r.domains
+}
+
+func prepareSensitiveFlags(cmd *cobra.Command, action Action) error {
+	stdinUsed := false
+	for _, flag := range action.Flags {
+		if !flag.Sensitive {
+			continue
+		}
+		if cmd.Flags().Changed(flag.Name) {
+			return fmt.Errorf("--%s cannot carry secrets in argv; use --%s-file or --%s-stdin", flag.Name, flag.Name, flag.Name)
+		}
+		path, _ := cmd.Flags().GetString(flag.Name + "-file")
+		stdin, _ := cmd.Flags().GetBool(flag.Name + "-stdin")
+		if path != "" && stdin {
+			return fmt.Errorf("choose one input for %s", flag.Name)
+		}
+		if path == "" && !stdin {
+			if flag.Required {
+				return fmt.Errorf("protected input for %s is required", flag.Name)
+			}
+			continue
+		}
+		var value string
+		var err error
+		if stdin {
+			if stdinUsed {
+				return fmt.Errorf("stdin may supply only one secret")
+			}
+			stdinUsed = true
+			value, err = security.SecretStdin(cmd.InOrStdin())
+		} else {
+			value, err = security.SecretFile(path)
+		}
+		if err != nil {
+			return err
+		}
+		if err := cmd.Flags().Set(flag.Name, value); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateRouteValues(action Action, args map[string]any) error {
+	for name, value := range args {
+		if name != "id" && name != "externalGuid" && !strings.Contains(action.RESTPath, "{"+name+"}") {
+			continue
+		}
+		segment := fmt.Sprint(value)
+		if segment == "." || segment == ".." || strings.ContainsAny(segment, "/\\?#%") {
+			return fmt.Errorf("invalid route component %s", name)
+		}
+	}
+	return nil
 }

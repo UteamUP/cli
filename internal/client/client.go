@@ -460,7 +460,7 @@ func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField,
 		return nil, &clierrors.NotAuthenticatedError{}
 	}
 
-	fileData, err := os.ReadFile(filePath)
+	fileData, err := security.ReadFile(filePath, 100*1024*1024)
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", filePath, err)
 	}
@@ -707,7 +707,7 @@ func openMultipartFileStream(
 			_ = writer.Close()
 		}()
 
-		file, err := os.Open(filePath)
+		file, err := security.OpenRegular(filePath, maxFileBytes)
 		if err != nil {
 			_ = writer.CloseWithError(fmt.Errorf("opening upload file: %w", err))
 			return
@@ -749,26 +749,17 @@ func buildQueryString(params map[string]any, actionName string) string {
 		return ""
 	}
 
-	parts := make([]string, 0, len(params))
+	values := url.Values{}
 	for k, v := range params {
-		// Skip "id" — it's in the URL path for get/update/delete
 		if k == "id" {
 			continue
 		}
-		// Skip "query" for search — it goes as the search term
 		if k == "query" && actionName == "search" {
-			parts = append(parts, fmt.Sprintf("search=%v", v))
-			continue
+			k = "search"
 		}
-		// Map camelCase CLI flag names to backend query params
-		switch k {
-		case "pageSize":
-			parts = append(parts, fmt.Sprintf("pageSize=%v", v))
-		default:
-			parts = append(parts, fmt.Sprintf("%s=%v", k, v))
-		}
+		values.Set(k, fmt.Sprint(v))
 	}
-	return strings.Join(parts, "&")
+	return values.Encode()
 }
 
 func appendQueryString(rawURL, query string) string {
@@ -785,3 +776,38 @@ func appendQueryString(rawURL, query string) string {
 }
 
 func (c *APIClient) WithProfile(profile string) *APIClient { c.profile = profile; return c }
+
+// CallRESTDownload keeps authenticated file bodies out of the JSON response buffer.
+func (c *APIClient) CallRESTDownload(ctx context.Context, path, outputPath string, params map[string]any, headers map[string]string, action string) (int64, error) {
+	token, err := auth.LoadTokenForOrigin(c.baseURL, c.profile)
+	if err != nil {
+		return 0, err
+	}
+	if !token.IsValid() {
+		return 0, &clierrors.NotAuthenticatedError{}
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, appendQueryString(c.baseURL+path, buildQueryString(params, action)), nil)
+	if err != nil {
+		return 0, err
+	}
+	for name, value := range headers {
+		request.Header.Set(name, value)
+	}
+	request.Header.Set("Authorization", "Bearer "+token.AccessToken)
+	request.Header.Set("X-Requested-With", "XMLHttpRequest")
+	if token.TenantGUID != "" {
+		request.Header.Set("X-Tenant-Guid", token.TenantGUID)
+	}
+	response, err := c.httpClient().Do(request)
+	if err != nil {
+		return 0, err
+	}
+	defer response.Body.Close()
+	if response.StatusCode >= 400 {
+		return 0, fmt.Errorf("download failed with status %d", response.StatusCode)
+	}
+	if response.ContentLength > maxDownloadBytes {
+		return 0, fmt.Errorf("download exceeds limit")
+	}
+	return WriteDownloadFile(outputPath, response.Body)
+}

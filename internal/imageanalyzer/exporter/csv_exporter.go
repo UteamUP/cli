@@ -3,8 +3,10 @@
 package exporter
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
+	"github.com/uteamup/cli/internal/security"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -82,7 +84,6 @@ func (e *CSVExporter) ExportVendorCSV(vendors []models.DetectedVendor) (string, 
 	if err != nil {
 		return "", fmt.Errorf("creating vendor CSV: %w", err)
 	}
-	defer f.Close()
 
 	w := csv.NewWriter(f)
 	defer w.Flush()
@@ -108,6 +109,13 @@ func (e *CSVExporter) ExportVendorCSV(vendors []models.DetectedVendor) (string, 
 		}
 	}
 
+	w.Flush()
+	if err := w.Error(); err != nil {
+		return "", err
+	}
+	if err := f.Close(); err != nil {
+		return "", err
+	}
 	return csvPath, nil
 }
 
@@ -119,7 +127,6 @@ func (e *CSVExporter) ExportLocationCSV(locations []models.DetectedLocation) (st
 	if err != nil {
 		return "", fmt.Errorf("creating location CSV: %w", err)
 	}
-	defer f.Close()
 
 	w := csv.NewWriter(f)
 	defer w.Flush()
@@ -154,6 +161,13 @@ func (e *CSVExporter) ExportLocationCSV(locations []models.DetectedLocation) (st
 		}
 	}
 
+	w.Flush()
+	if err := w.Error(); err != nil {
+		return "", err
+	}
+	if err := f.Close(); err != nil {
+		return "", err
+	}
 	return csvPath, nil
 }
 
@@ -163,7 +177,6 @@ func (e *CSVExporter) writeCSV(path string, columns []string, groups []models.Im
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
 	w := csv.NewWriter(f)
 	defer w.Flush()
@@ -182,19 +195,21 @@ func (e *CSVExporter) writeCSV(path string, columns []string, groups []models.Im
 			return err
 		}
 	}
-	return nil
+	w.Flush()
+	if err := w.Error(); err != nil {
+		return err
+	}
+	return f.Close()
 }
 
-func createPrivateOutput(path string) (*os.File, error) {
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
-	if err != nil {
-		return nil, err
-	}
-	if err := file.Chmod(0o600); err != nil {
-		file.Close()
-		return nil, err
-	}
-	return file, nil
+type privateOutput struct {
+	bytes.Buffer
+	path string
+}
+
+func (p *privateOutput) Close() error { return security.WriteFile(p.path, p.Bytes()) }
+func createPrivateOutput(path string) (*privateOutput, error) {
+	return &privateOutput{path: path}, nil
 }
 
 func sanitizeCSVRecord(record []string) []string {

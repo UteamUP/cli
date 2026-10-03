@@ -321,7 +321,7 @@ func TestNCRTransitionConfirmationIsValidatedLocallyAndNotSerialized(t *testing.
 		"ncr.submit",
 		"--request-file", requestPath,
 		"--idempotency-key", testEvidenceGUID,
-		"--concurrency-token", "ncr-version-7",
+		"--concurrency-token-file", protectedRegistrySecret(t, "ncr-version-7"),
 		"--confirm",
 	})
 	if err := command.Execute(); err != nil {
@@ -351,7 +351,7 @@ func TestNCRTransitionRejectsExplicitFalseConfirmationBeforeCreatingAClient(t *t
 		"ncr.submit",
 		"--request-file", filepath.Join(t.TempDir(), "unused.json"),
 		"--idempotency-key", testEvidenceGUID,
-		"--concurrency-token", "ncr-version-7",
+		"--concurrency-token-file", protectedRegistrySecret(t, "ncr-version-7"),
 		"--confirm=false",
 	})
 

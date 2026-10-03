@@ -12,6 +12,7 @@ import (
 
 	"github.com/uteamup/cli/internal/auth"
 	"github.com/uteamup/cli/internal/config"
+	"github.com/uteamup/cli/internal/security"
 )
 
 var tenantCmd = &cobra.Command{
@@ -72,7 +73,7 @@ Examples:
 		}
 
 		// Print header.
-		fmt.Printf("\nTenants for %s (%d total)\n", token.Email, len(tenants))
+		fmt.Printf("\nTenants for %s (%d total)\n", security.SafeText(token.Email), len(tenants))
 		fmt.Println()
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
@@ -91,7 +92,7 @@ Examples:
 
 			plan := "(no plan)"
 			if t.HasPlan() {
-				plan = t.PlanName
+				plan = security.SafeText(t.PlanName)
 			}
 
 			status := "inactive"
@@ -99,7 +100,7 @@ Examples:
 				status = "active"
 			}
 
-			fmt.Fprintf(w, "%s \t%s\t%s\t%s\t%s\n", marker, t.Name, t.GUID, plan, status)
+			fmt.Fprintf(w, "%s \t%s\t%s\t%s\t%s\n", marker, security.SafeText(t.Name), t.GUID, plan, status)
 		}
 		w.Flush()
 
@@ -161,7 +162,7 @@ Examples:
 		}
 
 		// Display list.
-		fmt.Printf("\nSelect a tenant for %s:\n\n", token.Email)
+		fmt.Printf("\nSelect a tenant for %s:\n\n", security.SafeText(token.Email))
 		for i, t := range tenants {
 			current := " "
 			if t.GUID == token.TenantGUID {
@@ -169,9 +170,9 @@ Examples:
 			}
 			plan := "(no plan)"
 			if t.HasPlan() {
-				plan = t.PlanName
+				plan = security.SafeText(t.PlanName)
 			}
-			fmt.Printf("  %s %d. %s [%s]\n", current, i+1, t.Name, plan)
+			fmt.Printf("  %s %d. %s [%s]\n", current, i+1, security.SafeText(t.Name), plan)
 		}
 
 		// Prompt for selection.
@@ -204,7 +205,7 @@ Examples:
 			return fmt.Errorf("updating token: %w", err)
 		}
 
-		fmt.Printf("\nActive tenant set to: %s (%s)\n", selected.Name, selected.GUID)
+		fmt.Printf("\nActive tenant set to: %s (%s)\n", security.SafeText(selected.Name), selected.GUID)
 		fmt.Printf("Saved to profile: %s\n", cfg.ActiveProfile)
 
 		return nil

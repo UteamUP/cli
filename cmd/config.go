@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/uteamup/cli/internal/auth"
 	"github.com/uteamup/cli/internal/config"
 )
 
@@ -60,12 +61,16 @@ You will be prompted for:
 			baseURL = "https://api.uteamup.com"
 		}
 
-		fmt.Print("API key (32 chars, press Enter to skip): ")
-		apiKey, _ := reader.ReadString('\n')
+		apiKey, readErr := auth.PromptSecret(reader, "API key (32 chars, press Enter to skip): ")
+		if readErr != nil {
+			return readErr
+		}
 		apiKey = strings.TrimSpace(apiKey)
 
-		fmt.Print("API secret (64+ chars, press Enter to skip): ")
-		secret, _ := reader.ReadString('\n')
+		secret, readErr := auth.PromptSecret(reader, "API secret (64+ chars, press Enter to skip): ")
+		if readErr != nil {
+			return readErr
+		}
 		secret = strings.TrimSpace(secret)
 
 		// Export JSON defaults: enabled for development profiles, disabled for production
@@ -162,9 +167,9 @@ Examples:
 		case "baseUrl", "baseurl":
 			profile.BaseURL = value
 		case "apiKey", "apikey":
-			profile.APIKey = value
+			return fmt.Errorf("API credentials cannot be supplied in argv; use config init")
 		case "secret":
-			profile.Secret = value
+			return fmt.Errorf("API credentials cannot be supplied in argv; use config init")
 		case "logLevel", "loglevel":
 			profile.LogLevel = strings.ToUpper(value)
 		case "requestTimeout":

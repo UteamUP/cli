@@ -98,8 +98,7 @@ func PromptMfaCode() (string, error) {
 func PromptAPIKey() (apiKey, secret string, err error) {
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Print("API Key (32 characters): ")
-	apiKey, err = reader.ReadString('\n')
+	apiKey, err = readSecret(reader, "API Key (32 characters): ")
 	if err != nil && !(errors.Is(err, io.EOF) && apiKey != "") {
 		return "", "", fmt.Errorf("reading API key: %w", err)
 	}
@@ -111,4 +110,9 @@ func PromptAPIKey() (apiKey, secret string, err error) {
 	}
 
 	return apiKey, secret, nil
+}
+
+// PromptSecret uses hidden console input or an explicitly supplied stdin stream.
+func PromptSecret(reader *bufio.Reader, prompt string) (string, error) {
+	return readSecret(reader, prompt)
 }

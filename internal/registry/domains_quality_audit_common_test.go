@@ -416,7 +416,7 @@ func TestQualityAuditRepresentativeRequestsPreserveTransportContracts(t *testing
 				"--idempotency-key", test.idempotencyKey,
 			)
 			if test.concurrencyToken != "" {
-				commandArguments = append(commandArguments, "--concurrency-token", test.concurrencyToken)
+				commandArguments = append(commandArguments, "--concurrency-token-file", protectedRegistrySecret(t, test.concurrencyToken))
 			}
 			if test.confirmation {
 				commandArguments = append(commandArguments, "--confirm")

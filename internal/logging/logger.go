@@ -2,6 +2,7 @@ package logging
 
 import (
 	"fmt"
+	"github.com/uteamup/cli/internal/security"
 	"os"
 	"strings"
 	"time"
@@ -74,7 +75,7 @@ func (l *Logger) log(level Level, msg string, args ...any) {
 	}
 	ts := time.Now().UTC().Format("15:04:05")
 	formatted := fmt.Sprintf(msg, args...)
-	formatted = redact(formatted)
+	formatted = security.SafeText(redact(formatted))
 	fmt.Fprintf(os.Stderr, "[%s] %s  %s\n", ts, level, formatted)
 }
 

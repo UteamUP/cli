@@ -56,7 +56,7 @@ Aliases: uteamup, ut
 
 Examples:
   uteamup login                           # Interactive login
-  ut login --api-key=KEY --api-secret=SEC # API key auth
+  ut login --api-key-auth                 # Protected API key auth
   ut asset list                           # List assets
   ut workorder get 123 -o json            # Get work order as JSON`,
 	SilenceUsage:  true,

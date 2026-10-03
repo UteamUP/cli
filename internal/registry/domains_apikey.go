@@ -21,9 +21,10 @@ func init() {
 		APIPath:     "/api/tenant-api-keys",
 		Actions: []Action{
 			{
-				Name:        "create",
-				Description: "Create a tenant API key. The secret is returned ONCE in the response — copy it immediately. Use --mcp-enabled for a key usable with the MCP server (e.g. ChatGPT).",
-				ToolName:    "UteamupTenantApiKeyCreate",
+				Name:                  "create",
+				DisableResponseExport: true,
+				Description:           "Create a tenant API key. The secret is returned ONCE in the response — copy it immediately. Use --mcp-enabled for a key usable with the MCP server (e.g. ChatGPT).",
+				ToolName:              "UteamupTenantApiKeyCreate",
 				Flags: []FlagDef{
 					{Name: "name", Description: "API key name (required)", Required: true, Type: "string"},
 					{Name: "description", Description: "API key description", Type: "string"},

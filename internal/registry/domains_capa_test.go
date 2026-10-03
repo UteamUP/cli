@@ -444,7 +444,7 @@ func TestCAPASourceNCRAddKeepsRouteIdentitySeparateFromRootBody(t *testing.T) {
 		testCAPANonConformanceGUID,
 		"--request-file", requestPath,
 		"--idempotency-key", testCAPAEvidenceGUID,
-		"--concurrency-token", "capa-version-3",
+		"--concurrency-token-file", protectedRegistrySecret(t, "capa-version-3"),
 	})
 	if err := command.Execute(); err != nil {
 		t.Fatalf("source-ncr-add command error = %v", err)

@@ -6,6 +6,7 @@
 package cleanup
 
 import (
+	"github.com/uteamup/cli/internal/security"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -216,17 +217,19 @@ func (c *Catalog) scanMobile(root string) {
 // --- helpers ---
 
 func walkFiles(dir, ext string, fn func(path, content string)) {
+	remaining := int64(256 * 1024 * 1024)
 	_ = filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
+		if err != nil || d.IsDir() || !d.Type().IsRegular() || remaining <= 0 {
 			return nil
 		}
 		if !strings.HasSuffix(path, ext) {
 			return nil
 		}
-		b, readErr := os.ReadFile(path)
+		b, readErr := security.ReadFile(path, 4*1024*1024)
 		if readErr != nil {
 			return nil
 		}
+		remaining -= int64(len(b))
 		fn(path, string(b))
 		return nil
 	})

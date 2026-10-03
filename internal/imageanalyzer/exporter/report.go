@@ -2,7 +2,7 @@ package exporter
 
 import (
 	"fmt"
-	"os"
+	"github.com/uteamup/cli/internal/security"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -79,11 +79,8 @@ func (e *CSVExporter) GenerateSummaryReport(
 	report := b.String()
 
 	reportPath := filepath.Join(e.outputFolder, "summary_report.md")
-	if err := os.WriteFile(reportPath, []byte(report), 0o600); err != nil {
+	if err := security.WriteFile(reportPath, []byte(report)); err != nil {
 		return "", fmt.Errorf("writing summary report: %w", err)
-	}
-	if err := os.Chmod(reportPath, 0o600); err != nil {
-		return "", fmt.Errorf("securing summary report: %w", err)
 	}
 	return report, nil
 }

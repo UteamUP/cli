@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/uteamup/cli/internal/auth"
+	"github.com/uteamup/cli/internal/security"
 )
 
 var authCmd = &cobra.Command{
@@ -35,12 +36,12 @@ token expiry, and the associated config profile.`,
 		fmt.Println("---------------------")
 
 		if token.Email != "" {
-			fmt.Printf("  User:        %s\n", token.Email)
+			fmt.Printf("  User:        %s\n", security.SafeText(token.Email))
 		}
 		fmt.Printf("  Method:      %s\n", token.AuthMethod)
 		fmt.Printf("  Profile:     %s\n", token.Profile)
 		if token.TenantName != "" {
-			fmt.Printf("  Tenant:      %s\n", token.TenantName)
+			fmt.Printf("  Tenant:      %s\n", security.SafeText(token.TenantName))
 		}
 		if token.TenantGUID != "" {
 			fmt.Printf("  Tenant GUID: %s\n", token.TenantGUID)

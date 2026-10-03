@@ -1,6 +1,9 @@
 package errors
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/uteamup/cli/internal/security"
+)
 
 // AuthError represents authentication failures.
 type AuthError struct {
@@ -30,7 +33,7 @@ type APIError struct {
 }
 
 func (e *APIError) Error() string {
-	return fmt.Sprintf("API error %d %s: %s", e.StatusCode, e.Status, e.Body)
+	return fmt.Sprintf("API error %d %s: %s", e.StatusCode, security.SafeText(e.Status), security.SafeText(e.Body))
 }
 
 // NewAPIError creates an APIError.

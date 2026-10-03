@@ -3,6 +3,7 @@ package output
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/uteamup/cli/internal/security"
 	"os"
 	"sort"
 	"strconv"
@@ -11,6 +12,12 @@ import (
 )
 
 func printTable(data json.RawMessage) error {
+	var raw any
+	if json.Unmarshal(data, &raw) == nil {
+		data, _ = json.Marshal(safeTableValue(raw))
+	} else {
+		data = []byte(security.SafeText(string(data)))
+	}
 	if data == nil || string(data) == "null" {
 		fmt.Println("(no data)")
 		return nil
@@ -533,5 +540,25 @@ func formatValue(v any) string {
 		return s
 	default:
 		return fmt.Sprintf("%v", val)
+	}
+}
+
+func safeTableValue(value any) any {
+	switch v := value.(type) {
+	case string:
+		return security.SafeText(v)
+	case []any:
+		for i, item := range v {
+			v[i] = safeTableValue(item)
+		}
+		return v
+	case map[string]any:
+		out := make(map[string]any, len(v))
+		for key, item := range v {
+			out[security.SafeText(key)] = safeTableValue(item)
+		}
+		return out
+	default:
+		return value
 	}
 }
