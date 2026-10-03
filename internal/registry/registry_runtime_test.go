@@ -113,13 +113,6 @@ func runResponseBodyAction(
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
-	if err := auth.SaveToken(&auth.TokenData{
-		AccessToken: "response-body-download-token",
-		ExpiresAt:   time.Now().Add(time.Hour),
-		TenantGUID:  "55555555-5555-4555-8555-555555555555",
-	}); err != nil {
-		t.Fatalf("save test token: %v", err)
-	}
 
 	var requestsMu sync.Mutex
 	var requests []recordedResponseBodyRequest
@@ -145,6 +138,14 @@ func runResponseBodyAction(
 		_, _ = response.Write(responseBodyPDF)
 	}))
 	t.Cleanup(server.Close)
+	if err := auth.SaveToken(&auth.TokenData{
+		APIOrigin:   server.URL,
+		AccessToken: "response-body-download-token",
+		ExpiresAt:   time.Now().Add(time.Hour),
+		TenantGUID:  "55555555-5555-4555-8555-555555555555",
+	}); err != nil {
+		t.Fatalf("save test token: %v", err)
+	}
 
 	domain := &Domain{Name: "report", APIPath: "/api/report", Actions: []Action{action}}
 	apiClient := client.NewAPIClient(

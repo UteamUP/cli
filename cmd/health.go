@@ -12,6 +12,7 @@ import (
 
 	"github.com/uteamup/cli/internal/auth"
 	"github.com/uteamup/cli/internal/config"
+	"github.com/uteamup/cli/internal/security"
 )
 
 var healthCmd = &cobra.Command{
@@ -100,13 +101,14 @@ func checkBackendHealth(baseURL string) bool {
 // probe against a remote host accept any certificate (UTP-CLI-INSECURE-TLS).
 func newHealthClient(baseURL string) *http.Client {
 	return &http.Client{
-		Timeout: 5 * time.Second,
-		Transport: &http.Transport{
+		Timeout:       5 * time.Second,
+		CheckRedirect: security.Redirect,
+		Transport: security.Transport{Origin: baseURL, Base: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				MinVersion:         tls.VersionTLS12,
 				InsecureSkipVerify: auth.SkipTLSVerifyFor(baseURL, insecure), //nolint:gosec // loopback-only, see auth.SkipTLSVerifyFor
 			},
-		},
+		}},
 	}
 }
 

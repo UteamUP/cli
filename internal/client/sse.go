@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/uteamup/cli/internal/security"
 	"io"
 	"strings"
 )
@@ -17,7 +18,11 @@ type SSEEvent struct {
 // ParseSSE reads an SSE stream and returns all data payloads as parsed JSON.
 func ParseSSE(reader io.Reader) ([]json.RawMessage, error) {
 	var results []json.RawMessage
-	scanner := bufio.NewScanner(reader)
+	bounded, err := security.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	scanner := bufio.NewScanner(strings.NewReader(string(bounded)))
 
 	var currentData strings.Builder
 
@@ -38,6 +43,9 @@ func ParseSSE(reader io.Reader) ([]json.RawMessage, error) {
 			}
 
 			if json.Valid([]byte(data)) {
+				if len(results) >= 1024 {
+					return nil, fmt.Errorf("SSE event limit exceeded")
+				}
 				results = append(results, json.RawMessage(data))
 			}
 		}
@@ -47,6 +55,9 @@ func ParseSSE(reader io.Reader) ([]json.RawMessage, error) {
 	if currentData.Len() > 0 {
 		data := strings.TrimSpace(currentData.String())
 		if data != "[DONE]" && json.Valid([]byte(data)) {
+			if len(results) >= 1024 {
+				return nil, fmt.Errorf("SSE event limit exceeded")
+			}
 			results = append(results, json.RawMessage(data))
 		}
 	}

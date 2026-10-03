@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -13,6 +12,7 @@ import (
 
 	clierrors "github.com/uteamup/cli/internal/errors"
 	"github.com/uteamup/cli/internal/logging"
+	"github.com/uteamup/cli/internal/security"
 )
 
 // OAuthTokenResponse represents the backend token endpoint response.
@@ -86,13 +86,14 @@ func skipTLSVerifyFor(baseURL string, insecure bool) bool {
 
 func tenantHTTPClient(baseURL string, insecure bool) *http.Client {
 	return &http.Client{
-		Timeout: 15 * time.Second,
-		Transport: &http.Transport{
+		Timeout:       15 * time.Second,
+		CheckRedirect: security.Redirect,
+		Transport: security.Transport{Origin: baseURL, Base: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				MinVersion:         tls.VersionTLS12,
 				InsecureSkipVerify: skipTLSVerifyFor(baseURL, insecure), //nolint:gosec // loopback-only, see skipTLSVerifyFor
 			},
-		},
+		}},
 	}
 }
 
@@ -114,7 +115,7 @@ func FetchTenantInfo(accessToken, baseURL, tenantGUID string, insecure bool) (*T
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := security.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("my-tenants returned %d: %s", resp.StatusCode, string(body))
 	}
@@ -159,7 +160,7 @@ func FetchAllTenants(accessToken, baseURL string, insecure bool) ([]TenantInfo, 
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := security.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("my-tenants returned %d: %s", resp.StatusCode, string(body))
 	}
@@ -212,7 +213,7 @@ func (a *Client) completeMfaLogin(mfaToken, email string) (*TokenData, error) {
 	}
 	defer resp.Body.Close()
 
-	respBody, _ := io.ReadAll(resp.Body)
+	respBody, _ := security.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		// The server answers every failure identically on purpose — an expired, spent or
 		// unknown token is indistinguishable from a wrong code — so do not invent a more
@@ -287,7 +288,7 @@ func (a *Client) httpClient() *http.Client {
 	if skipTLSVerifyFor(a.baseURL, a.insecure) {
 		transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true} //nolint:gosec // loopback-only, see skipTLSVerifyFor
 	}
-	return &http.Client{Transport: transport, Timeout: 30 * time.Second}
+	return &http.Client{Transport: security.Transport{Base: transport, Origin: a.baseURL}, Timeout: 30 * time.Second, CheckRedirect: security.Redirect}
 }
 
 // LoginWithCredentials authenticates with email/password and returns a token.
@@ -307,7 +308,7 @@ func (a *Client) LoginWithCredentials(email, password string) (*TokenData, error
 	}
 	defer resp.Body.Close()
 
-	respBody, _ := io.ReadAll(resp.Body)
+	respBody, _ := security.ReadAll(resp.Body)
 
 	// The password was right and a second factor is owed. Without this the user sees
 	// "login failed with status 403" and the JSON body, which reads as a broken CLI rather
@@ -356,7 +357,7 @@ func (a *Client) fetchMyTenants(accessToken string) ([]TenantInfo, error) {
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := security.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("my-tenants returned %d: %s", resp.StatusCode, string(body))
 	}
@@ -413,7 +414,7 @@ func (a *Client) LoginWithAPIKey(apiKey, secret string) (*TokenData, error) {
 		}
 	}
 	if code == "" {
-		body, _ := io.ReadAll(authResp.Body)
+		body, _ := security.ReadAll(authResp.Body)
 		var authBody struct {
 			Code string `json:"code"`
 		}
@@ -447,7 +448,7 @@ func (a *Client) LoginWithAPIKey(apiKey, secret string) (*TokenData, error) {
 	}
 	defer tokenResp.Body.Close()
 
-	tokenBody, _ := io.ReadAll(tokenResp.Body)
+	tokenBody, _ := security.ReadAll(tokenResp.Body)
 	if tokenResp.StatusCode != http.StatusOK {
 		return nil, clierrors.NewAuthError(
 			fmt.Sprintf("token exchange failed with status %d: %s", tokenResp.StatusCode, string(tokenBody)), nil,

@@ -420,13 +420,6 @@ func runRegisteredDomainCommand(t *testing.T, domainName string, args ...string)
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
-	if err := auth.SaveToken(&auth.TokenData{
-		AccessToken: "registered-domain-token",
-		ExpiresAt:   time.Now().Add(time.Hour),
-		TenantGUID:  "55555555-5555-4555-8555-555555555555",
-	}); err != nil {
-		t.Fatalf("save test token: %v", err)
-	}
 
 	var requestsMu sync.Mutex
 	var requests []recordedDomainRequest
@@ -453,6 +446,14 @@ func runRegisteredDomainCommand(t *testing.T, domainName string, args ...string)
 		_, _ = response.Write([]byte(`{}`))
 	}))
 	t.Cleanup(server.Close)
+	if err := auth.SaveToken(&auth.TokenData{
+		APIOrigin:   server.URL,
+		AccessToken: "registered-domain-token",
+		ExpiresAt:   time.Now().Add(time.Hour),
+		TenantGUID:  "55555555-5555-4555-8555-555555555555",
+	}); err != nil {
+		t.Fatalf("save test token: %v", err)
+	}
 
 	apiClient := client.NewAPIClient(
 		server.URL,

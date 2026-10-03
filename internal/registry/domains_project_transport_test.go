@@ -215,12 +215,7 @@ func projectTransportClient(t *testing.T, mode string, retry client.RetryOptions
 	fixtureHome := t.TempDir()
 	t.Setenv("HOME", fixtureHome)
 	t.Setenv("USERPROFILE", fixtureHome)
-	if err := auth.SaveToken(&auth.TokenData{
-		AccessToken: "project-transport-token", ExpiresAt: time.Now().Add(time.Hour),
-		AuthMethod: mode, TenantGUID: projectTransportTenantGUID,
-	}); err != nil {
-		t.Fatalf("save test token: %v", err)
-	}
+
 	server := httptest.NewTLSServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if request.Header.Get("Authorization") != "Bearer project-transport-token" || request.Header.Get("X-Tenant-Guid") != projectTransportTenantGUID {
 			t.Error("request lost the authenticated actor or tenant context")
@@ -229,6 +224,13 @@ func projectTransportClient(t *testing.T, mode string, retry client.RetryOptions
 		handler(response, request)
 	}))
 	t.Cleanup(server.Close)
+	if err := auth.SaveToken(&auth.TokenData{
+		APIOrigin:   server.URL,
+		AccessToken: "project-transport-token", ExpiresAt: time.Now().Add(time.Hour),
+		AuthMethod: mode, TenantGUID: projectTransportTenantGUID,
+	}); err != nil {
+		t.Fatalf("save test token: %v", err)
+	}
 	return client.NewAPIClient(server.URL, time.Second, true, retry, logging.New(logging.LevelError))
 }
 

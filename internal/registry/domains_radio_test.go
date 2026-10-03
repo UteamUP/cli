@@ -139,13 +139,6 @@ func TestRadioBackupSharePointUsesSelectedTenantAndPreservesAvailability(t *test
 			fixtureHome := t.TempDir()
 			t.Setenv("HOME", fixtureHome)
 			t.Setenv("USERPROFILE", fixtureHome)
-			if err := auth.SaveToken(&auth.TokenData{
-				AccessToken: "radio-sharepoint-test-token",
-				ExpiresAt:   time.Now().Add(time.Hour),
-				TenantGUID:  tenantGUID,
-			}); err != nil {
-				t.Fatalf("save test token: %v", err)
-			}
 
 			var requestCount atomic.Int32
 			server := httptest.NewTLSServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
@@ -168,6 +161,14 @@ func TestRadioBackupSharePointUsesSelectedTenantAndPreservesAvailability(t *test
 				_, _ = response.Write([]byte(tc.body))
 			}))
 			t.Cleanup(server.Close)
+			if err := auth.SaveToken(&auth.TokenData{
+				APIOrigin:   server.URL,
+				AccessToken: "radio-sharepoint-test-token",
+				ExpiresAt:   time.Now().Add(time.Hour),
+				TenantGUID:  tenantGUID,
+			}); err != nil {
+				t.Fatalf("save test token: %v", err)
+			}
 
 			apiClient := client.NewAPIClient(server.URL, time.Second, true, client.RetryOptions{MaxRetries: 0}, logging.New(logging.LevelError))
 			format := "json"

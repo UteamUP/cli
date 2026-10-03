@@ -21,6 +21,7 @@ import (
 	"github.com/uteamup/cli/internal/auth"
 	clierrors "github.com/uteamup/cli/internal/errors"
 	"github.com/uteamup/cli/internal/logging"
+	"github.com/uteamup/cli/internal/security"
 )
 
 const (
@@ -71,6 +72,7 @@ type JSONRPCError struct {
 
 // APIClient communicates with the UteamUP backend.
 type APIClient struct {
+	profile   string
 	baseURL   string
 	timeout   time.Duration
 	insecure  bool
@@ -98,12 +100,12 @@ func (c *APIClient) httpClient() *http.Client {
 	if auth.SkipTLSVerifyFor(c.baseURL, c.insecure) {
 		transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12, InsecureSkipVerify: true} //nolint:gosec // loopback-only, see auth.SkipTLSVerifyFor
 	}
-	return &http.Client{Transport: transport, Timeout: c.timeout}
+	return &http.Client{Transport: security.Transport{Base: transport, Origin: c.baseURL}, Timeout: c.timeout, CheckRedirect: security.Redirect}
 }
 
 // CallTool sends a JSON-RPC 2.0 tools/call request to the /mcp endpoint.
 func (c *APIClient) CallTool(ctx context.Context, toolName string, args map[string]any) (json.RawMessage, error) {
-	token, err := auth.LoadToken()
+	token, err := auth.LoadTokenForOrigin(c.baseURL, c.profile)
 	if err != nil {
 		return nil, clierrors.NewAuthError("loading token", err)
 	}
@@ -148,7 +150,10 @@ func (c *APIClient) CallTool(ctx context.Context, toolName string, args map[stri
 		defer resp.Body.Close()
 
 		if resp.StatusCode >= 400 {
-			respBody, _ := io.ReadAll(resp.Body)
+			respBody, readErr := security.ReadAll(resp.Body)
+			if readErr != nil {
+				return readErr
+			}
 			return clierrors.NewAPIError(resp.StatusCode, resp.Status, string(respBody))
 		}
 
@@ -161,7 +166,7 @@ func (c *APIClient) CallTool(ctx context.Context, toolName string, args map[stri
 			}
 			result = ExtractResult(events)
 		} else {
-			respBody, err := io.ReadAll(resp.Body)
+			respBody, err := security.ReadAll(resp.Body)
 			if err != nil {
 				return fmt.Errorf("reading response: %w", err)
 			}
@@ -260,7 +265,7 @@ func boundedToolError(value string) string {
 // `[FromHeader]`. Values must already be valid HTTP header strings; callers
 // are responsible for any encoding.
 func (c *APIClient) CallREST(ctx context.Context, method, path string, params map[string]any, extraHeaders map[string]string, actionName string) (json.RawMessage, error) {
-	token, err := auth.LoadToken()
+	token, err := auth.LoadTokenForOrigin(c.baseURL, c.profile)
 	if err != nil {
 		return nil, clierrors.NewAuthError("loading token", err)
 	}
@@ -337,7 +342,7 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 		}
 		defer resp.Body.Close()
 
-		respBody, err := io.ReadAll(resp.Body)
+		respBody, err := security.ReadAll(resp.Body)
 		if err != nil {
 			return fmt.Errorf("reading response: %w", err)
 		}
@@ -368,7 +373,9 @@ func (c *APIClient) DownloadFile(ctx context.Context, rawURL, outputPath string)
 	if err != nil {
 		return 0, fmt.Errorf("creating download request: %w", err)
 	}
-	resp, err := c.httpClient().Do(req)
+	downloadClient := c.httpClient()
+	downloadClient.Transport = security.Transport{Base: http.DefaultTransport.(*http.Transport).Clone(), Origin: parsed.Scheme + "://" + parsed.Host}
+	resp, err := downloadClient.Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("downloading attachment: %w", err)
 	}
@@ -445,7 +452,7 @@ func writeDownloadFileWithLimit(outputPath string, r io.Reader, limit int64) (in
 // that bind IFormFile — e.g. the stock CSV import. Auth, tenant, and CSRF
 // headers mirror CallREST.
 func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField, filePath string, params map[string]any, extraHeaders map[string]string, actionName string) (json.RawMessage, error) {
-	token, err := auth.LoadToken()
+	token, err := auth.LoadTokenForOrigin(c.baseURL, c.profile)
 	if err != nil {
 		return nil, clierrors.NewAuthError("loading token", err)
 	}
@@ -507,7 +514,7 @@ func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField,
 		}
 		defer resp.Body.Close()
 
-		respBody, err := io.ReadAll(resp.Body)
+		respBody, err := security.ReadAll(resp.Body)
 		if err != nil {
 			return fmt.Errorf("reading response: %w", err)
 		}
@@ -575,7 +582,7 @@ func (c *APIClient) CallRESTUploadLimited(
 	maxFileBytes int64,
 	extraHeaders map[string]string,
 ) (json.RawMessage, error) {
-	token, err := auth.LoadToken()
+	token, err := auth.LoadTokenForOrigin(c.baseURL, c.profile)
 	if err != nil {
 		return nil, clierrors.NewAuthError("loading token", err)
 	}
@@ -776,3 +783,5 @@ func appendQueryString(rawURL, query string) string {
 	}
 	return rawURL + "?" + query
 }
+
+func (c *APIClient) WithProfile(profile string) *APIClient { c.profile = profile; return c }

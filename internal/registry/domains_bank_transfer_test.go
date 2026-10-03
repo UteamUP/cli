@@ -216,16 +216,17 @@ func newBankTransferContractClient(
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
+
+	server := httptest.NewTLSServer(handler)
+	t.Cleanup(server.Close)
 	if err := auth.SaveToken(&auth.TokenData{
+		APIOrigin:   server.URL,
 		AccessToken: "bank-transfer-contract-token",
 		ExpiresAt:   time.Now().Add(time.Hour),
 		TenantGUID:  tenantGUID,
 	}); err != nil {
 		t.Fatalf("save test token: %v", err)
 	}
-
-	server := httptest.NewTLSServer(handler)
-	t.Cleanup(server.Close)
 	return client.NewAPIClient(
 		server.URL,
 		time.Second,

@@ -57,6 +57,9 @@ Examples:
 			return fmt.Errorf("loading profile: %w", err)
 		}
 
+		if err := token.ValidateBinding(profile.BaseURL, cfg.ActiveProfile); err != nil {
+			return err
+		}
 		// Fetch all tenants.
 		tenants, err := auth.FetchAllTenants(token.AccessToken, profile.BaseURL, insecure)
 		if err != nil {
@@ -143,6 +146,9 @@ Examples:
 			return fmt.Errorf("loading profile: %w", err)
 		}
 
+		if err := token.ValidateBinding(profile.BaseURL, cfg.ActiveProfile); err != nil {
+			return err
+		}
 		// Fetch all tenants.
 		tenants, err := auth.FetchAllTenants(token.AccessToken, profile.BaseURL, insecure)
 		if err != nil {

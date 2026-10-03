@@ -8,12 +8,14 @@ import (
 	"time"
 
 	"github.com/uteamup/cli/internal/config"
+	"github.com/uteamup/cli/internal/security"
 )
 
 const tokenFileName = "token.json"
 
 // TokenData holds cached authentication tokens and tenant context.
 type TokenData struct {
+	APIOrigin    string    `json:"apiOrigin"`
 	AccessToken  string    `json:"accessToken"`
 	RefreshToken string    `json:"refreshToken,omitempty"`
 	ExpiresAt    time.Time `json:"expiresAt"`
@@ -95,4 +97,27 @@ func ClearToken() error {
 		return nil
 	}
 	return err
+}
+
+// ValidateBinding fails closed for legacy caches and changed profiles or origins.
+func (t *TokenData) ValidateBinding(baseURL, profile string) error {
+	origin, err := security.Origin(baseURL)
+	if err != nil {
+		return err
+	}
+	if t == nil || t.APIOrigin != origin || t.Profile != profile {
+		return fmt.Errorf("session does not match selected profile and API origin; sign in again")
+	}
+	return nil
+}
+
+func LoadTokenForOrigin(baseURL, profile string) (*TokenData, error) {
+	token, err := LoadToken()
+	if err != nil {
+		return nil, err
+	}
+	if err := token.ValidateBinding(baseURL, profile); err != nil {
+		return nil, err
+	}
+	return token, nil
 }

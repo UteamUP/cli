@@ -35,14 +35,6 @@ func TestCallRESTUploadLimitedUsesAuthenticatedGuidScopedMultipart(t *testing.T)
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
-	if err := auth.SaveToken(&auth.TokenData{
-		AccessToken: "secret-access-token",
-		ExpiresAt:   time.Now().Add(time.Hour),
-		TenantID:    42,
-		TenantGUID:  "b966b8c7-04a4-45d4-aa51-519ecf2ef13a",
-	}); err != nil {
-		t.Fatal(err)
-	}
 
 	uploadPath := filepath.Join(t.TempDir(), "source.mp4")
 	if err := os.WriteFile(uploadPath, []byte("safe-media"), 0o600); err != nil {
@@ -84,6 +76,15 @@ func TestCallRESTUploadLimitedUsesAuthenticatedGuidScopedMultipart(t *testing.T)
 		_, _ = response.Write([]byte(`{"items":[]}`))
 	}))
 	defer server.Close()
+	if err := auth.SaveToken(&auth.TokenData{
+		APIOrigin:   server.URL,
+		AccessToken: "secret-access-token",
+		ExpiresAt:   time.Now().Add(time.Hour),
+		TenantID:    42,
+		TenantGUID:  "b966b8c7-04a4-45d4-aa51-519ecf2ef13a",
+	}); err != nil {
+		t.Fatal(err)
+	}
 
 	apiClient := NewAPIClient(server.URL, time.Second, true, RetryOptions{MaxRetries: 0}, logging.New(logging.LevelError))
 	_, err := apiClient.CallRESTUploadLimited(

@@ -9,6 +9,7 @@ import (
 	"github.com/uteamup/cli/internal/auth"
 	"github.com/uteamup/cli/internal/config"
 	"github.com/uteamup/cli/internal/logging"
+	"github.com/uteamup/cli/internal/security"
 )
 
 var (
@@ -66,7 +67,11 @@ func runLogin(cmd *cobra.Command, args []string) error {
 		baseURL = envBaseURL
 	}
 
-	authClient := auth.NewClient(baseURL, insecure, logger)
+	origin, originErr := security.Origin(baseURL)
+	if originErr != nil {
+		return originErr
+	}
+	authClient := auth.NewClient(origin, insecure, logger)
 
 	var token *auth.TokenData
 
@@ -106,6 +111,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	token.APIOrigin = origin
 	// Save active profile name to token
 	if selectedProfile != "" {
 		token.Profile = selectedProfile

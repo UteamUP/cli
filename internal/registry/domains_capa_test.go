@@ -373,13 +373,6 @@ func TestCAPASourceNCRAddKeepsRouteIdentitySeparateFromRootBody(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
-	if err := auth.SaveToken(&auth.TokenData{
-		AccessToken: "capa-contract-token",
-		ExpiresAt:   time.Now().Add(time.Hour),
-		TenantGUID:  "55555555-5555-4555-8555-555555555555",
-	}); err != nil {
-		t.Fatalf("save test token: %v", err)
-	}
 
 	server := httptest.NewTLSServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if request.Method != http.MethodPost {
@@ -419,6 +412,14 @@ func TestCAPASourceNCRAddKeepsRouteIdentitySeparateFromRootBody(t *testing.T) {
 		_, _ = response.Write([]byte(`{"correctivePreventiveAction":{}}`))
 	}))
 	t.Cleanup(server.Close)
+	if err := auth.SaveToken(&auth.TokenData{
+		APIOrigin:   server.URL,
+		AccessToken: "capa-contract-token",
+		ExpiresAt:   time.Now().Add(time.Hour),
+		TenantGUID:  "55555555-5555-4555-8555-555555555555",
+	}); err != nil {
+		t.Fatalf("save test token: %v", err)
+	}
 
 	apiClient := client.NewAPIClient(
 		server.URL,

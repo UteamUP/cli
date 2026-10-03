@@ -40,7 +40,7 @@ func newMediaAPIClient(profile *config.Profile, timeout time.Duration) (*client.
 		BaseDelay:  time.Second,
 		MaxDelay:   10 * time.Second,
 	}
-	return client.NewAPIClient(baseURL, timeout, insecure, retries, logging.New(level)), nil
+	return client.NewAPIClient(baseURL, timeout, insecure, retries, logging.New(level)).WithProfile(activeProfileName()), nil
 }
 
 func validateMediaTenant(profile *config.Profile, token *auth.TokenData) error {
@@ -62,4 +62,12 @@ func validateMediaTenant(profile *config.Profile, token *auth.TokenData) error {
 		return fmt.Errorf("the active profile tenant does not match the authenticated tenant; sign in again")
 	}
 	return nil
+}
+
+func activeProfileName() string {
+	cfg, err := config.Load()
+	if err != nil {
+		return ""
+	}
+	return cfg.ActiveProfile
 }

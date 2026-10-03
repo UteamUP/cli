@@ -72,6 +72,8 @@ func TestNewDomainAPIClientHonorsRuntimeInsecureFlag(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := auth.SaveToken(&auth.TokenData{
+		APIOrigin:   server.URL,
+		Profile:     cfg.ActiveProfile,
 		AccessToken: "test-token",
 		ExpiresAt:   time.Now().Add(time.Hour),
 		TenantGUID:  "11111111-1111-4111-8111-111111111111",

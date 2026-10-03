@@ -151,13 +151,6 @@ func TestJSONFlagReadsRootObjectFileInsteadOfSendingItsPath(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
-	if err := auth.SaveToken(&auth.TokenData{
-		AccessToken: "json-helper-contract-token",
-		ExpiresAt:   time.Now().Add(time.Hour),
-		TenantGUID:  "55555555-5555-4555-8555-555555555555",
-	}); err != nil {
-		t.Fatalf("save test token: %v", err)
-	}
 
 	server := httptest.NewTLSServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if request.Method != http.MethodPost {
@@ -188,6 +181,14 @@ func TestJSONFlagReadsRootObjectFileInsteadOfSendingItsPath(t *testing.T) {
 		_, _ = response.Write([]byte(`{}`))
 	}))
 	t.Cleanup(server.Close)
+	if err := auth.SaveToken(&auth.TokenData{
+		APIOrigin:   server.URL,
+		AccessToken: "json-helper-contract-token",
+		ExpiresAt:   time.Now().Add(time.Hour),
+		TenantGUID:  "55555555-5555-4555-8555-555555555555",
+	}); err != nil {
+		t.Fatalf("save test token: %v", err)
+	}
 
 	domain := &Domain{
 		Name:    "json-helper",
@@ -258,13 +259,6 @@ func TestNCRTransitionConfirmationIsValidatedLocallyAndNotSerialized(t *testing.
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
-	if err := auth.SaveToken(&auth.TokenData{
-		AccessToken: "ncr-contract-token",
-		ExpiresAt:   time.Now().Add(time.Hour),
-		TenantGUID:  "55555555-5555-4555-8555-555555555555",
-	}); err != nil {
-		t.Fatalf("save test token: %v", err)
-	}
 
 	server := httptest.NewTLSServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if request.Method != http.MethodPost {
@@ -295,6 +289,14 @@ func TestNCRTransitionConfirmationIsValidatedLocallyAndNotSerialized(t *testing.
 		_, _ = response.Write([]byte(`{"transitionAvailability":{"options":[]}}`))
 	}))
 	t.Cleanup(server.Close)
+	if err := auth.SaveToken(&auth.TokenData{
+		APIOrigin:   server.URL,
+		AccessToken: "ncr-contract-token",
+		ExpiresAt:   time.Now().Add(time.Hour),
+		TenantGUID:  "55555555-5555-4555-8555-555555555555",
+	}); err != nil {
+		t.Fatalf("save test token: %v", err)
+	}
 
 	apiClient := client.NewAPIClient(
 		server.URL,

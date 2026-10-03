@@ -165,7 +165,7 @@ func newDomainAPIClient(logger *logging.Logger, exportCfg *registry.ExportConfig
 		), nil
 	}
 
-	profile, _, err := selectedProfileConfig(cfg, profileName)
+	profile, selectedName, err := selectedProfileConfig(cfg, profileName)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func newDomainAPIClient(logger *logging.Logger, exportCfg *registry.ExportConfig
 		BaseDelay:  time.Second,
 		MaxDelay:   10 * time.Second,
 	}
-	return client.NewAPIClient(profile.BaseURL, timeout, insecure, retryOpts, logger), nil
+	return client.NewAPIClient(profile.BaseURL, timeout, insecure, retryOpts, logger).WithProfile(selectedName), nil
 }
 
 // Execute runs the root command.
