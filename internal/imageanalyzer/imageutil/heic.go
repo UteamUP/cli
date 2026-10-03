@@ -1,12 +1,16 @@
 package imageutil
 
 import (
+	"context"
 	"fmt"
+	"github.com/uteamup/cli/internal/security"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // heicMagicSignatures contains the ftyp box brand values that identify
@@ -30,7 +34,7 @@ func IsHEIC(filePath string) bool {
 // hasHEICMagicBytes checks whether the file starts with HEIC/HEIF
 // magic bytes (ftyp box at offset 4).
 func hasHEICMagicBytes(filePath string) bool {
-	f, err := os.Open(filePath)
+	f, err := security.OpenRegular(filePath, 100*1024*1024)
 	if err != nil {
 		return false
 	}
@@ -75,6 +79,42 @@ func ConvertHEICToJPEG(filePath string) ([]byte, error) {
 // convertHEICViaSips uses the macOS built-in `sips` command to convert
 // HEIC to JPEG.
 func convertHEICViaSips(filePath string) ([]byte, error) {
+	source, err := security.ReadFile(filePath, 15*1024*1024)
+	if err != nil {
+		return nil, err
+	}
+	input, err := os.CreateTemp("", "heic-source-*.heic")
+	if err != nil {
+		return nil, err
+	}
+	defer os.Remove(input.Name())
+	if _, err := input.Write(source); err != nil {
+		input.Close()
+		return nil, err
+	}
+	input.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	dimensions, err := exec.CommandContext(ctx, "sips", "-g", "pixelWidth", "-g", "pixelHeight", input.Name()).Output()
+	if err != nil {
+		return nil, err
+	}
+	width, height := 0, 0
+	for _, line := range strings.Split(string(dimensions), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 2 {
+			value, _ := strconv.Atoi(fields[1])
+			switch fields[0] {
+			case "pixelWidth:":
+				width = value
+			case "pixelHeight:":
+				height = value
+			}
+		}
+	}
+	if err := validateImageDimensions(width, height, maxOutputImageDimension); err != nil {
+		return nil, err
+	}
 	tmpFile, err := os.CreateTemp("", "heic-convert-*.jpg")
 	if err != nil {
 		return nil, fmt.Errorf("create temp file for HEIC conversion: %w", err)
@@ -83,12 +123,12 @@ func convertHEICViaSips(filePath string) ([]byte, error) {
 	tmpFile.Close()
 	defer os.Remove(tmpPath)
 
-	cmd := exec.Command("sips", "-s", "format", "jpeg", filePath, "--out", tmpPath)
+	cmd := exec.CommandContext(ctx, "sips", "-s", "format", "jpeg", input.Name(), "--out", tmpPath)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return nil, fmt.Errorf("sips conversion failed: %w\noutput: %s", err, string(output))
 	}
 
-	data, err := os.ReadFile(tmpPath)
+	data, err := security.ReadFile(tmpPath, 15*1024*1024)
 	if err != nil {
 		return nil, fmt.Errorf("read converted JPEG: %w", err)
 	}

@@ -6,6 +6,7 @@ import (
 	"image"
 	"image/jpeg"
 	_ "image/png"
+	"io"
 
 	_ "golang.org/x/image/bmp"
 	"golang.org/x/image/draw"
@@ -80,4 +81,13 @@ func validateImageDimensions(width int, height int, maxOutputDimension int) erro
 		return fmt.Errorf("source image resolution exceeds the safe processing limit")
 	}
 	return nil
+}
+
+// ValidateImageHeader applies the full-decode budget to every image reader.
+func ValidateImageHeader(reader io.Reader) error {
+	config, _, err := image.DecodeConfig(reader)
+	if err != nil {
+		return err
+	}
+	return validateImageDimensions(config.Width, config.Height, maxOutputImageDimension)
 }

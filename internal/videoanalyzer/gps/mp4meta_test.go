@@ -340,3 +340,16 @@ func TestParseISO6709(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractGPSRejectsOutOfContainerAndHugeBoxLengths(t *testing.T) {
+	for _, size := range []uint32{4, 0xffffffff} {
+		bytes := make([]byte, 8)
+		binary.BigEndian.PutUint32(bytes, size)
+		copy(bytes[4:], "moov")
+		path := filepath.Join(t.TempDir(), "bad.mp4")
+		os.WriteFile(path, bytes, 0600)
+		if _, _, err := ExtractGPS(path); err == nil {
+			t.Fatalf("size %d accepted", size)
+		}
+	}
+}

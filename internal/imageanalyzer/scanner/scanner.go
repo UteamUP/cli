@@ -2,6 +2,7 @@ package scanner
 
 import (
 	"fmt"
+	"github.com/uteamup/cli/internal/security"
 	"log"
 	"os"
 	"path/filepath"
@@ -95,6 +96,7 @@ func (s *ImageScanner) ScanFolder() ([]models.ImageInfo, error) {
 			log.Printf("skipped image %s: file size is outside the 1-%d MB limit", filepath.Base(path), s.maxFileSizeMB)
 			return nil
 		}
+		security.BindSource(path, fi)
 		if !imageutil.IsValidImage(path) {
 			log.Printf("skipped invalid image: %s", filepath.Base(path))
 			return nil

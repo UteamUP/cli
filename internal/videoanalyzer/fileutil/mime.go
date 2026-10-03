@@ -2,7 +2,7 @@ package fileutil
 
 import (
 	"fmt"
-	"os"
+	"github.com/uteamup/cli/internal/security"
 )
 
 // MIMEType represents detected file MIME type.
@@ -40,7 +40,7 @@ var mp4Brands = map[string]bool{
 // MOV: ftyp at offset 4 with brand "qt  " (QuickTime).
 // GIF: starts with GIF87a or GIF89a.
 func DetectMIME(path string) (MIMEType, error) {
-	f, err := os.Open(path)
+	f, err := security.OpenRegular(path, 100*1024*1024)
 	if err != nil {
 		return MIMETypeUnsupported, fmt.Errorf("open file: %w", err)
 	}

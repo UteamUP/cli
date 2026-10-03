@@ -2,6 +2,7 @@ package fileutil
 
 import (
 	"fmt"
+	"github.com/uteamup/cli/internal/security"
 	"io/fs"
 	"log"
 	"os"
@@ -93,6 +94,7 @@ func (s *Scanner) processFile(path string, info os.FileInfo, result *ScanResult)
 		return
 	}
 
+	security.BindSource(path, info)
 	mt, err := DetectMIME(path)
 	if err != nil {
 		log.Printf("skip %s: MIME detection failed: %v", filepath.Base(path), err)

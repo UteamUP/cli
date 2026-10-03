@@ -2,7 +2,7 @@ package imageutil
 
 import (
 	"fmt"
-	"os"
+	"github.com/uteamup/cli/internal/security"
 )
 
 // LoadImageBytes loads an image from filePath, converts HEIC if needed,
@@ -18,7 +18,7 @@ func LoadImageBytes(filePath string, maxDimension int) ([]byte, error) {
 		}
 		rawBytes = jpegBytes
 	} else {
-		data, err := os.ReadFile(filePath)
+		data, err := security.ReadFile(filePath, 15*1024*1024)
 		if err != nil {
 			return nil, fmt.Errorf("read image %q: %w", filePath, err)
 		}

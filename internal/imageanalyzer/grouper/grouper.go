@@ -187,6 +187,7 @@ func (g *ImageGrouper) agglomerativeCluster(items []models.ImageAnalysisResult) 
 		clusters[i] = []models.ImageAnalysisResult{r}
 	}
 
+	remainingWork := 20_000_000
 	changed := true
 	for changed {
 		changed = false
@@ -194,7 +195,10 @@ func (g *ImageGrouper) agglomerativeCluster(items []models.ImageAnalysisResult) 
 		for i < len(clusters) {
 			j := i + 1
 			for j < len(clusters) {
-				if g.clustersShouldMerge(clusters[i], clusters[j]) {
+				if remainingWork <= 0 {
+					return clusters
+				}
+				if g.clustersShouldMergeBounded(clusters[i], clusters[j], &remainingWork) {
 					clusters[i] = append(clusters[i], clusters[j]...)
 					clusters = append(clusters[:j], clusters[j+1:]...)
 					changed = true
@@ -211,9 +215,14 @@ func (g *ImageGrouper) agglomerativeCluster(items []models.ImageAnalysisResult) 
 
 // clustersShouldMerge returns true if any pair across the two clusters
 // exceeds the similarity threshold (single-linkage criterion).
-func (g *ImageGrouper) clustersShouldMerge(a, b []models.ImageAnalysisResult) bool {
+func (g *ImageGrouper) clustersShouldMergeBounded(a, b []models.ImageAnalysisResult, remaining *int) bool {
 	for _, ra := range a {
 		for _, rb := range b {
+			work := len(ra.ExtractedData.GetName())*len(rb.ExtractedData.GetName()) + len(ra.ExtractedData.GetDescription())*len(rb.ExtractedData.GetDescription()) + 1
+			*remaining -= work
+			if *remaining < 0 {
+				return false
+			}
 			if computeSimilarity(ra, rb) >= g.similarityThreshold {
 				return true
 			}

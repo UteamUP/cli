@@ -5,13 +5,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/uteamup/cli/internal/security"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
 	"io"
 	"log"
-	"os"
 
 	"github.com/corona10/goimagehash"
 
@@ -23,7 +23,7 @@ const hashChunkSize = 8192 // 8 KiB
 // ComputeSHA256 computes the SHA-256 hash of the file at filePath,
 // reading in streaming 8 KiB chunks. Returns the lowercase hex string.
 func ComputeSHA256(filePath string) (string, error) {
-	f, err := os.Open(filePath)
+	f, err := security.OpenRegular(filePath, 100*1024*1024)
 	if err != nil {
 		return "", fmt.Errorf("open file for sha256: %w", err)
 	}
@@ -63,6 +63,9 @@ func ComputePerceptualHash(filePath string) (string, error) {
 			log.Printf("perceptual hash: HEIC conversion failed for %s: %v", filePath, err)
 			return "", nil
 		}
+		if err := imageutil.ValidateImageHeader(bytes.NewReader(jpegBytes)); err != nil {
+			return "", err
+		}
 		decoded, _, err := image.Decode(bytes.NewReader(jpegBytes))
 		if err != nil {
 			log.Printf("perceptual hash: decode converted HEIC failed for %s: %v", filePath, err)
@@ -70,12 +73,18 @@ func ComputePerceptualHash(filePath string) (string, error) {
 		}
 		img = decoded
 	} else {
-		f, err := os.Open(filePath)
+		f, err := security.OpenRegular(filePath, 100*1024*1024)
 		if err != nil {
 			return "", fmt.Errorf("open file for phash: %w", err)
 		}
 		defer f.Close()
 
+		if err := imageutil.ValidateImageHeader(f); err != nil {
+			return "", err
+		}
+		if _, err := f.Seek(0, io.SeekStart); err != nil {
+			return "", err
+		}
 		decoded, _, err := image.Decode(f)
 		if err != nil {
 			log.Printf("perceptual hash: decode failed for %s: %v", filePath, err)

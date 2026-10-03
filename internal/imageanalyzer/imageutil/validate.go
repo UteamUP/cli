@@ -1,6 +1,7 @@
 package imageutil
 
 import (
+	"github.com/uteamup/cli/internal/security"
 	"image"
 	"os"
 	"path/filepath"
@@ -49,7 +50,7 @@ func IsValidImage(filePath string) bool {
 		return err == nil && info.Size() > 0
 	}
 
-	f, err := os.Open(filePath)
+	f, err := security.OpenRegular(filePath, 100*1024*1024)
 	if err != nil {
 		return false
 	}

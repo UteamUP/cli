@@ -76,6 +76,9 @@ func computeSimilarity(a, b models.ImageAnalysisResult) float64 {
 // using Levenshtein edit distance: 1.0 - distance/max(len(a), len(b)).
 // Empty strings: if both empty returns 1.0, if one empty returns 0.0.
 func levenshteinRatio(a, b string) float64 {
+	if len(a) > 2048 || len(b) > 2048 {
+		return 0
+	}
 	if a == b {
 		return 1.0
 	}
@@ -95,8 +98,8 @@ func levenshteinRatio(a, b string) float64 {
 		prev[j] = j
 	}
 
+	curr := make([]int, lb+1)
 	for i := 1; i <= la; i++ {
-		curr := make([]int, lb+1)
 		curr[0] = i
 		for j := 1; j <= lb; j++ {
 			cost := 1
@@ -115,7 +118,7 @@ func levenshteinRatio(a, b string) float64 {
 			}
 			curr[j] = m
 		}
-		prev = curr
+		prev, curr = curr, prev
 	}
 
 	dist := prev[lb]

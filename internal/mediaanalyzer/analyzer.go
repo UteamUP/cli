@@ -7,12 +7,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/uteamup/cli/internal/security"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/uteamup/cli/internal/client"
 	clierrors "github.com/uteamup/cli/internal/errors"
@@ -242,6 +245,9 @@ func hasNegativeValue(values ...*int64) bool {
 }
 
 func mapItem(item analysisItem, sourcePath string, uploadFileName string) (models.ImageAnalysisResult, error) {
+	if err := validateExtractedStrings(reflect.ValueOf(&item.ExtractedData)); err != nil {
+		return models.ImageAnalysisResult{}, err
+	}
 	entityType := models.EntityType(strings.ToLower(strings.TrimSpace(item.Type)))
 	if !isSupportedEntityType(entityType) {
 		return models.ImageAnalysisResult{}, fmt.Errorf("backend returned an unsupported inventory entity type")
@@ -351,4 +357,50 @@ func newRequestGUID() (string, error) {
 	bytes[8] = (bytes[8] & 0x3f) | 0x80
 	encoded := hex.EncodeToString(bytes)
 	return fmt.Sprintf("%s-%s-%s-%s-%s", encoded[0:8], encoded[8:12], encoded[12:16], encoded[16:20], encoded[20:32]), nil
+}
+
+func validateExtractedStrings(value reflect.Value) error {
+	if value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface {
+		if value.IsNil() {
+			return nil
+		}
+		return validateExtractedStrings(value.Elem())
+	}
+	switch value.Kind() {
+	case reflect.String:
+		if utf8.RuneCountInString(value.String()) > 512 {
+			return fmt.Errorf("analysis string exceeds processing limit")
+		}
+		if value.CanSet() {
+			value.SetString(security.SafeText(value.String()))
+		}
+	case reflect.Struct:
+		for i := 0; i < value.NumField(); i++ {
+			if err := validateExtractedStrings(value.Field(i)); err != nil {
+				return err
+			}
+		}
+	case reflect.Slice, reflect.Array:
+		if value.Len() > 100 {
+			return fmt.Errorf("analysis list exceeds processing limit")
+		}
+		for i := 0; i < value.Len(); i++ {
+			if err := validateExtractedStrings(value.Index(i)); err != nil {
+				return err
+			}
+		}
+	case reflect.Map:
+		if value.Len() > 100 {
+			return fmt.Errorf("analysis object exceeds processing limit")
+		}
+		for _, key := range value.MapKeys() {
+			if err := validateExtractedStrings(key); err != nil {
+				return err
+			}
+			if err := validateExtractedStrings(value.MapIndex(key)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

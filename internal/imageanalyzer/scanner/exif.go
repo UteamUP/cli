@@ -1,8 +1,8 @@
 package scanner
 
 import (
+	"github.com/uteamup/cli/internal/security"
 	"log"
-	"os"
 
 	"github.com/rwcarlsen/goexif/exif"
 )
@@ -14,7 +14,7 @@ import (
 func ExtractEXIF(filePath string) map[string]interface{} {
 	result := make(map[string]interface{})
 
-	f, err := os.Open(filePath)
+	f, err := security.OpenRegular(filePath, 100*1024*1024)
 	if err != nil {
 		log.Printf("exif: cannot open %s: %v", filePath, err)
 		return result

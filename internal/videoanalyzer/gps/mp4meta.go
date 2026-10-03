@@ -3,8 +3,8 @@ package gps
 import (
 	"encoding/binary"
 	"fmt"
+	"github.com/uteamup/cli/internal/security"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -22,7 +22,7 @@ type Data struct {
 //
 // Returns the GPS data, whether GPS was found, and any error.
 func ExtractGPS(path string) (data Data, found bool, err error) {
-	f, err := os.Open(path)
+	f, err := security.OpenRegular(path, 100*1024*1024)
 	if err != nil {
 		return Data{}, false, fmt.Errorf("opening file: %w", err)
 	}
@@ -79,7 +79,10 @@ var xyzBoxType = string([]byte{0xA9, 'x', 'y', 'z'})
 // parseBoxes iterates over boxes within the region [current_pos, end) of the ReadSeeker.
 // path tracks which container boxes we're looking for (e.g., ["moov"] means we need to find moov first).
 func parseBoxes(r io.ReadSeeker, end int64, path []string) (Data, bool, error) {
-	for {
+	for boxes := 0; ; boxes++ {
+		if boxes >= 4096 {
+			return Data{}, false, fmt.Errorf("MP4 box count exceeds limit")
+		}
 		pos, err := r.Seek(0, io.SeekCurrent)
 		if err != nil {
 			return Data{}, false, err
@@ -110,6 +113,9 @@ func parseBoxes(r io.ReadSeeker, end int64, path []string) (Data, bool, error) {
 		}
 
 		contentSize := size - hdrSize
+		if size < hdrSize || size > end-pos {
+			return Data{}, false, fmt.Errorf("MP4 box exceeds its container")
+		}
 		boxEnd := pos + size
 
 		if len(path) > 0 && boxType == path[0] {
@@ -135,7 +141,10 @@ func parseBoxes(r io.ReadSeeker, end int64, path []string) (Data, bool, error) {
 // findGPSInContainer searches within a container (moov) for GPS data.
 // It looks for udta -> ©xyz and also meta -> keys+ilst patterns.
 func findGPSInContainer(r io.ReadSeeker, end int64) (Data, bool, error) {
-	for {
+	for boxes := 0; ; boxes++ {
+		if boxes >= 4096 {
+			return Data{}, false, fmt.Errorf("MP4 box count exceeds limit")
+		}
 		pos, err := r.Seek(0, io.SeekCurrent)
 		if err != nil {
 			return Data{}, false, err
@@ -159,6 +168,9 @@ func findGPSInContainer(r io.ReadSeeker, end int64) (Data, bool, error) {
 			size = end - pos
 		}
 
+		if size < hdrSize || size > end-pos {
+			return Data{}, false, fmt.Errorf("MP4 box exceeds its container")
+		}
 		boxEnd := pos + size
 		_ = hdrSize
 
@@ -196,7 +208,10 @@ func findGPSInContainer(r io.ReadSeeker, end int64) (Data, bool, error) {
 
 // findXYZInUDTA searches within a udta box for the ©xyz atom.
 func findXYZInUDTA(r io.ReadSeeker, end int64) (Data, bool, error) {
-	for {
+	for boxes := 0; ; boxes++ {
+		if boxes >= 4096 {
+			return Data{}, false, fmt.Errorf("MP4 box count exceeds limit")
+		}
 		pos, err := r.Seek(0, io.SeekCurrent)
 		if err != nil {
 			return Data{}, false, err
@@ -220,6 +235,9 @@ func findXYZInUDTA(r io.ReadSeeker, end int64) (Data, bool, error) {
 			size = end - pos
 		}
 
+		if size < hdrSize || size > end-pos {
+			return Data{}, false, fmt.Errorf("MP4 box exceeds its container")
+		}
 		boxEnd := pos + size
 
 		if boxType == xyzBoxType {
@@ -230,6 +248,9 @@ func findXYZInUDTA(r io.ReadSeeker, end int64) (Data, bool, error) {
 			}
 
 			// Read the content
+			if contentSize > 1024*1024 {
+				return Data{}, false, fmt.Errorf("MP4 metadata exceeds limit")
+			}
 			content := make([]byte, contentSize)
 			if _, err := io.ReadFull(r, content); err != nil {
 				return Data{}, false, err
@@ -261,7 +282,10 @@ func findGPSInMeta(r io.ReadSeeker, end int64) (Data, bool, error) {
 	var ilstSize int64
 
 	// First pass: find keys and ilst boxes
-	for {
+	for boxes := 0; ; boxes++ {
+		if boxes >= 4096 {
+			return Data{}, false, fmt.Errorf("MP4 box count exceeds limit")
+		}
 		pos, err := r.Seek(0, io.SeekCurrent)
 		if err != nil {
 			return Data{}, false, err
@@ -285,12 +309,18 @@ func findGPSInMeta(r io.ReadSeeker, end int64) (Data, bool, error) {
 			size = end - pos
 		}
 
+		if size < hdrSize || size > end-pos {
+			return Data{}, false, fmt.Errorf("MP4 box exceeds its container")
+		}
 		boxEnd := pos + size
 
 		switch boxType {
 		case "keys":
 			contentSize := size - hdrSize
 			if contentSize > 0 {
+				if contentSize > 1024*1024 {
+					return Data{}, false, fmt.Errorf("MP4 metadata exceeds limit")
+				}
 				content := make([]byte, contentSize)
 				if _, err := io.ReadFull(r, content); err == nil {
 					keys = parseKeysAtom(content)
@@ -326,7 +356,10 @@ func findGPSInMeta(r io.ReadSeeker, end int64) (Data, bool, error) {
 
 	ilstEnd := ilstPos + ilstSize
 	idx := 0
-	for {
+	for boxes := 0; ; boxes++ {
+		if boxes >= 4096 {
+			return Data{}, false, fmt.Errorf("MP4 box count exceeds limit")
+		}
 		pos, err := r.Seek(0, io.SeekCurrent)
 		if err != nil || pos >= ilstEnd {
 			break
@@ -344,12 +377,18 @@ func findGPSInMeta(r io.ReadSeeker, end int64) (Data, bool, error) {
 			size = ilstEnd - pos
 		}
 
+		if size < hdrSize || size > ilstEnd-pos {
+			return Data{}, false, fmt.Errorf("MP4 box exceeds its container")
+		}
 		boxEnd := pos + size
 
 		if idx == gpsKeyIndex {
 			// Read this ilst entry's data box
 			contentSize := size - hdrSize
 			if contentSize > 0 {
+				if contentSize > 1024*1024 {
+					return Data{}, false, fmt.Errorf("MP4 metadata exceeds limit")
+				}
 				content := make([]byte, contentSize)
 				if _, err := io.ReadFull(r, content); err == nil {
 					// ilst entries contain a "data" sub-box
