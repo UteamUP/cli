@@ -24,7 +24,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
 					{Name: "page-size", Short: "s", Description: "Items per page", Default: 25, Type: "int"},
-					{Name: "filter", Short: "f", Description: "Filter by name", Type: "string"},
+					{Name: "filter", Short: "f", Description: "Filter by name or plant code (partial, case-insensitive)", Type: "string", QueryName: "nameFilter"},
 					{Name: "sort-by", Description: "Sort field (Name, CreatedAt, etc.)", Default: "Name", Type: "string"},
 					{Name: "sort-order", Description: "Sort direction (asc or desc)", Default: "asc", Type: "string"},
 				},
@@ -133,9 +133,11 @@ func init() {
 			},
 			{
 				Name:        "search",
-				Description: "Search assets by name or serial number",
+				Description: "Search assets by name or plant code (partial, case-insensitive)",
 				ToolName:    "UteamupAssetSearch",
-				Args:        []ArgDef{{Name: "query", Description: "Search term", Required: true, Type: "string"}},
+				// The backend has no /api/asset/search route; the paginated list takes ?search=.
+				UseDomainBasePath: true,
+				Args:              []ArgDef{{Name: "query", Description: "Search term", Required: true, Type: "string", QueryName: "search"}},
 				Flags: []FlagDef{
 					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
 					{Name: "page-size", Short: "s", Description: "Items per page", Default: 25, Type: "int"},

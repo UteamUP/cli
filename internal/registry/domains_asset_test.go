@@ -1,8 +1,117 @@
 package registry
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
+	"time"
+
+	"github.com/uteamup/cli/internal/auth"
+	"github.com/uteamup/cli/internal/client"
+	"github.com/uteamup/cli/internal/logging"
 )
+
+// runAssetCommand executes an asset action against a TLS test server and returns the
+// request it received, so tests prove the real route instead of only the struct fields.
+func runAssetCommand(t *testing.T, cliArgs ...string) *http.Request {
+	t.Helper()
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+
+	var received *http.Request
+	server := httptest.NewTLSServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		received = request.Clone(request.Context())
+		response.Header().Set("Content-Type", "application/json")
+		_, _ = response.Write([]byte(`{"assets":[],"currentPage":1,"pageSize":25,"totalItems":0,"totalPages":0}`))
+	}))
+	t.Cleanup(server.Close)
+	if err := auth.SaveToken(&auth.TokenData{
+		APIOrigin:   server.URL,
+		AccessToken: "asset-search-token",
+		ExpiresAt:   time.Now().Add(time.Hour),
+		TenantGUID:  "55555555-5555-4555-8555-555555555555",
+	}); err != nil {
+		t.Fatalf("save test token: %v", err)
+	}
+
+	apiClient := client.NewAPIClient(server.URL, time.Second, true, client.RetryOptions{MaxRetries: 0}, logging.New(logging.LevelError))
+	format := "json"
+	command := buildDomainCommand(
+		findAssetDomain(t),
+		func() (*client.APIClient, error) { return apiClient, nil },
+		logging.New(logging.LevelError),
+		&format,
+		&ExportConfig{},
+	)
+	command.SilenceErrors = true
+	command.SilenceUsage = true
+	command.SetArgs(cliArgs)
+	if err := command.Execute(); err != nil {
+		t.Fatalf("asset %v error = %v", cliArgs, err)
+	}
+	if received == nil {
+		t.Fatalf("asset %v sent no request", cliArgs)
+	}
+	return received
+}
+
+func assertAssetQuery(t *testing.T, got url.Values, want map[string]string) {
+	t.Helper()
+	for key, value := range want {
+		if got.Get(key) != value {
+			t.Errorf("query %s = %q, want %q (full query %q)", key, got.Get(key), value, got.Encode())
+		}
+	}
+}
+
+// Regression (2026-10-04): search called GET /api/asset/search, which the backend reads as
+// /api/asset/{id} and answers 400 "The value 'search' is not valid".
+func TestAssetSearchUsesPaginatedListWithSearchQuery(t *testing.T) {
+	request := runAssetCommand(t, "search", "BOREHOLE 1", "--page", "2", "--page-size", "10")
+
+	if request.Method != http.MethodGet {
+		t.Errorf("method = %s, want GET", request.Method)
+	}
+	if request.URL.Path != "/api/asset" {
+		t.Errorf("path = %q, want /api/asset", request.URL.Path)
+	}
+	query := request.URL.Query()
+	assertAssetQuery(t, query, map[string]string{"search": "BOREHOLE 1", "page": "2", "pageSize": "10"})
+	if query.Has("query") {
+		t.Errorf("positional arg leaked as ?query=: %q", query.Encode())
+	}
+}
+
+func TestAssetSearchRequiresQuery(t *testing.T) {
+	action := findAssetAction(t, "search")
+	if len(action.Args) != 1 || !action.Args[0].Required || action.Args[0].QueryName != "search" {
+		t.Fatalf("search must take one required query arg sent as ?search=, got %+v", action.Args)
+	}
+}
+
+// Regression (2026-10-04): list --filter sent ?filter=, which the backend does not bind,
+// so every asset came back unfiltered.
+func TestAssetListFilterIsSentAsNameFilter(t *testing.T) {
+	request := runAssetCommand(t, "list", "--filter", "pump")
+
+	if request.URL.Path != "/api/asset" {
+		t.Errorf("path = %q, want /api/asset", request.URL.Path)
+	}
+	query := request.URL.Query()
+	assertAssetQuery(t, query, map[string]string{"nameFilter": "pump", "page": "1", "pageSize": "25"})
+	if query.Has("filter") {
+		t.Errorf("unbound ?filter= still sent: %q", query.Encode())
+	}
+}
+
+func TestAssetListWithoutFilterSendsNoNameFilter(t *testing.T) {
+	request := runAssetCommand(t, "list")
+	if request.URL.Query().Has("nameFilter") {
+		t.Errorf("unfiltered list must not send nameFilter: %q", request.URL.RawQuery)
+	}
+}
 
 func findAssetDomain(t *testing.T) *Domain {
 	t.Helper()
