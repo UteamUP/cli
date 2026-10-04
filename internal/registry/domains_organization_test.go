@@ -66,10 +66,71 @@ func TestCodeResolveDescriptionListsEveryTargetType(t *testing.T) {
 		t.Fatal("expected `resolve` action on code domain")
 	}
 
-	for _, target := range []string{"stockItem", "stockItemUnit", "stockBin", "asset", "assetGroup", "unknown"} {
+	for _, target := range []string{"stockItem", "stockItemUnit", "stockBin", "asset", "assetGroup", "part", "tool", "chemical", "workPermit", "unknown"} {
 		if !strings.Contains(action.Description, target) {
 			t.Errorf("resolve description is missing the %q target type: %q", target, action.Description)
 		}
+	}
+}
+
+func TestCodeTargetActionsBuildTheTargetRoutes(t *testing.T) {
+	d := findCodeDomain(t)
+	const target = "44444444-4444-4444-4444-444444444444"
+	const code = "55555555-5555-5555-5555-555555555555"
+
+	cases := []struct {
+		name   string
+		method string
+		tool   string
+		args   map[string]any
+		want   string
+	}{
+		{"target-list", "GET", "UteamupCodeListForTarget", map[string]any{"targetType": "part", "targetGuid": target}, "/api/codes/targets/part/" + target},
+		{"target-register", "POST", "UteamupCodeRegisterForTarget", map[string]any{"targetType": "stockbin", "targetGuid": target}, "/api/codes/targets/stockbin/" + target},
+		{"target-remove", "DELETE", "UteamupCodeRemoveFromTarget", map[string]any{"targetType": "workpermit", "targetGuid": target, "codeGuid": code}, "/api/codes/targets/workpermit/" + target + "/" + code},
+	}
+
+	for _, tc := range cases {
+		action := findAction(d, tc.name)
+		if action == nil {
+			t.Fatalf("missing code action %q", tc.name)
+		}
+		if action.HTTPMethod != tc.method || action.ToolName != tc.tool {
+			t.Errorf("%s = %s %s, want %s %s", tc.name, action.HTTPMethod, action.ToolName, tc.method, tc.tool)
+		}
+		got, consumed := buildRESTPath(d, *action, tc.args)
+		if got != tc.want {
+			t.Errorf("%s path = %q, want %q", tc.name, got, tc.want)
+		}
+		if len(consumed) != len(tc.args) {
+			t.Errorf("%s consumed %v, want every positional arg", tc.name, consumed)
+		}
+	}
+}
+
+func TestCodeTargetTypeIsRestrictedToTheBackendTable(t *testing.T) {
+	d := findCodeDomain(t)
+	for _, name := range []string{"target-list", "target-register", "target-remove"} {
+		action := findAction(d, name)
+		if action == nil {
+			t.Fatalf("missing code action %q", name)
+		}
+		got := strings.Join(action.Args[0].AllowedValues, ",")
+		if action.Args[0].Name != "targetType" || got != "part,tool,chemical,stockitem,stockbin,workpermit" {
+			t.Errorf("%s targetType allowed values = %q", name, got)
+		}
+		if action.Args[1].Type != "non-empty-uuid" {
+			t.Errorf("%s targetGuid type = %q, want non-empty-uuid", name, action.Args[1].Type)
+		}
+	}
+
+	register := findAction(d, "target-register")
+	required := map[string]bool{}
+	for _, flag := range register.Flags {
+		required[flag.Name] = flag.Required
+	}
+	if !required["type"] || !required["value"] || required["description"] {
+		t.Errorf("target-register flags required = %v, want type and value required, description optional", required)
 	}
 }
 

@@ -15,10 +15,40 @@ func init() {
 		Actions: append(crudActions("Code"),
 			Action{
 				Name:        "resolve",
-				Description: "Resolve a scanned value (code, serial number, or bin code) to its typed target: stockItem | stockItemUnit | stockBin | asset | assetGroup | unknown",
+				Description: "Resolve a scanned value (code, serial number, or bin code) to its typed target: stockItem | stockItemUnit | stockBin | asset | assetGroup | part | tool | chemical | workPermit | unknown",
 				ToolName:    "UteamupCodeResolve",
 				RESTPath:    "resolve/{value}",
 				Args:        []ArgDef{{Name: "value", Description: "Scanned/typed value to resolve", Required: true, Type: "string"}},
+			},
+			Action{
+				Name:        "target-list",
+				Description: "List the QR codes, barcodes and NFC tags registered on a part, tool, chemical, stock item, stock bin or work permit",
+				ToolName:    "UteamupCodeListForTarget",
+				HTTPMethod:  "GET",
+				RESTPath:    "targets/{targetType}/{targetGuid}",
+				Args:        codeTargetArgs(),
+			},
+			Action{
+				Name:        "target-register",
+				Description: "Register a scanned QR code, barcode or NFC tag on a part, tool, chemical, stock item, stock bin or work permit",
+				ToolName:    "UteamupCodeRegisterForTarget",
+				HTTPMethod:  "POST",
+				RESTPath:    "targets/{targetType}/{targetGuid}",
+				Args:        codeTargetArgs(),
+				Flags: []FlagDef{
+					{Name: "type", Description: "QR | BARCODE | NFC", Required: true, Type: "string"},
+					{Name: "value", Description: "Exactly what the scanner read", Required: true, Type: "string"},
+					{Name: "description", Description: "Optional label; defaults to '{type} · {record name}'", Type: "string"},
+				},
+			},
+			Action{
+				Name:        "target-remove",
+				Description: "Remove a code from a part, tool, chemical, stock item, stock bin or work permit (only a code registered on that target)",
+				ToolName:    "UteamupCodeRemoveFromTarget",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "targets/{targetType}/{targetGuid}/{codeGuid}",
+				Args: append(codeTargetArgs(),
+					ArgDef{Name: "codeGuid", Description: "GUID of the code to remove", Required: true, Type: "non-empty-uuid"}),
 			},
 		),
 	})
@@ -31,4 +61,14 @@ func init() {
 		{Name: "import", Description: "Import tenant holidays for a country and year", ToolName: "UteamupTenantHolidayImport", HTTPMethod: "POST", RESTPath: "import/{year}", Args: []ArgDef{{Name: "year", Description: "Holiday year", Required: true, Type: "int"}}, Flags: []FlagDef{{Name: "country-code", Description: "ISO 2-letter country code", Default: "IS", Type: "string"}}},
 	}})
 	Register(&Domain{Name: "role", Aliases: []string{"roles"}, Description: "Manage roles", Actions: listGetActions("Role")})
+}
+
+// codeTargetTypes mirrors the backend CodeTargetTypes table (api/codes/targets/{targetType}).
+var codeTargetTypes = []string{"part", "tool", "chemical", "stockitem", "stockbin", "workpermit"}
+
+func codeTargetArgs() []ArgDef {
+	return []ArgDef{
+		{Name: "targetType", Description: "part | tool | chemical | stockitem | stockbin | workpermit", Required: true, Type: "string", AllowedValues: codeTargetTypes},
+		{Name: "targetGuid", Description: "GUID of the target record", Required: true, Type: "non-empty-uuid"},
+	}
 }
