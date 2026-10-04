@@ -1899,3 +1899,35 @@ func TestStockStartCountActionWired(t *testing.T) {
 		t.Fatalf("start-count requires one GUID argument, got %+v", action.Args)
 	}
 }
+
+// Bug 59ad42c5: InventoryController (api/inventory) is an aggregated cross-type view. It
+// routes GET api/inventory and POST api/inventory/bulk-delete only, so the crudActions
+// template's get/create/update/delete always 404ed. The domain must expose only the two
+// actions the controller serves, each resolving to its real route.
+func TestInventoryDomainExposesOnlyRoutesTheControllerServes(t *testing.T) {
+	domain := findDomain("inventory")
+	if domain == nil {
+		t.Fatal("inventory domain not registered")
+	}
+	want := map[string]struct{ method, path string }{
+		"list":        {"GET", "/api/inventory"},
+		"bulk-delete": {"POST", "/api/inventory/bulk-delete"},
+	}
+	if len(domain.Actions) != len(want) {
+		t.Fatalf("inventory actions = %d, want only %d (no phantom get/create/update/delete)", len(domain.Actions), len(want))
+	}
+	for _, action := range domain.Actions {
+		route, ok := want[action.Name]
+		if !ok {
+			t.Fatalf("inventory %s has no route on InventoryController and would always 404", action.Name)
+		}
+		method := action.HTTPMethod
+		if method == "" {
+			method = HTTPMethod[action.Name]
+		}
+		path, _ := buildRESTPath(domain, action, map[string]any{"id": "1", "externalGuid": "g"})
+		if method != route.method || path != route.path {
+			t.Errorf("inventory %s = %s %s, want %s %s", action.Name, method, path, route.method, route.path)
+		}
+	}
+}

@@ -106,8 +106,11 @@ func TestProjectReviewedCommandsSendRootJSONForBothTokenModes(t *testing.T) {
 	}
 }
 
-func TestProjectModelCommandsUseNamedMCPArgumentsForBothTokenModes(t *testing.T) {
-	for _, mode := range []string{"login", "apikey"} {
+// /mcp resolves the tenant only from API-key token claims, so the typed MCP
+// model commands are exercised with an API-key session; an email/password
+// session is refused before sending (see the test below).
+func TestProjectModelCommandsUseNamedMCPArgumentsForAPIKeySessions(t *testing.T) {
+	for _, mode := range []string{"apikey"} {
 		for _, scenario := range []struct{ action, tool string }{
 			{"create", "UteamupProjectCreate"}, {"update", "UteamupProjectUpdate"},
 		} {
@@ -151,6 +154,22 @@ func TestProjectModelCommandsUseNamedMCPArgumentsForBothTokenModes(t *testing.T)
 				}
 			})
 		}
+	}
+}
+
+func TestMCPOnlyCommandsRefuseEmailPasswordSessionsBeforeSending(t *testing.T) {
+	var calls atomic.Int32
+	apiClient := projectTransportClient(t, "login", client.RetryOptions{}, func(response http.ResponseWriter, request *http.Request) {
+		calls.Add(1)
+	})
+	err := executeProjectTransport(t, apiClient, "project", []string{
+		"create", "--from-json", writeRegistryJSONFixture(t, `{"name":"Equipment delivery","customerGuid":null,"locationGuids":[],"notes":"Retain reviewed scope"}`),
+	})
+	if err == nil || !strings.Contains(err.Error(), "ut login --api-key-auth") || strings.Contains(err.Error(), "unable to determine tenant") {
+		t.Fatalf("email/password session must get an actionable API-key message, got %v", err)
+	}
+	if calls.Load() != 0 {
+		t.Fatalf("HTTP calls = %d, want none: /mcp cannot serve an email/password session", calls.Load())
 	}
 }
 

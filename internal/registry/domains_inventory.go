@@ -1268,8 +1268,13 @@ func init() {
 	Register(&Domain{
 		Name:        "inventory",
 		Description: "Manage inventory",
-		Actions: append(crudActions("Inventory"),
-			Action{
+		// InventoryController is an aggregated view across asset/part/tool/chemical: it serves
+		// GET api/inventory and POST bulk-delete but no create/get/update/delete by id, so the
+		// generic crudActions template only minted commands that always 404. Single items are
+		// managed through their own domains (asset, part, tool, chemical).
+		Actions: []Action{
+			{Name: "list", Description: "List records", ToolName: "UteamupInventoryList", Flags: paginationFlags()},
+			{
 				Name: "bulk-delete",
 				Description: "Delete several inventory items at once, with the server enforcing the type scope you declare. " +
 					"Run with --dry-run first: any item outside --scope refuses the WHOLE batch.",
@@ -1282,6 +1287,6 @@ func init() {
 					{Name: "dry-run", BodyName: "dryRun", Description: "Report what would be deleted without deleting it", Type: "bool"},
 				},
 			},
-		),
+		},
 	})
 }
