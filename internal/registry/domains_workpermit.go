@@ -28,6 +28,78 @@ func init() {
 					{Name: "workorder-guid", Description: "Optional work order GUID the entry is made for", Type: "uuid"},
 				},
 			},
+			{
+				Name:        "links",
+				Description: "List the work orders, assets, chemicals, knowledge articles, tools and certificates linked to a work permit",
+				ToolName:    "UteamupWorkPermitLinksList",
+				RESTPath:    "by-guid/{workPermitGuid}/links",
+				HTTPMethod:  "GET",
+				Flags:       []FlagDef{workPermitFlag()},
+			},
+			{
+				Name:        "link-add",
+				Description: "Link a work order, asset, chemical, knowledge article, tool or certificate to a work permit",
+				ToolName:    "UteamupWorkPermitLinkAdd",
+				RESTPath:    "by-guid/{workPermitGuid}/links",
+				HTTPMethod:  "POST",
+				Flags: []FlagDef{
+					workPermitFlag(),
+					{Name: "type", Description: "WorkOrder | Asset | Chemical | KnowledgeArticle | Tool | Certificate", Required: true, Type: "string", BodyName: "linkType", AllowedValues: workPermitLinkTypes},
+					{Name: "target", Description: "GUID of the record to link", Required: true, Type: "non-empty-uuid", BodyName: "targetGuid"},
+				},
+			},
+			{
+				Name:        "link-remove",
+				Description: "Remove a link from a work permit",
+				ToolName:    "UteamupWorkPermitLinkRemove",
+				RESTPath:    "links/by-guid/{linkGuid}",
+				HTTPMethod:  "DELETE",
+				Flags: []FlagDef{
+					{Name: "link", Description: "Work permit link GUID", Required: true, Type: "non-empty-uuid", BodyName: "linkGuid"},
+				},
+			},
+			{
+				Name:        "linked-to",
+				Description: "List the work permits linked to a work order, asset, chemical, knowledge article, tool or certificate",
+				ToolName:    "UteamupWorkPermitsLinkedTo",
+				RESTPath:    "linked/{linkType}/{targetGuid}",
+				HTTPMethod:  "GET",
+				Flags: []FlagDef{
+					{Name: "type", Description: "workorder | asset | chemical | knowledgearticle | tool | certificate", Required: true, Type: "string", BodyName: "linkType", AllowedValues: workPermitLinkedToTypes},
+					{Name: "target", Description: "GUID of the linked record", Required: true, Type: "non-empty-uuid", BodyName: "targetGuid"},
+				},
+			},
+			{
+				Name:        "prerequisite-add",
+				Description: "Make another work permit a prerequisite of this work permit",
+				ToolName:    "UteamupWorkPermitPrerequisiteAdd",
+				RESTPath:    "by-guid/{workPermitGuid}/prerequisites",
+				HTTPMethod:  "POST",
+				Flags:       []FlagDef{workPermitFlag(), prerequisiteFlag()},
+			},
+			{
+				Name:        "prerequisite-remove",
+				Description: "Remove a prerequisite work permit from this work permit",
+				ToolName:    "UteamupWorkPermitPrerequisiteRemove",
+				RESTPath:    "by-guid/{workPermitGuid}/prerequisites/{prerequisiteGuid}",
+				HTTPMethod:  "DELETE",
+				Flags:       []FlagDef{workPermitFlag(), prerequisiteFlag()},
+			},
 		},
 	})
+}
+
+// workPermitLinkTypes is the backend link-type enum sent in the link-add body;
+// workPermitLinkedToTypes is the same set as the lowercase linked/{linkType} route segment.
+var (
+	workPermitLinkTypes     = []string{"WorkOrder", "Asset", "Chemical", "KnowledgeArticle", "Tool", "Certificate"}
+	workPermitLinkedToTypes = []string{"workorder", "asset", "chemical", "knowledgearticle", "tool", "certificate"}
+)
+
+func workPermitFlag() FlagDef {
+	return FlagDef{Name: "permit", Description: "Work permit GUID", Required: true, Type: "non-empty-uuid", BodyName: "workPermitGuid"}
+}
+
+func prerequisiteFlag() FlagDef {
+	return FlagDef{Name: "prerequisite", Description: "Prerequisite work permit GUID", Required: true, Type: "non-empty-uuid", BodyName: "prerequisiteGuid"}
 }
