@@ -168,6 +168,9 @@ type Action struct {
 	HTTPMethod string
 	Args       []ArgDef
 	Flags      []FlagDef
+	// RejectExtraArgs opts an action into rejecting undeclared positional input
+	// before creating a client. Existing actions retain their current behavior.
+	RejectExtraArgs bool
 	// DownloadURLField turns the REST response into a streamed local download.
 	// DownloadOutputFlag names the local-only output flag, while
 	// DownloadDefaultArg supplies the default filename stem.
@@ -354,6 +357,9 @@ func buildActionCommand(domain *Domain, action Action, apiClientFactory APIClien
 func validateActionInput(cmd *cobra.Command, args []string, action Action) error {
 	if err := validateActionDefinition(action); err != nil {
 		return err
+	}
+	if action.RejectExtraArgs && len(args) > len(action.Args) {
+		return fmt.Errorf("%s accepts at most %d positional arguments", action.Name, len(action.Args))
 	}
 
 	for index, argument := range action.Args {
