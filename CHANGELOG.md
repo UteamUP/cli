@@ -5,6 +5,35 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0](https://github.com/UteamUP/cli/compare/4.1.0...4.2.0) (2026-10-04)
+
+
+### Features
+
+* add confirmed client device commands ([a7644a4](https://github.com/UteamUP/cli/commit/a7644a4a1c92453ab0c5e4ecb6ce504074680e6a))
+* add confirmed tenant client security CLI commands ([c9e92b6](https://github.com/UteamUP/cli/commit/c9e92b6b45352a5f815d573a34afc737bda5c5f6))
+* add scoped client policy history command ([fc8e547](https://github.com/UteamUP/cli/commit/fc8e54769077c3a155e896c9f8e38764ac4cc59e))
+* **asset:** expose tool, chemical, and part assignment flags on asset patch ([a5b90bb](https://github.com/UteamUP/cli/commit/a5b90bb432fd923aa51d7ae34708f0410dc36b86))
+* expose field checks through CLI ([fcdd07f](https://github.com/UteamUP/cli/commit/fcdd07f2bd10da2cd8181b25d9963f70278d02ca))
+* expose saved Radio team eligibility ([e632c15](https://github.com/UteamUP/cli/commit/e632c15d57bd36ef5168e675db8f3daeede22aea))
+* **itcost:** cloud cost commands and asset TCO ([bc98eb1](https://github.com/UteamUP/cli/commit/bc98eb18c738c1117b5acf297c1fa523606d8252))
+* **itcost:** cloud cost commands and asset TCO ([bd106df](https://github.com/UteamUP/cli/commit/bd106dfdf74e39cb6e09d0d2ec03628c8824a20e))
+* **location-privacy:** CLI domain mirroring the location privacy MCP tools ([1f4d203](https://github.com/UteamUP/cli/commit/1f4d203d7f1d775c3431043c492bd60772ba5b44))
+* **tenant:** clear the mobile app limit with --mobile-same-as-web ([480c7e8](https://github.com/UteamUP/cli/commit/480c7e8a3be39b9ac8b5149731cdd7e77c103fc6))
+* **tenant:** set web and mobile feature levels, and the mobile opt-in ([caaeb04](https://github.com/UteamUP/cli/commit/caaeb043ec2b6fd46a2c02f1727a3f2aa64c0fcb))
+
+
+### Bug Fixes
+
+* **asset:** route search and list filter to the real asset list query ([30f1954](https://github.com/UteamUP/cli/commit/30f1954f0aeb83daca4dec0a3c7e4859a90bde33))
+* bind CLI sessions to HTTPS origins and bound responses ([5752ec6](https://github.com/UteamUP/cli/commit/5752ec6ebd28fde8b6d2dd608da684cdb03de15e))
+* **cli:** explain MCP-only actions to email logins and drop phantom inventory verbs ([38b4650](https://github.com/UteamUP/cli/commit/38b46505675a8fc63a8a9ddd8ff4927bc1c0e808))
+* open media descriptors without blocking on swapped FIFOs ([b6d2095](https://github.com/UteamUP/cli/commit/b6d20953eb66e044ba51b978b67c2aed4d9d5be9))
+* preserve secure CLI export and media compatibility ([f616245](https://github.com/UteamUP/cli/commit/f6162457484dd19c91109e572f31c1eeee6f3d75))
+* protect CLI inputs routes exports and release tooling ([ffa5f28](https://github.com/UteamUP/cli/commit/ffa5f2883ec4a06c1fea04e66de78f599be4deb5))
+* validate media identity and bound parsing and grouping ([2cb3a5f](https://github.com/UteamUP/cli/commit/2cb3a5fdc1cc06604edd8931f79d0a721939aae6))
+* validate project update identity as UUID ([605dfb1](https://github.com/UteamUP/cli/commit/605dfb1b6050a7816e3e4451a9d46bd7c50281b2))
+
 ## [4.1.0](https://github.com/UteamUP/cli/compare/4.0.0...4.1.0) (2026-09-28)
 
 
