@@ -115,8 +115,8 @@ func init() {
 				HTTPMethod:  "PUT",
 				Args:        []ArgDef{{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "uuid"}},
 				Flags: []FlagDef{
-					{Name: "title", Description: "New title", Type: "string"},
-					{Name: "status", Description: "New status", Type: "string"},
+					{Name: "title", BodyName: "name", Description: "New title", Type: "string"},
+					{Name: "status", Description: "New status (0=Not started, 1=Pending, 2=In progress, 3=On hold, 4=Completed, 5=Cancelled); omitted fields keep their current value", Type: "string"},
 					{Name: "priority", Description: "New priority (1=Low, 2=Medium, 3=High, 4=Urgent, 5=Critical)", Type: "string"},
 					{Name: "asset-group-guid", BodyName: "assetGroupGuids", Description: "Asset group GUID, repeatable — every active member is linked to the workorder as an asset carrying the group as its origin", Type: "stringSlice"},
 					{Name: "from-json", Description: "JSON file with update data", Type: "string"},

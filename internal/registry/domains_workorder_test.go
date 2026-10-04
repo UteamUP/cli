@@ -119,6 +119,29 @@ func TestWorkorderGetUpdateDeleteMatchMCPGuidContracts(t *testing.T) {
 	}
 }
 
+// The API ignores an unknown "title" key, so --title never renamed anything.
+func TestWorkorderUpdateTitleFlagSendsName(t *testing.T) {
+	d := findDomain("workorder")
+	if d == nil {
+		t.Fatal("expected workorder domain to be registered")
+	}
+	for _, action := range d.Actions {
+		if action.Name != "update" {
+			continue
+		}
+		for _, f := range action.Flags {
+			if f.Name == "title" {
+				if f.BodyName != "name" {
+					t.Errorf("title BodyName = %q, want name", f.BodyName)
+				}
+				return
+			}
+		}
+		t.Fatal("update action has no title flag")
+	}
+	t.Fatal("expected update action")
+}
+
 func TestWorkorderCompleteUsesGuidOnlyStatusFreeContract(t *testing.T) {
 	d := findDomain("workorder")
 	if d == nil {
