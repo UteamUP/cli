@@ -248,6 +248,9 @@ func TestAssetPatchAction(t *testing.T) {
 		"location-guid":           {"uuid", "locationGuid"},
 		"location-floor-guid":     {"uuid", "locationFloorGuid"},
 		"is-active":               {"bool", "isActive"},
+		"tool-guids":              {"stringSlice", "toolGuids"},
+		"chemical-guids":          {"stringSlice", "chemicalGuids"},
+		"asset-parts-file":        {"string", "assetParts"},
 		"expected-updated-at-utc": {"string", "expectedUpdatedAtUtc"},
 	}
 	if len(action.Flags) != len(want) {
@@ -271,6 +274,10 @@ func TestAssetPatchAction(t *testing.T) {
 		}
 		if body != expected.body {
 			t.Errorf("%s flag body field = %q, want %q", flag.Name, body, expected.body)
+		}
+		// Part assignments are objects, so they can only arrive as a JSON file.
+		if flag.Name == "asset-parts-file" && !flag.JSONFile {
+			t.Errorf("asset-parts-file must be a JSONFile flag")
 		}
 	}
 }

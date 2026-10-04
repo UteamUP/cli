@@ -115,6 +115,9 @@ func init() {
 					{Name: "location-floor-guid", Description: "Floor or room GUID within the location (the empty GUID clears it)", Type: "uuid"},
 					// No Default: a bool flag with a default is always sent, which would flip the asset.
 					{Name: "is-active", Description: "Set active (true) or inactive (false)", Type: "bool"},
+					{Name: "tool-guids", Description: "Complete set of linked tool GUIDs, repeatable or comma-separated (--tool-guids= removes every tool)", Type: "stringSlice"},
+					{Name: "chemical-guids", Description: "Complete set of linked chemical GUIDs, repeatable or comma-separated (--chemical-guids= removes every chemical)", Type: "stringSlice"},
+					{Name: "asset-parts-file", BodyName: "assetParts", Description: "JSON file with the complete set of part assignments: [{\"partGuid\": \"...\", \"assignedQuantity\": 2}] ([] removes every part)", Type: "string", JSONFile: true},
 					{Name: "expected-updated-at-utc", Description: "The asset's updatedAt as last read; a newer stored value fails with asset_changed", Type: "string"},
 				},
 			},
