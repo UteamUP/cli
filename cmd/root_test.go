@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -103,5 +105,84 @@ func TestNewDomainAPIClientHonorsRuntimeInsecureFlag(t *testing.T) {
 		"list",
 	); err != nil {
 		t.Fatalf("self-signed TLS request failed despite --insecure: %v", err)
+	}
+}
+
+func renewTestJWT(exp int64) string {
+	enc := base64.RawURLEncoding
+	return enc.EncodeToString([]byte(`{"alg":"HS256"}`)) + "." +
+		enc.EncodeToString([]byte(fmt.Sprintf(`{"exp":%d}`, exp))) + "." + enc.EncodeToString([]byte("sig"))
+}
+
+func expiredSessionFor(origin string) *auth.TokenData {
+	return &auth.TokenData{
+		APIOrigin:    origin,
+		AccessToken:  "old-access",
+		RefreshToken: "old-refresh",
+		ExpiresAt:    time.Now().Add(-time.Hour),
+		AuthMethod:   "login",
+		Profile:      "prod",
+	}
+}
+
+// An expired login session is renewed and saved, so the next command (and "auth status")
+// sees a valid session instead of "Not authenticated".
+func TestRenewSessionRenewsAndSavesAnExpiredLoginSession(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	previous := insecure
+	insecure = true
+	t.Cleanup(func() { insecure = previous })
+
+	newAccess := renewTestJWT(time.Now().Add(2 * time.Hour).Unix())
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		fmt.Fprintf(w, `{"accessToken":%q,"refreshToken":"new-refresh"}`, newAccess)
+	}))
+	defer server.Close()
+
+	got := renewSession(expiredSessionFor(server.URL))
+	if !got.IsValid() || got.AccessToken != newAccess {
+		t.Fatalf("renewSession returned %+v, want the renewed session", got)
+	}
+	saved, err := auth.LoadToken()
+	if err != nil || saved == nil || saved.RefreshToken != "new-refresh" || saved.AccessToken != newAccess {
+		t.Fatalf("saved session = %+v, %v; want the rotated tokens", saved, err)
+	}
+}
+
+// Refresh tokens rotate, so when two commands renew at once only one wins. The loser must use
+// the session the winner saved rather than telling the user to sign in again.
+func TestRenewSessionUsesASessionAnotherProcessRenewed(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	previous := insecure
+	insecure = true
+	t.Cleanup(func() { insecure = previous })
+
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "Invalid refresh token.", http.StatusUnauthorized)
+	}))
+	defer server.Close()
+
+	winner := expiredSessionFor(server.URL)
+	winner.AccessToken = "winner-access"
+	winner.ExpiresAt = time.Now().Add(time.Hour)
+	if err := auth.SaveToken(winner); err != nil {
+		t.Fatal(err)
+	}
+
+	got := renewSession(expiredSessionFor(server.URL))
+	if got.AccessToken != "winner-access" || !got.IsValid() {
+		t.Fatalf("renewSession returned %+v, want the session the other process saved", got)
+	}
+}
+
+func TestRenewSessionLeavesAPIKeySessionsAlone(t *testing.T) {
+	token := expiredSessionFor("https://127.0.0.1:1")
+	token.AuthMethod = "apikey"
+	if got := renewSession(token); got != token || got.IsValid() {
+		t.Fatalf("an API-key session must not be renewed, got %+v", got)
 	}
 }

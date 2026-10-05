@@ -82,8 +82,14 @@ func SaveToken(token *TokenData) error {
 		return fmt.Errorf("marshaling token: %w", err)
 	}
 
+	// Write then rename, so a crash or a second CLI process never reads a half-written
+	// session (renewal rewrites this file on an ordinary command, not just on login).
 	path := filepath.Join(dir, tokenFileName)
-	return os.WriteFile(path, data, 0600)
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, data, 0600); err != nil {
+		return err
+	}
+	return os.Rename(tmp, path)
 }
 
 // ClearToken deletes the cached token file.

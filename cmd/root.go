@@ -75,6 +75,9 @@ Examples:
 		if err != nil {
 			return fmt.Errorf("checking auth status: %w", err)
 		}
+		if token != nil && !token.IsValid() {
+			token = renewSession(token)
+		}
 		if token == nil || !token.IsValid() {
 			fmt.Fprintln(os.Stderr, "Not authenticated. Run \"uteamup login\" or \"ut login\" first.")
 			os.Exit(1)
@@ -188,6 +191,27 @@ func newDomainAPIClient(logger *logging.Logger, exportCfg *registry.ExportConfig
 		MaxDelay:   10 * time.Second,
 	}
 	return client.NewAPIClient(profile.BaseURL, timeout, insecure, retryOpts, logger).WithProfile(selectedName), nil
+}
+
+// renewSession trades an expired login session's refresh token for a new access token and
+// saves it. It returns the session to use: the renewed one, one another CLI process renewed
+// in the meantime (refresh tokens rotate, so only one renewal wins), or the expired one when
+// renewal is impossible, in which case the caller asks the user to sign in.
+func renewSession(token *auth.TokenData) *auth.TokenData {
+	if token.AuthMethod != "login" || token.RefreshToken == "" || token.APIOrigin == "" {
+		return token
+	}
+	authClient := auth.NewClient(token.APIOrigin, insecure, logging.New(logging.LevelInfo))
+	if err := authClient.RefreshSession(token); err != nil {
+		if latest, loadErr := auth.LoadToken(); loadErr == nil && latest != nil && latest.IsValid() {
+			return latest
+		}
+		return token
+	}
+	if err := auth.SaveToken(token); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: the session was renewed but could not be saved: %v\n", err)
+	}
+	return token
 }
 
 // Execute runs the root command.

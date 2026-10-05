@@ -31,6 +31,9 @@ token expiry, and the associated config profile.`,
 			fmt.Println("Run \"uteamup login\" or \"ut login\" to authenticate.")
 			return nil
 		}
+		if !token.IsValid() {
+			token = renewSession(token)
+		}
 
 		fmt.Println("Authentication Status")
 		fmt.Println("---------------------")
