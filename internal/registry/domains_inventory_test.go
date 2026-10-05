@@ -1931,3 +1931,133 @@ func TestInventoryDomainExposesOnlyRoutesTheControllerServes(t *testing.T) {
 		}
 	}
 }
+
+// --- Coverage gaps (StockCoverageGapsController, api/stock/coverage-gaps) ---
+
+func TestStockCoverageGapsActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "coverage-gaps", "UteamupStockListCoverageGaps", "", "coverage-gaps")
+	if len(action.Args) != 0 {
+		t.Errorf("coverage-gaps expected no positional args, got %+v", action.Args)
+	}
+	if path, _ := buildRESTPath(findStockDomain(t), *action, map[string]any{}); path != "/api/stock/coverage-gaps" {
+		t.Errorf("coverage-gaps path = %q, want /api/stock/coverage-gaps", path)
+	}
+	if f := stockFlagByName(action, "type"); f == nil || f.Type != "string" || strings.Join(f.AllowedValues, ",") != "Part,Tool,Chemical" {
+		t.Errorf("type flag must be a string allow-listed to Part|Tool|Chemical, got %+v", f)
+	}
+	wantReasons := "assetAssignment,kitComponent,workorderTemplate,maintenancePlan,toolConsumable,chemicalConsumable"
+	if f := stockFlagByName(action, "reason"); f == nil || f.Type != "string" || strings.Join(f.AllowedValues, ",") != wantReasons {
+		t.Errorf("reason flag must be a string allow-listed to the camelCase reason kinds, got %+v", f)
+	}
+	if f := stockFlagByName(action, "page"); f == nil || f.Type != "int" || f.Default != 1 {
+		t.Errorf("page flag must be an int defaulting to 1, got %+v", f)
+	}
+	if f := stockFlagByName(action, "page-size"); f == nil || f.Type != "int" || f.Default != 50 {
+		t.Errorf("page-size flag must be an int defaulting to 50 (binds pageSize), got %+v", f)
+	}
+}
+
+func TestStockCoverageSummaryActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "coverage-summary", "UteamupStockCoverageGapSummary", "", "coverage-gaps/summary")
+	if len(action.Args) != 0 || len(action.Flags) != 0 {
+		t.Errorf("coverage-summary expected no args or flags, got args=%+v flags=%+v", action.Args, action.Flags)
+	}
+}
+
+func TestStockCoverageSuggestCostActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "coverage-suggest-cost", "UteamupStockSuggestCoverage", "", "coverage-gaps/suggest/cost")
+	if len(action.Args) != 0 || len(action.Flags) != 0 {
+		t.Errorf("coverage-suggest-cost expected no args or flags, got args=%+v flags=%+v", action.Args, action.Flags)
+	}
+}
+
+func TestStockCoverageSuggestActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "coverage-suggest", "UteamupStockSuggestCoverage", "POST", "coverage-gaps/suggest")
+	if len(action.Args) != 0 {
+		t.Errorf("coverage-suggest expected no positional args, got %+v", action.Args)
+	}
+	if f := stockFlagByName(action, "file"); f == nil || !f.Required || !f.JSONFile || f.BodyName != "items" {
+		t.Errorf("coverage-suggest expected a required JSONFile flag bound to body `items`, got %+v", f)
+	}
+	if f := stockFlagByName(action, "focus"); f == nil || f.Required || f.Type != "string" {
+		t.Errorf("focus flag must be an optional string, got %+v", f)
+	}
+}
+
+func TestStockCoverageCreateActionWired(t *testing.T) {
+	action := assertStockActionRoute(t, "coverage-create", "UteamupStockCreateFromCoverageGaps", "POST", "coverage-gaps/create")
+	if len(action.Args) != 0 {
+		t.Errorf("coverage-create expected no positional args, got %+v", action.Args)
+	}
+	if f := stockFlagByName(action, "file"); f == nil || !f.Required || !f.JSONFile || f.BodyName != "lines" {
+		t.Errorf("coverage-create expected a required JSONFile flag bound to body `lines`, got %+v", f)
+	}
+	f := stockFlagByName(action, "confirm")
+	if f == nil || f.Type != "bool" || !f.Required || !f.MustBeTrue || !f.LocalOnly {
+		t.Errorf("confirm flag must be a required, must-be-true, local-only bool, got %+v", f)
+	}
+	if err := validateActionDefinition(*action); err != nil {
+		t.Errorf("coverage-create definition invalid: %v", err)
+	}
+}
+
+// --- Consumables on tools and chemicals ({guid}/consumables) ---
+
+func TestToolAndChemicalConsumableActionsWired(t *testing.T) {
+	for _, owner := range []struct{ domain, prefix string }{{"tool", "Tool"}, {"chemical", "Chemical"}} {
+		domain := findDomain(owner.domain)
+		if domain == nil {
+			t.Fatalf("%s domain not registered", owner.domain)
+		}
+		routes := []struct {
+			name, tool, method, restPath, path string
+			args                               []string
+		}{
+			{"consumable-list", "Uteamup" + owner.prefix + "ListConsumables", "", "{guid}/consumables", "/api/" + owner.domain + "/g1/consumables", []string{"guid"}},
+			{"consumable-add", "Uteamup" + owner.prefix + "AddConsumable", "POST", "{guid}/consumables", "/api/" + owner.domain + "/g1/consumables", []string{"guid"}},
+			{"consumable-remove", "Uteamup" + owner.prefix + "RemoveConsumable", "DELETE", "{guid}/consumables/{requirementGuid}", "/api/" + owner.domain + "/g1/consumables/r1", []string{"guid", "requirementGuid"}},
+		}
+		for _, want := range routes {
+			action := findAction(domain, want.name)
+			if action == nil {
+				t.Errorf("%s %s not registered", owner.domain, want.name)
+				continue
+			}
+			if action.ToolName != want.tool || action.HTTPMethod != want.method || action.RESTPath != want.restPath {
+				t.Errorf("%s %s = %q %q %q, want %q %q %q", owner.domain, want.name,
+					action.ToolName, action.HTTPMethod, action.RESTPath, want.tool, want.method, want.restPath)
+			}
+			if len(action.Args) != len(want.args) {
+				t.Errorf("%s %s args = %+v, want %v", owner.domain, want.name, action.Args, want.args)
+				continue
+			}
+			for i, name := range want.args {
+				if action.Args[i].Name != name || !action.Args[i].Required || action.Args[i].Type != "string" {
+					t.Errorf("%s %s arg %d = %+v, want required string %q", owner.domain, want.name, i, action.Args[i], name)
+				}
+			}
+			path, consumed := buildRESTPath(domain, *action, map[string]any{"guid": "g1", "requirementGuid": "r1"})
+			if path != want.path || len(consumed) != len(want.args) {
+				t.Errorf("%s %s path = %q (consumed %v), want %q", owner.domain, want.name, path, consumed, want.path)
+			}
+		}
+
+		add := findAction(domain, "consumable-add")
+		if add == nil {
+			continue
+		}
+		bodyNames := map[string]string{"part": "requiredPartGuid", "chemical": "requiredChemicalGuid", "quantity": "quantity", "unit": "unitOfMeasure", "notes": "notes"}
+		for flagName, bodyName := range bodyNames {
+			if f := stockFlagByName(add, flagName); f == nil || f.BodyName != bodyName || f.Required {
+				t.Errorf("%s consumable-add --%s must be optional and bound to `%s`, got %+v", owner.domain, flagName, bodyName, f)
+			}
+		}
+		quantity := stockFlagByName(add, "quantity")
+		if quantity == nil || quantity.Type != "float" {
+			t.Fatalf("%s consumable-add --quantity must be a float flag, got %+v", owner.domain, quantity)
+		}
+		if v, ok := quantity.Default.(float64); !ok || v != 1.0 {
+			t.Errorf("%s consumable-add --quantity Default = %#v, want float64 1.0 (an int literal panics the registry)", owner.domain, quantity.Default)
+		}
+	}
+}

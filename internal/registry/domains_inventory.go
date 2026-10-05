@@ -1036,6 +1036,53 @@ func init() {
 					{Name: "vendor-guid", Description: "Vendor GUID of the group to confirm (omit for the no-resolvable-vendor group)", Type: "string", BodyName: "vendorGuid"},
 				},
 			},
+			// --- Coverage gaps: needed parts/tools/chemicals with no stock item ---
+			Action{
+				Name:        "coverage-gaps",
+				Description: "List parts, tools and chemicals that in-service assets need but that have no stock item, with reasons and a suggested location",
+				ToolName:    "UteamupStockListCoverageGaps",
+				RESTPath:    "coverage-gaps",
+				Flags: []FlagDef{
+					{Name: "type", Description: "Item type filter: Part, Tool, or Chemical", Type: "string", AllowedValues: []string{"Part", "Tool", "Chemical"}},
+					{Name: "reason", Description: "Reason filter: assetAssignment, kitComponent, workorderTemplate, maintenancePlan, toolConsumable, or chemicalConsumable", Type: "string", AllowedValues: []string{"assetAssignment", "kitComponent", "workorderTemplate", "maintenancePlan", "toolConsumable", "chemicalConsumable"}},
+					{Name: "page", Description: "Page number", Default: 1, Type: "int"},
+					{Name: "page-size", Description: "Page size", Default: 50, Type: "int"},
+				},
+			},
+			Action{
+				Name:        "coverage-summary",
+				Description: "Count the coverage gaps (total and per item type)",
+				ToolName:    "UteamupStockCoverageGapSummary",
+				RESTPath:    "coverage-gaps/summary",
+			},
+			Action{
+				Name:        "coverage-suggest-cost",
+				Description: "Show the AI credit cost of one coverage suggestion request before running it",
+				ToolName:    "UteamupStockSuggestCoverage",
+				RESTPath:    "coverage-gaps/suggest/cost",
+			},
+			Action{
+				Name:        "coverage-suggest",
+				Description: "Suggest stock for up to 50 coverage gaps (charged against the AI quota; writes nothing)",
+				ToolName:    "UteamupStockSuggestCoverage",
+				HTTPMethod:  "POST",
+				RESTPath:    "coverage-gaps/suggest",
+				Flags: []FlagDef{
+					{Name: "file", Short: "f", Description: "Path to a JSON file with the items (1-50): [{\"itemType\":\"Part|Tool|Chemical\",\"itemGuid\":\"…\"}]", Required: true, Type: "string", JSONFile: true, BodyName: "items"},
+					{Name: "focus", Description: "Optional focus for the AI, e.g. 'prefer the main warehouse'", Type: "string"},
+				},
+			},
+			Action{
+				Name:        "coverage-create",
+				Description: "Create reviewed coverage-gap lines (1-50) as stock items; each line succeeds or fails on its own",
+				ToolName:    "UteamupStockCreateFromCoverageGaps",
+				HTTPMethod:  "POST",
+				RESTPath:    "coverage-gaps/create",
+				Flags: []FlagDef{
+					{Name: "file", Short: "f", Description: "Path to a JSON file with the lines: [{\"itemType\":\"Part\",\"itemGuid\":\"…\",\"stockGuid\":\"…\",\"minimum\":N,\"maximum\":N,\"reorderPoint\":N,\"safetyStock\":N,\"leadTimeDays\":N}]", Required: true, Type: "string", JSONFile: true, BodyName: "lines"},
+					{Name: "confirm", Description: "Explicitly confirm creating the stock items", Type: "bool", Required: true, MustBeTrue: true, LocalOnly: true},
+				},
+			},
 		),
 	})
 
@@ -1256,15 +1303,20 @@ func init() {
 		Name:        "chemical",
 		Aliases:     []string{"chemicals"},
 		Description: "Manage chemicals",
-		Actions: []Action{
+		Actions: append([]Action{
 			{Name: "list", Description: "List chemicals", ToolName: "UteamupChemicalList", Flags: paginationFlags()},
 			{Name: "get", Description: "Get chemical by GUID", ToolName: "UteamupChemicalGet", Args: externalGUIDArg(), RESTPath: "by-guid/{externalGuid}"},
 			{Name: "create", Description: "Create a chemical", ToolName: "UteamupChemicalCreate", Flags: []FlagDef{jsonFlag()}},
 			{Name: "update", Description: "Update a chemical by GUID", ToolName: "UteamupChemicalUpdate", Args: externalGUIDArg(), RESTPath: "by-guid/{externalGuid}", Flags: []FlagDef{jsonFlag()}},
 			{Name: "delete", Description: "Delete a chemical by GUID", ToolName: "UteamupChemicalDelete", Args: externalGUIDArg(), RESTPath: "by-guid/{externalGuid}"},
-		},
+		}, consumableActions("Chemical", "chemical")...),
 	})
-	Register(&Domain{Name: "tool", Aliases: []string{"tools"}, Description: "Manage tools/equipment", Actions: crudActions("Tool")})
+	Register(&Domain{
+		Name:        "tool",
+		Aliases:     []string{"tools"},
+		Description: "Manage tools/equipment",
+		Actions:     append(crudActions("Tool"), consumableActions("Tool", "tool")...),
+	})
 	Register(&Domain{
 		Name:        "inventory",
 		Description: "Manage inventory",
@@ -1289,4 +1341,46 @@ func init() {
 			},
 		},
 	})
+}
+
+// consumableActions exposes the parts/chemicals a tool or chemical uses up
+// (`{guid}/consumables` on ToolController and ChemicalController). These feed
+// stock coverage-gap detection.
+func consumableActions(entityPrefix, label string) []Action {
+	ownerArg := ArgDef{Name: "guid", Description: "Owning " + label + " GUID", Required: true, Type: "string"}
+	return []Action{
+		{
+			Name:        "consumable-list",
+			Description: "List the consumables (parts or chemicals) a " + label + " uses up",
+			ToolName:    "Uteamup" + entityPrefix + "ListConsumables",
+			RESTPath:    "{guid}/consumables",
+			Args:        []ArgDef{ownerArg},
+		},
+		{
+			Name:        "consumable-add",
+			Description: "Add a consumable to a " + label + ": exactly one of --part or --chemical (a duplicate pair is rejected)",
+			ToolName:    "Uteamup" + entityPrefix + "AddConsumable",
+			HTTPMethod:  "POST",
+			RESTPath:    "{guid}/consumables",
+			Args:        []ArgDef{ownerArg},
+			Flags: []FlagDef{
+				{Name: "part", BodyName: "requiredPartGuid", Description: "Consumed part GUID", Type: "string"},
+				{Name: "chemical", BodyName: "requiredChemicalGuid", Description: "Consumed chemical GUID", Type: "string"},
+				{Name: "quantity", BodyName: "quantity", Description: "Quantity consumed (0.0001-1000000)", Default: 1.0, Type: "float"},
+				{Name: "unit", BodyName: "unitOfMeasure", Description: "Unit of measure (optional, max 32 characters)", Type: "string"},
+				{Name: "notes", BodyName: "notes", Description: "Notes (optional, max 500 characters)", Type: "string"},
+			},
+		},
+		{
+			Name:        "consumable-remove",
+			Description: "Remove a consumable from a " + label,
+			ToolName:    "Uteamup" + entityPrefix + "RemoveConsumable",
+			HTTPMethod:  "DELETE",
+			RESTPath:    "{guid}/consumables/{requirementGuid}",
+			Args: []ArgDef{
+				ownerArg,
+				{Name: "requirementGuid", Description: "Consumable requirement GUID", Required: true, Type: "string"},
+			},
+		},
+	}
 }
