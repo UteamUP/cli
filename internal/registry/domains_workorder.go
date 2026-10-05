@@ -119,7 +119,7 @@ func init() {
 					{Name: "status", Description: "New status (0=Not started, 1=Pending, 2=In progress, 3=On hold, 4=Completed, 5=Cancelled); omitted fields keep their current value", Type: "string"},
 					{Name: "priority", Description: "New priority (1=Low, 2=Medium, 3=High, 4=Urgent, 5=Critical)", Type: "string"},
 					{Name: "asset-group-guid", BodyName: "assetGroupGuids", Description: "Asset group GUID, repeatable — every active member is linked to the workorder as an asset carrying the group as its origin", Type: "stringSlice"},
-					{Name: "from-json", Description: "JSON file with update data", Type: "string"},
+					{Name: "from-json", Description: "JSON object file with only the fields to change (e.g. name, description, startDate, dueDate)", Type: "string", RootJSONObjectFile: true},
 					{Name: "project-guid", BodyName: "projectGuid", Description: "Owning project GUID; an empty GUID clears the link", Type: "uuid"},
 					{Name: "project-stage-guid", BodyName: "projectStageGuid", Description: "Lifecycle stage GUID; an empty GUID clears the link", Type: "uuid"},
 					{Name: "project-output-item-guid", BodyName: "projectOutputItemGuid", Description: "Responsible deliverable GUID; an empty GUID explicitly clears it", Type: "uuid"},

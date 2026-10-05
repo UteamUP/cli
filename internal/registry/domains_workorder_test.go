@@ -119,8 +119,9 @@ func TestWorkorderGetUpdateDeleteMatchMCPGuidContracts(t *testing.T) {
 	}
 }
 
-// The API ignores an unknown "title" key, so --title never renamed anything.
-func TestWorkorderUpdateTitleFlagSendsName(t *testing.T) {
+// The API ignores unknown keys: --title (sent as "title") never renamed anything, and
+// --from-json sent its file path as a "fromJson" field instead of the file contents.
+func TestWorkorderUpdateFlagsReachTheModel(t *testing.T) {
 	d := findDomain("workorder")
 	if d == nil {
 		t.Fatal("expected workorder domain to be registered")
@@ -129,15 +130,25 @@ func TestWorkorderUpdateTitleFlagSendsName(t *testing.T) {
 		if action.Name != "update" {
 			continue
 		}
+		seen := map[string]bool{}
 		for _, f := range action.Flags {
-			if f.Name == "title" {
+			switch f.Name {
+			case "title":
 				if f.BodyName != "name" {
 					t.Errorf("title BodyName = %q, want name", f.BodyName)
 				}
-				return
+			case "from-json":
+				// Without this the file path itself was sent as a "fromJson" body field.
+				if !f.RootJSONObjectFile || f.BodyName != "" {
+					t.Errorf("from-json = %+v, want a root JSON object file", f)
+				}
 			}
+			seen[f.Name] = true
 		}
-		t.Fatal("update action has no title flag")
+		if !seen["title"] || !seen["from-json"] {
+			t.Fatalf("update flags = %v, want title and from-json", seen)
+		}
+		return
 	}
 	t.Fatal("expected update action")
 }
