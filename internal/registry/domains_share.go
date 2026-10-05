@@ -2,7 +2,7 @@ package registry
 
 func init() {
 	// Routes mirror EntityShareController (/api/share/*). The management routes are
-	// per-kind (api/share/asset, api/share/assetgroup), so --entity-type fills the route
+	// per-kind (api/share/asset, api/share/assetgroup, api/share/workpermit), so --entity-type fills the route
 	// segment as well as naming the permission pair the backend requires. Its
 	// AllowedValues are the escaping: RESTPath expansion does not escape, so an
 	// unconstrained flag there would let a caller reshape the route.
@@ -12,14 +12,14 @@ func init() {
 	// they are exercising, exactly as the MCP tools do — but it travels on the query
 	// string there so it never lands in a body the update model does not declare.
 	shareGuid := ArgDef{Name: "shareGuid", Description: "Share GUID", Required: true, Type: "non-empty-uuid"}
-	const entityTypeDescription = "What is being shared: asset or assetgroup"
+	const entityTypeDescription = "What is being shared: asset, assetgroup or workpermit"
 	routeEntityType := FlagDef{
 		Name:          "entity-type",
 		BodyName:      "entityType",
 		Description:   entityTypeDescription,
 		Required:      true,
 		Type:          "string",
-		AllowedValues: []string{"asset", "assetgroup"},
+		AllowedValues: []string{"asset", "assetgroup", "workpermit"},
 	}
 	queryEntityType := FlagDef{
 		Name:          "entity-type",
@@ -27,7 +27,7 @@ func init() {
 		Description:   entityTypeDescription + " — names the permission pair this call exercises",
 		Required:      true,
 		Type:          "string",
-		AllowedValues: []string{"asset", "assetgroup"},
+		AllowedValues: []string{"asset", "assetgroup", "workpermit"},
 	}
 
 	Register(&Domain{

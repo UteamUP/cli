@@ -86,6 +86,44 @@ func init() {
 				Flags:       []FlagDef{workPermitFlag(), prerequisiteFlag()},
 			},
 			{
+				Name:        "approvers",
+				Description: "List who decides each approval step of a work permit and where an emailed approval stands",
+				ToolName:    "UteamupWorkPermitApproversList",
+				RESTPath:    "by-guid/{workPermitGuid}/approvers",
+				HTTPMethod:  "GET",
+				Flags:       []FlagDef{workPermitFlag()},
+			},
+			{
+				Name:        "approver-assign",
+				Description: "Name a tenant user or a contact as the approver of one step; a contact on the current step is emailed a link and code",
+				ToolName:    "UteamupWorkPermitApproverAssign",
+				RESTPath:    "by-guid/{workPermitGuid}/approvers",
+				HTTPMethod:  "PUT",
+				Flags: []FlagDef{
+					workPermitFlag(),
+					{Name: "step", Description: "Supervisor | SafetyOfficer | SiteManager", Required: true, Type: "string", AllowedValues: workPermitApproverSteps},
+					{Name: "kind", Description: "User | Contact", Required: true, Type: "string", AllowedValues: []string{"User", "Contact"}},
+					{Name: "user", Description: "Tenant user GUID when --kind User", Type: "uuid", BodyName: "userGuid"},
+					{Name: "contact", Description: "Contact GUID when --kind Contact", Type: "uuid", BodyName: "contactGuid"},
+				},
+			},
+			{
+				Name:        "approver-clear",
+				Description: "Remove the named approver of one step; an open emailed link stops working",
+				ToolName:    "UteamupWorkPermitApproverClear",
+				RESTPath:    "by-guid/{workPermitGuid}/approvers/{step}",
+				HTTPMethod:  "DELETE",
+				Flags:       []FlagDef{workPermitFlag(), approverStepRouteFlag()},
+			},
+			{
+				Name:        "approver-resend",
+				Description: "Email the contact on the current step a fresh approval link and code",
+				ToolName:    "UteamupWorkPermitApproverResend",
+				RESTPath:    "by-guid/{workPermitGuid}/approvers/{step}/resend",
+				HTTPMethod:  "POST",
+				Flags:       []FlagDef{workPermitFlag(), approverStepRouteFlag()},
+			},
+			{
 				Name:        "settings",
 				Description: "Show the tenant's automatic expiry setting and how many open permits the next run would expire (needs Tenant.Update)",
 				ToolName:    "UteamupWorkPermitSettingsGet",
@@ -116,6 +154,17 @@ var (
 	workPermitLinkTypes     = []string{"WorkOrder", "Asset", "Chemical", "KnowledgeArticle", "Tool", "Certificate"}
 	workPermitLinkedToTypes = []string{"workorder", "asset", "chemical", "knowledgearticle", "tool", "certificate"}
 )
+
+// workPermitApproverSteps is the step enum sent in the approver-assign body;
+// workPermitApproverStepSegments is the same set as the lowercase approvers/{step} route segment.
+var (
+	workPermitApproverSteps        = []string{"Supervisor", "SafetyOfficer", "SiteManager"}
+	workPermitApproverStepSegments = []string{"supervisor", "safetyofficer", "sitemanager"}
+)
+
+func approverStepRouteFlag() FlagDef {
+	return FlagDef{Name: "step", Description: "supervisor | safetyofficer | sitemanager", Required: true, Type: "string", BodyName: "step", AllowedValues: workPermitApproverStepSegments}
+}
 
 func workPermitFlag() FlagDef {
 	return FlagDef{Name: "permit", Description: "Work permit GUID", Required: true, Type: "non-empty-uuid", BodyName: "workPermitGuid"}

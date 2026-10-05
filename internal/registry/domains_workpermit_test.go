@@ -366,3 +366,85 @@ func TestWorkPermitSettingsUpdateRequiresTheDayCount(t *testing.T) {
 		t.Errorf("sent %d requests, want none", calls.Load())
 	}
 }
+
+func TestWorkPermitApproverActionsSendTheBackendRoutes(t *testing.T) {
+	permitBase := "/api/workpermit/by-guid/" + workPermitLinkPermitGUID
+	for _, scenario := range []struct {
+		name   string
+		args   []string
+		method string
+		path   string
+		body   map[string]any
+	}{
+		{
+			name:   "approvers",
+			args:   []string{"approvers", "--permit", workPermitLinkPermitGUID},
+			method: http.MethodGet, path: permitBase + "/approvers",
+		},
+		{
+			name:   "approver-assign contact",
+			args:   []string{"approver-assign", "--permit", workPermitLinkPermitGUID, "--step", "SafetyOfficer", "--kind", "Contact", "--contact", workPermitLinkTargetGUID},
+			method: http.MethodPut, path: permitBase + "/approvers",
+			body: map[string]any{"step": "SafetyOfficer", "kind": "Contact", "contactGuid": workPermitLinkTargetGUID},
+		},
+		{
+			name:   "approver-clear",
+			args:   []string{"approver-clear", "--permit", workPermitLinkPermitGUID, "--step", "supervisor"},
+			method: http.MethodDelete, path: permitBase + "/approvers/supervisor",
+		},
+		{
+			name:   "approver-resend",
+			args:   []string{"approver-resend", "--permit", workPermitLinkPermitGUID, "--step", "sitemanager"},
+			method: http.MethodPost, path: permitBase + "/approvers/sitemanager/resend",
+		},
+	} {
+		t.Run(scenario.name, func(t *testing.T) {
+			var calls atomic.Int32
+			apiClient := projectTransportClient(t, "login", client.RetryOptions{}, func(response http.ResponseWriter, request *http.Request) {
+				calls.Add(1)
+				if request.Method != scenario.method || request.URL.Path != scenario.path || request.URL.RawQuery != "" {
+					t.Errorf("request = %s %s, want %s %s", request.Method, request.URL, scenario.method, scenario.path)
+				}
+				if scenario.body != nil {
+					var body map[string]any
+					if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
+						t.Errorf("decode body: %v", err)
+					}
+					if !reflect.DeepEqual(body, scenario.body) {
+						t.Errorf("body = %#v, want %#v", body, scenario.body)
+					}
+				}
+				_, _ = response.Write([]byte(`[]`))
+			})
+
+			if err := executeProjectTransport(t, apiClient, "workpermit", scenario.args); err != nil {
+				t.Fatalf("%s failed: %v", scenario.name, err)
+			}
+			if calls.Load() != 1 {
+				t.Fatalf("HTTP calls = %d, want one", calls.Load())
+			}
+		})
+	}
+}
+
+func TestWorkPermitApproverCommandsRefuseBadInputBeforeSending(t *testing.T) {
+	for _, args := range [][]string{
+		{"approver-assign", "--permit", workPermitLinkPermitGUID, "--step", "Owner", "--kind", "User"},
+		{"approver-assign", "--permit", workPermitLinkPermitGUID, "--step", "Supervisor", "--kind", "Robot"},
+		{"approver-assign", "--permit", workPermitLinkPermitGUID, "--step", "Supervisor", "--kind", "Contact", "--contact", "not-a-guid"},
+		{"approver-clear", "--permit", workPermitLinkPermitGUID, "--step", "../admin"},
+		{"approver-clear", "--permit", workPermitLinkPermitGUID, "--step", "1"},
+		{"approver-resend", "--permit", workPermitLinkPermitGUID},
+	} {
+		var calls atomic.Int32
+		apiClient := projectTransportClient(t, "login", client.RetryOptions{}, func(response http.ResponseWriter, request *http.Request) {
+			calls.Add(1)
+		})
+		if err := executeProjectTransport(t, apiClient, "workpermit", args); err == nil {
+			t.Errorf("%v must fail before sending", args)
+		}
+		if calls.Load() != 0 {
+			t.Errorf("%v sent %d requests, want none", args, calls.Load())
+		}
+	}
+}

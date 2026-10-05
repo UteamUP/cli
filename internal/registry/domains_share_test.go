@@ -69,10 +69,11 @@ func TestShareManagementActionsAllRequireTheEntityType(t *testing.T) {
 		if !flag.Required {
 			t.Errorf("%s: --entity-type must be required", name)
 		}
-		if len(flag.AllowedValues) != 2 ||
+		if len(flag.AllowedValues) != 3 ||
 			!containsExact(flag.AllowedValues, "asset") ||
-			!containsExact(flag.AllowedValues, "assetgroup") {
-			t.Errorf("%s: --entity-type AllowedValues = %v, want [asset assetgroup]", name, flag.AllowedValues)
+			!containsExact(flag.AllowedValues, "assetgroup") ||
+			!containsExact(flag.AllowedValues, "workpermit") {
+			t.Errorf("%s: --entity-type AllowedValues = %v, want [asset assetgroup workpermit]", name, flag.AllowedValues)
 		}
 	}
 
@@ -125,6 +126,7 @@ func TestShareRoutesExpandFromTheirFlagsAndArgs(t *testing.T) {
 		want   string
 	}{
 		{"create", map[string]any{"entityType": "assetgroup"}, "/api/share/assetgroup"},
+		{"create", map[string]any{"entityType": "workpermit"}, "/api/share/workpermit"},
 		{"list", map[string]any{"entityType": "asset", "targetGuid": "a-1"}, "/api/share/asset/by-target/a-1"},
 		{"update", map[string]any{"shareGuid": "s-1"}, "/api/share/s-1"},
 		{"revoke", map[string]any{"shareGuid": "s-1"}, "/api/share/s-1"},
