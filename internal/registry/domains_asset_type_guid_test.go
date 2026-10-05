@@ -33,6 +33,18 @@ func TestAssetTypeActionsMirrorGuidMCPContracts(t *testing.T) {
 			t.Errorf("%s request-file is miswired: %+v", name, request)
 		}
 	}
+
+	fill := findDomainAction(t, "asset-type", "fill-existing-assets")
+	if fill.ToolName != "UteamupAssetTypeFillExistingAssets" {
+		t.Errorf("fill-existing-assets tool = %q", fill.ToolName)
+	}
+	if len(fill.Args) != 1 || fill.Args[0].Name != "attributeGuid" || !fill.Args[0].Required || fill.Args[0].Type != "uuid" {
+		t.Errorf("fill-existing-assets attributeGuid is miswired: %+v", fill.Args)
+	}
+	value := actionFlagByName(t, fill, "value")
+	if !value.Required || value.BodyName != "rawValue" || value.Type != "string" {
+		t.Errorf("fill-existing-assets value is miswired: %+v", value)
+	}
 }
 
 func TestAssetTypeMeterActionsAreGuidOnly(t *testing.T) {

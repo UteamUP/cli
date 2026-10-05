@@ -41,4 +41,12 @@ func TestMeterReadingRecordLinksPhotoOrVoiceDocumentByGuid(t *testing.T) {
 	if document.BodyName != "documentGuid" || document.Required || document.Type != "string" {
 		t.Errorf("document-guid must be an optional documentGuid body field: %+v", document)
 	}
+	for name, body := range map[string]string{
+		"latitude": "latitude", "longitude": "longitude", "location-accuracy-meters": "locationAccuracyMeters",
+	} {
+		flag := actionFlagByName(t, action, name)
+		if flag.Type != "float" || flag.Required || (flag.BodyName != "" && flag.BodyName != body) {
+			t.Errorf("%s must be an optional float bound to %s: %+v", name, body, flag)
+		}
+	}
 }

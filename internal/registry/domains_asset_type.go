@@ -54,6 +54,18 @@ func init() {
 					{Name: "assetTypeGuid", Description: "Asset type public GUID", Required: true, Type: "uuid"},
 				},
 			},
+			{
+				Name:        "fill-existing-assets",
+				Description: "Write one value for a field on every existing asset of its type that has none yet",
+				ToolName:    "UteamupAssetTypeFillExistingAssets",
+				MCPOnly:     true,
+				Args: []ArgDef{
+					{Name: "attributeGuid", Description: "Attribute definition public GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "value", BodyName: "rawValue", Description: "Value parsed by the field's data type (e.g. 12.5, true, 2026-10-05)", Required: true, Type: "string"},
+				},
+			},
 			// --- Reseller catalog: reverse fitment lookup (stock-reseller-catalog §12) ---
 			{
 				Name:        "compatible-parts",
