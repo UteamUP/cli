@@ -70,6 +70,7 @@ func init() {
 					{Name: "latitude", Description: "Where the reading was taken (required when the asset type requires Location)", Type: "float"},
 					{Name: "longitude", Description: "Where the reading was taken (required when the asset type requires Location)", Type: "float"},
 					{Name: "location-accuracy-meters", BodyName: "locationAccuracyMeters", Description: "GPS accuracy radius in metres", Type: "float"},
+					{Name: "link-url", BodyName: "linkUrl", Description: "Web link (required for Link attributes, absolute http(s) URL)", Type: "string"},
 				},
 			},
 			{

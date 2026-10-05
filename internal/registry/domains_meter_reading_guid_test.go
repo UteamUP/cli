@@ -49,4 +49,8 @@ func TestMeterReadingRecordLinksPhotoOrVoiceDocumentByGuid(t *testing.T) {
 			t.Errorf("%s must be an optional float bound to %s: %+v", name, body, flag)
 		}
 	}
+	link := actionFlagByName(t, action, "link-url")
+	if link.BodyName != "linkUrl" || link.Required || link.Type != "string" {
+		t.Errorf("link-url must be an optional linkUrl body field: %+v", link)
+	}
 }
