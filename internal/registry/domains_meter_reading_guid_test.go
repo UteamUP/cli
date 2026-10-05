@@ -53,4 +53,8 @@ func TestMeterReadingRecordLinksPhotoOrVoiceDocumentByGuid(t *testing.T) {
 	if link.BodyName != "linkUrl" || link.Required || link.Type != "string" {
 		t.Errorf("link-url must be an optional linkUrl body field: %+v", link)
 	}
+	nfc := actionFlagByName(t, action, "scanned-nfc-value")
+	if nfc.BodyName != "scannedNfcValue" || nfc.Required || nfc.Type != "string" {
+		t.Errorf("scanned-nfc-value must be an optional scannedNfcValue body field: %+v", nfc)
+	}
 }

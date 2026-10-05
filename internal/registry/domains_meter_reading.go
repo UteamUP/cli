@@ -71,6 +71,7 @@ func init() {
 					{Name: "longitude", Description: "Where the reading was taken (required when the asset type requires Location)", Type: "float"},
 					{Name: "location-accuracy-meters", BodyName: "locationAccuracyMeters", Description: "GPS accuracy radius in metres", Type: "float"},
 					{Name: "link-url", BodyName: "linkUrl", Description: "Web link (required for Link attributes, absolute http(s) URL)", Type: "string"},
+					{Name: "scanned-nfc-value", BodyName: "scannedNfcValue", Description: "Value read from the asset's NFC tag (NfcCheck attributes; Yes only when it is a tag registered to the asset)", Type: "string"},
 				},
 			},
 			{
