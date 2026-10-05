@@ -66,6 +66,7 @@ func init() {
 					{Name: "value", BodyName: "readingValue", Description: "Reading value (numeric)", Required: true, Type: "float"},
 					{Name: "timestamp", BodyName: "readingTimestamp", Description: "Reading timestamp (ISO 8601, defaults to now)", Type: "string"},
 					{Name: "notes", Description: "Optional notes", Type: "string"},
+					{Name: "document-guid", BodyName: "documentGuid", Description: "Uploaded photo/voice clip document Guid (required for Photo and Audio attributes)", Type: "string"},
 				},
 			},
 			{

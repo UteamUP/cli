@@ -33,3 +33,12 @@ func actionFlagExists(action *Action, name string) bool {
 	}
 	return false
 }
+
+func TestMeterReadingRecordLinksPhotoOrVoiceDocumentByGuid(t *testing.T) {
+	action := findDomainAction(t, "meter-reading", "record")
+
+	document := actionFlagByName(t, action, "document-guid")
+	if document.BodyName != "documentGuid" || document.Required || document.Type != "string" {
+		t.Errorf("document-guid must be an optional documentGuid body field: %+v", document)
+	}
+}
