@@ -42,6 +42,14 @@ func init() {
 				},
 			},
 			Action{
+				Name:        "target-generate",
+				Description: "Generate a printable barcode (e.g. PRT-7K2M9QXA) on a part, tool, chemical, stock item, stock bin or work permit; returns the existing barcode if it has one",
+				ToolName:    "UteamupCodeGenerateForTarget",
+				HTTPMethod:  "POST",
+				RESTPath:    "targets/{targetType}/{targetGuid}/generate",
+				Args:        codeTargetArgs(),
+			},
+			Action{
 				Name:        "target-remove",
 				Description: "Remove a code from a part, tool, chemical, stock item, stock bin or work permit (only a code registered on that target)",
 				ToolName:    "UteamupCodeRemoveFromTarget",

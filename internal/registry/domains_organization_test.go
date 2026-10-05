@@ -87,6 +87,7 @@ func TestCodeTargetActionsBuildTheTargetRoutes(t *testing.T) {
 	}{
 		{"target-list", "GET", "UteamupCodeListForTarget", map[string]any{"targetType": "part", "targetGuid": target}, "/api/codes/targets/part/" + target},
 		{"target-register", "POST", "UteamupCodeRegisterForTarget", map[string]any{"targetType": "stockbin", "targetGuid": target}, "/api/codes/targets/stockbin/" + target},
+		{"target-generate", "POST", "UteamupCodeGenerateForTarget", map[string]any{"targetType": "tool", "targetGuid": target}, "/api/codes/targets/tool/" + target + "/generate"},
 		{"target-remove", "DELETE", "UteamupCodeRemoveFromTarget", map[string]any{"targetType": "workpermit", "targetGuid": target, "codeGuid": code}, "/api/codes/targets/workpermit/" + target + "/" + code},
 	}
 
@@ -110,7 +111,7 @@ func TestCodeTargetActionsBuildTheTargetRoutes(t *testing.T) {
 
 func TestCodeTargetTypeIsRestrictedToTheBackendTable(t *testing.T) {
 	d := findCodeDomain(t)
-	for _, name := range []string{"target-list", "target-register", "target-remove"} {
+	for _, name := range []string{"target-list", "target-register", "target-generate", "target-remove"} {
 		action := findAction(d, name)
 		if action == nil {
 			t.Fatalf("missing code action %q", name)
