@@ -301,3 +301,68 @@ func TestWorkPermitLinkCommandsRefuseBadInputBeforeSending(t *testing.T) {
 		}
 	}
 }
+
+func TestWorkPermitSettingsActionsSendTheSettingsRoute(t *testing.T) {
+	for _, scenario := range []struct {
+		name  string
+		args  []string
+		check func(t *testing.T, request *http.Request)
+	}{
+		{
+			name: "settings with preview",
+			args: []string{"settings", "--preview-days", "14"},
+			check: func(t *testing.T, request *http.Request) {
+				if request.Method != http.MethodGet || request.URL.Path != "/api/workpermit/settings" ||
+					request.URL.Query().Get("previewDays") != "14" {
+					t.Errorf("request = %s %s, want GET /api/workpermit/settings?previewDays=14", request.Method, request.URL)
+				}
+			},
+		},
+		{
+			name: "settings-update",
+			args: []string{"settings-update", "--enabled=true", "--days", "10"},
+			check: func(t *testing.T, request *http.Request) {
+				if request.Method != http.MethodPut || request.URL.Path != "/api/workpermit/settings" {
+					t.Errorf("request = %s %s, want PUT /api/workpermit/settings", request.Method, request.URL)
+				}
+				var body map[string]any
+				if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
+					t.Fatalf("decode body: %v", err)
+				}
+				want := map[string]any{"autoExpireEnabled": true, "autoExpireAfterDays": float64(10)}
+				if !reflect.DeepEqual(body, want) {
+					t.Errorf("body = %#v, want %#v", body, want)
+				}
+			},
+		},
+	} {
+		t.Run(scenario.name, func(t *testing.T) {
+			var calls atomic.Int32
+			apiClient := projectTransportClient(t, "login", client.RetryOptions{}, func(response http.ResponseWriter, request *http.Request) {
+				calls.Add(1)
+				scenario.check(t, request)
+				_, _ = response.Write([]byte(`{"autoExpireEnabled":true,"autoExpireAfterDays":10,"wouldExpireNow":0}`))
+			})
+
+			if err := executeProjectTransport(t, apiClient, "workpermit", scenario.args); err != nil {
+				t.Fatalf("%s failed: %v", scenario.name, err)
+			}
+			if calls.Load() != 1 {
+				t.Fatalf("HTTP calls = %d, want one", calls.Load())
+			}
+		})
+	}
+}
+
+func TestWorkPermitSettingsUpdateRequiresTheDayCount(t *testing.T) {
+	var calls atomic.Int32
+	apiClient := projectTransportClient(t, "login", client.RetryOptions{}, func(response http.ResponseWriter, request *http.Request) {
+		calls.Add(1)
+	})
+	if err := executeProjectTransport(t, apiClient, "workpermit", []string{"settings-update", "--enabled=true"}); err == nil {
+		t.Error("settings-update without --days must fail before sending")
+	}
+	if calls.Load() != 0 {
+		t.Errorf("sent %d requests, want none", calls.Load())
+	}
+}

@@ -85,6 +85,27 @@ func init() {
 				HTTPMethod:  "DELETE",
 				Flags:       []FlagDef{workPermitFlag(), prerequisiteFlag()},
 			},
+			{
+				Name:        "settings",
+				Description: "Show the tenant's automatic expiry setting and how many open permits the next run would expire (needs Tenant.Update)",
+				ToolName:    "UteamupWorkPermitSettingsGet",
+				RESTPath:    "settings",
+				HTTPMethod:  "GET",
+				Flags: []FlagDef{
+					{Name: "preview-days", QueryName: "previewDays", Description: "Preview how many open permits would expire with this day count (1-365)", Type: "int"},
+				},
+			},
+			{
+				Name:        "settings-update",
+				Description: "Turn automatic expiry of open work permits on or off and set the day count (needs Tenant.Update)",
+				ToolName:    "UteamupWorkPermitSettingsUpdate",
+				RESTPath:    "settings",
+				HTTPMethod:  "PUT",
+				Flags: []FlagDef{
+					{Name: "enabled", Description: "Turn automatic expiry on", Default: false, Type: "bool", BodyName: "autoExpireEnabled"},
+					{Name: "days", Description: "Days after creation at which an open permit expires (1-365)", Required: true, Type: "int", BodyName: "autoExpireAfterDays"},
+				},
+			},
 		},
 	})
 }
