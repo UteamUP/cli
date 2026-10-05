@@ -5,6 +5,22 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.0](https://github.com/UteamUP/cli/compare/4.2.0...4.3.0) (2026-10-05)
+
+
+### Features
+
+* **codes:** list, register and remove scan codes on parts, tools, chemicals, stock and permits ([2cdb01d](https://github.com/UteamUP/cli/commit/2cdb01daaf6c6cd21f95a74597f2c2831d205d6d))
+* **workpermit:** manage named approvers and share permits from the CLI ([039367c](https://github.com/UteamUP/cli/commit/039367cc9bceed5eb36a4ede8892b495ab117cbf))
+* **workpermit:** manage work permit links and prerequisites ([ce43520](https://github.com/UteamUP/cli/commit/ce435207f22e1e675647ac190a1a4eb8f4904b4d))
+* **workpermit:** show and change the automatic expiry setting ([1d4e92c](https://github.com/UteamUP/cli/commit/1d4e92c851ab0aeb932909c0af9e2c93da742c7c))
+
+
+### Bug Fixes
+
+* **workorder:** merge the --from-json file into the update body ([c1d3a6d](https://github.com/UteamUP/cli/commit/c1d3a6d533c15c1566d39aa33100d4f0f8bb8fe7))
+* **workorder:** send --title as the workorder name on update ([1c0c932](https://github.com/UteamUP/cli/commit/1c0c932ca842e13c99dbffb1b3bdb6dcc4df1bd7))
+
 ## [4.2.0](https://github.com/UteamUP/cli/compare/4.1.0...4.2.0) (2026-10-04)
 
 
