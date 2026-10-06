@@ -1,5 +1,11 @@
 package registry
 
+// Names of the backend MeterReadingSource / MeterReadingQuality enums (Enums/AssetTypeEnums.cs).
+var (
+	meterReadingSources   = []string{"Manual", "IoT", "Import", "Inspection", "Telematics", "RentalHandover"}
+	meterReadingQualities = []string{"Normal", "Estimated", "Quarantined", "Corrected"}
+)
+
 // Mirrors the MCP UteamupMeterreading* tools backed by
 // MeterReadingController on the backend. The endpoints are GUID-first —
 // every command takes the asset's external Guid (and, where applicable,
@@ -48,6 +54,37 @@ func init() {
 					{Name: "page-size", Short: "s", Description: "Items per page (max 1000)", Default: 50, Type: "int"},
 					{Name: "from", Description: "Start date filter (ISO 8601)", Type: "string"},
 					{Name: "to", Description: "End date filter (ISO 8601)", Type: "string"},
+				},
+			},
+			{
+				// Tenant-wide list. There is deliberately no flag naming the person who recorded
+				// a reading: who/where are restricted fields the backend hides per caller.
+				Name:         "list",
+				Description:  "List meter readings across every asset and meter in the tenant, newest first",
+				ToolName:     "UteamupMeterreadingList",
+				HTTPMethod:   "GET",
+				RESTBasePath: "/api/meter-readings",
+				Flags: []FlagDef{
+					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
+					{Name: "page-size", Short: "s", Description: "Items per page (1-100)", Default: 25, Type: "int"},
+					{Name: "from", Description: "Earliest reading time, inclusive (ISO 8601 UTC)", Type: "string"},
+					{Name: "to", Description: "Latest reading time, inclusive (ISO 8601 UTC)", Type: "string"},
+					{Name: "asset-guid", Description: "Only readings for this asset Guid", Type: "uuid"},
+					{Name: "attribute-definition-guid", Description: "Only readings for this meter attribute definition Guid", Type: "uuid"},
+					{Name: "source", Description: "Only readings from this source: Manual|IoT|Import|Inspection|Telematics|RentalHandover", Type: "string", AllowedValues: meterReadingSources},
+					{Name: "quality", Description: "Only readings with this quality: Normal|Estimated|Quarantined|Corrected", Type: "string", AllowedValues: meterReadingQualities},
+					{Name: "search", Description: "Match asset name, meter name or work order ticket (max 200 characters)", Type: "string"},
+				},
+			},
+			{
+				Name:         "get",
+				Description:  "Get one meter reading by its Guid",
+				ToolName:     "UteamupMeterreadingGet",
+				HTTPMethod:   "GET",
+				RESTBasePath: "/api/meter-readings",
+				RESTPath:     "by-guid/{readingGuid}",
+				Args: []ArgDef{
+					{Name: "readingGuid", Description: "Meter reading Guid", Required: true, Type: "uuid"},
 				},
 			},
 			{
