@@ -26,7 +26,7 @@ func init() {
 				HTTPMethod:  "GET",
 				RESTPath:    "{assetGuid}/meter-readings/current",
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset external Guid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset external Guid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"},
 				},
 			},
 			{
@@ -36,7 +36,7 @@ func init() {
 				HTTPMethod:  "GET",
 				RESTPath:    "{assetGuid}/attributes",
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset external Guid", Required: true, Type: "string"},
 				},
 			},
 			{
@@ -46,8 +46,8 @@ func init() {
 				HTTPMethod:  "GET",
 				RESTPath:    "{assetGuid}/meter-readings/{attributeDefinitionGuid}/history",
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
-					{Name: "attribute-definition-guid", Description: "Attribute definition external Guid", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "attribute-definition-guid", BodyName: "attributeDefinitionGuid", Description: "Attribute definition external Guid", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
 					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
@@ -106,7 +106,7 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "{assetGuid}/meter-readings",
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset external Guid", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
 					{Name: "attribute-definition-guid", Description: "Attribute definition external Guid", Required: true, Type: "string"},
@@ -130,8 +130,8 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "{assetGuid}/meter-readings/{attributeDefinitionGuid}/statutory",
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
-					{Name: "attribute-definition-guid", Description: "Odometer attribute definition external Guid", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "attribute-definition-guid", BodyName: "attributeDefinitionGuid", Description: "Odometer attribute definition external Guid", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
 					{Name: "value", BodyName: "readingValue", Description: "Reading value (numeric)", Required: true, Type: "float"},
@@ -148,8 +148,8 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "{assetGuid}/meter-readings/by-guid/{readingGuid}/correct",
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
-					{Name: "reading-guid", Description: "Guid of the reading being corrected", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "reading-guid", BodyName: "readingGuid", Description: "Guid of the reading being corrected", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
 					{Name: "value", BodyName: "correctedValue", Description: "Corrected reading value (numeric)", Required: true, Type: "float"},
@@ -163,8 +163,8 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "{assetGuid}/meter-readings/{attributeDefinitionGuid}/replace-meter",
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
-					{Name: "attribute-definition-guid", Description: "Meter attribute definition external Guid", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "attribute-definition-guid", BodyName: "attributeDefinitionGuid", Description: "Meter attribute definition external Guid", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
 					{Name: "initial-value", BodyName: "initialValue", Description: "Reading shown on the replacement meter (defaults to 0)", Default: 0.0, Type: "float"},
@@ -178,8 +178,8 @@ func init() {
 				RESTPath:    "{assetGuid}/meter-readings/{attributeDefinitionGuid}/ocr",
 				HTTPMethod:  "POST",
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
-					{Name: "attribute-definition-guid", Description: "Attribute definition external Guid", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "attribute-definition-guid", BodyName: "attributeDefinitionGuid", Description: "Attribute definition external Guid", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
 					{Name: "photo", Description: "Path to meter photo", Required: true, Type: "string", UploadFile: true},

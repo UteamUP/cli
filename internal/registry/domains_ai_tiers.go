@@ -36,7 +36,7 @@ func init() {
 				RESTPath:    "by-guid/{workPermitGuid}/ai-prefill",
 				HTTPMethod:  "POST",
 				Args: []ArgDef{
-					{Name: "work-permit-guid", Description: "Work permit external Guid", Required: true, Type: "string"},
+					{Name: "work-permit-guid", BodyName: "workPermitGuid", Description: "Work permit external Guid", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
 					{Name: "workorder-guid", Description: "Optional related workorder Guid", Type: "string"},

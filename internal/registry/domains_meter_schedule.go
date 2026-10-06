@@ -117,7 +117,7 @@ func init() {
 				HTTPMethod:  "GET",
 				RESTPath:    "compliance/asset/{assetGuid}",
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset external Guid", Required: true, Type: "string"},
 				},
 			},
 			{
@@ -127,7 +127,7 @@ func init() {
 				HTTPMethod:  "GET",
 				RESTPath:    "asset/{assetGuid}/open-workorders",
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset external Guid", Required: true, Type: "string"},
 				},
 			},
 			{
@@ -137,7 +137,7 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "initialize/asset/{assetGuid}",
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset external Guid", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset external Guid", Required: true, Type: "string"},
 				},
 			},
 			{

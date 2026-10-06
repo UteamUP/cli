@@ -3,10 +3,10 @@ package registry
 import "testing"
 
 func TestAiTierDomainsExposeNewBackendEndpoints(t *testing.T) {
-	// Placeholders must use the CAMEL-CASE arg key. runCommand stores positional args in
-	// toolArgs under BodyName or camelCase(Name), and expandPathTemplate looks them up by that
-	// key — so the dashed forms these assertions used to pin ({asset-guid},
-	// {attribute-definition-guid}) never expanded and shipped the literal token in the URL.
+	// Placeholders use the camelCase key, so the dashed positional args carry a matching
+	// BodyName: executeAction stores positional args under BodyName, else their raw Name, and
+	// expandPathTemplate looks them up by that key. TestEveryRESTPathPlaceholderResolvesToAStoredArgKey
+	// guards the pairing for every domain.
 	ocr := findDomainAction(t, "meter-reading", "ocr")
 	if ocr.RESTPath != "{assetGuid}/meter-readings/{attributeDefinitionGuid}/ocr" || ocr.HTTPMethod != "POST" {
 		t.Fatalf("meter-reading ocr route = method %q path %q", ocr.HTTPMethod, ocr.RESTPath)
