@@ -51,6 +51,18 @@ func init() {
 				},
 			},
 			{
+				// The caller's own log: there is deliberately no flag naming another person.
+				Name:         "my-view-log",
+				Description:  "See who viewed your restricted meter-reading data (who recorded, where, the capture), newest first",
+				ToolName:     "UteamupMeterreadingMyViewLog",
+				HTTPMethod:   "GET",
+				RESTBasePath: "/api/meter-readings",
+				RESTPath:     "my/view-log",
+				Flags: []FlagDef{
+					{Name: "take", Short: "t", Description: "How many entries to return (1-500)", Default: 100, Type: "int"},
+				},
+			},
+			{
 				Name:        "record",
 				Description: "Record a manual meter reading",
 				ToolName:    "UteamupMeterreadingRecord",
