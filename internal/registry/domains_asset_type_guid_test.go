@@ -2,11 +2,11 @@ package registry
 
 import "testing"
 
-func TestAssetTypeActionsMirrorGuidMCPContracts(t *testing.T) {
+func TestAssetTypeActionsMirrorGuidRESTContractsForBothAuthenticationMethods(t *testing.T) {
 	domain := findDomainByName(t, "asset-type")
 	for _, action := range domain.Actions {
-		if !action.MCPOnly {
-			t.Errorf("%s must use its governed MCP tool", action.Name)
+		if action.MCPOnly {
+			t.Errorf("%s must support the REST authentication boundary", action.Name)
 		}
 		for _, arg := range action.Args {
 			if arg.Name == "id" || arg.Type == "int" {
@@ -29,7 +29,7 @@ func TestAssetTypeActionsMirrorGuidMCPContracts(t *testing.T) {
 	for _, name := range []string{"create", "update"} {
 		action := findDomainAction(t, "asset-type", name)
 		request := actionFlagByName(t, action, "request-file")
-		if !request.Required || !request.JSONFile || request.BodyName != "model" {
+		if !request.Required || !request.RootJSONObjectFile {
 			t.Errorf("%s request-file is miswired: %+v", name, request)
 		}
 	}

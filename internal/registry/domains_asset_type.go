@@ -3,6 +3,7 @@ package registry
 func init() {
 	Register(&Domain{
 		Name:        "asset-type",
+		APIPath:     "/api/asset-type",
 		Aliases:     []string{"assettypes", "at"},
 		Description: "Manage asset types",
 		Actions: []Action{
@@ -10,16 +11,16 @@ func init() {
 				Name:        "list",
 				Description: "List asset types",
 				ToolName:    "UteamupAssetTypeList",
-				MCPOnly:     true,
 				Flags: []FlagDef{
-					{Name: "include-inactive", BodyName: "includeInactive", Description: "Include inactive asset types", Type: "bool"},
+					{Name: "include-inactive", QueryName: "includeInactive", Description: "Include inactive asset types", Type: "bool"},
 				},
 			},
 			{
 				Name:        "get",
+				RESTPath:    "{assetTypeGuid}",
+				HTTPMethod:  "GET",
 				Description: "Get an asset type by public GUID",
 				ToolName:    "UteamupAssetTypeGet",
-				MCPOnly:     true,
 				Args: []ArgDef{
 					{Name: "assetTypeGuid", Description: "Asset type public GUID", Required: true, Type: "uuid"},
 				},
@@ -28,37 +29,39 @@ func init() {
 				Name:        "create",
 				Description: "Create an asset type from reviewed JSON",
 				ToolName:    "UteamupAssetTypeCreate",
-				MCPOnly:     true,
 				Flags: []FlagDef{
-					{Name: "request-file", Short: "f", BodyName: "model", Description: "JSON file containing the GUID-only asset type creation model", Required: true, Type: "string", JSONFile: true},
+					{Name: "request-file", Short: "f", Description: "JSON file containing the GUID-only asset type creation model", Required: true, Type: "string", RootJSONObjectFile: true},
 				},
 			},
 			{
 				Name:        "update",
+				RESTPath:    "{assetTypeGuid}",
+				HTTPMethod:  "PUT",
 				Description: "Update an asset type by public GUID from reviewed JSON",
 				ToolName:    "UteamupAssetTypeUpdate",
-				MCPOnly:     true,
 				Args: []ArgDef{
 					{Name: "assetTypeGuid", Description: "Asset type public GUID", Required: true, Type: "uuid"},
 				},
 				Flags: []FlagDef{
-					{Name: "request-file", Short: "f", BodyName: "model", Description: "JSON file containing the asset type update model", Required: true, Type: "string", JSONFile: true},
+					{Name: "request-file", Short: "f", Description: "JSON file containing the asset type update model", Required: true, Type: "string", RootJSONObjectFile: true},
 				},
 			},
 			{
 				Name:        "delete",
+				RESTPath:    "{assetTypeGuid}",
+				HTTPMethod:  "DELETE",
 				Description: "Delete an asset type by public GUID",
 				ToolName:    "UteamupAssetTypeDelete",
-				MCPOnly:     true,
 				Args: []ArgDef{
 					{Name: "assetTypeGuid", Description: "Asset type public GUID", Required: true, Type: "uuid"},
 				},
 			},
 			{
 				Name:        "fill-existing-assets",
+				RESTPath:    "attributes/{attributeGuid}/fill-existing",
+				HTTPMethod:  "POST",
 				Description: "Write one value for a field on every existing asset of its type that has none yet",
 				ToolName:    "UteamupAssetTypeFillExistingAssets",
-				MCPOnly:     true,
 				Args: []ArgDef{
 					{Name: "attributeGuid", Description: "Attribute definition public GUID", Required: true, Type: "uuid"},
 				},
@@ -69,9 +72,10 @@ func init() {
 			// --- Reseller catalog: reverse fitment lookup (stock-reseller-catalog §12) ---
 			{
 				Name:        "compatible-parts",
+				RESTPath:    "by-guid/{assetTypeGuid}/compatible-parts",
+				HTTPMethod:  "GET",
 				Description: "List the parts declared compatible with (that fit) an asset type",
 				ToolName:    "UteamupAssetTypeListCompatibleParts",
-				MCPOnly:     true,
 				Args: []ArgDef{
 					{Name: "assetTypeGuid", Description: "Asset type public GUID", Required: true, Type: "uuid"},
 				},

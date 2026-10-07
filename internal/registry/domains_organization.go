@@ -68,7 +68,9 @@ func init() {
 		{Name: "delete", Description: "Delete a tenant holiday by GUID", ToolName: "UteamupTenantHolidayDelete", Args: []ArgDef{{Name: "holidayGuid", Description: "Tenant holiday GUID", Required: true, Type: "string"}}, RESTPath: "by-guid/{holidayGuid}"},
 		{Name: "import", Description: "Import tenant holidays for a country and year", ToolName: "UteamupTenantHolidayImport", HTTPMethod: "POST", RESTPath: "import/{year}", Args: []ArgDef{{Name: "year", Description: "Holiday year", Required: true, Type: "int"}}, Flags: []FlagDef{{Name: "country-code", Description: "ISO 2-letter country code", Default: "IS", Type: "string"}}},
 	}})
-	Register(&Domain{Name: "role", Aliases: []string{"roles"}, Description: "Manage roles", Actions: listGetActions("Role")})
+	roleActions := listGetActions("Role")
+	roleActions[0].RESTPath = "tenant"
+	Register(&Domain{Name: "role", Aliases: []string{"roles"}, Description: "Manage roles", Actions: roleActions})
 }
 
 // codeTargetTypes mirrors the backend CodeTargetTypes table (api/codes/targets/{targetType}).
