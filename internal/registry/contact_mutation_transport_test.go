@@ -116,3 +116,91 @@ func TestContactReviewedMutationMetadataReachesNormalTransportExactly(t *testing
 		})
 	}
 }
+
+func TestContactTypeOriginalIntentReachesNormalGuidTransport(t *testing.T) {
+	for _, name := range []string{"create", "update", "delete"} {
+		t.Run(name, func(t *testing.T) {
+			home := t.TempDir()
+			t.Setenv("HOME", home)
+			t.Setenv("USERPROFILE", home)
+			const target = "11111111-1111-4111-8111-111111111111"
+			const operation = "22222222-2222-4222-8222-222222222222"
+			const revision = "2026-10-07T12:00:00.1234567Z"
+			seen := false
+			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				seen = true
+				path := "/api/contacttype"
+				if name != "create" {
+					path += "/" + target
+				}
+				if r.URL.Path != path || r.Method != map[string]string{"create": "POST", "update": "PUT", "delete": "DELETE"}[name] {
+					t.Errorf("wrong normal route/method: %s %s", r.Method, r.URL.Path)
+				}
+				fields := map[string]any{}
+				if name == "delete" {
+					for key, values := range r.URL.Query() {
+						if len(values) != 1 {
+							t.Error("duplicate original query metadata")
+						}
+						fields[key] = values[0]
+					}
+					if fields["mutationOutcomeVersion"] != "1" {
+						t.Error("missing negotiated query version")
+					}
+				} else {
+					raw, _ := io.ReadAll(r.Body)
+					if err := json.Unmarshal(raw, &fields); err != nil {
+						t.Error(err)
+					}
+					if fields["name"] != "Reviewed type" || fields["mutationOutcomeVersion"] != float64(1) {
+						t.Error("original type fields/version changed")
+					}
+				}
+				if fields["idempotencyKey"] != operation || name != "create" && fields["expectedUpdatedAt"] != revision {
+					t.Error("original operation or exact seven-tick revision changed")
+				}
+				if _, exists := fields["confirm"]; exists {
+					t.Error("local confirmation leaked into public request")
+				}
+				if _, exists := fields["contactTypeGuid"]; exists {
+					t.Error("route identity leaked into body/query")
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"schemaVersion":1,"outcome":"applied"}`))
+			}))
+			defer server.Close()
+			if err := auth.SaveToken(&auth.TokenData{APIOrigin: server.URL, AccessToken: "isolated-test-token", ExpiresAt: time.Now().Add(time.Hour)}); err != nil {
+				t.Fatal(err)
+			}
+			logger := logging.New(logging.LevelError)
+			format := "json"
+			factory := func() (*client.APIClient, error) {
+				return client.NewAPIClient(server.URL, time.Second, true, client.RetryOptions{MaxRetries: 0}, logger), nil
+			}
+			domain := findDomain("contact-type")
+			var action Action
+			for _, candidate := range domain.Actions {
+				if candidate.Name == name {
+					action = candidate
+					break
+				}
+			}
+			args := []string{"--idempotency-key", operation, "--confirm"}
+			if name != "create" {
+				args = append([]string{target}, args...)
+				args = append(args, "--expected-updated-at", revision)
+			}
+			if name != "delete" {
+				args = append(args, "--name", "Reviewed type")
+			}
+			command := buildActionCommand(domain, action, factory, logger, &format, nil)
+			command.SetArgs(args)
+			if err := command.Execute(); err != nil {
+				t.Fatal(err)
+			}
+			if !seen {
+				t.Fatal("reviewed normal ContactType request was not dispatched")
+			}
+		})
+	}
+}

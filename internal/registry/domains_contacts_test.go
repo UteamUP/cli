@@ -75,12 +75,51 @@ func TestContactTypeDomainIsGuidFirstAndMatchesRestController(t *testing.T) {
 		if found == nil {
 			t.Fatalf("missing %s action", actionName)
 		}
-		if found.RESTPath != "{externalGuid}" {
+		if found.RESTPath != "{contactTypeGuid}" {
 			t.Errorf("%s path = %q", actionName, found.RESTPath)
 		}
-		if len(found.Args) != 1 || found.Args[0].Name != "externalGuid" {
-			t.Errorf("%s must use one public externalGuid arg", actionName)
+		if len(found.Args) != 1 || found.Args[0].Name != "contactTypeGuid" {
+			t.Errorf("%s must use one public contactTypeGuid arg", actionName)
 		}
+	}
+}
+
+func TestContactTypeMutationsRequireOriginalReviewedNormalContract(t *testing.T) {
+	d := findDomain("contact-type")
+	for _, name := range []string{"create", "update", "delete"} {
+		t.Run(name, func(t *testing.T) {
+			var found *Action
+			for index := range d.Actions {
+				if d.Actions[index].Name == name {
+					found = &d.Actions[index]
+					break
+				}
+			}
+			if found == nil || found.MCPOnly {
+				t.Fatal("expected existing normal REST action")
+			}
+			wantTool := map[string]string{"create": "UteamupContacttypeCreate", "update": "UteamupContacttypeUpdate", "delete": "UteamupContacttypeDelete"}[name]
+			if found.ToolName != wantTool {
+				t.Fatal("tool mirror must match actual backend public name")
+			}
+			flags := map[string]FlagDef{}
+			for _, flag := range found.Flags {
+				flags[flag.Name] = flag
+			}
+			if !flags["idempotency-key"].Required || flags["idempotency-key"].Type != "uuid" || flags["mutation-outcome-version"].Default != 1 {
+				t.Fatal("original operation identity and explicit receipt version required")
+			}
+			if !flags["confirm"].Required || !flags["confirm"].MustBeTrue || !flags["confirm"].LocalOnly {
+				t.Fatal("reviewed mutation requires local explicit confirmation")
+			}
+			if name == "create" {
+				if _, present := flags["expected-updated-at"]; present {
+					t.Fatal("create must not invent a target revision")
+				}
+			} else if !flags["expected-updated-at"].Required || flags["expected-updated-at"].Type != "string" {
+				t.Fatal("original seven-tick revision must remain a required wire string")
+			}
+		})
 	}
 }
 
