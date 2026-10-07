@@ -166,10 +166,12 @@ func TestAssetTypeCompatiblePartsWired(t *testing.T) {
 		t.Errorf("compatible-parts tool = %q, want UteamupAssetTypeListCompatibleParts", a.ToolName)
 	}
 
-	// asset-type dispatches through the JSON-RPC tools/call transport, so no REST base
-	// path is derived for it and the hyphenated-route concern does not apply.
-	if !a.MCPOnly {
-		t.Error("compatible-parts must stay MCP-only")
+	if a.MCPOnly || a.HTTPMethod != "GET" || a.RESTPath != "by-guid/{assetTypeGuid}/compatible-parts" {
+		t.Errorf("compatible-parts must use the GUID REST read boundary: %+v", a)
+	}
+	const guid = "22222222-2222-4222-8222-222222222222"
+	if path, consumed := buildRESTPath(findDomainByName(t, "asset-type"), *a, map[string]any{"assetTypeGuid": guid}); path != "/api/asset-type/by-guid/"+guid+"/compatible-parts" || len(consumed) != 1 {
+		t.Errorf("compatible-parts path = %q consumed = %+v", path, consumed)
 	}
 
 	if len(a.Args) != 1 || a.Args[0].Name != "assetTypeGuid" || !a.Args[0].Required || a.Args[0].Type != "uuid" {
