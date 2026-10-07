@@ -544,8 +544,8 @@ func stockActionFlag(t *testing.T, actionName, flagName string) *FlagDef {
 func TestStockTransferActionWired(t *testing.T) {
 	action := findStockAction(t, "transfer")
 
-	if action.ToolName != "TransferInventory" {
-		t.Errorf("transfer ToolName = %q, want %q", action.ToolName, "TransferInventory")
+	if action.ToolName != "UteamupInventoryTransfer" {
+		t.Errorf("transfer ToolName = %q, want %q", action.ToolName, "UteamupInventoryTransfer")
 	}
 	if action.HTTPMethod != "POST" {
 		t.Errorf("transfer HTTPMethod = %q, want POST", action.HTTPMethod)
@@ -557,12 +557,12 @@ func TestStockTransferActionWired(t *testing.T) {
 	// GUIDs only at the boundary: every identifier flag is a string Guid.
 	for _, name := range []string{"stock-item-guid", "destination-stock-guid"} {
 		f := stockActionFlag(t, "transfer", name)
-		if !f.Required || f.Type != "string" {
+		if !f.Required || f.Type != "uuid" {
 			t.Errorf("transfer flag %q must be a Required string Guid, got %+v", name, f)
 		}
 	}
-	if qty := stockActionFlag(t, "transfer", "quantity"); !qty.Required || qty.Type != "float" {
-		t.Errorf("transfer quantity must be a Required float flag, got %+v", qty)
+	if qty := stockActionFlag(t, "transfer", "quantity"); !qty.Required || qty.Type != "decimal" {
+		t.Errorf("transfer quantity must be a Required exact decimal flag, got %+v", qty)
 	}
 	for _, name := range []string{"destination-bin-guid", "reason", "reference"} {
 		if f := stockActionFlag(t, "transfer", name); f.Required {
@@ -2059,5 +2059,44 @@ func TestToolAndChemicalConsumableActionsWired(t *testing.T) {
 		if v, ok := quantity.Default.(float64); !ok || v != 1.0 {
 			t.Errorf("%s consumable-add --quantity Default = %#v, want float64 1.0 (an int literal panics the registry)", owner.domain, quantity.Default)
 		}
+	}
+}
+
+func TestStockTransferPreparationAndReviewedIntent(t *testing.T) {
+	context := findStockAction(t, "transfer-context")
+	if context.ToolName != "UteamupInventoryTransferContext" || context.HTTPMethod != "GET" || context.RESTPath != "items/{guid}/transfer-context" {
+		t.Fatalf("preparation must use the existing fixed read endpoint: %+v", context)
+	}
+	if len(context.Args) != 1 || context.Args[0].Name != "guid" || !context.Args[0].Required || context.Args[0].Type != "uuid" {
+		t.Fatal("preparation requires a public source GUID")
+	}
+	dest := stockActionFlag(t, "transfer-context", "destination-stock-guid")
+	if !dest.Required || dest.Type != "uuid" || dest.QueryName != "destinationStockGuid" {
+		t.Fatal("preparation destination must remain a GUID query")
+	}
+	for _, name := range []string{"idempotency-key", "expected-updated-at", "expected-source-catalog-sha256", "destination-expectation", "expected-destination-stock-updated-at"} {
+		if !stockActionFlag(t, "transfer", name).Required {
+			t.Fatalf("reviewed transfer missing required %s", name)
+		}
+	}
+	key := stockActionFlag(t, "transfer", "idempotency-key")
+	if key.Type != "uuid" {
+		t.Fatal("stable operation identity must be a GUID")
+	}
+	choice := stockActionFlag(t, "transfer", "destination-expectation")
+	if len(choice.AllowedValues) != 2 || choice.AllowedValues[0] != "absent" || choice.AllowedValues[1] != "existing" {
+		t.Fatal("destination decision must be closed")
+	}
+	confirm := stockActionFlag(t, "transfer", "confirm")
+	if !confirm.Required || !confirm.MustBeTrue || !confirm.LocalOnly {
+		t.Fatal("confirmation must be explicit and never sent as API authority")
+	}
+	units := stockActionFlag(t, "transfer", "unit-guids-file")
+	if !units.JSONFile || units.BodyName != "unitGuids" {
+		t.Fatal("serialized units must use the existing JSON array transport")
+	}
+	selected := stockActionFlag(t, "transfer", "destination-item-guid")
+	if selected.Type != "uuid" || selected.Required {
+		t.Fatal("selected public GUID applies only to existing destinations")
 	}
 }

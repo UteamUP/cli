@@ -56,7 +56,7 @@ type FlagDef struct {
 	Short       string
 	Description string
 	Default     any
-	Type        string // "string", "int", "bool", "float", "stringSlice", "uuid", "non-empty-uuid"
+	Type        string // "string", "int", "bool", "float", "decimal", "stringSlice", "uuid", "non-empty-uuid"
 	Required    bool
 	// Sensitive keeps the value available to the outgoing request while
 	// replacing it with [REDACTED] in diagnostic argument/header logs.
@@ -330,6 +330,14 @@ func buildActionCommand(domain *Domain, action Action, apiClientFactory APIClien
 			} else {
 				cmd.Flags().StringSlice(flag.Name, def, flag.Description)
 			}
+		case "decimal":
+			def := ""
+			if flag.Default != nil {
+				if value, ok := flag.Default.(string); ok {
+					def = value
+				}
+			}
+			cmd.Flags().String(flag.Name, def, flag.Description)
 		default: // string
 			def := ""
 			if flag.Default != nil {
@@ -387,6 +395,9 @@ func validateActionInput(cmd *cobra.Command, args []string, action Action) error
 		}
 	}
 
+	if _, err := exactDecimalFlags(cmd, action); err != nil {
+		return err
+	}
 	for _, flag := range action.Flags {
 		if !cmd.Flags().Changed(flag.Name) {
 			continue
@@ -566,6 +577,10 @@ func containsExact(values []string, candidate string) bool {
 }
 
 func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Action, apiClient *client.APIClient, logger *logging.Logger, outputFormat *string, export *ExportConfig) error {
+	decimals, decimalErr := exactDecimalFlags(cmd, action)
+	if decimalErr != nil {
+		return decimalErr
+	}
 	toolArgs := make(map[string]any)
 	queryParams := make(map[string]any)
 	downloadOutputPath := ""
@@ -608,6 +623,20 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 			continue
 		}
 		if flag.LocalOnly {
+			continue
+		}
+		if flag.Type == "decimal" {
+			if value, ok := decimals[flag.Name]; ok {
+				if flag.QueryName != "" {
+					queryParams[flag.QueryName] = value
+				} else {
+					name := flag.BodyName
+					if name == "" {
+						name = toCamelCase(flag.Name)
+					}
+					toolArgs[name] = value
+				}
+			}
 			continue
 		}
 		if flag.QueryName != "" {
@@ -1429,4 +1458,62 @@ func validateRouteValues(action Action, args map[string]any) error {
 		}
 	}
 	return nil
+}
+
+// Exact decimals travel as bounded JSON number lexemes, never binary floating point.
+// Server domain validation remains authoritative for sign, range and quantity precision.
+var exactDecimalPattern = regexp.MustCompile(`^-?(0|[1-9][0-9]*)(\.[0-9]+)?$`)
+
+func parseExactDecimal(value string) (json.Number, error) {
+	if len(value) == 0 || len(value) > 60 || !exactDecimalPattern.MatchString(value) {
+		return "", fmt.Errorf("must be an invariant decimal number without exponent or whitespace")
+	}
+	unsigned := strings.TrimPrefix(value, "-")
+	parts := strings.Split(unsigned, ".")
+	digits := len(parts[0])
+	if len(parts) == 2 {
+		if len(parts[1]) > 28 {
+			return "", fmt.Errorf("decimal scale exceeds 28")
+		}
+		digits += len(parts[1])
+	}
+	if digits > 29 {
+		return "", fmt.Errorf("decimal precision exceeds 29 digits")
+	}
+	return json.Number(value), nil
+}
+
+func exactDecimalFlags(cmd *cobra.Command, action Action) (map[string]json.Number, error) {
+	values := make(map[string]json.Number)
+	for _, flag := range action.Flags {
+		if flag.Type != "decimal" {
+			continue
+		}
+		if flag.HeaderName != "" || flag.JSONFile || flag.RootJSONObjectFile || flag.UploadFile || flag.LocalOnly {
+			return nil, fmt.Errorf("decimal flag --%s must emit a numeric body or query value", flag.Name)
+		}
+		if !cmd.Flags().Changed(flag.Name) && flag.Default == nil {
+			if flag.Required {
+				return nil, fmt.Errorf("--%s is required", flag.Name)
+			}
+			continue
+		}
+		value, err := cmd.Flags().GetString(flag.Name)
+		if err != nil {
+			return nil, fmt.Errorf("invalid decimal flag --%s: %w", flag.Name, err)
+		}
+		if !cmd.Flags().Changed(flag.Name) {
+			var ok bool
+			value, ok = flag.Default.(string)
+			if !ok {
+				return nil, fmt.Errorf("decimal default --%s must be a string literal", flag.Name)
+			}
+		}
+		number, err := parseExactDecimal(value)
+		if err != nil {
+			return nil, fmt.Errorf("invalid --%s: %w", flag.Name, err)
+		}
+		values[flag.Name] = number
+	}
+	return values, nil
 }
