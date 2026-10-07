@@ -1,0 +1,118 @@
+package registry
+
+import (
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/uteamup/cli/internal/auth"
+	"github.com/uteamup/cli/internal/client"
+	"github.com/uteamup/cli/internal/logging"
+)
+
+func TestContactReviewedMutationMetadataReachesNormalTransportExactly(t *testing.T) {
+	for _, name := range []string{"update", "delete", "update-conflicting-file"} {
+		t.Run(name, func(t *testing.T) {
+			actionName := name
+			if name == "update-conflicting-file" {
+				actionName = "update"
+			}
+			home := t.TempDir()
+			t.Setenv("HOME", home)
+			t.Setenv("USERPROFILE", home)
+			const guid = "11111111-1111-4111-8111-111111111111"
+			const operation = "22222222-2222-4222-8222-222222222222"
+			const revision = "2026-10-07T12:00:00.1234567Z"
+			seen := false
+			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				seen = true
+				if r.URL.Path != "/api/contact/"+guid {
+					t.Errorf("wrong route %s", r.URL.Path)
+				}
+				fields := map[string]any{}
+				if actionName == "update" {
+					if r.Method != http.MethodPut {
+						t.Errorf("wrong method %s", r.Method)
+					}
+					raw, _ := io.ReadAll(r.Body)
+					if err := json.Unmarshal(raw, &fields); err != nil {
+						t.Error(err)
+					}
+					if fields["mutationOutcomeVersion"] != float64(1) {
+						t.Error("missing v1")
+					}
+				} else {
+					if r.Method != http.MethodDelete {
+						t.Errorf("wrong method %s", r.Method)
+					}
+					for key, values := range r.URL.Query() {
+						if len(values) != 1 {
+							t.Error("duplicate query value")
+						}
+						fields[key] = values[0]
+					}
+					if fields["mutationOutcomeVersion"] != "1" {
+						t.Error("missing v1")
+					}
+				}
+				if fields["idempotencyKey"] != operation || fields["expectedUpdatedAt"] != revision {
+					t.Error("original key/revision changed")
+				}
+				if _, exists := fields["confirm"]; exists {
+					t.Error("local confirmation leaked")
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"outcome":"applied"}`))
+			}))
+			defer server.Close()
+			if err := auth.SaveToken(&auth.TokenData{APIOrigin: server.URL, AccessToken: "isolated-test-token", ExpiresAt: time.Now().Add(time.Hour)}); err != nil {
+				t.Fatal(err)
+			}
+			logger := logging.New(logging.LevelError)
+			format := "json"
+			factory := func() (*client.APIClient, error) {
+				return client.NewAPIClient(server.URL, time.Second, true, client.RetryOptions{MaxRetries: 0}, logger), nil
+			}
+			domain := findDomain("contact")
+			var action Action
+			for _, candidate := range domain.Actions {
+				if candidate.Name == actionName {
+					action = candidate
+					break
+				}
+			}
+			command := buildActionCommand(domain, action, factory, logger, &format, nil)
+			args := []string{guid, "--idempotency-key", operation, "--expected-updated-at", revision, "--confirm"}
+			if actionName == "update" {
+				file := filepath.Join(home, "contact.json")
+				fields := []byte(`{"firstName":"Reviewed","lastName":"Contact","email":"contact@example.test"}`)
+				if name == "update-conflicting-file" {
+					fields = []byte(`{"firstName":"Reviewed","lastName":"Contact","email":"contact@example.test","idempotencyKey":"33333333-3333-4333-8333-333333333333"}`)
+				}
+				if err := os.WriteFile(file, fields, 0600); err != nil {
+					t.Fatal(err)
+				}
+				args = append(args, "--from-json", file)
+			}
+			command.SetArgs(args)
+			err := command.Execute()
+			if name == "update-conflicting-file" {
+				if err == nil || seen {
+					t.Fatal("conflicting original metadata must fail before transport")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !seen {
+				t.Fatal("normal request not dispatched")
+			}
+		})
+	}
+}

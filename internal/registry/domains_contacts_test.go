@@ -83,3 +83,44 @@ func TestContactTypeDomainIsGuidFirstAndMatchesRestController(t *testing.T) {
 		}
 	}
 }
+
+func TestContactMutationsAreGuidFirstReviewedNormalRoutes(t *testing.T) {
+	d := findDomain("contact")
+	for _, name := range []string{"create", "update", "delete"} {
+		t.Run(name, func(t *testing.T) {
+			var found *Action
+			for i := range d.Actions {
+				if d.Actions[i].Name == name {
+					found = &d.Actions[i]
+					break
+				}
+			}
+			if found == nil {
+				t.Fatal("missing action")
+			}
+			want := map[string]string{"create": "UteamupContactCreate", "update": "UteamupContactUpdate", "delete": "UteamupContactDelete"}[name]
+			if found.ToolName != want || found.MCPOnly {
+				t.Fatal("must use existing normal REST with canonical tool mirror")
+			}
+			if name != "create" && (len(found.Args) != 1 || found.Args[0].Name != "contactGuid" || found.Args[0].Type != "uuid") {
+				t.Fatal("public GUID required")
+			}
+			flags := map[string]FlagDef{}
+			for _, flag := range found.Flags {
+				flags[flag.Name] = flag
+			}
+			if !flags["idempotency-key"].Required || flags["idempotency-key"].Type != "uuid" {
+				t.Fatal("original operation key required")
+			}
+			if flags["mutation-outcome-version"].Default != 1 {
+				t.Fatal("explicit v1 receipt negotiation required")
+			}
+			if !flags["confirm"].Required || !flags["confirm"].MustBeTrue || !flags["confirm"].LocalOnly {
+				t.Fatal("review confirmation required")
+			}
+			if name != "create" && (!flags["expected-updated-at"].Required || flags["expected-updated-at"].Type != "string") {
+				t.Fatal("exact original wire revision required")
+			}
+		})
+	}
+}
