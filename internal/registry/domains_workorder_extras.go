@@ -160,8 +160,8 @@ func init() {
 		},
 	})
 	Register(&Domain{Name: "workorder-watchlist", Description: "Manage work order watchlists", Actions: crudActions("WorkorderWatchlist")})
-	Register(&Domain{Name: "tasklist", Aliases: []string{"tasks"}, Description: "Manage task lists", Actions: crudActions("TaskList")})
-	Register(&Domain{Name: "checklist", Aliases: []string{"checklists"}, Description: "Manage checklists", Actions: crudActions("CheckList")})
+	Register(&Domain{Name: "tasklist", Aliases: []string{"tasks"}, Description: "Manage task lists and required work-order type policies", APIPath: "/api/tasklist", Actions: listTemplateActions("Tasklist")})
+	Register(&Domain{Name: "checklist", Aliases: []string{"checklists"}, Description: "Manage conditional checklists and required work-order type policies", APIPath: "/api/checklist", Actions: listTemplateActions("Checklist")})
 	Register(&Domain{Name: "language", Aliases: []string{"lang"}, Description: "Language utilities (AI translation)", Actions: []Action{
 		{
 			Name:        "translate",
