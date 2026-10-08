@@ -39,7 +39,7 @@ func TestEveryRegisteredActionPreservesPermissionDenial(t *testing.T) {
 		_, _ = w.Write([]byte(body))
 	}))
 	defer server.Close()
-	for _, method := range []string{"login", "api-key"} {
+	for _, method := range []string{"login", "saml", "apikey"} {
 		if err := auth.SaveToken(&auth.TokenData{APIOrigin: server.URL, AccessToken: "rbac-denied",
 			AuthMethod: method, ExpiresAt: time.Now().Add(time.Hour), TenantGUID: guid}); err != nil {
 			t.Fatal(err)
@@ -88,7 +88,7 @@ func TestEveryRegisteredActionPreservesPermissionDenial(t *testing.T) {
 					before := requests.Load()
 					var runErr error
 					stdout := captureRegistryStdout(t, func() { runErr = command.Execute() })
-					if method == "login" && action.MCPOnly {
+					if method != "apikey" && action.MCPOnly {
 						var authErr *clierrors.AuthError
 						if !errors.As(runErr, &authErr) || requests.Load() != before || stdout != "" {
 							t.Fatalf("API-key-only action did not fail closed for a human login: %v", runErr)
