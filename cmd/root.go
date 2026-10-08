@@ -114,6 +114,14 @@ func registerDomainCommands() {
 	for _, cmd := range registry.DefaultRegistry.BuildCommands(func() (*client.APIClient, error) {
 		return newDomainAPIClient(logger, exportCfg)
 	}, logger, &outputFormat, exportCfg) {
+		if cmd.Name() == "tenant" {
+			for _, action := range cmd.Commands() {
+				if action.Name() == "get-saml" || action.Name() == "update-saml" {
+					tenantCmd.AddCommand(action)
+				}
+			}
+			continue
+		}
 		rootCmd.AddCommand(cmd)
 	}
 }

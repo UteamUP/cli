@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync/atomic"
@@ -49,6 +50,38 @@ type samlInteraction struct {
 	prompt func(string, string) (string, error)
 }
 
+type samlStartTarget struct {
+	company, tenantGUID, ownerToken string
+}
+
+var samlTenantGUID = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+
+// TestSAML validates a disabled connection without replacing the owner's session.
+func (a *Client) TestSAML(ctx context.Context, tenantGUID, ownerToken string) error {
+	return a.testSaml(ctx, tenantGUID, ownerToken, launchSamlBrowser)
+}
+
+func (a *Client) testSaml(ctx context.Context, tenantGUID, ownerToken string, launch func(context.Context, string) error) error {
+	if !samlTenantGUID.MatchString(tenantGUID) || tenantGUID == "00000000-0000-0000-0000-000000000000" || ownerToken == "" {
+		return fmt.Errorf("SAML setup test requires a tenant GUID and an authenticated owner session")
+	}
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Minute)
+	defer cancel()
+	code, verifier, err := a.runSamlBrowser(ctx, samlStartTarget{tenantGUID: tenantGUID, ownerToken: ownerToken}, launch)
+	if err != nil {
+		return err
+	}
+	var response samlExchangeResponse
+	err = a.samlPost(ctx, "/api/auth/saml/exchange", samlExchangeRequest{Code: code, CodeVerifier: verifier, ClientID: "cli"}, &response, "")
+	if err != nil {
+		return err
+	}
+	if response.Status != "setup_validated" || !strings.EqualFold(response.TenantGUID, tenantGUID) || response.Profile != nil || response.ContinuationToken != "" {
+		return fmt.Errorf("SAML setup test did not validate the selected tenant; owner session was retained")
+	}
+	return nil
+}
+
 // LoginWithSAML opens the company identity provider in the system browser.
 func (a *Client) LoginWithSAML(ctx context.Context, company string) (*TokenData, error) {
 	reader := bufio.NewReader(os.Stdin)
@@ -73,17 +106,25 @@ func (a *Client) loginWithSaml(ctx context.Context, company string, interaction 
 	}
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer cancel()
+	code, verifier, err := a.runSamlBrowser(ctx, samlStartTarget{company: company}, interaction.launch)
+	if err != nil {
+		return nil, err
+	}
+	return a.completeSamlLogin(ctx, code, verifier, interaction.prompt)
+}
+
+func (a *Client) runSamlBrowser(ctx context.Context, target samlStartTarget, launch func(context.Context, string) error) (string, string, error) {
 	verifier, err := GenerateCodeVerifier()
 	if err != nil {
-		return nil, fmt.Errorf("creating SAML proof: %w", err)
+		return "", "", fmt.Errorf("creating SAML proof: %w", err)
 	}
 	state, err := GenerateCodeVerifier()
 	if err != nil {
-		return nil, fmt.Errorf("creating SAML state: %w", err)
+		return "", "", fmt.Errorf("creating SAML state: %w", err)
 	}
 	listener, err := net.Listen("tcp4", "127.0.0.1:0")
 	if err != nil {
-		return nil, fmt.Errorf("opening SAML callback listener: %w", err)
+		return "", "", fmt.Errorf("opening SAML callback listener: %w", err)
 	}
 	defer listener.Close()
 	callback := make(chan samlCallback, 1)
@@ -96,30 +137,40 @@ func (a *Client) loginWithSaml(ctx context.Context, company string, interaction 
 	defer server.Close()
 	go func() { _ = server.Serve(listener) }()
 	var start samlStartResponse
-	err = a.samlPost(ctx, "/api/auth/saml/start", map[string]string{
-		"companyCode": company, "clientId": "cli",
+	startPath := "/api/auth/saml/start"
+	request := map[string]string{
+		"clientId": "cli",
 		"redirectUri": "http://" + listener.Addr().String() + samlCallbackPath,
 		"state":       state, "codeChallenge": CodeChallenge(verifier), "codeChallengeMethod": "S256",
-	}, &start)
+	}
+	if target.tenantGUID != "" {
+		startPath = "/api/tenant/saml/test?" + url.Values{"tenantGuid": {target.tenantGUID}}.Encode()
+	} else {
+		request["companyCode"] = target.company
+	}
+	err = a.samlPost(ctx, startPath, request, &start, target.ownerToken)
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 	authorize, err := url.Parse(start.AuthenticationURL)
 	if err != nil || authorize.Scheme != "https" || authorize.Hostname() == "" || authorize.User != nil || authorize.Fragment != "" || !start.ExpiresAt.After(time.Now()) {
-		return nil, fmt.Errorf("server returned an invalid or expired SAML sign-in link")
+		return "", "", fmt.Errorf("server returned an invalid or expired SAML sign-in link")
 	}
-	if err := interaction.launch(ctx, authorize.String()); err != nil {
-		return nil, fmt.Errorf("opening SAML sign-in: %w", err)
+	if err := launch(ctx, authorize.String()); err != nil {
+		return "", "", fmt.Errorf("opening SAML sign-in: %w", err)
 	}
 	select {
 	case result := <-callback:
 		_ = server.Close()
 		if result.err != nil {
-			return nil, result.err
+			return "", "", result.err
 		}
-		return a.completeSamlLogin(ctx, result.code, verifier, interaction.prompt)
+		return result.code, verifier, nil
 	case <-ctx.Done():
-		return nil, fmt.Errorf("SAML sign-in cancelled or timed out; retry with --saml --company %s", security.SafeText(company))
+		if target.tenantGUID != "" {
+			return "", "", fmt.Errorf("SAML setup test cancelled or timed out; retry tenant test-saml")
+		}
+		return "", "", fmt.Errorf("SAML sign-in cancelled or timed out; retry with --saml --company %s", security.SafeText(target.company))
 	}
 }
 
@@ -147,9 +198,12 @@ func samlCallbackHandler(state, host string, callback chan<- samlCallback) http.
 		if query.Get("error") != "" {
 			result.err = fmt.Errorf("SAML sign-in was cancelled or refused; retry using your company code")
 		}
-		callback <- result
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write([]byte("Return to UteamUP CLI to finish sign-in. You can close this window."))
+		if flusher, ok := w.(http.Flusher); ok {
+			flusher.Flush()
+		}
+		callback <- result
 	})
 }
 
@@ -166,7 +220,7 @@ func (a *Client) completeSamlLogin(ctx context.Context, code, verifier string, p
 	var challenge *samlExchangeResponse
 	for attempts := 0; attempts < 6; attempts++ {
 		var response samlExchangeResponse
-		if err := a.samlPost(ctx, "/api/auth/saml/exchange", request, &response); err != nil {
+		if err := a.samlPost(ctx, "/api/auth/saml/exchange", request, &response, ""); err != nil {
 			if challenge == nil || ctx.Err() != nil {
 				return nil, err
 			}
@@ -213,7 +267,7 @@ func (a *Client) acceptSamlSession(response *samlExchangeResponse) (*TokenData, 
 	return token, nil
 }
 
-func (a *Client) samlPost(ctx context.Context, path string, data, result any) error {
+func (a *Client) samlPost(ctx context.Context, path string, data, result any, ownerToken string) error {
 	body, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -224,6 +278,9 @@ func (a *Client) samlPost(ctx context.Context, path string, data, result any) er
 	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("X-Requested-With", "XMLHttpRequest")
+	if ownerToken != "" {
+		request.Header.Set("Authorization", "Bearer "+ownerToken)
+	}
 	response, err := a.httpClient().Do(request)
 	if err != nil {
 		return fmt.Errorf("SAML service unavailable; check your connection and retry")
