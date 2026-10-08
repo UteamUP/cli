@@ -856,7 +856,11 @@ func (c *APIClient) CallRESTDownload(ctx context.Context, method, path, outputPa
 	}
 	defer response.Body.Close()
 	if response.StatusCode >= 400 {
-		return 0, fmt.Errorf("download failed with status %d", response.StatusCode)
+		body, readErr := security.ReadAll(response.Body)
+		if readErr != nil {
+			return 0, readErr
+		}
+		return 0, clierrors.NewAPIError(response.StatusCode, response.Status, string(body))
 	}
 	if response.ContentLength > maxDownloadBytes {
 		return 0, fmt.Errorf("download exceeds limit")

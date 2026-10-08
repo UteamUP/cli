@@ -150,7 +150,8 @@ type Action struct {
 	RESTBasePath string
 	// UseDomainBasePath routes this action to the exact domain API path without
 	// the conventional action-derived suffix (for example, a collection search
-	// served at the collection root). It cannot be combined with path overrides.
+	// served at the collection root). RESTBasePath may select another domain root;
+	// RESTPath cannot add a suffix when the root itself is requested.
 	UseDomainBasePath bool
 	// RESTPath is the path suffix appended to the domain's basePath. It supports
 	// `{argName}` placeholders that are substituted from the action's positional
@@ -460,7 +461,7 @@ func validateActionDefinition(action Action) error {
 			)
 		}
 	}
-	if action.UseDomainBasePath && (action.RESTBasePath != "" || action.RESTPath != "") {
+	if action.UseDomainBasePath && action.RESTPath != "" {
 		return fmt.Errorf(
 			"invalid action %s: domain-base routing cannot use REST path overrides",
 			action.Name,

@@ -70,7 +70,15 @@ func TestEveryRegisteredActionPreservesPermissionDenial(t *testing.T) {
 						if flag.StrongETag {
 							value = `"rbac-version"`
 						}
-						args = append(args, "--"+flag.Name+"="+value)
+						if flag.Sensitive {
+							protected := filepath.Join(t.TempDir(), "protected-input")
+							if err := os.WriteFile(protected, []byte(value), 0600); err != nil {
+								t.Fatal(err)
+							}
+							args = append(args, "--"+flag.Name+"-file="+protected)
+						} else {
+							args = append(args, "--"+flag.Name+"="+value)
+						}
 					}
 					format := "json"
 					command := buildActionCommand(domain, action, func() (*client.APIClient, error) { return api, nil },
@@ -80,6 +88,13 @@ func TestEveryRegisteredActionPreservesPermissionDenial(t *testing.T) {
 					before := requests.Load()
 					var runErr error
 					stdout := captureRegistryStdout(t, func() { runErr = command.Execute() })
+					if method == "login" && action.MCPOnly {
+						var authErr *clierrors.AuthError
+						if !errors.As(runErr, &authErr) || requests.Load() != before || stdout != "" {
+							t.Fatalf("API-key-only action did not fail closed for a human login: %v", runErr)
+						}
+						return
+					}
 					var apiErr *clierrors.APIError
 					if !errors.As(runErr, &apiErr) || apiErr.StatusCode != http.StatusForbidden || apiErr.Body != body {
 						t.Fatalf("permission denial was not preserved: %v", runErr)
