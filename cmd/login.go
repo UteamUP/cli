@@ -22,6 +22,7 @@ var (
 	loginKeyAuth     bool
 	loginSAML        bool
 	loginCompany     string
+	loginEmail       string
 )
 
 var loginCmd = &cobra.Command{
@@ -35,6 +36,10 @@ Interactive login (email/password):
 
 Company SSO (system browser):
   uteamup login --saml --company iteggs --profile dev
+  uteamup login --saml --email gisli@iteggs.com --profile dev
+
+Email discovery sends only the domain to the selected backend. It requires a
+verified company domain; password and provider sign-in remain available.
 
 API key authentication:
   uteamup login --api-key-auth
@@ -54,6 +59,7 @@ func init() {
 	loginCmd.Flags().BoolVar(&loginKeyAuth, "api-key-auth", false, "Prompt for API credentials without echo")
 	loginCmd.Flags().BoolVar(&loginSAML, "saml", false, "Sign in through your company SAML identity provider")
 	loginCmd.Flags().StringVar(&loginCompany, "company", "", "Company code for SAML sign-in")
+	loginCmd.Flags().StringVar(&loginEmail, "email", "", "Find optional SAML sign-in using only this email's domain (requires --saml)")
 }
 
 func runLogin(cmd *cobra.Command, args []string) error {
@@ -70,8 +76,14 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	if loginCompany != "" && !loginSAML {
 		return fmt.Errorf("--company requires --saml")
 	}
-	if loginSAML && loginCompany == "" {
-		return fmt.Errorf("--saml requires --company")
+	if loginEmail != "" && !loginSAML {
+		return fmt.Errorf("--email requires --saml for domain discovery")
+	}
+	if loginCompany != "" && loginEmail != "" {
+		return fmt.Errorf("choose --company or --email for SAML login")
+	}
+	if loginSAML && loginCompany == "" && loginEmail == "" {
+		return fmt.Errorf("--saml requires --company or --email")
 	}
 	logger := logging.Default()
 	if verbose {
@@ -112,7 +124,15 @@ func runLogin(cmd *cobra.Command, args []string) error {
 		ctx, stop := signal.NotifyContext(loginContext, os.Interrupt)
 		defer stop()
 		loginContext = ctx
-		token, err = authClient.LoginWithSAML(ctx, loginCompany)
+		company := loginCompany
+		if loginEmail != "" {
+			company, err = authClient.DiscoverSAMLCompany(ctx, loginEmail)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "Company SSO found: %s. Continue sign-in in your browser.\n", security.SafeText(company))
+		}
+		token, err = authClient.LoginWithSAML(ctx, company)
 		if err != nil {
 			return err
 		}

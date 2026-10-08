@@ -7,6 +7,37 @@ func init() {
 		Description: "Manage tenants (organizations)",
 		Actions: append(listGetActions("Tenant"), []Action{
 			{
+				Name: "saml-domain-list", Description: "List exact SAML discovery domains and DNS ownership challenges (Tenant.ManageSaml)",
+				ToolName: "uteamup_tenant_saml_domain_list", HTTPMethod: "GET", RESTPath: "saml/domains",
+				Args:            []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "non-empty-uuid", QueryName: "tenantGuid"}},
+				RejectExtraArgs: true,
+			},
+			{
+				Name: "saml-domain-register", Description: "Register a domain disabled until DNS TXT verification; requires a saved SAML connection",
+				ToolName: "uteamup_tenant_saml_domain_register", HTTPMethod: "POST", RESTPath: "saml/domains",
+				Args:            []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "non-empty-uuid", QueryName: "tenantGuid"}},
+				Flags:           []FlagDef{{Name: "domain", Description: "Exact email domain, for example iteggs.com", Required: true, Type: "string"}},
+				RejectExtraArgs: true,
+			},
+			{
+				Name: "saml-domain-verify", Description: "Verify the current DNS TXT record and enable optional company SSO discovery",
+				ToolName: "uteamup_tenant_saml_domain_verify", HTTPMethod: "POST", RESTPath: "saml/domains/{domainGuid}/verify",
+				Args: []ArgDef{
+					{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "non-empty-uuid", QueryName: "tenantGuid"},
+					{Name: "domainGuid", Description: "Registered domain GUID", Required: true, Type: "non-empty-uuid"},
+				},
+				RejectExtraArgs: true,
+			},
+			{
+				Name: "saml-domain-disable", Description: "Disable SSO discovery and rotate its DNS challenge; retain the domain and business data",
+				ToolName: "uteamup_tenant_saml_domain_disable", HTTPMethod: "DELETE", RESTPath: "saml/domains/{domainGuid}",
+				Args: []ArgDef{
+					{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "non-empty-uuid", QueryName: "tenantGuid"},
+					{Name: "domainGuid", Description: "Registered domain GUID", Required: true, Type: "non-empty-uuid"},
+				},
+				RejectExtraArgs: true,
+			},
+			{
 				Name: "get-saml", Description: "Read tenant SAML setup and certificate expiry (Tenant.ManageSaml)",
 				ToolName: "uteamup_tenant_saml_get", HTTPMethod: "GET", RESTPath: "saml",
 				Args:            []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "non-empty-uuid", QueryName: "tenantGuid"}},

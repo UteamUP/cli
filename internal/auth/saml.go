@@ -283,6 +283,7 @@ func (a *Client) samlPost(ctx context.Context, path string, data, result any, ow
 		return err
 	}
 	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Cache-Control", "no-store")
 	request.Header.Set("X-Requested-With", "XMLHttpRequest")
 	if ownerToken != "" {
 		request.Header.Set("Authorization", "Bearer "+ownerToken)
