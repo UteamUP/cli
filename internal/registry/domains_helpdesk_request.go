@@ -1,14 +1,14 @@
 package registry
 
-// Helpdesk cases and the tenant's intake mode. A Helpdesk-seat user submits and lists
-// their own cases; a reviewer with WorkRequest.Review works the queue: start review,
-// decline with a note, or upgrade to one work order, optionally from a template.
-func init() {
+// Pending Helpdesk intake contracts. Do not register these domains until the
+// request routes, MCP tools and intake settings exist on the backend. Sending
+// intake-only fields to today's license settings endpoint resets omitted fields.
+func pendingHelpdeskDomains() []*Domain {
 	requestGUIDArg := []ArgDef{
 		{Name: "requestGuid", Description: "Helpdesk case external GUID", Required: true, Type: "uuid"},
 	}
 
-	Register(&Domain{
+	requests := &Domain{
 		Name:        "helpdesk-request",
 		Aliases:     []string{"helpdesk-requests", "hdr"},
 		Description: "Submit helpdesk cases and review the helpdesk queue by GUID",
@@ -70,13 +70,13 @@ func init() {
 				},
 			},
 		},
-	})
+	}
 
 	tenantGUIDArg := []ArgDef{
 		{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "uuid"},
 	}
 
-	Register(&Domain{
+	intake := &Domain{
 		Name:        "helpdesk-intake",
 		Description: "Read or set what happens to new helpdesk cases in a tenant",
 		APIPath:     "/api/tenant",
@@ -102,5 +102,6 @@ func init() {
 				},
 			},
 		},
-	})
+	}
+	return []*Domain{requests, intake}
 }

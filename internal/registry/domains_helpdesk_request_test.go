@@ -4,20 +4,25 @@ import "testing"
 
 func helpdeskDomainAction(t *testing.T, domainName, actionName string) (*Domain, Action) {
 	t.Helper()
-	domain := findDomain(domainName)
+	var domain *Domain
+	for _, pending := range pendingHelpdeskDomains() {
+		if pending.Name == domainName {
+			domain = pending
+		}
+	}
 	if domain == nil {
-		t.Fatalf("%s domain is not registered", domainName)
+		t.Fatalf("%s pending domain is missing", domainName)
 	}
 	for _, action := range domain.Actions {
 		if action.Name == actionName {
 			return domain, action
 		}
 	}
-	t.Fatalf("%s action %q is not registered", domainName, actionName)
+	t.Fatalf("%s pending action %q is missing", domainName, actionName)
 	return nil, Action{}
 }
 
-func TestHelpdeskRequestRoutesMirrorTheController(t *testing.T) {
+func TestPendingHelpdeskRequestRouteContract(t *testing.T) {
 	cases := []struct {
 		action, method, path string
 	}{
@@ -66,8 +71,8 @@ func TestHelpdeskIntakeSetSendsOnlyTheIntakeFields(t *testing.T) {
 	if domain.APIPath != "/api/tenant" || set.HTTPMethod != "PATCH" || set.RESTPath != "{tenantGuid}/helpdesk-settings" {
 		t.Fatalf("unexpected intake set route: %s %s/%s", set.HTTPMethod, domain.APIPath, set.RESTPath)
 	}
-	// The PATCH must not carry license counts or approval flags: the backend treats an omitted
-	// field as unchanged, so the CLI can never zero a tenant's extra helpdesk licenses.
+	// This pending payload requires a backend that preserves omitted license fields.
+	// Today's endpoint does not, so the domain must remain unregistered.
 	for _, flag := range set.Flags {
 		if flag.BodyName != "helpdeskIntakeMode" && flag.BodyName != "helpdeskDefaultTemplateGuid" {
 			t.Fatalf("unexpected body field %q on helpdesk-intake set", flag.BodyName)
@@ -76,5 +81,18 @@ func TestHelpdeskIntakeSetSendsOnlyTheIntakeFields(t *testing.T) {
 	_, get := helpdeskDomainAction(t, "helpdesk-intake", "get")
 	if get.HTTPMethod != "GET" || get.RESTPath != "{tenantGuid}/helpdesk-licenses" {
 		t.Fatalf("unexpected intake get route: %s %q", get.HTTPMethod, get.RESTPath)
+	}
+}
+
+func TestPendingHelpdeskIntakeIsNotExposedAsAnExecutableDomain(t *testing.T) {
+	for _, domain := range pendingHelpdeskDomains() {
+		if findDomain(domain.Name) != nil {
+			t.Fatalf("unsupported Helpdesk domain %s must not be registered", domain.Name)
+		}
+		for _, alias := range domain.Aliases {
+			if findDomain(alias) != nil {
+				t.Fatalf("unsupported Helpdesk alias %s must not be registered", alias)
+			}
+		}
 	}
 }
