@@ -63,7 +63,9 @@ uteamup config init
 # 2. Authenticate
 uteamup login                    # interactive (email/password)
 # or
-ut login --api-key=KEY --api-secret=SECRET   # API key
+uteamup login --saml --company iteggs --profile dev  # company SSO
+# or
+ut login --api-key-auth           # protected API key prompt
 
 # 3. Use it
 ut asset list
@@ -382,14 +384,41 @@ Prompts for email and password. Calls the backend login endpoint and receives a 
 ### Method 2: API Key Auth (OAuth 2.0 + PKCE)
 
 ```bash
-uteamup login --api-key=KEY --api-secret=SECRET
+uteamup login --api-key-auth
 # or
-ut login --api-key=KEY --api-secret=SECRET
+ut login --api-key-file key.txt --api-secret-file secret.txt
 ```
 
 Uses the same OAuth 2.0 + PKCE flow as the MCP server. Requires an API key (32 chars) and secret (64+ chars) from the UteamUP backend.
 
-If you omit `--api-secret`, you'll be prompted interactively.
+The API key and secret are read without echo, or from owner-only files.
+
+### Method 3: Company SSO (SAML)
+
+```bash
+uteamup login --saml --company iteggs --profile dev
+```
+
+Opens the system browser for the company identity provider. A protected loopback
+callback and PKCE bind the result to this login. UteamUP prompts for ownership
+verification or MFA when required, then stores the normal session for the selected
+profile and backend. Existing company membership or a valid invitation is required.
+Press Ctrl+C to cancel; retry with the same company code.
+
+Tenant owners and configured platform administrators can configure SAML:
+
+```bash
+uteamup tenant get-saml <tenantGuid> --profile dev
+uteamup tenant update-saml <tenantGuid> --configuration-file saml.json --profile dev
+uteamup tenant test-saml <tenantGuid> --profile dev
+```
+
+The configuration file is a JSON object containing `companyCode`, `metadataUrl`
+or `metadataXml`, optional `emailAttribute` and `nameAttribute`, and `enabled`.
+Save with `enabled: false`, run the restricted browser setup test, then use
+`update-saml` with `enabled: true` to activate. The setup test retains the owner's
+cached session. All commands use the server's `Tenant.ManageSaml`, owner, entitlement,
+and global SAML checks.
 
 ### Token Management
 

@@ -116,9 +116,9 @@ func (c *APIClient) CallTool(ctx context.Context, toolName string, args map[stri
 	// The backend resolves the /mcp tenant only from the TenantGuid claim that API-key
 	// tokens carry (McpTenantContextMiddleware); an email/password session token never
 	// has it, so the call could only come back as a 401 that talks about API keys.
-	if token.AuthMethod == "login" {
+	if token.AuthMethod != "apikey" {
 		return nil, clierrors.NewAuthError(fmt.Sprintf(
-			"%s is only available to API-key sessions; you are logged in with email/password. "+
+			"%s is only available to API-key sessions; the current session uses human sign-in. "+
 				"Run \"ut login --api-key-auth\" (or --api-key-file with --api-secret-file) and retry", toolName), nil)
 	}
 

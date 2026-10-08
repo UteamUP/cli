@@ -139,7 +139,7 @@ func TestSamlLoginKeepsPkceAndTenantBoundThroughLinkAndMfa(t *testing.T) {
 			}
 			return err
 		},
-		prompt: func(status, email string) (string, error) {
+		prompt: func(_ context.Context, status, email string) (string, error) {
 			if email != "gisli@iteggs.com" {
 				t.Error("ownership prompt omitted account")
 			}
@@ -180,7 +180,10 @@ func TestSamlLoginCancellationClosesListener(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	_, err := NewClient(server.URL, true, logging.Default()).loginWithSaml(ctx, "iteggs", samlInteraction{
 		launch: func(context.Context, string) error { cancel(); return nil },
-		prompt: func(string, string) (string, error) { t.Fatal("cancelled login requested proof"); return "", nil },
+		prompt: func(context.Context, string, string) (string, error) {
+			t.Fatal("cancelled login requested proof")
+			return "", nil
+		},
 	})
 	if err == nil || !strings.Contains(err.Error(), "cancelled") {
 		t.Fatal("cancelled login was accepted")
@@ -219,7 +222,9 @@ func TestSamlSessionRejectsMissingTenantAndExpiredProfile(t *testing.T) {
 	client := NewClient("https://devback.uteamup.com", false, logging.Default())
 	for _, response := range []samlExchangeResponse{
 		{Status: "authenticated"},
-		{TenantGUID: "tenant", Profile: &LoginResponse{AccessToken: "session", TokenExpiry: time.Now().Add(-time.Hour).Format(time.RFC3339)}},
+		{TenantGUID: "11111111-1111-4111-8111-111111111111", Profile: &LoginResponse{AccessToken: "session", RefreshToken: "refresh", TokenExpiry: time.Now().Add(-time.Hour).Format(time.RFC3339)}},
+		{TenantGUID: "tenant", Profile: &LoginResponse{AccessToken: "session", RefreshToken: "refresh", TokenExpiry: time.Now().Add(time.Hour).Format(time.RFC3339)}},
+		{TenantGUID: "11111111-1111-4111-8111-111111111111", Profile: &LoginResponse{AccessToken: "session", TokenExpiry: time.Now().Add(time.Hour).Format(time.RFC3339)}},
 	} {
 		if _, err := client.acceptSamlSession(&response); err == nil {
 			t.Fatal("incomplete or expired session was accepted")

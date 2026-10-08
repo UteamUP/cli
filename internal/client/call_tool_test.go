@@ -45,9 +45,15 @@ func callToolClient(t *testing.T, authMethod string, calls *atomic.Int32) *APICl
 // The backend resolves the /mcp tenant only from API-key token claims, so an
 // email/password session must be refused locally with an actionable message
 // instead of being sent to /mcp for a 401 about API keys (bug 4499a609).
-func TestCallToolRefusesEmailPasswordSessionBeforeSending(t *testing.T) {
+func TestCallToolRefusesHumanOrUnknownSessionBeforeSending(t *testing.T) {
+	for _, method := range []string{"login", "saml", "unknown", ""} {
+		t.Run(method, func(t *testing.T) { testCallToolRefusesHumanSession(t, method) })
+	}
+}
+
+func testCallToolRefusesHumanSession(t *testing.T, method string) {
 	var calls atomic.Int32
-	apiClient := callToolClient(t, "login", &calls)
+	apiClient := callToolClient(t, method, &calls)
 
 	_, err := apiClient.CallTool(context.Background(), "UteamupAssetTypeList", map[string]any{})
 
@@ -55,7 +61,7 @@ func TestCallToolRefusesEmailPasswordSessionBeforeSending(t *testing.T) {
 	if !errors.As(err, &authErr) {
 		t.Fatalf("error = %v, want AuthError", err)
 	}
-	for _, want := range []string{"UteamupAssetTypeList", "email/password", "ut login --api-key-auth"} {
+	for _, want := range []string{"UteamupAssetTypeList", "human sign-in", "ut login --api-key-auth"} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("error %q does not mention %q", err.Error(), want)
 		}

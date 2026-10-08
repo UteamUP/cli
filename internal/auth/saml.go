@@ -47,7 +47,7 @@ type samlExchangeResponse struct {
 
 type samlInteraction struct {
 	launch func(context.Context, string) error
-	prompt func(string, string) (string, error)
+	prompt func(context.Context, string, string) (string, error)
 }
 
 type samlStartTarget struct {
@@ -87,13 +87,13 @@ func (a *Client) LoginWithSAML(ctx context.Context, company string) (*TokenData,
 	reader := bufio.NewReader(os.Stdin)
 	interaction := samlInteraction{
 		launch: launchSamlBrowser,
-		prompt: func(status, email string) (string, error) {
+		prompt: func(ctx context.Context, status, email string) (string, error) {
 			if status == "link_required" {
 				fmt.Fprintf(os.Stderr, "Verify ownership of %s using the code sent by UteamUP.\n", security.SafeText(email))
-				return PromptSecret(reader, "Email verification code: ")
+				return promptSamlSecret(ctx, reader, "Email verification code: ")
 			}
 			fmt.Fprintln(os.Stderr, "This account requires a second factor.")
-			return PromptSecret(reader, "Authenticator or recovery code: ")
+			return promptSamlSecret(ctx, reader, "Authenticator or recovery code: ")
 		},
 	}
 	return a.loginWithSaml(ctx, company, interaction)
@@ -139,7 +139,7 @@ func (a *Client) runSamlBrowser(ctx context.Context, target samlStartTarget, lau
 	var start samlStartResponse
 	startPath := "/api/auth/saml/start"
 	request := map[string]string{
-		"clientId": "cli",
+		"clientId":    "cli",
 		"redirectUri": "http://" + listener.Addr().String() + samlCallbackPath,
 		"state":       state, "codeChallenge": CodeChallenge(verifier), "codeChallengeMethod": "S256",
 	}
@@ -215,7 +215,7 @@ func validSamlCallback(query url.Values, state string) bool {
 		(len(query["error"]) == 1 && query.Get("error") != "" && len(query["code"]) == 0)
 }
 
-func (a *Client) completeSamlLogin(ctx context.Context, code, verifier string, prompt func(string, string) (string, error)) (*TokenData, error) {
+func (a *Client) completeSamlLogin(ctx context.Context, code, verifier string, prompt func(context.Context, string, string) (string, error)) (*TokenData, error) {
 	request := samlExchangeRequest{Code: code, CodeVerifier: verifier, ClientID: "cli"}
 	var challenge *samlExchangeResponse
 	for attempts := 0; attempts < 6; attempts++ {
@@ -234,7 +234,7 @@ func (a *Client) completeSamlLogin(ctx context.Context, code, verifier string, p
 			return nil, fmt.Errorf("SAML sign-in could not complete; start again using your company code")
 		}
 		challenge = &response
-		proof, err := prompt(response.Status, response.Email)
+		proof, err := prompt(ctx, response.Status, response.Email)
 		if err != nil || strings.TrimSpace(proof) == "" {
 			return nil, fmt.Errorf("SAML verification cancelled")
 		}
@@ -249,7 +249,7 @@ func (a *Client) completeSamlLogin(ctx context.Context, code, verifier string, p
 }
 
 func (a *Client) acceptSamlSession(response *samlExchangeResponse) (*TokenData, error) {
-	if response.Profile == nil || response.Profile.AccessToken == "" || response.TenantGUID == "" {
+	if response.Profile == nil || response.Profile.AccessToken == "" || response.Profile.RefreshToken == "" || !samlTenantGUID.MatchString(response.TenantGUID) || response.TenantGUID == "00000000-0000-0000-0000-000000000000" {
 		return nil, fmt.Errorf("SAML sign-in returned an incomplete session")
 	}
 	expiry, err := time.Parse(time.RFC3339, response.Profile.TokenExpiry)

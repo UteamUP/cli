@@ -16,7 +16,7 @@ import (
 var tenantSamlGUID = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
 
 var tenantTestSamlCmd = &cobra.Command{
-	Use: "test-saml <tenantGuid>",
+	Use:   "test-saml <tenantGuid>",
 	Short: "Test a disabled tenant SAML connection in the system browser",
 	Long: `Validate a saved SAML connection using a restricted setup test.
 
@@ -34,19 +34,33 @@ Example:
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
-		if err != nil { return fmt.Errorf("loading configuration: %w", err) }
+		if err != nil {
+			return fmt.Errorf("loading configuration: %w", err)
+		}
 		profile, selectedName, err := selectedProfileConfig(cfg, profileName)
-		if err != nil { return err }
-		origin, err := security.CanonicalOrigin(profile.BaseURL)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
+		origin, err := security.Origin(profile.BaseURL)
+		if err != nil {
+			return err
+		}
 		token, err := auth.LoadToken()
-		if err != nil { return fmt.Errorf("reading owner session: %w", err) }
-		if token == nil || !token.IsValid() { return fmt.Errorf("sign in as an authorized tenant owner before running the setup test") }
-		if err := token.ValidateBinding(origin, selectedName); err != nil { return err }
+		if err != nil {
+			return fmt.Errorf("reading owner session: %w", err)
+		}
+		if token == nil || !token.IsValid() {
+			return fmt.Errorf("sign in as an authorized tenant owner before running the setup test")
+		}
+		if err := token.ValidateBinding(origin, selectedName); err != nil {
+			return err
+		}
 		ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt)
 		defer stop()
 		fmt.Fprintln(cmd.OutOrStdout(), "Finish the restricted SAML setup test in your browser. Press Ctrl+C to cancel.")
-		if err := auth.NewClient(origin, insecure, logging.New(logging.LevelInfo)).TestSAML(ctx, args[0], token.AccessToken); err != nil { return err }
+		if err := auth.NewClient(origin, insecure, logging.New(logging.LevelInfo)).TestSAML(ctx, args[0], token.AccessToken); err != nil {
+			return err
+		}
 		fmt.Fprintln(cmd.OutOrStdout(), "SAML setup validated. Your current session was retained; activate the connection when ready.")
 		return nil
 	},

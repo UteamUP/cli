@@ -116,7 +116,8 @@ func registerDomainCommands() {
 	}, logger, &outputFormat, exportCfg) {
 		if cmd.Name() == "tenant" {
 			for _, action := range cmd.Commands() {
-				if action.Name() == "get-saml" || action.Name() == "update-saml" {
+				// Keep the existing membership list and interactive setup test.
+				if action.Name() != "list" && action.Name() != "test-saml" {
 					tenantCmd.AddCommand(action)
 				}
 			}

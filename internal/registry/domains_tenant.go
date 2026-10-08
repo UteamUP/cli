@@ -9,21 +9,21 @@ func init() {
 			{
 				Name: "get-saml", Description: "Read tenant SAML setup and certificate expiry (Tenant.ManageSaml)",
 				ToolName: "uteamup_tenant_saml_get", HTTPMethod: "GET", RESTPath: "saml",
-				Args: []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "non-empty-uuid", QueryName: "tenantGuid"}},
+				Args:            []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "non-empty-uuid", QueryName: "tenantGuid"}},
 				RejectExtraArgs: true,
 			},
 			{
 				Name: "update-saml", Description: "Save or activate SAML using a configuration JSON file; requires owner authorization and successful setup test",
 				ToolName: "uteamup_tenant_saml_update", HTTPMethod: "PUT", RESTPath: "saml",
-				Args: []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "non-empty-uuid", QueryName: "tenantGuid"}},
-				Flags: []FlagDef{{Name: "configuration-file", Short: "f", Description: "SamlSaveModel JSON: companyCode, metadataUrl or metadataXml, claim mappings, enabled (false for draft)", Required: true, Type: "string", RootJSONObjectFile: true}},
+				Args:            []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "non-empty-uuid", QueryName: "tenantGuid"}},
+				Flags:           []FlagDef{{Name: "configuration-file", Short: "f", Description: "SamlSaveModel JSON: companyCode, metadataUrl or metadataXml, claim mappings, enabled (false for draft)", Required: true, Type: "string", RootJSONObjectFile: true}},
 				RejectExtraArgs: true,
 			},
 			{
 				Name: "test-saml", Description: "Validate a saved SAML draft using the system browser; retain current owner session",
 				ToolName: "uteamup_tenant_saml_test", HTTPMethod: "POST", RESTPath: "saml/test",
-				Args: []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "non-empty-uuid", QueryName: "tenantGuid"}},
-				Flags: []FlagDef{{Name: "request-file", Description: "Protected-loopback start request with clientId, state, redirectUri, codeChallenge and codeChallengeMethod", Required: true, Type: "string", RootJSONObjectFile: true}},
+				Args:                  []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "non-empty-uuid", QueryName: "tenantGuid"}},
+				Flags:                 []FlagDef{{Name: "request-file", Description: "Protected-loopback start request with clientId, state, redirectUri, codeChallenge and codeChallengeMethod", Required: true, Type: "string", RootJSONObjectFile: true}},
 				DisableResponseExport: true, RejectExtraArgs: true,
 			},
 			{
