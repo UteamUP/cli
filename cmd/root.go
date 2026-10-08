@@ -200,7 +200,7 @@ func newDomainAPIClient(logger *logging.Logger, exportCfg *registry.ExportConfig
 // in the meantime (refresh tokens rotate, so only one renewal wins), or the expired one when
 // renewal is impossible, in which case the caller asks the user to sign in.
 func renewSession(token *auth.TokenData) *auth.TokenData {
-	if token.AuthMethod != "login" || token.RefreshToken == "" || token.APIOrigin == "" {
+	if (token.AuthMethod != "login" && token.AuthMethod != "saml") || token.RefreshToken == "" || token.APIOrigin == "" {
 		return token
 	}
 	authClient := auth.NewClient(token.APIOrigin, insecure, logging.New(logging.LevelInfo))

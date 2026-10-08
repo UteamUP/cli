@@ -19,7 +19,7 @@ type TokenData struct {
 	AccessToken  string    `json:"accessToken"`
 	RefreshToken string    `json:"refreshToken,omitempty"`
 	ExpiresAt    time.Time `json:"expiresAt"`
-	AuthMethod   string    `json:"authMethod"` // "login" or "apikey"
+	AuthMethod   string    `json:"authMethod"` // "login", "saml", or "apikey"
 	Email        string    `json:"email,omitempty"`
 	Profile      string    `json:"profile"`
 	TenantID     int       `json:"tenantId,omitempty"`

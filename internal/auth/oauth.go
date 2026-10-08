@@ -26,6 +26,7 @@ type OAuthTokenResponse struct {
 // LoginResponse represents the backend login endpoint response.
 // Maps to ProfileModel in C# backend.
 type LoginResponse struct {
+	Email           string `json:"email"`
 	AccessToken     string `json:"accessToken"`
 	RefreshToken    string `json:"refreshToken,omitempty"`
 	TokenExpiry     string `json:"tokenExpiry,omitempty"`

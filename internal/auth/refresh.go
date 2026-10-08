@@ -13,13 +13,13 @@ import (
 	"github.com/uteamup/cli/internal/security"
 )
 
-// RefreshSession renews an email/password session with its refresh token, so a signed-in
+// RefreshSession renews a password or SAML session with its refresh token, so a signed-in
 // user is not sent back to "uteamup login" each time the access token expires.
 //
 // The server rotates refresh tokens: the old one stops working once it is used, so both
 // values are replaced. On any failure the token is left untouched.
 func (a *Client) RefreshSession(token *TokenData) error {
-	if token == nil || token.AuthMethod != "login" || token.RefreshToken == "" {
+	if token == nil || (token.AuthMethod != "login" && token.AuthMethod != "saml") || token.RefreshToken == "" {
 		return clierrors.NewAuthError("this session cannot be renewed; sign in again", nil)
 	}
 

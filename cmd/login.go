@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/signal"
 
 	"github.com/spf13/cobra"
 
@@ -19,16 +20,21 @@ var (
 	loginSecretStdin bool
 	loginKeyFile     string
 	loginKeyAuth     bool
+	loginSAML        bool
+	loginCompany     string
 )
 
 var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Authenticate with UteamUP",
-	Long: `Authenticate with UteamUP using email/password or API key.
+	Long: `Authenticate with UteamUP using email/password, company SSO, or API key.
 
 Interactive login (email/password):
   uteamup login
   ut login
+
+Company SSO (system browser):
+  uteamup login --saml --company iteggs --profile dev
 
 API key authentication:
   uteamup login --api-key-auth
@@ -46,6 +52,8 @@ func init() {
 	loginCmd.Flags().BoolVar(&loginSecretStdin, "api-secret-stdin", false, "Read API secret from stdin")
 	loginCmd.Flags().StringVar(&loginKeyFile, "api-key-file", "", "Owner-only API key file")
 	loginCmd.Flags().BoolVar(&loginKeyAuth, "api-key-auth", false, "Prompt for API credentials without echo")
+	loginCmd.Flags().BoolVar(&loginSAML, "saml", false, "Sign in through your company SAML identity provider")
+	loginCmd.Flags().StringVar(&loginCompany, "company", "", "Company code for SAML sign-in")
 }
 
 func runLogin(cmd *cobra.Command, args []string) error {
@@ -54,6 +62,16 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	}
 	if loginSecretFile != "" && loginSecretStdin {
 		return fmt.Errorf("choose one API secret input")
+	}
+	apiKeyLogin := loginKeyAuth || loginKeyFile != "" || loginSecretFile != "" || loginSecretStdin
+	if loginSAML && apiKeyLogin {
+		return fmt.Errorf("choose SAML login or API key login")
+	}
+	if loginCompany != "" && !loginSAML {
+		return fmt.Errorf("--company requires --saml")
+	}
+	if loginSAML && loginCompany == "" {
+		return fmt.Errorf("--saml requires --company")
 	}
 	logger := logging.Default()
 	if verbose {
@@ -89,7 +107,14 @@ func runLogin(cmd *cobra.Command, args []string) error {
 
 	var token *auth.TokenData
 
-	if loginKeyAuth || loginKeyFile != "" || loginSecretFile != "" || loginSecretStdin {
+	if loginSAML {
+		ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt)
+		defer stop()
+		token, err = authClient.LoginWithSAML(ctx, loginCompany)
+		if err != nil {
+			return err
+		}
+	} else if apiKeyLogin {
 		// API Key auth flow
 		apiKey, secret := "", ""
 		if loginKeyFile != "" {
@@ -155,6 +180,8 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	method := "email/password"
 	if token.AuthMethod == "apikey" {
 		method = "API key"
+	} else if token.AuthMethod == "saml" {
+		method = "company SSO"
 	}
 	fmt.Printf("Authenticated successfully via %s.\n", method)
 	if token.Email != "" {
