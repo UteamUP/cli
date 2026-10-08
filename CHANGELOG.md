@@ -5,6 +5,41 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.0](https://github.com/UteamUP/cli/compare/4.3.0...4.4.0) (2026-10-08)
+
+
+### Features
+
+* add fill-existing-assets action and enhance meter reading attributes ([4511b6b](https://github.com/UteamUP/cli/commit/4511b6bfdcd0ca66d88391d128d625a4582d1746))
+* asset-ai-builder commands ([92778dd](https://github.com/UteamUP/cli/commit/92778dd695e35d4227f7d5935d09a88a0eab2072))
+* **code:** add code target-generate for printable barcodes ([ef2baab](https://github.com/UteamUP/cli/commit/ef2baabb45288905840f45335e0c3b75ad6a3071))
+* **meter-reading:** add my-view-log to see who viewed your restricted reading data ([a8fa138](https://github.com/UteamUP/cli/commit/a8fa138a7f03d4bef1d660046e9089b1e2cce7a9))
+* **meter-reading:** link a photo or voice clip document when recording ([83a61e0](https://github.com/UteamUP/cli/commit/83a61e0ef5c79712ac3ba35e2750b27a613da1b3))
+* **meter-reading:** scanned-nfc-value flag on record ([3232bc1](https://github.com/UteamUP/cli/commit/3232bc12aaa5f38bc415c63d26be0674f416d1d1))
+* **meter-reading:** send location and web link when recording ([b25d49c](https://github.com/UteamUP/cli/commit/b25d49c6559efc3f784a4eaba4fbc4b8fdae9ed3))
+* **meter-readings:** list and get tenant-wide meter readings ([c7d14ad](https://github.com/UteamUP/cli/commit/c7d14adf9863a2087b3b28dc8d6c0b8b1568b6b9))
+* preserve reviewed Contact mutation intent in CLI ([5bedc66](https://github.com/UteamUP/cli/commit/5bedc6668a0b200db29898caa28a89fe08ad1a23))
+* preserve reviewed ContactType mutation intents ([3f771af](https://github.com/UteamUP/cli/commit/3f771af2c28e3e9cecbb80c93cf7c1d6370d3a4b))
+* preserve reviewed transfer intent in CLI commands ([49a3b59](https://github.com/UteamUP/cli/commit/49a3b596c2eafc4910dbef1ba860387171675d59))
+* **registry:** add the shutdown-rule domain ([8510d77](https://github.com/UteamUP/cli/commit/8510d777e5482cb19888fe3b6534d861e448eddf))
+* **stock:** add coverage-gap and consumable CLI commands ([d170add](https://github.com/UteamUP/cli/commit/d170add6a42149756287f142d1b97eaa621d88a6))
+* support conditional list policies in CLI ([a50da85](https://github.com/UteamUP/cli/commit/a50da857a5b5300c179a6b1f80c7eb6a93224ec7))
+
+
+### Bug Fixes
+
+* **auth:** renew an expired login session with its refresh token ([943571c](https://github.com/UteamUP/cli/commit/943571c6ccfeef3c789d7388a06b1594f501d307))
+* **client:** send the configured tenant, not only the login's ([25b2bb2](https://github.com/UteamUP/cli/commit/25b2bb236c00a815d01aaca5fcdfaf4f7b687a25))
+* **registry:** fill camelCase path placeholders from dashed positional args ([0d116de](https://github.com/UteamUP/cli/commit/0d116deef23186b776dbed871603f56464946bde))
+* route tenant roles and asset types through authenticated REST ([b608a1c](https://github.com/UteamUP/cli/commit/b608a1c6948ec540790be6736f48ce8a65bfbc63))
+
+
+### Tests
+
+* align compatible parts with GUID REST transport ([4884f50](https://github.com/UteamUP/cli/commit/4884f501c90724034cdcd60fa46bda54b0d5505c))
+* cover RBAC CLI authentication and permission denials ([f806237](https://github.com/UteamUP/cli/commit/f80623728d049eafccec98545f9b5f58e358c4f9))
+* **stock:** include the consumable read capabilities in UPMate parity ([a179254](https://github.com/UteamUP/cli/commit/a179254f5a73e04762a71c107c10da1fb04e09f1))
+
 ## [4.3.0](https://github.com/UteamUP/cli/compare/4.2.0...4.3.0) (2026-10-05)
 
 
