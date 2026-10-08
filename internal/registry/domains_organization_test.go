@@ -88,6 +88,8 @@ func TestCodeTargetActionsBuildTheTargetRoutes(t *testing.T) {
 		{"target-list", "GET", "UteamupCodeListForTarget", map[string]any{"targetType": "part", "targetGuid": target}, "/api/codes/targets/part/" + target},
 		{"target-register", "POST", "UteamupCodeRegisterForTarget", map[string]any{"targetType": "stockbin", "targetGuid": target}, "/api/codes/targets/stockbin/" + target},
 		{"target-generate", "POST", "UteamupCodeGenerateForTarget", map[string]any{"targetType": "tool", "targetGuid": target}, "/api/codes/targets/tool/" + target + "/generate"},
+		{"target-generate", "POST", "UteamupCodeGenerateForTarget", map[string]any{"targetType": "asset", "targetGuid": target}, "/api/codes/targets/asset/" + target + "/generate"},
+		{"target-list", "GET", "UteamupCodeListForTarget", map[string]any{"targetType": "assetgroup", "targetGuid": target}, "/api/codes/targets/assetgroup/" + target},
 		{"target-remove", "DELETE", "UteamupCodeRemoveFromTarget", map[string]any{"targetType": "workpermit", "targetGuid": target, "codeGuid": code}, "/api/codes/targets/workpermit/" + target + "/" + code},
 	}
 
@@ -117,7 +119,7 @@ func TestCodeTargetTypeIsRestrictedToTheBackendTable(t *testing.T) {
 			t.Fatalf("missing code action %q", name)
 		}
 		got := strings.Join(action.Args[0].AllowedValues, ",")
-		if action.Args[0].Name != "targetType" || got != "part,tool,chemical,stockitem,stockbin,workpermit" {
+		if action.Args[0].Name != "targetType" || got != "asset,assetgroup,part,tool,chemical,stockitem,stockbin,workpermit" {
 			t.Errorf("%s targetType allowed values = %q", name, got)
 		}
 		if action.Args[1].Type != "non-empty-uuid" {
@@ -132,6 +134,17 @@ func TestCodeTargetTypeIsRestrictedToTheBackendTable(t *testing.T) {
 	}
 	if !required["type"] || !required["value"] || required["description"] {
 		t.Errorf("target-register flags required = %v, want type and value required, description optional", required)
+	}
+
+	// The backend binds the generated code type with [FromQuery]; a body field would be ignored
+	// and every generate would silently fall back to a barcode.
+	generate := findAction(d, "target-generate")
+	if len(generate.Flags) != 1 {
+		t.Fatalf("target-generate flags = %v, want exactly the type flag", generate.Flags)
+	}
+	typeFlag := generate.Flags[0]
+	if typeFlag.Name != "type" || typeFlag.QueryName != "type" || typeFlag.Required || typeFlag.Default != "BARCODE" {
+		t.Errorf("target-generate type flag = %+v, want optional query flag defaulting to BARCODE", typeFlag)
 	}
 }
 

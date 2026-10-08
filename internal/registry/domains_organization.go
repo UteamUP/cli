@@ -22,7 +22,7 @@ func init() {
 			},
 			Action{
 				Name:        "target-list",
-				Description: "List the QR codes, barcodes and NFC tags registered on a part, tool, chemical, stock item, stock bin or work permit",
+				Description: "List the QR codes, barcodes and NFC tags registered on an asset, asset group, part, tool, chemical, stock item, stock bin or work permit",
 				ToolName:    "UteamupCodeListForTarget",
 				HTTPMethod:  "GET",
 				RESTPath:    "targets/{targetType}/{targetGuid}",
@@ -30,7 +30,7 @@ func init() {
 			},
 			Action{
 				Name:        "target-register",
-				Description: "Register a scanned QR code, barcode or NFC tag on a part, tool, chemical, stock item, stock bin or work permit",
+				Description: "Register a scanned QR code, barcode or NFC tag on an asset, asset group, part, tool, chemical, stock item, stock bin or work permit",
 				ToolName:    "UteamupCodeRegisterForTarget",
 				HTTPMethod:  "POST",
 				RESTPath:    "targets/{targetType}/{targetGuid}",
@@ -43,15 +43,18 @@ func init() {
 			},
 			Action{
 				Name:        "target-generate",
-				Description: "Generate a printable barcode (e.g. PRT-7K2M9QXA) on a part, tool, chemical, stock item, stock bin or work permit; returns the existing barcode if it has one",
+				Description: "Generate a QR code (the record's app link) or a printable barcode (e.g. PRT-7K2M9QXA) and attach it to an asset, asset group, part, tool, chemical, stock item, stock bin or work permit; returns the existing code of that type if it has one",
 				ToolName:    "UteamupCodeGenerateForTarget",
 				HTTPMethod:  "POST",
 				RESTPath:    "targets/{targetType}/{targetGuid}/generate",
 				Args:        codeTargetArgs(),
+				Flags: []FlagDef{
+					{Name: "type", Description: "QR | BARCODE", Default: "BARCODE", Type: "string", QueryName: "type"},
+				},
 			},
 			Action{
 				Name:        "target-remove",
-				Description: "Remove a code from a part, tool, chemical, stock item, stock bin or work permit (only a code registered on that target)",
+				Description: "Remove a code from an asset, asset group, part, tool, chemical, stock item, stock bin or work permit (only a code registered on that target)",
 				ToolName:    "UteamupCodeRemoveFromTarget",
 				HTTPMethod:  "DELETE",
 				RESTPath:    "targets/{targetType}/{targetGuid}/{codeGuid}",
@@ -74,11 +77,11 @@ func init() {
 }
 
 // codeTargetTypes mirrors the backend CodeTargetTypes table (api/codes/targets/{targetType}).
-var codeTargetTypes = []string{"part", "tool", "chemical", "stockitem", "stockbin", "workpermit"}
+var codeTargetTypes = []string{"asset", "assetgroup", "part", "tool", "chemical", "stockitem", "stockbin", "workpermit"}
 
 func codeTargetArgs() []ArgDef {
 	return []ArgDef{
-		{Name: "targetType", Description: "part | tool | chemical | stockitem | stockbin | workpermit", Required: true, Type: "string", AllowedValues: codeTargetTypes},
+		{Name: "targetType", Description: "asset | assetgroup | part | tool | chemical | stockitem | stockbin | workpermit", Required: true, Type: "string", AllowedValues: codeTargetTypes},
 		{Name: "targetGuid", Description: "GUID of the target record", Required: true, Type: "non-empty-uuid"},
 	}
 }
