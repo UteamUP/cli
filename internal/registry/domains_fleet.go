@@ -120,8 +120,8 @@ func init() {
 		{Name: "utilization", HTTPMethod: "GET", RESTPath: "utilization", Description: "Get GUID-first vehicle utilization", ToolName: "UteamupFleetDashboardGetUtilization"},
 		{Name: "compliance", HTTPMethod: "GET", RESTPath: "compliance", Description: "Get GUID-first fleet compliance", ToolName: "UteamupFleetDashboardGetCompliance"},
 		{Name: "map", HTTPMethod: "GET", RESTPath: "map", Description: "Get last-known vehicle positions for the fleet map", ToolName: "UteamupFleetDashboardGetMap"},
-		{Name: "maintenance-windows", Description: "Find bounded maintenance windows without reserving capacity", ToolName: "UteamupFleetMaintenanceWindowsFind", RESTBasePath: "/api/v1/assets", RESTPath: "{assetGuid}/maintenance-windows", HTTPMethod: "POST", Args: []ArgDef{{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "string"}}, Flags: []FlagDef{
-			{Name: "planning-file", Description: "JSON object with UTC horizon, duration and selected resources", Required: true, Type: "string", RootJSONObjectFile: true, BodyName: "planning"},
+		{Name: "maintenance-windows", Description: "Find bounded maintenance windows without reserving capacity", ToolName: "UteamupFleetMaintenanceWindowsFind", RESTBasePath: "/api/v1/assets", RESTPath: "{assetGuid}/maintenance-windows", HTTPMethod: "POST", Args: []ArgDef{{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "uuid"}}, Flags: []FlagDef{
+			{Name: "planning-file", Description: "JSON object with UTC horizon, duration and selected resources", Required: true, Type: "string", RootJSONObjectFile: true},
 		}},
 		{Name: "propose-maintenance", Description: "Prepare a governed maintenance proposal from fleet evidence", ToolName: "UteamupFleetMaintenancePropose", RESTBasePath: "/api/upmateassistant/fleet", RESTPath: "maintenance-proposals", HTTPMethod: "POST", Flags: []FlagDef{
 			{Name: "planning-file", BodyName: "planning", Description: "Optional JSON object with reviewed maintenance window and resources", Type: "string", JSONFile: true},
