@@ -165,7 +165,7 @@ func newDomainAPIClient(logger *logging.Logger, exportCfg *registry.ExportConfig
 			insecure,
 			client.DefaultRetryOptions(),
 			logger,
-		), nil
+		).WithTenant(os.Getenv("UTEAMUP_TENANT_GUID")), nil
 	}
 
 	profile, selectedName, err := selectedProfileConfig(cfg, profileName)
@@ -190,7 +190,9 @@ func newDomainAPIClient(logger *logging.Logger, exportCfg *registry.ExportConfig
 		BaseDelay:  time.Second,
 		MaxDelay:   10 * time.Second,
 	}
-	return client.NewAPIClient(profile.BaseURL, timeout, insecure, retryOpts, logger).WithProfile(selectedName), nil
+	return client.NewAPIClient(profile.BaseURL, timeout, insecure, retryOpts, logger).
+		WithProfile(selectedName).
+		WithTenant(profile.TenantGUID), nil
 }
 
 // renewSession trades an expired login session's refresh token for a new access token and

@@ -73,6 +73,7 @@ type JSONRPCError struct {
 // APIClient communicates with the UteamUP backend.
 type APIClient struct {
 	profile   string
+	tenant    string
 	baseURL   string
 	timeout   time.Duration
 	insecure  bool
@@ -145,11 +146,11 @@ func (c *APIClient) CallTool(ctx context.Context, toolName string, args map[stri
 		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 
 		// Send tenant context headers (required by backend)
-		if token.TenantGUID != "" {
-			req.Header.Set("X-Tenant-Guid", token.TenantGUID)
+		if tenantGUID := c.tenantGUID(token); tenantGUID != "" {
+			req.Header.Set("X-Tenant-Guid", tenantGUID)
 		}
 
-		c.logger.Debug("POST %s/mcp tool=%s tenant=%d", c.baseURL, toolName, token.TenantID)
+		c.logger.Debug("POST %s/mcp tool=%s tenant=%s", c.baseURL, toolName, c.tenantGUID(token))
 
 		resp, err := c.httpClient().Do(req)
 		if err != nil {
@@ -328,11 +329,11 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 		req.Header.Set("X-Requested-With", "XMLHttpRequest")
 
 		// Send tenant context headers (same as frontend apiCall)
-		if token.TenantID > 0 {
-			req.Header.Set("X-Tenant-ID", fmt.Sprintf("%d", token.TenantID))
+		if tenantID := c.legacyTenantID(token); tenantID > 0 {
+			req.Header.Set("X-Tenant-ID", fmt.Sprintf("%d", tenantID))
 		}
-		if token.TenantGUID != "" {
-			req.Header.Set("X-Tenant-Guid", token.TenantGUID)
+		if tenantGUID := c.tenantGUID(token); tenantGUID != "" {
+			req.Header.Set("X-Tenant-Guid", tenantGUID)
 		}
 
 		// Caller-supplied headers (e.g. `Idempotency-Key` from a `HeaderName`
@@ -342,7 +343,7 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 			req.Header.Set(k, v)
 		}
 
-		c.logger.Debug("%s %s tenant=%d", method, fullURL, token.TenantID)
+		c.logger.Debug("%s %s tenant=%s", method, fullURL, c.tenantGUID(token))
 
 		resp, err := c.httpClient().Do(req)
 		if err != nil {
@@ -503,18 +504,18 @@ func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField,
 		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 		req.Header.Set("X-Requested-With", "XMLHttpRequest")
 
-		if token.TenantID > 0 {
-			req.Header.Set("X-Tenant-ID", fmt.Sprintf("%d", token.TenantID))
+		if tenantID := c.legacyTenantID(token); tenantID > 0 {
+			req.Header.Set("X-Tenant-ID", fmt.Sprintf("%d", tenantID))
 		}
-		if token.TenantGUID != "" {
-			req.Header.Set("X-Tenant-Guid", token.TenantGUID)
+		if tenantGUID := c.tenantGUID(token); tenantGUID != "" {
+			req.Header.Set("X-Tenant-Guid", tenantGUID)
 		}
 
 		for k, v := range extraHeaders {
 			req.Header.Set(k, v)
 		}
 
-		c.logger.Debug("%s %s multipart file=%s tenant=%d", method, fullURL, filepath.Base(filePath), token.TenantID)
+		c.logger.Debug("%s %s multipart file=%s tenant=%s", method, fullURL, filepath.Base(filePath), c.tenantGUID(token))
 
 		resp, err := c.httpClient().Do(req)
 		if err != nil {
@@ -632,8 +633,8 @@ func (c *APIClient) CallRESTUploadLimited(
 		// Security-scoping headers always win over caller-supplied metadata.
 		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 		req.Header.Set("X-Requested-With", "XMLHttpRequest")
-		if token.TenantGUID != "" {
-			req.Header.Set("X-Tenant-Guid", token.TenantGUID)
+		if tenantGUID := c.tenantGUID(token); tenantGUID != "" {
+			req.Header.Set("X-Tenant-Guid", tenantGUID)
 		}
 
 		c.logger.Debug("%s %s multipart upload", method, c.baseURL+path)
@@ -785,6 +786,29 @@ func appendQueryString(rawURL, query string) string {
 
 func (c *APIClient) WithProfile(profile string) *APIClient { c.profile = profile; return c }
 
+// WithTenant pins the tenant a request names, overriding the one saved with the login: the profile's
+// tenantGuid or UTEAMUP_TENANT_GUID. The backend still refuses a tenant the caller is not a member of.
+func (c *APIClient) WithTenant(tenantGUID string) *APIClient {
+	c.tenant = strings.TrimSpace(tenantGUID)
+	return c
+}
+
+func (c *APIClient) tenantGUID(token *auth.TokenData) string {
+	if c.tenant != "" {
+		return c.tenant
+	}
+	return token.TenantGUID
+}
+
+// legacyTenantID is the login's numeric tenant id, withheld when an override names another tenant so
+// the request never carries two different tenants.
+func (c *APIClient) legacyTenantID(token *auth.TokenData) int {
+	if c.tenant != "" && !strings.EqualFold(c.tenant, token.TenantGUID) {
+		return 0
+	}
+	return token.TenantID
+}
+
 // CallRESTDownload keeps authenticated file bodies out of the JSON response buffer.
 func (c *APIClient) CallRESTDownload(ctx context.Context, method, path, outputPath string, params map[string]any, headers map[string]string, action string) (int64, error) {
 	token, err := auth.LoadTokenForOrigin(c.baseURL, c.profile)
@@ -823,8 +847,8 @@ func (c *APIClient) CallRESTDownload(ctx context.Context, method, path, outputPa
 	}
 	request.Header.Set("Authorization", "Bearer "+token.AccessToken)
 	request.Header.Set("X-Requested-With", "XMLHttpRequest")
-	if token.TenantGUID != "" {
-		request.Header.Set("X-Tenant-Guid", token.TenantGUID)
+	if tenantGUID := c.tenantGUID(token); tenantGUID != "" {
+		request.Header.Set("X-Tenant-Guid", tenantGUID)
 	}
 	response, err := c.httpClient().Do(request)
 	if err != nil {

@@ -96,7 +96,7 @@ func runCleanup(cmd *cobra.Command, args []string) error {
 	if timeout <= 0 {
 		timeout = 30 * time.Second
 	}
-	apiClient := client.NewAPIClient(profile.BaseURL, timeout, insecure, client.DefaultRetryOptions(), logging.New(logging.LevelError)).WithProfile(cfg.ActiveProfile)
+	apiClient := client.NewAPIClient(profile.BaseURL, timeout, insecure, client.DefaultRetryOptions(), logging.New(logging.LevelError)).WithProfile(cfg.ActiveProfile).WithTenant(profile.TenantGUID)
 	ctx := context.Background()
 
 	status, err := fetchStatus(ctx, apiClient)

@@ -40,7 +40,7 @@ func newMediaAPIClient(profile *config.Profile, timeout time.Duration) (*client.
 		BaseDelay:  time.Second,
 		MaxDelay:   10 * time.Second,
 	}
-	return client.NewAPIClient(baseURL, timeout, insecure, retries, logging.New(level)).WithProfile(activeProfileName()), nil
+	return client.NewAPIClient(baseURL, timeout, insecure, retries, logging.New(level)).WithProfile(activeProfileName()).WithTenant(profile.TenantGUID), nil
 }
 
 func validateMediaTenant(profile *config.Profile, token *auth.TokenData) error {
