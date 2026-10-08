@@ -39,6 +39,7 @@ func tenantHeaderServer(t *testing.T) (*httptest.Server, *[]http.Header) {
 	if err := auth.SaveToken(&auth.TokenData{
 		APIOrigin:   server.URL,
 		AccessToken: "access-token",
+		AuthMethod:  "apikey", // MCP tool calls are API-key only; REST works for both
 		ExpiresAt:   time.Now().Add(time.Hour),
 		TenantID:    42,
 		TenantGUID:  loginTenantGUID,
