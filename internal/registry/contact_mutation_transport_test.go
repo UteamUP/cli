@@ -2,11 +2,13 @@ package registry
 
 import (
 	"encoding/json"
+	"github.com/spf13/cobra"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,10 +18,10 @@ import (
 )
 
 func TestContactReviewedMutationMetadataReachesNormalTransportExactly(t *testing.T) {
-	for _, name := range []string{"update", "delete", "update-conflicting-file"} {
+	for _, name := range []string{"update", "delete", "update-conflicting-file", "update-v2"} {
 		t.Run(name, func(t *testing.T) {
 			actionName := name
-			if name == "update-conflicting-file" {
+			if name == "update-conflicting-file" || name == "update-v2" {
 				actionName = "update"
 			}
 			home := t.TempDir()
@@ -43,8 +45,16 @@ func TestContactReviewedMutationMetadataReachesNormalTransportExactly(t *testing
 					if err := json.Unmarshal(raw, &fields); err != nil {
 						t.Error(err)
 					}
-					if fields["mutationOutcomeVersion"] != float64(1) {
-						t.Error("missing v1")
+					version := float64(1)
+					if name == "update-v2" {
+						version = 2
+						parents, ok := fields["contactTypeCreateOperationGuids"].([]any)
+						if !ok || len(parents) != 1 || parents[0] != guid {
+							t.Error("original parent operation changed")
+						}
+					}
+					if fields["mutationOutcomeVersion"] != version {
+						t.Error("wrong request version")
 					}
 				} else {
 					if r.Method != http.MethodDelete {
@@ -98,6 +108,9 @@ func TestContactReviewedMutationMetadataReachesNormalTransportExactly(t *testing
 					t.Fatal(err)
 				}
 				args = append(args, "--from-json", file)
+			}
+			if name == "update-v2" {
+				args = append(args, "--mutation-outcome-version", "2", "--contact-type-create-operation-guids", guid)
 			}
 			command.SetArgs(args)
 			err := command.Execute()
@@ -202,5 +215,35 @@ func TestContactTypeOriginalIntentReachesNormalGuidTransport(t *testing.T) {
 				t.Fatal("reviewed normal ContactType request was not dispatched")
 			}
 		})
+	}
+}
+
+func TestContactLogicalParentsAreExplicitBoundedCanonicalAndConfirmed(t *testing.T) {
+	const parent = "11111111-1111-4111-8111-111111111111"
+	for _, action := range contactActions() {
+		if action.Name != "create" && action.Name != "update" {
+			continue
+		}
+		for _, value := range []string{parent, "", parent + "," + parent, strings.Repeat(parent+",", 128) + parent} {
+			cmd := &cobra.Command{}
+			cmd.Flags().Int("mutation-outcome-version", 2, "")
+			cmd.Flags().StringSlice("contact-type-create-operation-guids", nil, "")
+			if err := cmd.Flags().Set("contact-type-create-operation-guids", value); err != nil {
+				t.Fatal(err)
+			}
+			err := validateContactLogicalParents(cmd, action)
+			if (value == parent) != (err == nil) {
+				t.Fatalf("unexpected logical validation: %v", err)
+			}
+		}
+		confirmed := false
+		for _, flag := range action.Flags {
+			if flag.Name == "confirm" {
+				confirmed = flag.Required && flag.MustBeTrue && flag.LocalOnly
+			}
+		}
+		if !confirmed {
+			t.Fatal("logical dependency must preserve explicit confirmation")
+		}
 	}
 }

@@ -396,6 +396,9 @@ func validateActionInput(cmd *cobra.Command, args []string, action Action) error
 		}
 	}
 
+	if err := validateContactLogicalParents(cmd, action); err != nil {
+		return err
+	}
 	if _, err := exactDecimalFlags(cmd, action); err != nil {
 		return err
 	}
