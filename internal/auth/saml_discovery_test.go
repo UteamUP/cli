@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -71,12 +72,23 @@ func TestSamlDiscoveryRejectsDisplayNamesWildcardsAndIncompleteEmailDomains(t *t
 
 func TestSamlDiscoveryCancellationStopsTheOperationBeforeReturningACompany(t *testing.T) {
 	entered, canceled := make(chan struct{}), make(chan struct{})
+	release := make(chan struct{})
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// HTTP/1 cannot observe the disconnected client while an unread POST body
+		// owns the connection reader. Consume it before waiting for cancellation.
+		if _, err := io.Copy(io.Discard, r.Body); err != nil {
+			t.Errorf("read discovery body: %v", err)
+			return
+		}
 		close(entered)
-		<-r.Context().Done()
-		close(canceled)
+		select {
+		case <-r.Context().Done():
+			close(canceled)
+		case <-release:
+		}
 	}))
 	defer server.Close()
+	defer close(release)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	result := make(chan error, 1)
