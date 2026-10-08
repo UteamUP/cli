@@ -19,20 +19,21 @@ func TestBookableResourceDomainMirrorsBackendToolsAndGuidRoutes(t *testing.T) {
 		method string
 		path   string
 	}{
-		"list":               {"UteamupBookableResourceList", "GET", ""},
-		"crew-list":          {"UteamupBookableResourceCrewList", "GET", "crews"},
-		"source-list":        {"UteamupBookableResourceSourceList", "GET", "sources"},
-		"get":                {"UteamupBookableResourceGet", "GET", "{resourceGuid}"},
-		"create":             {"UteamupBookableResourceCreate", "POST", ""},
-		"update":             {"UteamupBookableResourceUpdate", "PUT", "{resourceGuid}"},
-		"pool-members-set":   {"UteamupBookableResourcePoolMembersSet", "PUT", "{poolGuid}/members"},
-		"territory-list":     {"UteamupServiceTerritoryList", "GET", "territories"},
-		"territory-create":   {"UteamupServiceTerritoryCreate", "POST", "territories"},
-		"territory-update":   {"UteamupServiceTerritoryUpdate", "PUT", "territories/{territoryGuid}"},
-		"requirement-list":   {"UteamupBookableResourceRequirementList", "GET", "workorders/{workorderGuid}/requirements"},
-		"requirement-create": {"UteamupBookableResourceRequirementCreate", "POST", "workorders/{workorderGuid}/requirements"},
-		"requirement-update": {"UteamupBookableResourceRequirementUpdate", "PUT", "requirements/{requirementGuid}"},
-		"route-estimate":     {"UteamupBookableResourceRouteEstimate", "POST", "route-estimate"},
+		"list":                {"UteamupBookableResourceList", "GET", ""},
+		"crew-list":           {"UteamupBookableResourceCrewList", "GET", "crews"},
+		"source-list":         {"UteamupBookableResourceSourceList", "GET", "sources"},
+		"availability-search": {"UteamupBookableResourceAvailabilitySearch", "GET", "availability-search"},
+		"get":                 {"UteamupBookableResourceGet", "GET", "{resourceGuid}"},
+		"create":              {"UteamupBookableResourceCreate", "POST", ""},
+		"update":              {"UteamupBookableResourceUpdate", "PUT", "{resourceGuid}"},
+		"pool-members-set":    {"UteamupBookableResourcePoolMembersSet", "PUT", "{poolGuid}/members"},
+		"territory-list":      {"UteamupServiceTerritoryList", "GET", "territories"},
+		"territory-create":    {"UteamupServiceTerritoryCreate", "POST", "territories"},
+		"territory-update":    {"UteamupServiceTerritoryUpdate", "PUT", "territories/{territoryGuid}"},
+		"requirement-list":    {"UteamupBookableResourceRequirementList", "GET", "workorders/{workorderGuid}/requirements"},
+		"requirement-create":  {"UteamupBookableResourceRequirementCreate", "POST", "workorders/{workorderGuid}/requirements"},
+		"requirement-update":  {"UteamupBookableResourceRequirementUpdate", "PUT", "requirements/{requirementGuid}"},
+		"route-estimate":      {"UteamupBookableResourceRouteEstimate", "POST", "route-estimate"},
 	}
 
 	for actionName, want := range expected {
@@ -66,7 +67,8 @@ func TestBookableResourceSourceFiltersUsePublicGuids(t *testing.T) {
 	action := findAction(findDomain("bookable-resource"), "list")
 	expected := map[string]string{
 		"user-guid": "userGuid", "contractor-profile-guid": "contractorProfileGuid",
-		"contractor-crew-guid": "contractorCrewGuid", "asset-guid": "assetGuid", "location-guid": "locationGuid",
+		"contractor-crew-guid": "contractorCrewGuid", "asset-guid": "assetGuid", "tool-guid": "toolGuid",
+		"location-guid": "locationGuid",
 	}
 	for _, flag := range action.Flags {
 		if want, ok := expected[flag.Name]; ok {
@@ -231,5 +233,94 @@ func TestBookableResourceStructuredInputsUseJSONFiles(t *testing.T) {
 		if !found {
 			t.Errorf("%s is missing --%s", actionName, flagName)
 		}
+	}
+}
+
+func TestBookableResourceMutationsAcceptToolSource(t *testing.T) {
+	domain := findDomain("bookable-resource")
+	for _, actionName := range []string{"create", "update"} {
+		action := findAction(domain, actionName)
+		found := false
+		for _, flag := range action.Flags {
+			if flag.Name == "tool-guid" {
+				found = true
+				if flag.BodyName != "toolGuid" || flag.Type != "string" || flag.Required {
+					t.Errorf("%s --tool-guid must be an optional public GUID mapped to toolGuid: %+v", actionName, flag)
+				}
+			}
+		}
+		if !found {
+			t.Errorf("%s is missing --tool-guid", actionName)
+		}
+	}
+}
+
+func TestBookableResourceTypeHelpListsEveryType(t *testing.T) {
+	domain := findDomain("bookable-resource")
+	for _, actionName := range []string{"list", "create", "update", "requirement-create", "requirement-update"} {
+		action := findAction(domain, actionName)
+		for _, flag := range action.Flags {
+			if flag.Name != "resource-type" {
+				continue
+			}
+			for _, label := range []string{"0=technician", "1=contractor", "2=crew", "3=equipment", "4=vehicle", "5=facility", "6=pool", "7=tool"} {
+				if !strings.Contains(flag.Description, label) {
+					t.Errorf("%s --resource-type help is missing %q: %q", actionName, label, flag.Description)
+				}
+			}
+		}
+	}
+	for _, check := range []struct{ action, flag string }{
+		{"list", "pool-member-resource-type"},
+		{"source-list", "resource-type"},
+	} {
+		for _, flag := range findAction(domain, check.action).Flags {
+			if flag.Name == check.flag && !strings.Contains(flag.Description, "7=tool") {
+				t.Errorf("%s --%s help is missing the tool type: %q", check.action, check.flag, flag.Description)
+			}
+		}
+	}
+}
+
+func TestBookableResourceAvailabilitySearchSendsQueryParameters(t *testing.T) {
+	action := findAction(findDomain("bookable-resource"), "availability-search")
+	if action == nil {
+		t.Fatal("availability-search action is missing")
+	}
+	expected := map[string]struct {
+		query    string
+		kind     string
+		required bool
+		def      any
+	}{
+		"from-utc":             {"fromUtc", "string", true, nil},
+		"to-utc":               {"toUtc", "string", true, nil},
+		"types":                {"types", "stringSlice", false, nil},
+		"search":               {"search", "string", false, nil},
+		"available-only":       {"availableOnly", "bool", false, nil},
+		"include-not-rostered": {"includeNotRostered", "bool", false, true},
+		"page-size-per-type":   {"pageSizePerType", "int", false, 10},
+		"cursor":               {"cursor", "string", false, nil},
+	}
+	for _, flag := range action.Flags {
+		want, ok := expected[flag.Name]
+		if !ok {
+			t.Errorf("unexpected availability flag %+v", flag)
+			continue
+		}
+		if flag.QueryName != want.query || flag.Type != want.kind || flag.Required != want.required || flag.Default != want.def {
+			t.Errorf("%s = %+v, want query %q type %q required %v default %v", flag.Name, flag, want.query, want.kind, want.required, want.def)
+		}
+		delete(expected, flag.Name)
+	}
+	if len(expected) != 0 {
+		t.Fatalf("missing availability flags: %v", expected)
+	}
+
+	path := appendQueryParameters("/api/bookableresources/availability-search", map[string]any{
+		"types": []string{"technician", "tool"},
+	})
+	if path != "/api/bookableresources/availability-search?types=technician&types=tool" {
+		t.Fatalf("types must repeat as separate query values, got %q", path)
 	}
 }
