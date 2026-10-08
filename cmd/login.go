@@ -106,10 +106,12 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	authClient := auth.NewClient(origin, insecure, logger)
 
 	var token *auth.TokenData
+	loginContext := cmd.Context()
 
 	if loginSAML {
-		ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt)
+		ctx, stop := signal.NotifyContext(loginContext, os.Interrupt)
 		defer stop()
+		loginContext = ctx
 		token, err = authClient.LoginWithSAML(ctx, loginCompany)
 		if err != nil {
 			return err
@@ -173,6 +175,9 @@ func runLogin(cmd *cobra.Command, args []string) error {
 		token.Profile = selectedProfile
 	}
 
+	if err := loginContext.Err(); err != nil {
+		return fmt.Errorf("login cancelled before saving the session: %w", err)
+	}
 	if err := auth.SaveToken(token); err != nil {
 		return fmt.Errorf("saving token: %w", err)
 	}

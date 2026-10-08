@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -102,7 +103,12 @@ func tenantHTTPClient(baseURL string, insecure bool) *http.Client {
 // given tenant GUID. If tenantGUID is empty, returns the default/first tenant.
 // Requires a valid access token and the backend base URL.
 func FetchTenantInfo(accessToken, baseURL, tenantGUID string, insecure bool) (*TenantInfo, error) {
-	req, err := http.NewRequest("GET", strings.TrimRight(baseURL, "/")+"/api/tenant/my-tenants", nil)
+	return FetchTenantInfoContext(context.Background(), accessToken, baseURL, tenantGUID, insecure)
+}
+
+// FetchTenantInfoContext confirms membership using the operation's cancellation context.
+func FetchTenantInfoContext(ctx context.Context, accessToken, baseURL, tenantGUID string, insecure bool) (*TenantInfo, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", strings.TrimRight(baseURL, "/")+"/api/tenant/my-tenants", nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}

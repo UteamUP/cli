@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -226,8 +227,64 @@ func TestSamlSessionRejectsMissingTenantAndExpiredProfile(t *testing.T) {
 		{TenantGUID: "tenant", Profile: &LoginResponse{AccessToken: "session", RefreshToken: "refresh", TokenExpiry: time.Now().Add(time.Hour).Format(time.RFC3339)}},
 		{TenantGUID: "11111111-1111-4111-8111-111111111111", Profile: &LoginResponse{AccessToken: "session", TokenExpiry: time.Now().Add(time.Hour).Format(time.RFC3339)}},
 	} {
-		if _, err := client.acceptSamlSession(&response); err == nil {
+		if _, err := client.acceptSamlSession(context.Background(), &response); err == nil {
 			t.Fatal("incomplete or expired session was accepted")
 		}
+	}
+}
+
+func TestSamlLoginCancellationDuringMembershipRejectsSession(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	membershipStarted := make(chan struct{})
+	membershipCancelled := make(chan struct{})
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/api/auth/saml/exchange":
+			_ = json.NewEncoder(w).Encode(samlExchangeResponse{
+				Status: "authenticated", TenantGUID: "11111111-1111-4111-8111-111111111111",
+				Profile: &LoginResponse{AccessToken: "session", RefreshToken: "refresh", TokenExpiry: time.Now().Add(time.Hour).Format(time.RFC3339)},
+			})
+		case "/api/tenant/my-tenants":
+			close(membershipStarted)
+			select {
+			case <-r.Context().Done():
+				close(membershipCancelled)
+			case <-time.After(2 * time.Second):
+				_ = json.NewEncoder(w).Encode([]TenantInfo{{GUID: "11111111-1111-4111-8111-111111111111", Name: "Iteggs"}})
+			}
+		default:
+			t.Errorf("unexpected path %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+	type outcome struct {
+		token *TokenData
+		err   error
+	}
+	completed := make(chan outcome, 1)
+	go func() {
+		token, err := NewClient(server.URL, true, logging.Default()).completeSamlLogin(ctx, "code", "verifier", nil)
+		completed <- outcome{token, err}
+	}()
+	select {
+	case <-membershipStarted:
+	case <-time.After(time.Second):
+		t.Fatal("membership confirmation did not start")
+	}
+	cancel()
+	select {
+	case result := <-completed:
+		if result.token != nil || !errors.Is(result.err, context.Canceled) {
+			t.Fatal("cancelled sign-in returned a session or lost cancellation")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("membership confirmation ignored sign-in cancellation")
+	}
+	select {
+	case <-membershipCancelled:
+	case <-time.After(time.Second):
+		t.Fatal("cancelled membership request remained active")
 	}
 }

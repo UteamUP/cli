@@ -228,7 +228,7 @@ func (a *Client) completeSamlLogin(ctx context.Context, code, verifier string, p
 			response = *challenge
 		}
 		if response.Status == "authenticated" {
-			return a.acceptSamlSession(&response)
+			return a.acceptSamlSession(ctx, &response)
 		}
 		if (response.Status != "link_required" && response.Status != "mfa_required") || response.ContinuationToken == "" || !response.ExpiresAt.After(time.Now()) {
 			return nil, fmt.Errorf("SAML sign-in could not complete; start again using your company code")
@@ -248,7 +248,10 @@ func (a *Client) completeSamlLogin(ctx context.Context, code, verifier string, p
 	return nil, fmt.Errorf("SAML verification attempt limit reached; start again using your company code")
 }
 
-func (a *Client) acceptSamlSession(response *samlExchangeResponse) (*TokenData, error) {
+func (a *Client) acceptSamlSession(ctx context.Context, response *samlExchangeResponse) (*TokenData, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("SAML sign-in cancelled: %w", err)
+	}
 	if response.Profile == nil || response.Profile.AccessToken == "" || response.Profile.RefreshToken == "" || !samlTenantGUID.MatchString(response.TenantGUID) || response.TenantGUID == "00000000-0000-0000-0000-000000000000" {
 		return nil, fmt.Errorf("SAML sign-in returned an incomplete session")
 	}
@@ -256,7 +259,10 @@ func (a *Client) acceptSamlSession(response *samlExchangeResponse) (*TokenData, 
 	if err != nil || !expiry.After(time.Now()) {
 		return nil, fmt.Errorf("SAML sign-in returned an expired session")
 	}
-	tenant, err := FetchTenantInfo(response.Profile.AccessToken, a.baseURL, response.TenantGUID, a.insecure)
+	tenant, err := FetchTenantInfoContext(ctx, response.Profile.AccessToken, a.baseURL, response.TenantGUID, a.insecure)
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, fmt.Errorf("SAML sign-in cancelled: %w", ctxErr)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("confirming SAML company membership failed; retry sign-in")
 	}
