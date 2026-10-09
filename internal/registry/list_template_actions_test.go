@@ -1,9 +1,9 @@
 package registry
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
-	"reflect"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -55,8 +55,12 @@ func TestListTemplateRequestsKeepWorkflowAndPolicyAtRootWithGuidRoute(t *testing
 			for _, key := range consumed {
 				delete(args, key)
 			}
-			if !reflect.DeepEqual(args, model) {
-				t.Fatalf("template request changed: got %#v, want %#v", args, model)
+			encoded, err := json.Marshal(args)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !bytes.Equal(encoded, raw) {
+				t.Fatalf("template request changed: got %s, want %s", encoded, raw)
 			}
 			fileFlag := actionFlagByName(t, action, "from-json")
 			if !fileFlag.Required || !fileFlag.RootJSONObjectFile {
