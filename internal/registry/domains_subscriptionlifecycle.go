@@ -56,6 +56,21 @@ func init() {
 				},
 			},
 			{
+				// For a bank-transfer tenant with no subscription at all (a demo or test
+				// tenant), where activate-without-payment has no row to act on. Creates one on
+				// the tenant's current plan and runs the same audited override; returns the
+				// existing active subscription when there already is one.
+				Name:        "grant-without-payment",
+				Description: "Give a bank-transfer tenant with no subscription an active one on its plan (audited override; requires a reason)",
+				ToolName:    "UteamupSubscriptionGrantWithoutPayment",
+				HTTPMethod:  "POST",
+				RESTPath:    "admin/tenants/{tenantGuid}/subscriptions/grant-without-payment",
+				Args:        []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "reason", Description: "Why payment is being waived (required; recorded permanently in the admin audit log)", Required: true, Type: "string"},
+				},
+			},
+			{
 				Name:        "clear-scheduled-cancel",
 				Description: "Clear a scheduled cancellation before it fires; the subscription stays active",
 				ToolName:    "UteamupSubscriptionClearScheduledCancel",

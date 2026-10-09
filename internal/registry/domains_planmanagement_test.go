@@ -194,8 +194,8 @@ func TestPlanAnalyticsDomainRegistered(t *testing.T) {
 
 func TestSubscriptionLifecycleDomainRegistered(t *testing.T) {
 	d := assertDomainAPIPath(t, "subscription-lifecycle", "/api/internalbilling")
-	if len(d.Actions) != 5 {
-		t.Errorf("subscription-lifecycle expected 5 lifecycle actions, got %d", len(d.Actions))
+	if len(d.Actions) != 6 {
+		t.Errorf("subscription-lifecycle expected 6 lifecycle actions, got %d", len(d.Actions))
 	}
 
 	for actionName, restPath := range map[string]string{
@@ -225,6 +225,17 @@ func TestSubscriptionLifecycleDomainRegistered(t *testing.T) {
 	reason := findFlag(override, "reason")
 	if reason == nil || !reason.Required || reason.Type != "string" {
 		t.Errorf("subscription-lifecycle activate-without-payment --reason must be a required string flag, got %+v", reason)
+	}
+
+	// grant-without-payment targets a tenant with no subscription row, so it is keyed by
+	// the tenant GUID and carries the same mandatory reason as the BIL-002 override.
+	grant := findDomainAction(t, "subscription-lifecycle", "grant-without-payment")
+	if grant.HTTPMethod != "POST" || grant.RESTPath != "admin/tenants/{tenantGuid}/subscriptions/grant-without-payment" {
+		t.Errorf("subscription-lifecycle grant-without-payment: want POST admin/tenants/{tenantGuid}/subscriptions/grant-without-payment, got %q %s", grant.HTTPMethod, grant.RESTPath)
+	}
+	assertSingleGUIDArg(t, grant, "tenantGuid")
+	if grantReason := findFlag(grant, "reason"); grantReason == nil || !grantReason.Required || grantReason.Type != "string" {
+		t.Errorf("subscription-lifecycle grant-without-payment --reason must be a required string flag, got %+v", grantReason)
 	}
 
 	sched := findDomainAction(t, "subscription-lifecycle", "schedule-cancel")
