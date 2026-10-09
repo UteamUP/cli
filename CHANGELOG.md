@@ -5,6 +5,34 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.5.0](https://github.com/UteamUP/cli/compare/4.4.0...4.5.0) (2026-10-09)
+
+
+### Features
+
+* add explicit Contact logical type dependency contract ([82688d3](https://github.com/UteamUP/cli/commit/82688d306c1b1314afcc064711d328ccd49811bf))
+* add reviewed ICE commands and preserve original JSON numbers ([46790d8](https://github.com/UteamUP/cli/commit/46790d86a9700668c5750b84454ac712c240e9d6))
+* discover optional company SSO and manage verified domains in CLI ([7dd83d9](https://github.com/UteamUP/cli/commit/7dd83d9625f1d39ab7110b4b23f4d9b389cbd9e1))
+
+
+### Bug Fixes
+
+* allow asset group draft generation without documents ([500c6bc](https://github.com/UteamUP/cli/commit/500c6bcba7d79584c599a90291ce53c9be3d8dd4))
+* hide unsupported helpdesk intake commands ([394cb59](https://github.com/UteamUP/cli/commit/394cb59c8df8b3a522a217c31fc9582a4eb1e958))
+
+
+### Miscellaneous
+
+* synchronize CLI 4.4.0 release metadata ([7ff998c](https://github.com/UteamUP/cli/commit/7ff998c5d52864b482822405bf2bb03bdaf74758))
+
+
+### Tests
+
+* **client:** run the tenant header test as an API-key session ([bd3eced](https://github.com/UteamUP/cli/commit/bd3eced4d4a8639001752928503fc95f2aea76a2))
+* compare list template request JSON across numeric representations ([696ce25](https://github.com/UteamUP/cli/commit/696ce25fc1fdf3a21061b8b4fc20a4bef39beec0))
+* exercise persisted api-key and saml CLI session methods ([cece5dd](https://github.com/UteamUP/cli/commit/cece5dda5d3ef8a2a4e8e81fe6b572827d8afc80))
+* observe SAML cancellation after reading the request body ([b7c08da](https://github.com/UteamUP/cli/commit/b7c08da2db35a1de55ca73f2ca492ba4fc0eef5e))
+
 ## [4.4.0](https://github.com/UteamUP/cli/compare/4.3.0...4.4.0) (2026-10-08)
 
 
