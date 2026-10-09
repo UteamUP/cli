@@ -175,7 +175,7 @@ func TestAssetGroupLinksGenerateCarriesPromptAndIdempotencyKey(t *testing.T) {
 	}
 }
 
-func TestAssetGroupDocumentDraftRequiresEvidenceAndIdempotencyKey(t *testing.T) {
+func TestAssetGroupDraftAllowsOptionalEvidenceAndRequiresIdempotencyKey(t *testing.T) {
 	d := assetGroupDomain(t)
 	generate := findAction(d, "document-draft-generate")
 	if generate == nil {
@@ -184,8 +184,8 @@ func TestAssetGroupDocumentDraftRequiresEvidenceAndIdempotencyKey(t *testing.T) 
 
 	flags := flagsToMap(generate.Flags)
 	documents, ok := flags["document-guid"]
-	if !ok || !documents.Required || documents.BodyName != "documentGuids" || documents.Type != "stringSlice" {
-		t.Errorf("--document-guid must be a required repeatable slice mapped to documentGuids, got %+v", documents)
+	if !ok || documents.Required || documents.BodyName != "documentGuids" || documents.Type != "stringSlice" {
+		t.Errorf("--document-guid must be an optional repeatable slice mapped to documentGuids, got %+v", documents)
 	}
 	request, ok := flags["request-guid"]
 	if !ok || !request.Required || request.BodyName != "requestGuid" || request.Type != "non-empty-uuid" {

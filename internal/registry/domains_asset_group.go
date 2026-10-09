@@ -213,13 +213,13 @@ func init() {
 			},
 			{
 				Name:        "document-draft-generate",
-				Description: "Ask UPMate to propose a new group, existing members and cause/effect links from tenant documents",
+				Description: "Ask UPMate to propose a group from a description, linked industry codes and optional documents",
 				ToolName:    "UteamupAssetGroupDocumentDraftGenerate",
 				HTTPMethod:  "POST",
 				RESTPath:    "document-drafts/generate",
 				Flags: []FlagDef{
 					{Name: "prompt", Description: "System boundary and failure effects to identify (10-4000 chars)", Required: true, Type: "string"},
-					{Name: "document-guid", BodyName: "documentGuids", Description: "Tenant document GUID to read, one to five, repeatable", Required: true, Type: "stringSlice"},
+					{Name: "document-guid", BodyName: "documentGuids", Description: "Optional tenant document GUID to read, up to five, repeatable", Type: "stringSlice"},
 					{Name: "request-guid", BodyName: "requestGuid", Description: "Caller-generated GUID that deduplicates a retried generation", Required: true, Type: "non-empty-uuid"},
 				},
 			},
@@ -237,7 +237,7 @@ func init() {
 			},
 			{
 				Name:        "document-draft-apply",
-				Description: "Create the reviewed subset of a stored document-backed group proposal",
+				Description: "Create the reviewed subset of a stored group proposal and attach its source documents",
 				ToolName:    "UteamupAssetGroupDocumentDraftApply",
 				HTTPMethod:  "POST",
 				RESTPath:    "document-drafts/from-generation/{generationGuid}",
