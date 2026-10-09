@@ -38,6 +38,30 @@ func init() {
 					RootJSONObjectFile: true,
 				}},
 			},
+			Action{
+				Name:         "ice-assignments-review",
+				Description:  "Read a coherent ICE assignment baseline; this does not grant offline authority",
+				ToolName:     "UteamupEmergencycontactAssignmentsReview",
+				RESTBasePath: "/api/emergencycontact",
+				RESTPath:     "by-contact/{guid}",
+				HTTPMethod:   "GET",
+				Args:         []ArgDef{{Name: "guid", Description: "The contact's public GUID", Required: true, Type: "uuid"}},
+				Flags:        []FlagDef{{Name: "reviewed-version", Type: "int", Default: 1, QueryName: "reviewedVersion", Description: "Explicit reviewed ICE snapshot version (1)"}},
+			},
+			Action{
+				Name:         "ice-assignments-replace-reviewed",
+				Description:  "Apply a confirmed original ICE replacement; retain the same body and operation key after an uncertain response",
+				ToolName:     "UteamupEmergencycontactAssignmentsReplaceReviewed",
+				RESTBasePath: "/api/emergencycontact",
+				RESTPath:     "by-contact/{guid}/assignments",
+				HTTPMethod:   "PUT",
+				Args:         []ArgDef{{Name: "guid", Description: "The contact's public GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "from-json", Description: "Exact original four-key JSON: userGuids, idempotencyKey, expectedAssignmentsHash, mutationOutcomeVersion=1; never refresh an unresolved retry", Type: "string", Required: true, RootJSONObjectFile: true},
+					{Name: "idempotency-key", Description: "Same original operation GUID as the retained JSON body", Type: "uuid", Required: true, HeaderName: "Idempotency-Key"},
+					{Name: "confirm", Description: "Explicitly confirm the reviewed ICE assignment replacement", Type: "bool", Required: true, MustBeTrue: true, LocalOnly: true},
+				},
+			},
 		),
 	})
 

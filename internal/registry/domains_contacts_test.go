@@ -163,3 +163,52 @@ func TestContactMutationsAreGuidFirstReviewedNormalRoutes(t *testing.T) {
 		})
 	}
 }
+
+func TestReviewedIceActionsUseNormalGuidRoutesAndExplicitNegotiation(t *testing.T) {
+	d := findDomain("contact")
+	for _, name := range []string{"ice-assignments-review", "ice-assignments-replace-reviewed"} {
+		t.Run(name, func(t *testing.T) {
+			var action *Action
+			for index := range d.Actions {
+				if d.Actions[index].Name == name {
+					action = &d.Actions[index]
+					break
+				}
+			}
+			if action == nil || action.MCPOnly || action.RESTBasePath != "/api/emergencycontact" {
+				t.Fatal("reviewed ICE must reuse the normal REST owner")
+			}
+			if len(action.Args) != 1 || action.Args[0].Name != "guid" || action.Args[0].Type != "uuid" {
+				t.Fatal("only public Contact GUID is caller-controlled scope")
+			}
+			flags := map[string]FlagDef{}
+			for _, flag := range action.Flags {
+				flags[flag.Name] = flag
+			}
+			if name == "ice-assignments-review" {
+				if action.ToolName != "UteamupEmergencycontactAssignmentsReview" || action.HTTPMethod != "GET" || action.RESTPath != "by-contact/{guid}" {
+					t.Fatal("reviewed read tool/route mismatch")
+				}
+				version := flags["reviewed-version"]
+				if version.Default != 1 || version.QueryName != "reviewedVersion" || version.Type != "int" {
+					t.Fatal("normal GET must explicitly negotiate version1")
+				}
+				return
+			}
+			if action.ToolName != "UteamupEmergencycontactAssignmentsReplaceReviewed" || action.HTTPMethod != "PUT" || action.RESTPath != "by-contact/{guid}/assignments" {
+				t.Fatal("reviewed replacement tool/route mismatch")
+			}
+			if !flags["from-json"].Required || !flags["from-json"].RootJSONObjectFile {
+				t.Fatal("complete original request must be supplied unchanged")
+			}
+			key := flags["idempotency-key"]
+			if !key.Required || key.Type != "uuid" || key.HeaderName != "Idempotency-Key" || key.MirrorHeaderInBody {
+				t.Fatal("header must bind original key without overwriting a conflicting body identity")
+			}
+			confirmation := flags["confirm"]
+			if !confirmation.Required || !confirmation.MustBeTrue || !confirmation.LocalOnly {
+				t.Fatal("local explicit confirmation must not add a fifth JSON field")
+			}
+		})
+	}
+}

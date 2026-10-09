@@ -40,6 +40,101 @@ func TestReadRootJSONObjectFileAcceptsAnUnwrappedEvolvingDTO(t *testing.T) {
 	}
 }
 
+func TestRootObjectKeepsOriginalNumericLexemesAndPrecision(t *testing.T) {
+	for _, literal := range []string{"1", "1.0", "1e0", "9007199254740993", "0.000000000000000000123"} {
+		t.Run(literal, func(t *testing.T) {
+			object, err := readRootJSONObjectFile(writeRegistryJSONFixture(t,
+				`{"mutationOutcomeVersion":`+literal+`,"nested":[`+literal+`]}`))
+			if err != nil {
+				t.Fatal(err)
+			}
+			encoded, err := json.Marshal(object)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var raw map[string]json.RawMessage
+			if err := json.Unmarshal(encoded, &raw); err != nil {
+				t.Fatal(err)
+			}
+			if string(raw["mutationOutcomeVersion"]) != literal || string(raw["nested"]) != "["+literal+"]" {
+				t.Fatalf("original reviewed numbers changed: %s", encoded)
+			}
+		})
+	}
+}
+
+func TestReviewedIceReplacementPreservesRawRequestAndConfirmationBoundary(t *testing.T) {
+	for _, literal := range []string{"1", "1.0", "1e0"} {
+		t.Run(literal, func(t *testing.T) {
+			const contact = "11111111-2222-4333-8444-555555555555"
+			const operation = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+			requestPath := writeRegistryJSONFixture(t, `{"userGuids":[],"idempotencyKey":"`+operation+
+				`","expectedAssignmentsHash":"`+strings.Repeat("a", 64)+`","mutationOutcomeVersion":`+literal+`}`)
+			t.Setenv("HOME", t.TempDir())
+			t.Setenv("USERPROFILE", os.Getenv("HOME"))
+			calls := 0
+			server := httptest.NewTLSServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+				calls++
+				if request.Method != http.MethodPut || request.URL.Path != "/api/emergencycontact/by-contact/"+contact+"/assignments" {
+					t.Errorf("wrong normal route: %s %s", request.Method, request.URL.Path)
+				}
+				if request.Header.Get("Idempotency-Key") != operation {
+					t.Error("original operation header changed")
+				}
+				var body map[string]json.RawMessage
+				if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
+					t.Error(err)
+				}
+				if len(body) != 4 || string(body["mutationOutcomeVersion"]) != literal || string(body["idempotencyKey"]) != `"`+operation+`"` {
+					t.Errorf("original reviewed wire changed: %#v", body)
+				}
+				response.Header().Set("Content-Type", "application/json")
+				if literal != "1" {
+					response.WriteHeader(http.StatusBadRequest)
+					_, _ = response.Write([]byte(`{"title":"Exact version literal1 is required"}`))
+					return
+				}
+				_, _ = response.Write([]byte(`{"schemaVersion":1,"outcome":"applied"}`))
+			}))
+			defer server.Close()
+			if err := auth.SaveToken(&auth.TokenData{APIOrigin: server.URL, AccessToken: "ice-fixture-token",
+				ExpiresAt: time.Now().Add(time.Hour), TenantGUID: "55555555-5555-4555-8555-555555555555"}); err != nil {
+				t.Fatal(err)
+			}
+			api := client.NewAPIClient(server.URL, time.Second, true, client.RetryOptions{MaxRetries: 0}, logging.New(logging.LevelError))
+			format := "json"
+			command := buildDomainCommand(findDomain("contact"), func() (*client.APIClient, error) { return api, nil },
+				logging.New(logging.LevelError), &format, &ExportConfig{})
+			command.SilenceErrors, command.SilenceUsage = true, true
+			command.SetArgs([]string{"ice-assignments-replace-reviewed", contact, "--from-json", requestPath,
+				"--idempotency-key", operation, "--confirm"})
+			err := command.Execute()
+			if (literal == "1" && err != nil) || (literal != "1" && err == nil) || calls != 1 {
+				t.Fatalf("calls=%d error=%v version=%s", calls, err, literal)
+			}
+		})
+	}
+}
+
+func TestReviewedIceFalseConfirmationNeverCreatesClient(t *testing.T) {
+	created := false
+	format := "json"
+	command := buildDomainCommand(findDomain("contact"), func() (*client.APIClient, error) {
+		created = true
+		return nil, nil
+	}, logging.New(logging.LevelError), &format, &ExportConfig{})
+	command.SilenceErrors, command.SilenceUsage = true, true
+	command.SetArgs([]string{"ice-assignments-replace-reviewed", "11111111-2222-4333-8444-555555555555",
+		"--from-json", filepath.Join(t.TempDir(), "unused.json"),
+		"--idempotency-key", "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", "--confirm=false"})
+	if err := command.Execute(); err == nil || !strings.Contains(err.Error(), "--confirm must be explicitly enabled") {
+		t.Fatalf("confirmation error = %v", err)
+	}
+	if created {
+		t.Fatal("client created before explicit confirmation")
+	}
+}
+
 func TestReadRootJSONObjectFileRejectsAmbiguousOrNonObjectJSON(t *testing.T) {
 	tests := []struct {
 		name string

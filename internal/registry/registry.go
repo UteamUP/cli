@@ -1134,6 +1134,8 @@ func readRootJSONObjectFile(path string) (map[string]any, error) {
 	}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
+	// Preserve original numeric lexemes and precision in reviewed request files.
+	decoder.UseNumber()
 	parsed, err := decodeStrictJSONValue(decoder)
 	if err != nil {
 		return nil, fmt.Errorf("parsing %s as JSON: %w", filepath.Base(path), err)
