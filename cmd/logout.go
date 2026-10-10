@@ -16,6 +16,12 @@ var logoutCmd = &cobra.Command{
 After logging out, you must run "uteamup login" or "ut login"
 again before using any commands.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		token, loadErr := auth.LoadToken()
+		if loadErr == nil {
+			if err := auth.RevokeSession(cmd.Context(), token, insecure); err != nil {
+				fmt.Fprintln(cmd.ErrOrStderr(), "Server session revocation was unavailable; clearing this device session.")
+			}
+		}
 		if err := auth.ClearToken(); err != nil {
 			return fmt.Errorf("clearing token: %w", err)
 		}

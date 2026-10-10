@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/uteamup/cli/internal/security"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -75,7 +76,7 @@ func (l *Logger) log(level Level, msg string, args ...any) {
 	}
 	ts := time.Now().UTC().Format("15:04:05")
 	formatted := fmt.Sprintf(msg, args...)
-	formatted = security.SafeText(redact(formatted))
+	formatted = SafeDiagnostic(formatted)
 	fmt.Fprintf(os.Stderr, "[%s] %s  %s\n", ts, level, formatted)
 }
 
@@ -97,51 +98,19 @@ func (l *Logger) Error(msg string, args ...any) { l.log(LevelError, msg, args...
 // SetLevel changes the log level.
 func (l *Logger) SetLevel(level Level) { l.level = level }
 
-// redact removes sensitive data from log messages.
+var capabilityURL = regexp.MustCompile(`(?i)https?://[^\s"'<>]+`)
+var credentialValue = regexp.MustCompile(`(?i)(\bBearer\s+|\b(?:token|secret|password|apiKey|api_key)\s*(?:=|:)\s*|\b(?:token|secret|password|apiKey|api_key)\s+)(?:"[^"\r\n]*"|'[^'\r\n]*'|[^\s,&#]+)`)
+
+// redact removes every credential occurrence, including URLs in transport errors.
 func redact(s string) string {
-	sensitivePatterns := []string{"Bearer ", "token", "secret", "password", "apiKey", "api_key"}
-	result := s
-	for _, pattern := range sensitivePatterns {
-		idx := strings.Index(strings.ToLower(result), strings.ToLower(pattern))
-		if idx == -1 {
-			continue
+	result := capabilityURL.ReplaceAllStringFunc(s, func(raw string) string {
+		if index := strings.IndexAny(raw, "?#"); index >= 0 {
+			return raw[:index] + "?[REDACTED]"
 		}
-		// Find the value after the pattern (look for = or : or space followed by the value)
-		after := result[idx+len(pattern):]
-		for _, sep := range []string{"=", ":", " "} {
-			if strings.HasPrefix(after, sep) {
-				valueStart := idx + len(pattern) + len(sep)
-				valueEnd := findValueEnd(result, valueStart)
-				if valueEnd > valueStart {
-					result = result[:valueStart] + "[REDACTED]" + result[valueEnd:]
-				}
-				break
-			}
-		}
-	}
-	return result
+		return raw
+	})
+	return credentialValue.ReplaceAllString(result, "${1}[REDACTED]")
 }
 
-// findValueEnd finds where a value ends (next space, quote boundary, or EOL).
-func findValueEnd(s string, start int) int {
-	if start >= len(s) {
-		return start
-	}
-	// If value starts with a quote, find closing quote
-	if s[start] == '"' || s[start] == '\'' {
-		quote := s[start]
-		for i := start + 1; i < len(s); i++ {
-			if s[i] == quote {
-				return i + 1
-			}
-		}
-		return len(s)
-	}
-	// Otherwise find next whitespace or comma
-	for i := start; i < len(s); i++ {
-		if s[i] == ' ' || s[i] == ',' || s[i] == '\n' || s[i] == '\t' {
-			return i
-		}
-	}
-	return len(s)
-}
+// SafeDiagnostic protects final command errors as well as logger output.
+func SafeDiagnostic(message string) string { return security.SafeText(redact(message)) }

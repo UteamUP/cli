@@ -2,7 +2,6 @@ package exporter
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/uteamup/cli/internal/imageanalyzer/imageutil"
 	"github.com/uteamup/cli/internal/imageanalyzer/models"
+	"github.com/uteamup/cli/internal/security"
 )
 
 // RenameImages copies images to the renamed-images folder with descriptive
@@ -26,6 +26,9 @@ func (e *CSVExporter) RenameImages(groups []models.ImageGroup) (map[string]strin
 
 	for _, group := range groups {
 		etype := string(group.Primary.Classification.PrimaryType)
+		if etype == "" || etype != imageutil.SanitizeFilename(etype) || strings.ContainsAny(etype, `/\`) {
+			return nil, fmt.Errorf("invalid image classification for generated filename")
+		}
 		name := imageutil.SanitizeFilename(group.Primary.ExtractedData.GetName())
 		if name == "" {
 			name = "unnamed"
@@ -67,22 +70,12 @@ func (e *CSVExporter) RenameImages(groups []models.ImageGroup) (map[string]strin
 	return mapping, nil
 }
 
-// copyFile copies src to dst using io.Copy, preserving content only.
+// copyFile uses the scanner-bound source identity and bounded private output.
 func copyFile(src, dst string) error {
-	in, err := os.Open(src)
+	in, err := security.OpenScannedRegular(src, 15*1024*1024)
 	if err != nil {
 		return err
 	}
 	defer in.Close()
-
-	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0o600)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	if _, err := io.Copy(out, in); err != nil {
-		return err
-	}
-	return out.Close()
+	return security.CopyNewFile(dst, in, 15*1024*1024)
 }

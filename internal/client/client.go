@@ -343,7 +343,7 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 			req.Header.Set(k, v)
 		}
 
-		c.logger.Debug("%s %s tenant=%s", method, fullURL, c.tenantGUID(token))
+		c.logger.Debug("%s %s tenant=%s", method, c.baseURL+path, c.tenantGUID(token))
 
 		resp, err := c.httpClient().Do(req)
 		if err != nil {
@@ -515,7 +515,7 @@ func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField,
 			req.Header.Set(k, v)
 		}
 
-		c.logger.Debug("%s %s multipart file=%s tenant=%s", method, fullURL, filepath.Base(filePath), c.tenantGUID(token))
+		c.logger.Debug("%s %s multipart file=%s tenant=%s", method, c.baseURL+path, filepath.Base(filePath), c.tenantGUID(token))
 
 		resp, err := c.httpClient().Do(req)
 		if err != nil {

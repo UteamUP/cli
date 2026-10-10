@@ -38,7 +38,7 @@ func init() {
 				ToolName:    "UteamupSalesBookingVerify",
 				Args:        []ArgDef{{Name: "id", Description: "Booking ID", Required: true, Type: "int"}},
 				Flags: []FlagDef{
-					{Name: "token", Short: "t", Description: "Verification token", Required: true, Type: "string"},
+					{Name: "token", Short: "t", Description: "Verification token", Required: true, Type: "string", Sensitive: true},
 				},
 			},
 			{

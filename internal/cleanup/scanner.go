@@ -189,7 +189,7 @@ func (c *Catalog) scanMobile(root string) {
 
 	// MobilePage catalog = GoRoute path strings (the route observer reports the templated path).
 	router := filepath.Join(mobile, "core", "router", "app_router.dart")
-	if content, err := os.ReadFile(router); err == nil {
+	if content, err := security.ReadFile(router, 4*1024*1024); err == nil {
 		for _, mm := range goRouteRe.FindAllStringSubmatch(string(content), -1) {
 			p := mm[1]
 			if !strings.HasPrefix(p, "/") {

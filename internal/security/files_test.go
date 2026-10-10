@@ -68,3 +68,22 @@ func TestSecretAndTerminalBoundaries(t *testing.T) {
 		t.Fatal(got)
 	}
 }
+
+func TestSourceRejectsIntermediateDirectorySymlink(t *testing.T) {
+	root := t.TempDir()
+	outside := t.TempDir()
+	source := filepath.Join(outside, "input")
+	if err := os.WriteFile(source, []byte("private"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(root, "redirect")
+	if err := os.Symlink(outside, link); err != nil {
+		t.Skip(err)
+	}
+	if _, err := ReadFile(filepath.Join(link, "input"), 100); err == nil {
+		t.Fatal("intermediate symlink followed")
+	}
+	if got, err := ReadFile(source, 100); err != nil || string(got) != "private" {
+		t.Fatalf("ordinary bounded file rejected: %v", err)
+	}
+}

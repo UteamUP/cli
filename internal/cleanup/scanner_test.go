@@ -27,6 +27,47 @@ func keysOf(c Catalog, typ string) map[string]bool {
 	return out
 }
 
+func TestMobileRouterDiscoveryRejectsSymlinksAndOversizedSource(t *testing.T) {
+	for _, oversized := range []bool{false, true} {
+		root := t.TempDir()
+		router := filepath.Join(root, "UteamUP_Mobile/lib/core/router/app_router.dart")
+		os.MkdirAll(filepath.Dir(router), 0700)
+		if oversized {
+			os.WriteFile(router, []byte("GoRoute(path: '/private')"), 0600)
+			os.Truncate(router, 4*1024*1024+1)
+		} else {
+			target := filepath.Join(root, "private")
+			os.WriteFile(target, []byte("GoRoute(path: '/private')"), 0600)
+			if err := os.Symlink(target, router); err != nil {
+				t.Skip(err)
+			}
+		}
+		var catalog Catalog
+		catalog.scanMobile(root)
+		if keysOf(catalog, TypeMobilePage)["/private"] {
+			t.Fatal("unsafe router was read")
+		}
+	}
+}
+
+func TestMobileRouterDiscoveryRejectsIntermediateDirectorySymlink(t *testing.T) {
+	root := t.TempDir()
+	outside := t.TempDir()
+	write(t, outside, "app_router.dart", `GoRoute(path: '/private')`)
+	parent := filepath.Join(root, "UteamUP_Mobile/lib/core")
+	if err := os.MkdirAll(parent, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(parent, "router")); err != nil {
+		t.Skip(err)
+	}
+	var catalog Catalog
+	catalog.scanMobile(root)
+	if keysOf(catalog, TypeMobilePage)["/private"] {
+		t.Fatal("intermediate router link was read")
+	}
+}
+
 func TestScan_DerivesMatchingKeys(t *testing.T) {
 	root := t.TempDir()
 

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -19,6 +20,10 @@ import (
 // The server rotates refresh tokens: the old one stops working once it is used, so both
 // values are replaced. On any failure the token is left untouched.
 func (a *Client) RefreshSession(token *TokenData) error {
+	return a.refreshSession(context.Background(), token)
+}
+
+func (a *Client) refreshSession(ctx context.Context, token *TokenData) error {
 	if token == nil || (token.AuthMethod != "login" && token.AuthMethod != "saml") || token.RefreshToken == "" {
 		return clierrors.NewAuthError("this session cannot be renewed; sign in again", nil)
 	}
@@ -27,7 +32,7 @@ func (a *Client) RefreshSession(token *TokenData) error {
 	if err != nil {
 		return clierrors.NewAuthError("creating session renewal request", err)
 	}
-	req, err := http.NewRequest("POST", a.baseURL+"/api/auth/refresh-token", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, "POST", a.baseURL+"/api/auth/refresh-token", bytes.NewReader(body))
 	if err != nil {
 		return clierrors.NewAuthError("creating session renewal request", err)
 	}

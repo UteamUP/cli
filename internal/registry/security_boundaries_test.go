@@ -33,6 +33,26 @@ func TestSensitiveArgvIsRejectedBeforeClientCreation(t *testing.T) {
 		t.Fatalf("err=%v client=%v", err, called)
 	}
 }
+
+func TestActualBookingVerificationCredentialRejectsArgvBeforeClientCreation(t *testing.T) {
+	called := false
+	factory := func() (*client.APIClient, error) { called = true; return nil, nil }
+	format := "json"
+	for _, domain := range DefaultRegistry.domains {
+		for _, action := range domain.Actions {
+			if action.ToolName != "UteamupSalesBookingVerify" {
+				continue
+			}
+			command := buildActionCommand(domain, action, factory, logging.New(logging.LevelError), &format, nil)
+			command.SetArgs([]string{"1", "--token", "private-one-time-code"})
+			if err := command.Execute(); err == nil || !strings.Contains(err.Error(), "argv") || called {
+				t.Fatalf("credential protection failed: %v", err)
+			}
+			return
+		}
+	}
+	t.Fatal("booking verification action missing")
+}
 func TestCredentialActionsDisableExport(t *testing.T) {
 	for _, pair := range [][2]string{{"apikey", "create"}, {"admin-user", "reset-password"}} {
 		_ = pair

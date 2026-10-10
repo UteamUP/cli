@@ -21,7 +21,13 @@ func BindSource(path string, info os.FileInfo) {
 
 // OpenRegular validates the opened descriptor, so a pathname swap cannot redirect a read.
 func OpenRegular(path string, maximum int64) (*os.File, error) {
-	before, err := os.Lstat(path)
+	root, err := openDirectory(filepath.Dir(path))
+	if err != nil {
+		return nil, err
+	}
+	defer root.Close()
+	name := filepath.Base(path)
+	before, err := root.Lstat(name)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +41,7 @@ func OpenRegular(path string, maximum int64) (*os.File, error) {
 	if !before.Mode().IsRegular() || before.Size() > maximum {
 		return nil, fmt.Errorf("source is not a bounded regular file")
 	}
-	file, err := openSource(path)
+	file, err := openSource(root, name)
 	if err != nil {
 		return nil, err
 	}
@@ -46,6 +52,19 @@ func OpenRegular(path string, maximum int64) (*os.File, error) {
 	}
 	return file, nil
 }
+
+// OpenScannedRegular refuses checkpoint inputs outside the current scan.
+func OpenScannedRegular(path string, maximum int64) (*os.File, error) {
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+	if _, ok := sourceIdentities.Load(absolute); !ok {
+		return nil, fmt.Errorf("source does not belong to the current scan")
+	}
+	return OpenRegular(path, maximum)
+}
+
 func ReadFile(path string, maximum int64) ([]byte, error) {
 	file, err := OpenRegular(path, maximum)
 	if err != nil {
@@ -85,7 +104,7 @@ func openDirectory(path string) (*os.Root, error) {
 		info, err := root.Lstat(part)
 		if err != nil || !info.IsDir() {
 			root.Close()
-			return nil, fmt.Errorf("output parent must be an existing directory without symlinks")
+			return nil, fmt.Errorf("parent must be an existing directory without symlinks")
 		}
 		next, err := root.OpenRoot(part)
 		if err != nil {
@@ -96,7 +115,7 @@ func openDirectory(path string) (*os.Root, error) {
 		root.Close()
 		if err != nil || !os.SameFile(info, actual) {
 			next.Close()
-			return nil, fmt.Errorf("output directory identity changed")
+			return nil, fmt.Errorf("directory identity changed")
 		}
 		root = next
 	}
@@ -149,4 +168,40 @@ func CopyFile(path string, source io.Reader, maximum int64) error {
 		return err
 	}
 	return WriteFile(path, bytes)
+}
+
+// CopyNewFile preserves collision refusal with an anchored exclusive destination.
+func CopyNewFile(path string, source io.Reader, maximum int64) error {
+	data, err := ReadLimit(source, maximum)
+	if err != nil {
+		return err
+	}
+	root, err := openDirectory(filepath.Dir(path))
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+	name := filepath.Base(path)
+	file, err := root.OpenFile(name, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+	success := false
+	defer func() {
+		file.Close()
+		if !success {
+			root.Remove(name)
+		}
+	}()
+	if _, err = file.Write(data); err != nil {
+		return err
+	}
+	if err = file.Sync(); err != nil {
+		return err
+	}
+	if err = file.Close(); err != nil {
+		return err
+	}
+	success = true
+	return nil
 }

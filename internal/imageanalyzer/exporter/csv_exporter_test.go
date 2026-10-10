@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/uteamup/cli/internal/imageanalyzer/models"
+	"github.com/uteamup/cli/internal/security"
 )
 
 // helper to create a string pointer.
@@ -273,6 +274,8 @@ func TestRenameImages(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	info, _ := os.Stat(srcFile)
+	security.BindSource(srcFile, info)
 	exp := NewExporter(t.TempDir(), dstDir, true, "")
 
 	group := models.ImageGroup{
