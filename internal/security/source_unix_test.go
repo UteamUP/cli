@@ -4,16 +4,23 @@ package security
 
 import (
 	"golang.org/x/sys/unix"
+	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestOpenSourceDoesNotBlockOnFIFO(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "payload")
+	dir := t.TempDir()
+	path := filepath.Join(dir, "payload")
 	if err := unix.Mkfifo(path, 0600); err != nil {
 		t.Fatal(err)
 	}
-	file, err := openSource(path)
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	file, err := openSource(root, "payload")
 	if err != nil {
 		t.Fatal(err)
 	}
