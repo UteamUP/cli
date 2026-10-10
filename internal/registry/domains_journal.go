@@ -164,6 +164,18 @@ func init() {
 					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int", QueryName: "limit"},
 				},
 			},
+			{
+				Name:         "search-locations",
+				Description:  "Search locations for journal @ mention linking (tenant-scoped, active only)",
+				ToolName:     "UteamupLocationMentionSearch",
+				RESTBasePath: "/api/location",
+				RESTPath:     "mention-search",
+				HTTPMethod:   "GET",
+				Args:         []ArgDef{{Name: "query", Description: "Search query (min 1 char)", Required: true, Type: "string", QueryName: "query"}},
+				Flags: []FlagDef{
+					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int", QueryName: "limit"},
+				},
+			},
 		},
 	})
 }
