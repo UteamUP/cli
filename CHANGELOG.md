@@ -5,6 +5,25 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.6.0](https://github.com/UteamUP/cli/compare/4.5.0...4.6.0) (2026-10-10)
+
+
+### Features
+
+* **billing:** add subscription-lifecycle grant-without-payment ([b21cd52](https://github.com/UteamUP/cli/commit/b21cd526dc4204c2a1b0a0210dcc076c6250bc36))
+* **journal:** add customer, contact and vendor mention lookups ([ab7a2d3](https://github.com/UteamUP/cli/commit/ab7a2d320468ed0cc607e8d36386003e5a684f43))
+* **journal:** add search-locations mention lookup ([b712531](https://github.com/UteamUP/cli/commit/b712531bd15979f87c87308b3f7015abb752e94e))
+
+
+### Bug Fixes
+
+* preserve CLI credential and filesystem boundaries ([2a1f73a](https://github.com/UteamUP/cli/commit/2a1f73a146ba5db2fd808299207f3fcae44fa469))
+
+
+### Tests
+
+* exercise FIFO reads through the anchored source opener ([e4880c6](https://github.com/UteamUP/cli/commit/e4880c6391c8264ea86898ead2db3acab6c3a9de))
+
 ## [4.5.0](https://github.com/UteamUP/cli/compare/4.4.0...4.5.0) (2026-10-09)
 
 
