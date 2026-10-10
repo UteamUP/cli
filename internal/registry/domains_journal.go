@@ -165,6 +165,42 @@ func init() {
 				},
 			},
 			{
+				Name:         "search-customers",
+				Description:  "Search customers for journal @ mention linking (tenant-scoped)",
+				ToolName:     "UteamupCustomerMentionSearch",
+				RESTBasePath: "/api/customer",
+				RESTPath:     "mention-search",
+				HTTPMethod:   "GET",
+				Args:         []ArgDef{{Name: "query", Description: "Search query (min 1 char)", Required: true, Type: "string", QueryName: "query"}},
+				Flags: []FlagDef{
+					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int", QueryName: "limit"},
+				},
+			},
+			{
+				Name:         "search-contacts",
+				Description:  "Search contacts for journal @ mention linking (tenant-scoped)",
+				ToolName:     "UteamupContactMentionSearch",
+				RESTBasePath: "/api/contact",
+				RESTPath:     "mention-search",
+				HTTPMethod:   "GET",
+				Args:         []ArgDef{{Name: "query", Description: "Search query (min 1 char)", Required: true, Type: "string", QueryName: "query"}},
+				Flags: []FlagDef{
+					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int", QueryName: "limit"},
+				},
+			},
+			{
+				Name:         "search-vendors",
+				Description:  "Search vendors for journal @ mention linking (tenant-scoped)",
+				ToolName:     "UteamupVendorMentionSearch",
+				RESTBasePath: "/api/vendor",
+				RESTPath:     "mention-search",
+				HTTPMethod:   "GET",
+				Args:         []ArgDef{{Name: "query", Description: "Search query (min 1 char)", Required: true, Type: "string", QueryName: "query"}},
+				Flags: []FlagDef{
+					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int", QueryName: "limit"},
+				},
+			},
+			{
 				Name:         "search-locations",
 				Description:  "Search locations for journal @ mention linking (tenant-scoped, active only)",
 				ToolName:     "UteamupLocationMentionSearch",

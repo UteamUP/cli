@@ -47,6 +47,9 @@ func TestJournalDomainActions(t *testing.T) {
 		"search-parts":      "UteamupPartMentionSearch",
 		"search-chemicals":  "UteamupChemicalMentionSearch",
 		"search-locations":  "UteamupLocationMentionSearch",
+		"search-customers":  "UteamupCustomerMentionSearch",
+		"search-contacts":   "UteamupContactMentionSearch",
+		"search-vendors":    "UteamupVendorMentionSearch",
 	}
 
 	actionMap := make(map[string]string)
@@ -289,6 +292,9 @@ func TestJournalMentionSearchActionsUseControllerRoutes(t *testing.T) {
 		{name: "search-parts", basePath: "/api/part"},
 		{name: "search-chemicals", basePath: "/api/chemical"},
 		{name: "search-locations", basePath: "/api/location"},
+		{name: "search-customers", basePath: "/api/customer"},
+		{name: "search-contacts", basePath: "/api/contact"},
+		{name: "search-vendors", basePath: "/api/vendor"},
 	} {
 		action := findAction(d, tc.name)
 		if action == nil {
