@@ -6,8 +6,10 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -68,7 +70,7 @@ func TestRadioRoutesUseActiveTenantAndPublicGuids(t *testing.T) {
 	if domain.APIPath != "/api/radio" {
 		t.Fatal("radio must use its explicit REST boundary")
 	}
-	expected := map[string]string{"team-eligibility": "teams/{teamGuid}/eligibility", "backup-sharepoint": "backup-destinations/sharepoint", "validate": "validate", "stop-pilot": "complimentary/revoke", "transcript": "channels/{channelGuid}/transmissions/{transmissionGuid}/transcript", "transmissions": "channels/{channelGuid}/transmissions", "status": "environment", "policy": "policy", "channels": "history-channels", "recordings": "recordings", "get": "recordings/{recordingGuid}", "playback": "recordings/{recordingGuid}/playback"}
+	expected := map[string]string{"team-eligibility": "teams/{teamGuid}/eligibility", "backup-sharepoint": "backup-destinations/sharepoint", "validate": "validate", "stop-pilot": "complimentary/revoke", "transcript": "channels/{channelGuid}/transmissions/{transmissionGuid}/transcript", "transmissions": "channels/{channelGuid}/transmissions", "status": "environment", "policy": "policy", "channels": "history-channels", "recordings": "recordings", "always-transcribe": "me/always-transcribe", "transcribe": "recordings/{recordingGuid}/transcription", "get": "recordings/{recordingGuid}", "playback": "recordings/{recordingGuid}/playback"}
 	for _, action := range domain.Actions {
 		if action.RESTPath != expected[action.Name] {
 			t.Errorf("wrong route for %s: %s", action.Name, action.RESTPath)
@@ -100,6 +102,26 @@ func TestRadioRoutesUseActiveTenantAndPublicGuids(t *testing.T) {
 		}
 		if action.Name == "stop-pilot" && (action.HTTPMethod != "POST" || len(action.Flags) != 1 || !action.Flags[0].Required || !action.Flags[0].RootJSONObjectFile) {
 			t.Error("stopping a pilot requires an explicit reviewed JSON request")
+		}
+		if action.Name == "always-transcribe" && (action.HTTPMethod != "PUT" || len(action.Args) != 0 || len(action.Flags) != 1 || action.Flags[0].Name != "enabled" || action.Flags[0].Type != "bool" || !action.Flags[0].Required || action.Flags[0].BodyName != "enabled" || action.Flags[0].QueryName != "" || action.ToolName != "UteamupRadioAlwaysTranscribeSet") {
+			t.Error("always-transcribe must PUT one required enabled body field for the caller only")
+		}
+		if action.Name == "transcribe" && (action.HTTPMethod != "POST" || len(action.Args) != 1 || action.Args[0].Name != "recordingGuid" || len(action.Flags) != 0 || action.ToolName != "UteamupRadioTranscriptionRequest") {
+			t.Error("transcribe must POST for one public recording GUID without extra fields")
+		}
+		if action.Name == "recordings" {
+			wantQuery := map[string]string{"channel-guid": "channelGuid", "scope": "scope", "from": "from", "to": "to", "team-guid": "teamGuid", "has-transcript": "hasTranscript", "transcript-contains": "transcriptContains"}
+			for _, flag := range action.Flags {
+				if want, ok := wantQuery[flag.Name]; ok {
+					if flag.QueryName != want || flag.Required || flag.Default != nil {
+						t.Errorf("recordings --%s must be an optional query filter %s", flag.Name, want)
+					}
+					delete(wantQuery, flag.Name)
+				}
+			}
+			if len(wantQuery) != 0 {
+				t.Errorf("recordings is missing history filters: %v", wantQuery)
+			}
 		}
 		delete(expected, action.Name)
 	}
@@ -250,5 +272,231 @@ func TestRadioLicenseCommandsRequireExplicitTenantAndMemberGuids(t *testing.T) {
 	}
 	if len(expected) != 0 {
 		t.Fatalf("missing actions: %v", expected)
+	}
+}
+
+type radioRecordedRequest struct {
+	method string
+	path   string
+	query  url.Values
+	body   map[string]any
+}
+
+// runRadioCommand executes one radio CLI command against a TLS test API and
+// records every request it sends.
+func runRadioCommand(t *testing.T, status int, responseBody string, args ...string) ([]radioRecordedRequest, error) {
+	t.Helper()
+	domain := findDomain("radio")
+	if domain == nil {
+		t.Fatal("radio domain missing")
+	}
+	fixtureHome := t.TempDir()
+	t.Setenv("HOME", fixtureHome)
+	t.Setenv("USERPROFILE", fixtureHome)
+
+	var requestsMu sync.Mutex
+	var requests []radioRecordedRequest
+	server := httptest.NewTLSServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		recorded := radioRecordedRequest{method: request.Method, path: request.URL.Path, query: request.URL.Query()}
+		raw, err := io.ReadAll(request.Body)
+		if err != nil {
+			t.Errorf("read request body: %v", err)
+		}
+		if len(raw) > 0 {
+			if err := json.Unmarshal(raw, &recorded.body); err != nil {
+				t.Errorf("request body %q is not a JSON object: %v", raw, err)
+			}
+		}
+		requestsMu.Lock()
+		requests = append(requests, recorded)
+		requestsMu.Unlock()
+		if responseBody != "" {
+			response.Header().Set("Content-Type", "application/json")
+		}
+		response.WriteHeader(status)
+		if responseBody != "" {
+			_, _ = response.Write([]byte(responseBody))
+		}
+	}))
+	t.Cleanup(server.Close)
+	if err := auth.SaveToken(&auth.TokenData{
+		APIOrigin:   server.URL,
+		AccessToken: "radio-command-test-token",
+		ExpiresAt:   time.Now().Add(time.Hour),
+		TenantGUID:  "44444444-4444-4444-8444-444444444444",
+	}); err != nil {
+		t.Fatalf("save test token: %v", err)
+	}
+
+	apiClient := client.NewAPIClient(server.URL, time.Second, true, client.RetryOptions{MaxRetries: 0}, logging.New(logging.LevelError))
+	format := "json"
+	command := buildDomainCommand(domain, func() (*client.APIClient, error) { return apiClient, nil }, logging.New(logging.LevelError), &format, &ExportConfig{})
+	command.SilenceErrors = true
+	command.SilenceUsage = true
+	command.SetArgs(args)
+	var runErr error
+	_ = captureRegistryStdout(t, func() { runErr = command.Execute() })
+
+	requestsMu.Lock()
+	defer requestsMu.Unlock()
+	return append([]radioRecordedRequest(nil), requests...), runErr
+}
+
+func TestRadioRecordingsHistoryFiltersTravelAsQuery(t *testing.T) {
+	const teamGUID = "55555555-5555-4555-8555-555555555555"
+	for _, tc := range []struct {
+		name string
+		args []string
+		want map[string]string
+	}{
+		{
+			name: "defaults keep the existing own-recordings contract",
+			args: []string{"recordings"},
+			want: map[string]string{"skip": "0", "take": "50"},
+		},
+		{
+			name: "every filter with scope All",
+			args: []string{"recordings", "--scope", "All", "--from", "2026-10-01T00:00:00Z", "--to", "2026-10-02T00:00:00Z", "--team-guid", teamGUID, "--has-transcript", "--transcript-contains", "pump room", "--skip", "50", "--take", "25"},
+			want: map[string]string{"scope": "All", "from": "2026-10-01T00:00:00Z", "to": "2026-10-02T00:00:00Z", "teamGuid": teamGUID, "hasTranscript": "true", "transcriptContains": "pump room", "skip": "50", "take": "25"},
+		},
+		{
+			name: "explicit false keeps the tri-state has-transcript filter",
+			args: []string{"recordings", "--scope", "Mine", "--has-transcript=false"},
+			want: map[string]string{"scope": "Mine", "hasTranscript": "false", "skip": "0", "take": "50"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			requests, err := runRadioCommand(t, http.StatusOK, `[]`, tc.args...)
+			if err != nil {
+				t.Fatalf("recordings command: %v", err)
+			}
+			if len(requests) != 1 {
+				t.Fatalf("requests = %d, want one history read", len(requests))
+			}
+			request := requests[0]
+			if request.method != http.MethodGet || request.path != "/api/radio/recordings" || request.body != nil {
+				t.Fatalf("request = %s %s body=%v, want a bodyless history read", request.method, request.path, request.body)
+			}
+			got := map[string]string{}
+			for key, values := range request.query {
+				if len(values) != 1 {
+					t.Fatalf("query %s repeated: %v", key, values)
+				}
+				got[key] = values[0]
+			}
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("query = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestRadioRecordingsRejectsInvalidFiltersBeforeRequest(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		args []string
+		want string
+	}{
+		{name: "unknown scope", args: []string{"recordings", "--scope", "Everyone"}, want: "--scope"},
+		{name: "scope is exact", args: []string{"recordings", "--scope", "all"}, want: "--scope"},
+		{name: "empty team guid", args: []string{"recordings", "--team-guid", "00000000-0000-0000-0000-000000000000"}, want: "--team-guid"},
+		{name: "malformed team guid", args: []string{"recordings", "--team-guid", "team-1"}, want: "--team-guid"},
+		{name: "non-boolean has-transcript", args: []string{"recordings", "--has-transcript=maybe"}, want: "has-transcript"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			requests, err := runRadioCommand(t, http.StatusOK, `[]`, tc.args...)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("error = %v, want rejection naming %s", err, tc.want)
+			}
+			if len(requests) != 0 {
+				t.Fatalf("invalid filters reached the API: %+v", requests)
+			}
+		})
+	}
+}
+
+func TestRadioAlwaysTranscribeSendsOnlyTheExplicitPreference(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		args []string
+		want bool
+	}{
+		{name: "enable", args: []string{"always-transcribe", "--enabled"}, want: true},
+		{name: "disable", args: []string{"always-transcribe", "--enabled=false"}, want: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			requests, err := runRadioCommand(t, http.StatusNoContent, "", tc.args...)
+			if err != nil {
+				t.Fatalf("always-transcribe command: %v", err)
+			}
+			if len(requests) != 1 {
+				t.Fatalf("requests = %d, want one preference write", len(requests))
+			}
+			request := requests[0]
+			if request.method != http.MethodPut || request.path != "/api/radio/me/always-transcribe" || len(request.query) != 0 {
+				t.Fatalf("request = %s %s?%s, want the caller's preference route", request.method, request.path, request.query.Encode())
+			}
+			if !reflect.DeepEqual(request.body, map[string]any{"enabled": tc.want}) {
+				t.Fatalf("body = %v, want only enabled=%v", request.body, tc.want)
+			}
+		})
+	}
+
+	t.Run("missing enabled is rejected", func(t *testing.T) {
+		requests, err := runRadioCommand(t, http.StatusNoContent, "", "always-transcribe")
+		if err == nil || !strings.Contains(err.Error(), "enabled") {
+			t.Fatalf("error = %v, want the required --enabled flag", err)
+		}
+		if len(requests) != 0 {
+			t.Fatalf("an implicit preference reached the API: %+v", requests)
+		}
+	})
+
+	t.Run("AI.Use denial is preserved", func(t *testing.T) {
+		const denial = `{"code":"RADIO_TRANSCRIPTION_NOT_ALLOWED"}`
+		requests, err := runRadioCommand(t, http.StatusForbidden, denial, "always-transcribe", "--enabled")
+		var apiErr *clierrors.APIError
+		if !errors.As(err, &apiErr) || apiErr.StatusCode != http.StatusForbidden || apiErr.Body != denial {
+			t.Fatalf("denial was not preserved: %v", err)
+		}
+		if len(requests) != 1 {
+			t.Fatalf("requests = %d, want one preference write", len(requests))
+		}
+	})
+}
+
+func TestRadioTranscribeRequestsOneRecordingWithoutBody(t *testing.T) {
+	const recordingGUID = "66666666-6666-4666-8666-666666666666"
+	requests, err := runRadioCommand(t, http.StatusOK, `{"recordingGuid":"`+recordingGUID+`","transcriptionStatus":"Pending"}`, "transcribe", recordingGUID)
+	if err != nil {
+		t.Fatalf("transcribe command: %v", err)
+	}
+	if len(requests) != 1 {
+		t.Fatalf("requests = %d, want one transcription request", len(requests))
+	}
+	request := requests[0]
+	if request.method != http.MethodPost || request.path != "/api/radio/recordings/"+recordingGUID+"/transcription" || len(request.query) != 0 || len(request.body) != 0 {
+		t.Fatalf("request = %s %s?%s body=%v, want a bodyless transcription request", request.method, request.path, request.query.Encode(), request.body)
+	}
+
+	t.Run("missing audio conflict is preserved", func(t *testing.T) {
+		const conflict = `{"code":"RADIO_RECORDING_NO_AUDIO"}`
+		_, err := runRadioCommand(t, http.StatusConflict, conflict, "transcribe", recordingGUID)
+		var apiErr *clierrors.APIError
+		if !errors.As(err, &apiErr) || apiErr.StatusCode != http.StatusConflict || apiErr.Body != conflict {
+			t.Fatalf("conflict was not preserved: %v", err)
+		}
+	})
+
+	for _, invalid := range []string{"00000000-0000-0000-0000-000000000000", "../recordings", "recording-1"} {
+		t.Run("rejects "+invalid, func(t *testing.T) {
+			requests, err := runRadioCommand(t, http.StatusOK, `{}`, "transcribe", invalid)
+			if err == nil || !strings.Contains(err.Error(), "recordingGuid") {
+				t.Fatalf("error = %v, want recordingGuid rejection", err)
+			}
+			if len(requests) != 0 {
+				t.Fatalf("invalid recording GUID reached the API: %+v", requests)
+			}
+		})
 	}
 }
