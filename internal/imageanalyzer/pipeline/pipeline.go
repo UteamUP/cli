@@ -109,29 +109,20 @@ func (p *Pipeline) Run(ctx context.Context) error {
 	fmt.Println("Phase 2: Analyzing images through UteamUP...")
 	log.Printf("Phase 2: Analyzing images through tenant-scoped backend routing")
 
-	cp, err := checkpoint.Load(p.config.Processing.CheckpointFile)
+	cp, err := checkpoint.Load(p.config.Processing.CheckpointFile, p.config.Processing.CheckpointScope, p.config.Processing.Resume)
 	if err != nil {
 		return fmt.Errorf("loading checkpoint: %w", err)
 	}
 
+	defer cp.Close()
 	if err := cp.AcquireLock(); err != nil {
 		return fmt.Errorf("checkpoint lock: %w", err)
 	}
 	defer cp.ReleaseLock()
 
-	// Restore previously processed results.
-	var results []models.ImageAnalysisResult
-	for _, raw := range cp.GetResults() {
-		// Handle both single result and array-of-results checkpoint formats.
-		var arr []models.ImageAnalysisResult
-		if json.Unmarshal(raw, &arr) == nil {
-			results = append(results, arr...)
-			continue
-		}
-		var single models.ImageAnalysisResult
-		if json.Unmarshal(raw, &single) == nil {
-			results = append(results, single)
-		}
+	results, restored, err := restoreResults(cp.GetResults(), imagesToAnalyze, editPairs, p.config.Processing.ConfidenceThreshold)
+	if err != nil {
+		return fmt.Errorf("restoring checkpoint: %w", err)
 	}
 
 	totalImages := len(imagesToAnalyze)
@@ -159,7 +150,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 			return err
 		}
 		// Skip already processed.
-		if cp.IsProcessed(imageInfo.SHA256Hash) {
+		if restored[imageInfo.SHA256Hash] {
 			_ = overallBar.Add(1)
 			continue
 		}
@@ -192,7 +183,9 @@ func (p *Pipeline) Run(ctx context.Context) error {
 			failResult := createFailResult(imageInfo, fmt.Sprintf("Load error: %v", err))
 			results = append(results, failResult)
 			raw, _ := json.Marshal(failResult)
-			_ = cp.AddResult(imageInfo.SHA256Hash, raw)
+			if err := cp.AddResult(imageInfo.SHA256Hash, raw); err != nil {
+				return fmt.Errorf("saving checkpoint: %w", err)
+			}
 			_ = imgBar.Add(3)
 			_ = overallBar.Add(1)
 			continue
@@ -214,27 +207,17 @@ func (p *Pipeline) Run(ctx context.Context) error {
 		// Step 3: Process results.
 		imgBar.Describe("    Saving results")
 		for j := range imageResults {
-			// Attach iPhone edit pair paths.
-			if pairs, ok := editPairs[imageInfo.Filename]; ok {
-				imageResults[j].PairedImages = pairs
-			}
-
-			// Apply confidence threshold.
-			if imageResults[j].Classification.Confidence > 0 &&
-				imageResults[j].Classification.Confidence < p.config.Processing.ConfidenceThreshold {
-				imageResults[j].Classification.PrimaryType = models.EntityTypeUnclassified
-				imageResults[j].FlaggedForReview = true
-				imageResults[j].ReviewReason = fmt.Sprintf(
-					"Low confidence: %.2f", imageResults[j].Classification.Confidence,
-				)
-			}
+			bindResultToScan(&imageResults[j], imageInfo, editPairs)
+			applyConfidenceThreshold(&imageResults[j], p.config.Processing.ConfidenceThreshold)
 		}
 
 		results = append(results, imageResults...)
 
 		// Checkpoint all results for this image.
 		raw, _ := json.Marshal(imageResults)
-		_ = cp.AddResult(imageInfo.SHA256Hash, raw)
+		if err := cp.AddResult(imageInfo.SHA256Hash, raw); err != nil {
+			return fmt.Errorf("saving checkpoint: %w", err)
+		}
 		_ = imgBar.Add(1)
 
 		// Per-image summary.
@@ -327,7 +310,9 @@ func (p *Pipeline) Run(ctx context.Context) error {
 	}
 
 	// Clean up checkpoint on success.
-	_ = cp.Delete()
+	if err := cp.Delete(); err != nil {
+		return fmt.Errorf("cleaning checkpoint: %w", err)
+	}
 
 	fmt.Printf("\n=== Pipeline complete in %.1fs ===\n", duration)
 	if credentialSource != "" {
@@ -577,4 +562,59 @@ func createFailResult(img models.ImageInfo, reason string) models.ImageAnalysisR
 		ReviewReason:     reason,
 		ProcessedAt:      time.Now(),
 	}
+}
+
+// The current scan owns every path used by CSV export and image copying. A saved
+// hash may restore analysis text, but never a saved path or paired-image authority.
+func restoreResults(saved map[string]json.RawMessage, images []models.ImageInfo, pairs map[string][]string, threshold float64) ([]models.ImageAnalysisResult, map[string]bool, error) {
+	var results []models.ImageAnalysisResult
+	restored := make(map[string]bool)
+	for _, image := range images {
+		raw, ok := saved[image.SHA256Hash]
+		if !ok {
+			continue
+		}
+		if strings.TrimSpace(string(raw)) == "null" {
+			return nil, nil, fmt.Errorf("invalid checkpoint result")
+		}
+		var items []models.ImageAnalysisResult
+		if err := json.Unmarshal(raw, &items); err != nil {
+			var single models.ImageAnalysisResult
+			if err := json.Unmarshal(raw, &single); err != nil {
+				return nil, nil, fmt.Errorf("invalid checkpoint result")
+			}
+			items = []models.ImageAnalysisResult{single}
+		}
+		if len(items) == 0 || len(items) > mediaanalyzer.MaxAnalysisItems {
+			return nil, nil, fmt.Errorf("too many checkpoint results")
+		}
+		for i := range items {
+			if err := mediaanalyzer.NormalizeResult(&items[i]); err != nil {
+				return nil, nil, fmt.Errorf("invalid checkpoint result: %w", err)
+			}
+			bindResultToScan(&items[i], image, pairs)
+			applyConfidenceThreshold(&items[i], threshold)
+		}
+		results = append(results, items...)
+		restored[image.SHA256Hash] = true
+	}
+	return results, restored, nil
+}
+
+func applyConfidenceThreshold(result *models.ImageAnalysisResult, threshold float64) {
+	if result.Classification.Confidence > 0 && result.Classification.Confidence < threshold {
+		result.Classification.PrimaryType = models.EntityTypeUnclassified
+		result.FlaggedForReview = true
+		result.ReviewReason = fmt.Sprintf("Low confidence: %.2f", result.Classification.Confidence)
+	}
+}
+
+func bindResultToScan(result *models.ImageAnalysisResult, image models.ImageInfo, pairs map[string][]string) {
+	result.ImagePath = image.Path
+	result.OriginalFilename = image.Filename
+	result.FileHashSHA256 = image.SHA256Hash
+	result.PerceptualHash = image.PerceptualHash
+	result.EXIFMetadata = image.EXIFMetadata
+	result.PairedImages = append([]string(nil), pairs[image.Filename]...)
+	result.RelatedTo = ""
 }

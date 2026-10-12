@@ -1,6 +1,7 @@
 package cleanup
 
 import (
+	"github.com/uteamup/cli/internal/security"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,6 +15,32 @@ func write(t *testing.T, root, rel, content string) {
 	}
 	if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestEnumerationRemainsAnchoredAfterRootPathSwap(t *testing.T) {
+	parent := t.TempDir()
+	root := filepath.Join(parent, "repo")
+	outside := t.TempDir()
+	source := "public class SafeController {\n[HttpGet]\npublic void Read() {}\n}"
+	write(t, root, "UteamUP_Backend/UteamUP_API/Controllers/SafeController.cs", source)
+	write(t, outside, "UteamUP_Backend/UteamUP_API/Controllers/EvilController.cs", "public class EvilController {\n[HttpGet]\npublic void Read() {}\n}")
+	anchor, err := security.OpenDirectory(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer anchor.Close()
+	if err := os.Rename(root, filepath.Join(parent, "original")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, root); err != nil {
+		t.Skip(err)
+	}
+	catalog := Catalog{scan: &scanSession{root: anchor, absolute: root, limits: scanLimits{bytes: 1024, entries: 100, units: 100, depth: 10}, cache: make(map[string]string)}}
+	catalog.scanBackend(root)
+	keys := keysOf(catalog, TypeBackendEndpoint)
+	if !keys["Safe.Read"] || keys["Evil.Read"] {
+		t.Fatalf("pathname swap redirected enumeration: %v", keys)
 	}
 }
 
@@ -42,8 +69,7 @@ func TestMobileRouterDiscoveryRejectsSymlinksAndOversizedSource(t *testing.T) {
 				t.Skip(err)
 			}
 		}
-		var catalog Catalog
-		catalog.scanMobile(root)
+		catalog := Scan(root)
 		if keysOf(catalog, TypeMobilePage)["/private"] {
 			t.Fatal("unsafe router was read")
 		}
@@ -61,8 +87,7 @@ func TestMobileRouterDiscoveryRejectsIntermediateDirectorySymlink(t *testing.T) 
 	if err := os.Symlink(outside, filepath.Join(parent, "router")); err != nil {
 		t.Skip(err)
 	}
-	var catalog Catalog
-	catalog.scanMobile(root)
+	catalog := Scan(root)
 	if keysOf(catalog, TypeMobilePage)["/private"] {
 		t.Fatal("intermediate router link was read")
 	}
@@ -155,5 +180,38 @@ final r = GoRouter(routes: [
 	mc := keysOf(cat, TypeMobileComponent)
 	if !mc["UCard"] {
 		t.Errorf("mobile components missing: %v", mc)
+	}
+}
+
+func TestScanBudgetsAreSharedAcrossProjectsAndWarnOnIncompleteResults(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, "UteamUP_Backend/UteamUP_API/Controllers/AController.cs", "class AController {}")
+	write(t, root, "UteamUP_Frontend/pages/index.vue", "<template></template>")
+	catalog := scanWithLimits(root, scanLimits{bytes: 25, entries: 100, units: 100, depth: 10})
+	if !catalog.Incomplete || len(catalog.Warnings) == 0 {
+		t.Fatal("shared bytes exhausted without incomplete warning")
+	}
+	if keysOf(catalog, TypeFrontendPage)["/"] {
+		t.Fatal("frontend received a fresh byte allowance")
+	}
+	catalog = scanWithLimits(root, scanLimits{bytes: 10000, entries: 1, units: 100, depth: 10})
+	if !catalog.Incomplete {
+		t.Fatal("directory-entry allowance was not enforced")
+	}
+}
+
+func TestScanNeverTraversesOutsideRootSymlink(t *testing.T) {
+	root, outside := t.TempDir(), t.TempDir()
+	write(t, outside, "Controllers/EvilController.cs", "class EvilController {}")
+	parent := filepath.Join(root, "UteamUP_Backend")
+	if err := os.MkdirAll(parent, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(parent, "UteamUP_API")); err != nil {
+		t.Skip(err)
+	}
+	catalog := Scan(root)
+	if !catalog.Incomplete || len(catalog.Entries) != 0 {
+		t.Fatalf("outside root accepted: %+v", catalog)
 	}
 }

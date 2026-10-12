@@ -111,6 +111,9 @@ func runCleanup(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Scanning monorepo at %s ...\n", root)
 	catalog := cleanup.Scan(root)
+	if catalog.Incomplete {
+		fmt.Fprintln(os.Stderr, "Source scan is incomplete; unused results are not trustworthy. See scanner warnings in the report.")
+	}
 
 	in := cleanup.ReportInput{
 		Catalog:      catalog,

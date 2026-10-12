@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // UsageRow mirrors the subset of the backend UsageStatResponse the diff needs.
@@ -78,7 +79,7 @@ func BuildSummaries(in ReportInput) []TypeSummary {
 			continue
 		}
 		entries := catalogByType[t]
-		s := TypeSummary{Type: t, TotalInCode: len(entries)}
+		s := TypeSummary{Type: t, TotalInCode: len(entries), Unreliable: in.Catalog.Incomplete}
 
 		for _, e := range entries {
 			if optInTypes[t] && !e.Instrumented {
@@ -115,7 +116,7 @@ func BuildSummaries(in ReportInput) []TypeSummary {
 func WriteMarkdown(in ReportInput, summaries []TypeSummary, outPath string) error {
 	var b strings.Builder
 	b.WriteString("# Cleanup Report\n\n")
-	fmt.Fprintf(&b, "- Environment: **%s**\n", in.Env)
+	fmt.Fprintf(&b, "- Environment: **%s**\n", markdownLiteral(in.Env))
 	fmt.Fprintf(&b, "- Generated: %s\n", in.Now.UTC().Format(time.RFC3339))
 
 	windowOK := observationWindow(&b, in)
@@ -123,7 +124,7 @@ func WriteMarkdown(in ReportInput, summaries []TypeSummary, outPath string) erro
 	if len(in.Catalog.Warnings) > 0 {
 		b.WriteString("\n> ⚠️ Scanner warnings:\n")
 		for _, w := range in.Catalog.Warnings {
-			fmt.Fprintf(&b, "> - %s\n", w)
+			fmt.Fprintf(&b, "> - %s\n", markdownLiteral(w))
 		}
 	}
 
@@ -140,7 +141,7 @@ func WriteMarkdown(in ReportInput, summaries []TypeSummary, outPath string) erro
 			flag = " ⚠️"
 		}
 		fmt.Fprintf(&b, "| %s%s | %d | %d | %d | %d | %d%% | %d |\n",
-			s.Type, flag, s.TotalInCode, s.Eligible, s.Used, s.Unused, pct, s.NotTracked)
+			markdownLiteral(s.Type), flag, s.TotalInCode, s.Eligible, s.Used, s.Unused, pct, s.NotTracked)
 	}
 
 	if !windowOK {
@@ -148,30 +149,44 @@ func WriteMarkdown(in ReportInput, summaries []TypeSummary, outPath string) erro
 	}
 
 	for _, s := range summaries {
-		b.WriteString("\n## " + s.Type + "\n\n")
-		if s.Unreliable {
+		b.WriteString("\n## " + markdownLiteral(s.Type) + "\n\n")
+		if s.Unreliable && len(s.ReverseDiff) > 0 {
 			fmt.Fprintf(&b, "> ⚠️ %d runtime key(s) had no matching code unit (key-contract drift) — results for this type may be unreliable.\n\n", len(s.ReverseDiff))
 		}
 		if optInTypes[s.Type] && s.NotTracked > 0 {
-			fmt.Fprintf(&b, "_%d %s(s) are not instrumented (no `v-usage` / tracker call) and are excluded from the unused count._\n\n", s.NotTracked, s.Type)
+			fmt.Fprintf(&b, "_%d %s(s) are not instrumented (no `v-usage` / tracker call) and are excluded from the unused count._\n\n", s.NotTracked, markdownLiteral(s.Type))
 		}
 		if len(s.UnusedKeys) == 0 {
 			b.WriteString("_No unused units._\n")
 		} else {
 			b.WriteString("Unused (exists in code, never exercised):\n\n")
 			for _, e := range s.UnusedKeys {
-				fmt.Fprintf(&b, "- `%s` — %s\n", e.Key, e.File)
+				fmt.Fprintf(&b, "- %s — %s\n", markdownLiteral(e.Key), markdownLiteral(e.File))
 			}
 		}
 		if len(s.ReverseDiff) > 0 {
 			b.WriteString("\nRuntime keys with no matching code unit (drift / dynamic):\n\n")
 			for _, k := range s.ReverseDiff {
-				fmt.Fprintf(&b, "- `%s`\n", k)
+				fmt.Fprintf(&b, "- %s\n", markdownLiteral(k))
 			}
 		}
 	}
 
 	return security.WriteFile(outPath, []byte(b.String()))
+}
+
+// Entity references display repository values as text, without creating Markdown
+// structure, HTML, links, images, or additional lines in the generated report.
+func markdownLiteral(value string) string {
+	var out strings.Builder
+	for _, r := range value {
+		if unicode.IsControl(r) || strings.ContainsRune("\\`*_{}[]()#+.!|><&~\"'", r) {
+			fmt.Fprintf(&out, "&#%d;", r)
+		} else {
+			out.WriteRune(r)
+		}
+	}
+	return out.String()
 }
 
 func observationWindow(b *strings.Builder, in ReportInput) bool {

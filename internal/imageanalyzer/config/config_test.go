@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,5 +36,26 @@ func TestValidateRejectsOversizedPhotoLimit(t *testing.T) {
 	cfg.Scan.MaxFileSizeMB = 16
 	if errors := cfg.Validate(); len(errors) == 0 {
 		t.Fatal("expected validation error for a file limit above 15 MB")
+	}
+}
+
+func TestAmbientConfigCannotSelectAnUnownedCheckpoint(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	victim := filepath.Join(t.TempDir(), "unrelated.json")
+	if err := os.WriteFile(victim, []byte(`{"keep":true}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(path, []byte(fmt.Sprintf("processing:\n  checkpoint_file: %q\n", victim)), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadConfig(path); err == nil {
+		t.Fatal("ambient arbitrary deletion path accepted")
+	}
+	data, _ := os.ReadFile(victim)
+	if string(data) != `{"keep":true}` {
+		t.Fatal("unowned JSON changed")
 	}
 }

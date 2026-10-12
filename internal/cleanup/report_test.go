@@ -1,6 +1,9 @@
 package cleanup
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -51,5 +54,31 @@ func TestBuildSummaries_DiffsUsedAndUnused(t *testing.T) {
 	}
 	if fc.Unused != 1 {
 		t.Errorf("instrumented-but-unused component count = %d, want 1", fc.Unused)
+	}
+}
+
+func TestWriteMarkdownTreatsRepositoryValuesAsLiteralText(t *testing.T) {
+	attack := "`![track](https://example.invalid/x)\n<script>alert(1)</script>|# injected"
+	path := filepath.Join(t.TempDir(), "report.md")
+	input := ReportInput{Env: attack, Now: time.Now(), Catalog: Catalog{Warnings: []string{attack}}}
+	summaries := []TypeSummary{{Type: attack, UnusedKeys: []CatalogEntry{{Key: attack, File: attack}}, ReverseDiff: []string{attack}}}
+	if err := WriteMarkdown(input, summaries, path); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	output := string(data)
+	for _, active := range []string{"![track]", "<script>", "\n<script>", "|# injected"} {
+		if strings.Contains(output, active) {
+			t.Fatalf("active report content escaped: %s", active)
+		}
+	}
+	if strings.Count(output, "&#96;&#33;&#91;track&#93;&#40;https://example&#46;invalid/x&#41;&#10;&#60;script&#62;alert&#40;1&#41;&#60;/script&#62;&#124;&#35; injected") != 7 {
+		t.Fatalf("not every dynamic value was encoded: %s", output)
+	}
+	if !strings.Contains(output, "&#10;") {
+		t.Fatal("line break was not encoded")
 	}
 }

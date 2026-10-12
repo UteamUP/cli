@@ -6,12 +6,35 @@ import (
 	"encoding/binary"
 	"math"
 	"net"
+	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
 	clierrors "github.com/uteamup/cli/internal/errors"
 	"github.com/uteamup/cli/internal/logging"
 )
+
+var idempotencyGUID = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`)
+
+func (c *APIClient) retryOptionsForRequest(method string) RetryOptions {
+	opts := c.retryOpts
+	switch method {
+	case http.MethodGet, http.MethodHead, http.MethodOptions:
+	default:
+		opts.MaxRetries = 0
+	}
+	return opts
+}
+
+func (c *APIClient) retryOptionsForMedia(method, path string, headers map[string]string) RetryOptions {
+	// These two multipart endpoints reserve and replay a tenant-scoped AI ledger
+	// attempt using this GUID and the content hash (InventoryMediaAnalysisRepository).
+	if method == http.MethodPost && (path == "/api/inventoryai/analyze-photo" || path == "/api/inventoryai/analyze-video") && idempotencyGUID.MatchString(headers["Idempotency-Key"]) {
+		return c.retryOpts
+	}
+	return c.retryOptionsForRequest(method)
+}
 
 // RetryOptions configures the retry behavior.
 type RetryOptions struct {

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/uteamup/cli/internal/security"
+	"math"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -26,9 +27,9 @@ const (
 	PhotoEndpoint = "/api/inventoryai/analyze-photo"
 	VideoEndpoint = "/api/inventoryai/analyze-video"
 
-	MaxPhotoBytes = 15 * 1024 * 1024
-	MaxVideoBytes = 100 * 1024 * 1024
-	maxItems      = 100
+	MaxPhotoBytes    = 15 * 1024 * 1024
+	MaxVideoBytes    = 100 * 1024 * 1024
+	MaxAnalysisItems = 100
 )
 
 var guidPattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`)
@@ -180,8 +181,8 @@ func (a *Analyzer) analyze(
 	if err != nil {
 		return Result{}, err
 	}
-	if len(response.Items) > maxItems {
-		return Result{}, fmt.Errorf("backend media analysis response exceeds the %d item limit", maxItems)
+	if len(response.Items) > MaxAnalysisItems {
+		return Result{}, fmt.Errorf("backend media analysis response exceeds the %d item limit", MaxAnalysisItems)
 	}
 
 	items := make([]models.ImageAnalysisResult, 0, len(response.Items))
@@ -245,16 +246,7 @@ func hasNegativeValue(values ...*int64) bool {
 }
 
 func mapItem(item analysisItem, sourcePath string, uploadFileName string) (models.ImageAnalysisResult, error) {
-	if err := validateExtractedStrings(reflect.ValueOf(&item.ExtractedData)); err != nil {
-		return models.ImageAnalysisResult{}, err
-	}
 	entityType := models.EntityType(strings.ToLower(strings.TrimSpace(item.Type)))
-	if !isSupportedEntityType(entityType) {
-		return models.ImageAnalysisResult{}, fmt.Errorf("backend returned an unsupported inventory entity type")
-	}
-	if item.ExtractedData.Type() != entityType && entityType != models.EntityTypeUnclassified {
-		return models.ImageAnalysisResult{}, fmt.Errorf("backend returned mismatched inventory analysis data")
-	}
 
 	confidence := 0.0
 	flaggedForReview := item.FlaggedForReview
@@ -265,9 +257,6 @@ func mapItem(item analysisItem, sourcePath string, uploadFileName string) (model
 			reviewReason = "Confidence was not reported by the analysis route."
 		}
 	} else {
-		if *item.Confidence < 0 || *item.Confidence > 1 {
-			return models.ImageAnalysisResult{}, fmt.Errorf("backend returned an invalid confidence value")
-		}
 		confidence = *item.Confidence
 	}
 
@@ -276,7 +265,7 @@ func mapItem(item analysisItem, sourcePath string, uploadFileName string) (model
 		metadata["video_timestamp"] = timestamp
 	}
 
-	return models.ImageAnalysisResult{
+	result := models.ImageAnalysisResult{
 		ImagePath:        sourcePath,
 		OriginalFilename: uploadFileName,
 		Classification: models.ClassificationResult{
@@ -290,7 +279,32 @@ func mapItem(item analysisItem, sourcePath string, uploadFileName string) (model
 		ReviewReason:     reviewReason,
 		ProcessedAt:      time.Now().UTC(),
 		RelatedTo:        cleanText(item.RelatedTo, 200),
-	}, nil
+	}
+	if err := NormalizeResult(&result); err != nil {
+		return models.ImageAnalysisResult{}, err
+	}
+	return result, nil
+}
+
+// NormalizeResult applies the same untrusted-result boundary to live analysis and checkpoints.
+func NormalizeResult(result *models.ImageAnalysisResult) error {
+	if !isSupportedEntityType(result.Classification.PrimaryType) {
+		return fmt.Errorf("analysis has an unsupported inventory entity type")
+	}
+	if result.ExtractedData.Type() != result.Classification.PrimaryType && result.Classification.PrimaryType != models.EntityTypeUnclassified {
+		return fmt.Errorf("analysis has mismatched inventory data")
+	}
+	confidence := result.Classification.Confidence
+	if math.IsNaN(confidence) || math.IsInf(confidence, 0) || confidence < 0 || confidence > 1 {
+		return fmt.Errorf("analysis has an invalid confidence value")
+	}
+	if err := validateExtractedStrings(reflect.ValueOf(&result.ExtractedData)); err != nil {
+		return err
+	}
+	result.Classification.Reasoning = cleanText(result.Classification.Reasoning, 2000)
+	result.ReviewReason = cleanText(result.ReviewReason, 500)
+	result.RelatedTo = cleanText(result.RelatedTo, 200)
+	return nil
 }
 
 func isSupportedEntityType(entityType models.EntityType) bool {

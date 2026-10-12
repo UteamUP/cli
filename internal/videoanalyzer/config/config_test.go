@@ -60,3 +60,20 @@ processing:
 		t.Fatalf("unexpected loaded config: %+v", cfg)
 	}
 }
+
+func TestLoadConfigPreservesExplicitNonrecursiveScan(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(path, []byte("scan:\n  recursive: false\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := LoadConfig(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Scan.Recursive {
+		t.Fatal("explicit recursion boundary was overridden")
+	}
+	if !DefaultConfig().Scan.Recursive {
+		t.Fatal("default recursion changed")
+	}
+}

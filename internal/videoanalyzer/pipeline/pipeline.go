@@ -37,7 +37,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 	fmt.Println("\nPhase 1: Scanning for video files...")
 	log.Printf("Phase 1: Scanning folder=%s", p.config.Scan.VideoFolder)
 
-	scanner := fileutil.NewScanner(p.config.Scan.MaxFileSizeMB)
+	scanner := fileutil.NewScanner(p.config.Scan.MaxFileSizeMB, p.config.Scan.Recursive)
 	scanResult, err := scanner.ScanPath(p.config.Scan.VideoFolder)
 	if err != nil {
 		return fmt.Errorf("scanning for videos: %w", err)

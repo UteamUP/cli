@@ -21,7 +21,7 @@ func BindSource(path string, info os.FileInfo) {
 
 // OpenRegular validates the opened descriptor, so a pathname swap cannot redirect a read.
 func OpenRegular(path string, maximum int64) (*os.File, error) {
-	root, err := openDirectory(filepath.Dir(path))
+	root, err := OpenDirectory(filepath.Dir(path))
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +74,8 @@ func ReadFile(path string, maximum int64) ([]byte, error) {
 	return ReadLimit(file, maximum)
 }
 
-// openDirectory anchors every traversal step to a descriptor and rejects symbolic links.
-func openDirectory(path string) (*os.Root, error) {
+// OpenDirectory anchors every traversal step to a descriptor and rejects symbolic links.
+func OpenDirectory(path string) (*os.Root, error) {
 	absolute, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
@@ -124,12 +124,16 @@ func openDirectory(path string) (*os.Root, error) {
 
 // WriteFile atomically replaces a regular destination without following its links.
 func WriteFile(path string, data []byte) error {
-	root, err := openDirectory(filepath.Dir(path))
+	root, err := OpenDirectory(filepath.Dir(path))
 	if err != nil {
 		return err
 	}
 	defer root.Close()
-	name := filepath.Base(path)
+	return WriteRootFile(root, filepath.Base(path), data)
+}
+
+// WriteRootFile atomically replaces a file inside an already anchored directory.
+func WriteRootFile(root *os.Root, name string, data []byte) error {
 	info, err := root.Lstat(name)
 	if err == nil && !info.Mode().IsRegular() {
 		return fmt.Errorf("output destination is not a regular file")
@@ -176,7 +180,7 @@ func CopyNewFile(path string, source io.Reader, maximum int64) error {
 	if err != nil {
 		return err
 	}
-	root, err := openDirectory(filepath.Dir(path))
+	root, err := OpenDirectory(filepath.Dir(path))
 	if err != nil {
 		return err
 	}
@@ -204,4 +208,25 @@ func CopyNewFile(path string, source io.Reader, maximum int64) error {
 	}
 	success = true
 	return nil
+}
+
+// ReadRootFile reads one bounded regular file relative to an already anchored directory.
+func ReadRootFile(root *os.Root, name string, maximum int64) ([]byte, error) {
+	before, err := root.Lstat(name)
+	if err != nil {
+		return nil, err
+	}
+	if !before.Mode().IsRegular() || before.Size() > maximum {
+		return nil, fmt.Errorf("source is not a bounded regular file")
+	}
+	file, err := openSource(root, name)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	after, err := file.Stat()
+	if err != nil || !after.Mode().IsRegular() || !os.SameFile(before, after) || after.Size() > maximum {
+		return nil, fmt.Errorf("source identity changed")
+	}
+	return ReadLimit(file, maximum)
 }

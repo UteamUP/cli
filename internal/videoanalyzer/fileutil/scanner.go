@@ -28,18 +28,19 @@ type ScanResult struct {
 // Scanner walks a directory or validates a single file, filtering by MIME type.
 type Scanner struct {
 	maxFileSizeMB int
+	recursive     bool
 }
 
 // NewScanner creates a new Scanner with the given file size limit in megabytes.
-func NewScanner(maxFileSizeMB int) *Scanner {
-	return &Scanner{maxFileSizeMB: maxFileSizeMB}
+func NewScanner(maxFileSizeMB int, recursive bool) *Scanner {
+	return &Scanner{maxFileSizeMB: maxFileSizeMB, recursive: recursive}
 }
 
 // ScanPath scans the given path (file or directory) for video files.
 // It uses DetectMIME to classify each file, routes GIFs to GIFFiles,
 // enforces the file size limit, and skips unsupported formats.
 // If path is a single file, it validates just that file.
-// If path is a directory, it walks recursively.
+// If path is a directory, it follows the configured recursion boundary.
 func (s *Scanner) ScanPath(path string) (*ScanResult, error) {
 	info, err := os.Lstat(path)
 	if err != nil {
@@ -58,6 +59,9 @@ func (s *Scanner) ScanPath(path string) (*ScanResult, error) {
 			return err
 		}
 		if d.IsDir() {
+			if !s.recursive && p != path {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		fi, err := d.Info()

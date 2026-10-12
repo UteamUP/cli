@@ -137,7 +137,7 @@ func (c *APIClient) CallTool(ctx context.Context, toolName string, args map[stri
 
 	var result json.RawMessage
 
-	err = RetryWithBackoff(ctx, c.logger, fmt.Sprintf("tool/%s", toolName), c.retryOpts, func() error {
+	err = RetryWithBackoff(ctx, c.logger, fmt.Sprintf("tool/%s", toolName), c.retryOptionsForRequest(http.MethodPost), func() error {
 		req, err := http.NewRequestWithContext(ctx, "POST", c.baseURL+"/mcp", bytes.NewReader(body))
 		if err != nil {
 			return fmt.Errorf("creating request: %w", err)
@@ -307,7 +307,7 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 
 	var result json.RawMessage
 
-	err = RetryWithBackoff(ctx, c.logger, fmt.Sprintf("REST %s %s", method, path), c.retryOpts, func() error {
+	err = RetryWithBackoff(ctx, c.logger, fmt.Sprintf("REST %s %s", method, path), c.retryOptionsForRequest(method), func() error {
 		// Each attempt must start at byte zero. Reusing a consumed reader turns
 		// an otherwise idempotent retry into an empty or truncated request.
 		var bodyReader io.Reader
@@ -495,7 +495,7 @@ func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField,
 
 	var result json.RawMessage
 
-	err = RetryWithBackoff(ctx, c.logger, fmt.Sprintf("REST %s %s", method, path), c.retryOpts, func() error {
+	err = RetryWithBackoff(ctx, c.logger, fmt.Sprintf("REST %s %s", method, path), c.retryOptionsForRequest(method), func() error {
 		req, err := http.NewRequestWithContext(ctx, method, fullURL, bytes.NewReader(buf.Bytes()))
 		if err != nil {
 			return fmt.Errorf("creating request: %w", err)
@@ -608,7 +608,7 @@ func (c *APIClient) CallRESTUploadLimited(
 	}
 
 	var result json.RawMessage
-	err = RetryWithBackoff(ctx, c.logger, fmt.Sprintf("REST %s %s", method, path), c.retryOpts, func() error {
+	err = RetryWithBackoff(ctx, c.logger, fmt.Sprintf("REST %s %s", method, path), c.retryOptionsForMedia(method, path, extraHeaders), func() error {
 		body, multipartContentType, streamErr := openMultipartFileStream(
 			ctx,
 			fileField,

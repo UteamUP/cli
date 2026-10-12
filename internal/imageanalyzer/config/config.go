@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/uteamup/cli/internal/imageanalyzer/checkpoint"
 	"gopkg.in/yaml.v3"
 )
 
@@ -25,29 +26,20 @@ type ScanConfig struct {
 
 // ProcessingConfig holds settings for image processing behavior.
 type ProcessingConfig struct {
-	DryRun                      bool    `yaml:"dry_run"`
-	RenameImages                bool    `yaml:"rename_images"`
-	RenamePattern               string  `yaml:"rename_pattern"`
-	GroupingSimilarityThreshold float64 `yaml:"grouping_similarity_threshold"`
-	ConfidenceThreshold         float64 `yaml:"confidence_threshold"`
-	CheckpointFile              string  `yaml:"checkpoint_file"`
+	DryRun                      bool             `yaml:"dry_run"`
+	RenameImages                bool             `yaml:"rename_images"`
+	RenamePattern               string           `yaml:"rename_pattern"`
+	GroupingSimilarityThreshold float64          `yaml:"grouping_similarity_threshold"`
+	ConfidenceThreshold         float64          `yaml:"confidence_threshold"`
+	CheckpointFile              string           `yaml:"checkpoint_file"`
+	Resume                      bool             `yaml:"-"`
+	CheckpointScope             checkpoint.Scope `yaml:"-"`
 }
 
 // AppConfig is the top-level configuration for the image analyzer.
 type AppConfig struct {
 	Scan       ScanConfig       `yaml:"scan"`
 	Processing ProcessingConfig `yaml:"processing"`
-}
-
-// defaultCheckpointPath returns the checkpoint file path inside ~/.uteamup/.
-func defaultCheckpointPath() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return ".checkpoint.json"
-	}
-	dir := filepath.Join(home, ".uteamup")
-	_ = os.MkdirAll(dir, 0700)
-	return filepath.Join(dir, "image-checkpoint.json")
 }
 
 // DefaultConfig returns an AppConfig populated with all default values.
@@ -67,7 +59,6 @@ func DefaultConfig() *AppConfig {
 			RenamePattern:               "{entity_type}_{name}_{seq}_{date}.{ext}",
 			GroupingSimilarityThreshold: 0.75,
 			ConfidenceThreshold:         0.5,
-			CheckpointFile:              defaultCheckpointPath(),
 		},
 	}
 }
@@ -150,9 +141,6 @@ func LoadConfig(configPath string, opts ...Option) (*AppConfig, error) {
 	if cfg.Processing.RenamePattern == "" {
 		cfg.Processing.RenamePattern = defaults.Processing.RenamePattern
 	}
-	if cfg.Processing.CheckpointFile == "" {
-		cfg.Processing.CheckpointFile = defaults.Processing.CheckpointFile
-	}
 
 	// Environment variable overrides (env vars take precedence over YAML).
 	if v := os.Getenv("IMAGE_FOLDER"); v != "" {
@@ -169,6 +157,11 @@ func LoadConfig(configPath string, opts ...Option) (*AppConfig, error) {
 		opt(cfg)
 	}
 
+	if cfg.Processing.CheckpointFile != "" {
+		if err := checkpoint.ValidatePath(cfg.Processing.CheckpointFile); err != nil {
+			return nil, err
+		}
+	}
 	return cfg, nil
 }
 

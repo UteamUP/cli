@@ -66,7 +66,7 @@ Examples:
 		if err != nil {
 			return fmt.Errorf("loading active profile: %w", err)
 		}
-		token, err := auth.LoadToken()
+		token, err := auth.LoadTokenForOrigin(profile.BaseURL, activeProfileName())
 		if err != nil {
 			return fmt.Errorf("loading authentication: %w", err)
 		}
@@ -114,6 +114,19 @@ Examples:
 		cfg, err := iaconfig.LoadConfig(configPath, opts...)
 		if err != nil {
 			return fmt.Errorf("loading config: %w", err)
+		}
+
+		scope, err := checkpoint.NewScope(profile.BaseURL, token.TenantGUID, absImagePath, token.Profile)
+		if err != nil {
+			return err
+		}
+		cfg.Processing.CheckpointScope = scope
+		cfg.Processing.Resume = imageResume
+		if cfg.Processing.CheckpointFile == "" {
+			cfg.Processing.CheckpointFile, err = checkpoint.Path(scope)
+			if err != nil {
+				return err
+			}
 		}
 
 		// Apply thresholds if explicitly set.
@@ -175,29 +188,62 @@ Examples:
 }
 
 var imageStatusCmd = &cobra.Command{
-	Use:   "status",
+	Use:   "status [path]",
+	Args:  cobra.MaximumNArgs(1),
 	Short: "Show status of an in-progress image analysis",
 	Long: `Display the current checkpoint status for an image analysis run.
 
 Shows the number of processed images, type breakdown, and timing information
-from the checkpoint file.
+from the checkpoint file. Pass the same source folder used by image analyze;
+without a path, the configured image_folder is used.
 
 Examples:
-  uteamup image status
-  ut img status`,
+  uteamup image status ./photos
+  ut img status ./Images/Original`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		checkpointPath := ".checkpoint.json"
-		if imageConfig != "" {
-			// Try to load checkpoint path from config.
-			if cfg, err := iaconfig.LoadConfig(imageConfig); err == nil {
-				checkpointPath = cfg.Processing.CheckpointFile
+		cliConfig, err := config.Load()
+		if err != nil {
+			return err
+		}
+		profile, err := cliConfig.ActiveProfileConfig()
+		if err != nil {
+			return err
+		}
+		token, err := auth.LoadTokenForOrigin(profile.BaseURL, activeProfileName())
+		if err != nil {
+			return err
+		}
+		if err := validateMediaTenant(profile, token); err != nil {
+			return err
+		}
+		configPath := imageConfig
+		if configPath == "" {
+			configPath = "config.yaml"
+		}
+		cfg, err := iaconfig.LoadConfig(configPath)
+		if err != nil {
+			return err
+		}
+		inputRoot := cfg.Scan.ImageFolder
+		if len(args) == 1 {
+			inputRoot = args[0]
+		}
+		scope, err := checkpoint.NewScope(profile.BaseURL, token.TenantGUID, inputRoot, token.Profile)
+		if err != nil {
+			return err
+		}
+		checkpointPath := cfg.Processing.CheckpointFile
+		if checkpointPath == "" {
+			checkpointPath, err = checkpoint.Path(scope)
+			if err != nil {
+				return err
 			}
 		}
-
-		cp, err := checkpoint.Load(checkpointPath)
+		cp, err := checkpoint.Load(checkpointPath, scope, true)
 		if err != nil {
 			return fmt.Errorf("loading checkpoint: %w", err)
 		}
+		defer cp.Close()
 
 		status := cp.GetStatus()
 
@@ -227,7 +273,7 @@ func init() {
 	imageAnalyzeCmd.Flags().StringVarP(&imageOutputDir, "output", "o", "./Output", "Output folder for analysis results")
 	imageAnalyzeCmd.Flags().BoolVar(&imageDryRun, "dry-run", false, "Validate and show upload scope without processing images")
 	imageAnalyzeCmd.Flags().BoolVar(&imageNoRename, "no-rename", false, "Skip image renaming after analysis")
-	imageAnalyzeCmd.Flags().StringVar(&imageConfig, "config", "", "Path to config.yaml override")
+	imageCmd.PersistentFlags().StringVar(&imageConfig, "config", "", "Path to config.yaml override")
 	imageAnalyzeCmd.Flags().BoolVar(&imageResume, "resume", false, "Resume from checkpoint if available")
 	imageAnalyzeCmd.Flags().Float64Var(&imageSimilarityThreshold, "similarity-threshold", 0.75, "Grouping similarity threshold (0.0-1.0)")
 	imageAnalyzeCmd.Flags().Float64Var(&imageConfidenceThreshold, "confidence-threshold", 0.5, "Minimum confidence to classify (0.0-1.0)")

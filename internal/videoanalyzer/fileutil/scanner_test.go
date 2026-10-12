@@ -57,7 +57,7 @@ func TestScanPath_SingleMP4File(t *testing.T) {
 	dir := createTempDir(t)
 	writeTempFile(t, dir, "test.mp4", makeMP4Bytes())
 
-	scanner := NewScanner(100)
+	scanner := NewScanner(100, true)
 	result, err := scanner.ScanPath(filepath.Join(dir, "test.mp4"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -77,7 +77,7 @@ func TestScanPath_SingleGIFFile(t *testing.T) {
 	dir := createTempDir(t)
 	writeTempFile(t, dir, "animation.gif", makeGIFBytes())
 
-	scanner := NewScanner(100)
+	scanner := NewScanner(100, true)
 	result, err := scanner.ScanPath(filepath.Join(dir, "animation.gif"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -97,7 +97,7 @@ func TestScanPath_UnsupportedFile(t *testing.T) {
 	dir := createTempDir(t)
 	writeTempFile(t, dir, "image.png", makePNGBytes())
 
-	scanner := NewScanner(100)
+	scanner := NewScanner(100, true)
 	result, err := scanner.ScanPath(filepath.Join(dir, "image.png"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -121,7 +121,7 @@ func TestScanPath_DirectoryWithMixedFiles(t *testing.T) {
 	writeTempFile(t, dir, "image.png", makePNGBytes())
 	writeTempFile(t, dir, "readme.txt", makeTXTBytes())
 
-	scanner := NewScanner(100)
+	scanner := NewScanner(100, true)
 	result, err := scanner.ScanPath(dir)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -140,7 +140,7 @@ func TestScanPath_DirectoryWithMixedFiles(t *testing.T) {
 func TestScanPath_EmptyDirectory(t *testing.T) {
 	dir := createTempDir(t)
 
-	scanner := NewScanner(100)
+	scanner := NewScanner(100, true)
 	result, err := scanner.ScanPath(dir)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -171,7 +171,7 @@ func TestScanPath_FileSizeLimit(t *testing.T) {
 	copy(smallData[8:12], "isom")
 	writeTempFile(t, dir, "small.mp4", smallData)
 
-	scanner := NewScanner(1) // 1 MB limit
+	scanner := NewScanner(1, true) // 1 MB limit
 	result, err := scanner.ScanPath(dir)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -188,7 +188,7 @@ func TestScanPath_FileSizeLimit(t *testing.T) {
 }
 
 func TestScanPath_NonexistentPath(t *testing.T) {
-	scanner := NewScanner(100)
+	scanner := NewScanner(100, true)
 	_, err := scanner.ScanPath("/nonexistent/path/that/does/not/exist")
 	if err == nil {
 		t.Fatal("expected error for nonexistent path, got nil")
@@ -204,7 +204,7 @@ func TestScanPath_SkipsSymbolicLink(t *testing.T) {
 		t.Skipf("symbolic links unavailable: %v", err)
 	}
 
-	result, err := NewScanner(100).ScanPath(link)
+	result, err := NewScanner(100, true).ScanPath(link)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -219,7 +219,7 @@ func TestScanPath_RecursiveSubdirectories(t *testing.T) {
 	writeTempFile(t, dir, "sub1/video1.mov", makeMOVBytes())
 	writeTempFile(t, dir, "sub1/sub2/video2.mp4", makeMP4Bytes())
 
-	scanner := NewScanner(100)
+	scanner := NewScanner(100, true)
 	result, err := scanner.ScanPath(dir)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -234,5 +234,24 @@ func TestScanPath_RecursiveSubdirectories(t *testing.T) {
 			t.Errorf("videos not sorted by path: %s came after %s",
 				result.Videos[i].Path, result.Videos[i-1].Path)
 		}
+	}
+}
+
+func TestScanPath_NonrecursiveIncludesOnlyRootFiles(t *testing.T) {
+	dir := createTempDir(t)
+	writeTempFile(t, dir, "root.mp4", makeMP4Bytes())
+	writeTempFile(t, dir, "root.gif", makeGIFBytes())
+	writeTempFile(t, dir, "nested/video.mp4", makeMP4Bytes())
+	writeTempFile(t, dir, "nested/image.gif", makeGIFBytes())
+	result, err := NewScanner(100, false).ScanPath(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Videos) != 1 || result.Videos[0].Filename != "root.mp4" || len(result.GIFFiles) != 1 || filepath.Base(result.GIFFiles[0]) != "root.gif" {
+		t.Fatalf("nonrecursive scan escaped its root: %+v", result)
+	}
+	fileResult, err := NewScanner(100, false).ScanPath(filepath.Join(dir, "nested", "video.mp4"))
+	if err != nil || len(fileResult.Videos) != 1 {
+		t.Fatalf("explicit file input rejected: %+v, %v", fileResult, err)
 	}
 }
