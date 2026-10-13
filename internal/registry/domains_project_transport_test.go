@@ -173,7 +173,7 @@ func TestMCPOnlyCommandsRefuseEmailPasswordSessionsBeforeSending(t *testing.T) {
 	}
 }
 
-func TestProjectScheduleRetryResendsIdenticalReviewedBodyAfter503(t *testing.T) {
+func TestProjectScheduleExplicitRetryResendsIdenticalReviewedBodyAfter503(t *testing.T) {
 	var bodies [][]byte
 	var mu sync.Mutex
 	apiClient := projectTransportClient(t, "apikey", client.RetryOptions{
@@ -193,9 +193,22 @@ func TestProjectScheduleRetryResendsIdenticalReviewedBodyAfter503(t *testing.T) 
 		}
 		_, _ = response.Write([]byte(`{"retained":true}`))
 	})
-	err := executeProjectTransport(t, apiClient, "project-schedule", []string{
+	args := []string{
 		"apply", projectTransportProjectGUID, "--from-json", writeRegistryJSONFixture(t, projectTransportPayload()),
-	})
+	}
+	// A mutation with an uncertain outcome must return control to the caller.
+	// The caller can explicitly resubmit the original reviewed request identity.
+	err := executeProjectTransport(t, apiClient, "project-schedule", args)
+	if err == nil || !strings.Contains(err.Error(), "503") {
+		t.Fatalf("uncertain mutation must report the original failure, got %v", err)
+	}
+	mu.Lock()
+	initialAttempts := len(bodies)
+	mu.Unlock()
+	if initialAttempts != 1 {
+		t.Fatalf("mutation was automatically retried: %d requests", initialAttempts)
+	}
+	err = executeProjectTransport(t, apiClient, "project-schedule", args)
 	if err != nil {
 		t.Fatalf("retried reviewed command failed: %v", err)
 	}
