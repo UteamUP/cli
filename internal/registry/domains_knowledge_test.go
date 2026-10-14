@@ -26,15 +26,16 @@ func TestKnowledgeDomainWired(t *testing.T) {
 
 	// Every action maps to the exact backend MCP tool method name.
 	expected := map[string]string{
-		"list":   "UteamupKnowledgeArticleList",
-		"get":    "UteamupKnowledgeArticleGet",
-		"create": "UteamupKnowledgeArticleCreate",
-		"update": "UteamupKnowledgeArticleUpdate",
-		"delete": "UteamupKnowledgeArticleDelete",
-		"search": "UteamupKnowledgeArticleSearch",
-		"linked": "UteamupKnowledgeArticleGetLinked",
-		"link":   "UteamupKnowledgeArticleLinkEntity",
-		"unlink": "UteamupKnowledgeArticleUnlinkEntity",
+		"move-relative": "UteamupKnowledgeArticleMoveRelative",
+		"list":          "UteamupKnowledgeArticleList",
+		"get":           "UteamupKnowledgeArticleGet",
+		"create":        "UteamupKnowledgeArticleCreate",
+		"update":        "UteamupKnowledgeArticleUpdate",
+		"delete":        "UteamupKnowledgeArticleDelete",
+		"search":        "UteamupKnowledgeArticleSearch",
+		"linked":        "UteamupKnowledgeArticleGetLinked",
+		"link":          "UteamupKnowledgeArticleLinkEntity",
+		"unlink":        "UteamupKnowledgeArticleUnlinkEntity",
 	}
 	got := map[string]string{}
 	for _, a := range d.Actions {
@@ -194,4 +195,30 @@ func TestKnowledgeEntityLinkRESTPathExpansion(t *testing.T) {
 	if len(consumed) != 3 {
 		t.Errorf("link path expansion consumed %d args, want 3 (%v)", len(consumed), consumed)
 	}
+}
+
+func TestKnowledgeRelativeMoveRequiresExplicitPlacementConfirmation(t *testing.T) {
+	domain := findDomainByName(t, "knowledge")
+	for _, action := range domain.Actions {
+		if action.Name != "move-relative" {
+			continue
+		}
+		if action.HTTPMethod != "POST" || action.RESTPath != "by-guid/{articleGuid}/move/relative" {
+			t.Fatal("relative placement must use its dedicated GUID route")
+		}
+		flags := map[string]FlagDef{}
+		for _, flag := range action.Flags {
+			flags[flag.Name] = flag
+		}
+		if !flags["confirm"].MustBeTrue || !flags["confirm"].LocalOnly || !flags["confirm"].Required {
+			t.Fatal("relative move requires explicit local confirmation")
+		}
+		if !action.RejectExtraArgs || action.Args[0].Type != "non-empty-uuid" || flags["target-article-guid"].Type != "non-empty-uuid" ||
+			!flags["target-article-guid"].Required || flags["target-article-guid"].BodyName != "targetArticleGuid" ||
+			!flags["place-after"].Required || flags["place-after"].Type != "bool" {
+			t.Fatal("relative move must carry target GUID and explicit direction")
+		}
+		return
+	}
+	t.Fatal("relative move command is missing")
 }
