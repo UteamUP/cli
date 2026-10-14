@@ -1,6 +1,16 @@
 package registry
 
-import "testing"
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/uteamup/cli/internal/auth"
+	"github.com/uteamup/cli/internal/client"
+	"github.com/uteamup/cli/internal/logging"
+)
 
 func findAPIKeyDomain(t *testing.T) *Domain {
 	t.Helper()
@@ -94,7 +104,7 @@ func TestApiKeyCreateAction(t *testing.T) {
 		return nil
 	}
 
-	// Flags map onto CreateTenantApiKeyModel via camelCase auto-conversion.
+	// Flags map onto CreateTenantApiKeyModel, with explicit names where needed.
 	for _, want := range []struct {
 		name     string
 		typ      string
@@ -120,6 +130,53 @@ func TestApiKeyCreateAction(t *testing.T) {
 		if f.Required != want.required {
 			t.Errorf("%s flag Required = %v, want %v", want.name, f.Required, want.required)
 		}
+	}
+}
+
+func TestApiKeyCreateSendsMcpEnabledContract(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(map[bool]string{false: "default disabled", true: "explicitly enabled"}[enabled], func(t *testing.T) {
+			t.Setenv("HOME", t.TempDir())
+			t.Setenv("UTEAMUP_TENANT_GUID", "52e73fd7-cd7b-45c6-9872-b6be9415203c")
+			var body map[string]any
+			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodPost || r.URL.Path != "/api/tenant-api-keys" {
+					t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
+				}
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					t.Error(err)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{}`))
+			}))
+			defer server.Close()
+			if err := auth.SaveToken(&auth.TokenData{APIOrigin: server.URL, AccessToken: "test-token", AuthMethod: "apikey", ExpiresAt: time.Now().Add(time.Hour)}); err != nil {
+				t.Fatal(err)
+			}
+			logger := logging.New(logging.LevelError)
+			format := "json"
+			factory := func() (*client.APIClient, error) {
+				return client.NewAPIClient(server.URL, time.Second, true, client.RetryOptions{}, logger), nil
+			}
+			command := buildActionCommand(findAPIKeyDomain(t), *findAPIKeyAction(t, "create"), factory, logger, &format, nil)
+			args := []string{"--name", "Private pilot", "--role-id", "dc2327fc-091c-4e45-ab37-a26768432afe"}
+			if enabled {
+				args = append(args, "--mcp-enabled")
+			}
+			command.SetArgs(args)
+			if err := command.Execute(); err != nil {
+				t.Fatal(err)
+			}
+			if body["isMcpEnabled"] != enabled {
+				t.Errorf("isMcpEnabled = %v, want %v", body["isMcpEnabled"], enabled)
+			}
+			if _, legacy := body["mcpEnabled"]; legacy {
+				t.Error("request sent the unsupported mcpEnabled field")
+			}
+			if body["roleId"] != "dc2327fc-091c-4e45-ab37-a26768432afe" {
+				t.Errorf("role scope changed: %v", body["roleId"])
+			}
+		})
 	}
 }
 
