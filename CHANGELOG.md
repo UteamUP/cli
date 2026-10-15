@@ -5,6 +5,26 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.0](https://github.com/UteamUP/cli/compare/4.6.0...4.7.0) (2026-10-15)
+
+
+### Features
+
+* Add confirmed GUID-based Knowledge relative move command ([678a0a4](https://github.com/UteamUP/cli/commit/678a0a47ba334c5fade2315390fd3f9fe18e0232))
+* add confirmed rating device delivery commands ([7369b02](https://github.com/UteamUP/cli/commit/7369b0282df17ebd9d6bc8bd096c1c7a7dd3ef1a))
+* add confirmed Vendor device protocol commands ([f8a1334](https://github.com/UteamUP/cli/commit/f8a1334e091522b346d7a544a9122a9f08c77819))
+
+
+### Bug Fixes
+
+* constrain cleanup and media checkpoint trust boundaries ([fa94c39](https://github.com/UteamUP/cli/commit/fa94c39e6abc4e82d63fb39fcfe9ea2885b4e485))
+* send the MCP-enabled API key field expected by the backend ([074be1e](https://github.com/UteamUP/cli/commit/074be1e765abac94a3e3d1ff09eb4b21e0153074))
+
+
+### Tests
+
+* require explicit retry of reviewed project mutations ([a92bd37](https://github.com/UteamUP/cli/commit/a92bd37ccdf62f3f69a7aaa9988ecad12f6633e5))
+
 ## [4.6.0](https://github.com/UteamUP/cli/compare/4.5.0...4.6.0) (2026-10-11)
 
 
