@@ -5,6 +5,15 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.8.0](https://github.com/UteamUP/cli/compare/4.7.0...4.8.0) (2026-10-15)
+
+
+### Features
+
+* add confirmed vendor compliance device delivery commands ([896676e](https://github.com/UteamUP/cli/commit/896676e1a434dd20ae839e1d3a00484656731c21))
+* add reviewed vendor message device commands ([832b0b7](https://github.com/UteamUP/cli/commit/832b0b7337b671968810d70fe43970252fe8d6c6))
+* **stock:** add stock takes action for tenant-wide counts ([bb9cc81](https://github.com/UteamUP/cli/commit/bb9cc816fb3e0963b87ede8449c3204f662cda09))
+
 ## [4.7.0](https://github.com/UteamUP/cli/compare/4.6.0...4.7.0) (2026-10-15)
 
 
