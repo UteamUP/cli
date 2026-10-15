@@ -595,6 +595,13 @@ func init() {
 				Flags:       paginationFlags(),
 			},
 			Action{
+				Name:        "takes",
+				Description: "List stock takes (inventory counts) across every stock location you can see, newest first (paged, max 500)",
+				ToolName:    "UteamupStockListTakes",
+				RESTPath:    "takes",
+				Flags:       paginationFlags(),
+			},
+			Action{
 				Name:        "start-count",
 				Description: "Start a pending inventory count without changing stock balances",
 				ToolName:    "UteamupStockStartStockTake",

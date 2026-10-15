@@ -1175,6 +1175,25 @@ func TestStockDueCountsActionWired(t *testing.T) {
 	}
 }
 
+func TestStockTakesActionListsEveryLocationInOneCall(t *testing.T) {
+	action := findStockAction(t, "takes")
+
+	if action.ToolName != "UteamupStockListTakes" {
+		t.Errorf("takes ToolName = %q, want %q", action.ToolName, "UteamupStockListTakes")
+	}
+	if action.RESTPath != "takes" || action.HTTPMethod != "" {
+		t.Errorf("takes must be GET takes (not POST, which creates a take), got %s %s", action.HTTPMethod, action.RESTPath)
+	}
+	if len(action.Args) != 0 {
+		t.Errorf("takes is tenant-wide and takes no location argument, got %+v", action.Args)
+	}
+	for _, name := range []string{"page", "page-size"} {
+		if f := stockActionFlag(t, "takes", name); f.Type != "int" {
+			t.Errorf("takes flag %q must be an int pagination flag, got %+v", name, f)
+		}
+	}
+}
+
 func TestStockTakeVarianceActionWired(t *testing.T) {
 	action := findStockAction(t, "variance")
 
