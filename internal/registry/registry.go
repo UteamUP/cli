@@ -138,9 +138,11 @@ var HTTPMethod = map[string]string{
 
 // Action represents a single CLI action (list, get, create, etc.).
 type Action struct {
-	Name        string
-	Description string
-	ToolName    string // MCP tool name, e.g. "UteamupAssetList"
+	// SensitiveBodyFields redacts root JSON fields in diagnostics without changing request bytes.
+	SensitiveBodyFields []string
+	Name                string
+	Description         string
+	ToolName            string // MCP tool name, e.g. "UteamupAssetList"
 	// MCPOnly routes the action through the authenticated JSON-RPC tools/call
 	// transport. Use it only when the backend intentionally exposes no REST
 	// adapter for the governed tool.
@@ -1074,6 +1076,12 @@ func redactSensitiveActionValues(action Action, args map[string]any, headers map
 	redactedHeaders := make(map[string]string, len(headers))
 	for key, value := range headers {
 		redactedHeaders[key] = value
+	}
+
+	for _, field := range action.SensitiveBodyFields {
+		if _, exists := redactedArgs[field]; exists {
+			redactedArgs[field] = "[REDACTED]"
+		}
 	}
 
 	for _, flag := range action.Flags {
