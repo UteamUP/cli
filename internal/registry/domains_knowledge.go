@@ -21,7 +21,7 @@ func init() {
 		// by-guid/{guid} routes. The int {id} routes are [Obsolete] and do not
 		// survive reseeds. list/create carry no identifier so they stay on the
 		// base path.
-		Actions: []Action{
+		Actions: append([]Action{
 			{Name: "list", Description: "List records", ToolName: "UteamupKnowledgeArticleList", Flags: paginationFlags()},
 			{Name: "get", Description: "Get an article by GUID", ToolName: "UteamupKnowledgeArticleGet", RESTPath: "by-guid/{articleGuid}",
 				Args: []ArgDef{{Name: "articleGuid", Description: "Knowledge article GUID", Required: true, Type: "string"}}},
@@ -59,7 +59,7 @@ func init() {
 					{Name: "entityGuid", Description: "Entity GUID", Required: true, Type: "string"},
 					{Name: "articleGuid", Description: "Knowledge article GUID", Required: true, Type: "string"},
 				}},
-		},
+		}, locationKnowledgeActions()...),
 	})
 
 	Register(&Domain{
