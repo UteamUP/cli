@@ -8,7 +8,7 @@ func locationActions() []Action {
 	fields.Required = true
 	fields.Description = "Reviewed JSON; optional idempotencyKey and mutationOutcomeVersion=1 (plus exact expectedUpdatedAt for update) negotiate a minimal receipt. Retain original JSON unchanged after uncertain delivery"
 	confirmation := FlagDef{Name: "confirm", Description: "Confirm the reviewed location change", Type: "bool", Required: true, MustBeTrue: true, LocalOnly: true}
-	return []Action{
+	return append([]Action{
 		{Name: "list", Description: "List visible records", ToolName: "Uteamup" + domain + "List", Flags: paginationFlags()},
 		{Name: "get", Description: "Get by public GUID", ToolName: "Uteamup" + domain + "Get", RESTPath: "{locationGuid}", Args: identity},
 		{Name: "create", Description: "Create from reviewed JSON", ToolName: "Uteamup" + domain + "Create", Flags: []FlagDef{fields, confirmation}},
@@ -18,5 +18,5 @@ func locationActions() []Action {
 			{Name: "expected-updated-at", Description: "Exact canonical reviewed UTC revision; retain unchanged on retry", Type: "string", QueryName: "expectedUpdatedAt"},
 			{Name: "mutation-outcome-version", Description: "Minimal outcome version (1)", Type: "int", QueryName: "mutationOutcomeVersion"},
 		}},
-	}
+	}, locationNodeActions()...)
 }
