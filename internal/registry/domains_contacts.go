@@ -68,10 +68,9 @@ func init() {
 	Register(&Domain{
 		Name:        "customer",
 		Aliases:     []string{"customers"},
-		Description: "Manage customers",
-		Actions: append(crudActions("Customer"),
-			Action{Name: "search", Description: "Search customers", ToolName: "UteamupCustomerSearch", Args: queryArg(), Flags: paginationFlags()},
-		),
+		Description: "Manage customers by public GUID",
+		APIPath:     "/api/customer",
+		Actions:     customerActions(),
 	})
 
 }
@@ -120,4 +119,22 @@ func validateContactLogicalParents(cmd *cobra.Command, action Action) error {
 		}
 	}
 	return nil
+}
+
+// Customer mutations use normal online REST contracts. Confirmation does not
+// imply idempotency: reconcile an uncertain write before creating another.
+func customerActions() []Action {
+	identity := []ArgDef{{Name: "customerGuid", Description: "Customer public GUID", Required: true, Type: "non-empty-uuid"}}
+	fields := jsonFlag()
+	fields.Required = true
+	fields.Description = "Reviewed customer JSON; use contactGuids, teamGuids and currencyGuid for references"
+	confirmation := FlagDef{Name: "confirm", Description: "Confirm this customer change; reconcile uncertain outcomes before retrying", Type: "bool", Required: true, MustBeTrue: true, LocalOnly: true}
+	return []Action{
+		{Name: "list", Description: "List visible customers", ToolName: "UteamupCustomerList", HTTPMethod: "GET", Flags: paginationFlags()},
+		{Name: "get", Description: "Get a customer by public GUID", ToolName: "UteamupCustomerGet", HTTPMethod: "GET", RESTPath: "{customerGuid}", Args: identity},
+		{Name: "create", Description: "Create a customer from reviewed JSON", ToolName: "UteamupCustomerCreate", HTTPMethod: "POST", Flags: []FlagDef{fields, confirmation}},
+		{Name: "update", Description: "Update a customer by public GUID", ToolName: "UteamupCustomerUpdate", HTTPMethod: "PUT", RESTPath: "{customerGuid}", Args: identity, Flags: []FlagDef{fields, confirmation}},
+		{Name: "delete", Description: "Delete a customer after explicit confirmation", ToolName: "UteamupCustomerDelete", HTTPMethod: "DELETE", RESTPath: "{customerGuid}", Args: identity, Flags: []FlagDef{confirmation}},
+		{Name: "search", Description: "Search visible customer names", ToolName: "UteamupCustomerSearch", HTTPMethod: "GET", UseDomainBasePath: true, Args: []ArgDef{{Name: "query", QueryName: "nameFilter", Description: "Customer name filter", Required: true, Type: "string"}}, Flags: paginationFlags()},
+	}
 }
