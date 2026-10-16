@@ -3,7 +3,7 @@ package registry
 func init() {
 	Register(&Domain{Name: "location", Aliases: []string{"locations", "loc"}, Description: "Manage locations", Actions: crudActions("Location")})
 	Register(&Domain{Name: "floor-plan", Description: "Manage floor plans", Actions: crudActions("FloorPlan")})
-	Register(&Domain{Name: "category", Aliases: []string{"categories", "cat"}, Description: "Manage categories", Actions: crudActions("Category")})
+	Register(&Domain{Name: "category", Aliases: []string{"categories", "cat"}, Description: "Manage categories", APIPath: "/api/category", Actions: classificationActions("Category")})
 	Register(&Domain{Name: "currency", Aliases: []string{"currencies"}, Description: "Manage currencies", Actions: crudActions("Currency")})
 	Register(&Domain{
 		Name:        "code",
@@ -63,7 +63,7 @@ func init() {
 			},
 		),
 	})
-	Register(&Domain{Name: "tag", Aliases: []string{"tags"}, Description: "Manage tags", Actions: crudActions("Tag")})
+	Register(&Domain{Name: "tag", Aliases: []string{"tags"}, Description: "Manage tags", APIPath: "/api/tag", Actions: classificationActions("Tag")})
 	Register(&Domain{Name: "tenant-holiday", Description: "Manage tenant holidays", Actions: []Action{
 		{Name: "year", Description: "List tenant holidays for a year", ToolName: "UteamupTenantHolidayGetByYear", RESTPath: "year/{year}", Args: []ArgDef{{Name: "year", Description: "Holiday year", Required: true, Type: "int"}}},
 		{Name: "create", Description: "Create a tenant holiday", ToolName: "UteamupTenantHolidayCreate", Flags: []FlagDef{jsonFlag()}},

@@ -28,7 +28,7 @@ func teamActions() []Action {
 var teamRevisionPattern = regexp.MustCompile(`^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,7})?Z$`)
 
 func validateTeamDeleteMetadata(cmd *cobra.Command, action Action) error {
-	if action.ToolName != "UteamupTeamDelete" {
+	if action.ToolName != "UteamupTeamDelete" && action.ToolName != "UteamupCategoryDelete" && action.ToolName != "UteamupTagDelete" {
 		return nil
 	}
 	flags := []string{"idempotency-key", "expected-updated-at", "mutation-outcome-version"}
@@ -42,18 +42,18 @@ func validateTeamDeleteMetadata(cmd *cobra.Command, action Action) error {
 		return nil
 	}
 	if supplied != len(flags) {
-		return fmt.Errorf("Team delete requires all three original mutation metadata flags together")
+		return fmt.Errorf("Deletion requires all three original mutation metadata flags together")
 	}
 	key, _ := cmd.Flags().GetString("idempotency-key")
 	version, _ := cmd.Flags().GetInt("mutation-outcome-version")
 	if !uuidValuePattern.MatchString(key) || strings.EqualFold(key, emptyUUIDValue) || version != 1 {
-		return fmt.Errorf("Team delete requires a nonempty operation GUID and mutation outcome version 1")
+		return fmt.Errorf("Deletion requires a nonempty operation GUID and mutation outcome version 1")
 	}
 	revision, _ := cmd.Flags().GetString("expected-updated-at")
 	const layout = "2006-01-02T15:04:05.9999999Z"
 	parsed, err := time.Parse(layout, revision)
 	if !teamRevisionPattern.MatchString(revision) || err != nil || parsed.Year() < 1 || parsed.Format(layout) != revision || parsed.IsZero() {
-		return fmt.Errorf("Team delete requires the exact canonical original UTC revision, with at most seven fractional digits and no trailing zeros")
+		return fmt.Errorf("Deletion requires the exact canonical original UTC revision, with at most seven fractional digits and no trailing zeros")
 	}
 	return nil
 }
