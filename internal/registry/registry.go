@@ -398,6 +398,9 @@ func validateActionInput(cmd *cobra.Command, args []string, action Action) error
 		}
 	}
 
+	if err := validateTeamDeleteMetadata(cmd, action); err != nil {
+		return err
+	}
 	if err := validateCustomerDeleteMetadata(cmd, action); err != nil {
 		return err
 	}
