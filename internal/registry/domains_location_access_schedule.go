@@ -20,7 +20,7 @@ func init() {
 		Aliases:     []string{"location-access", "site-access"},
 		Description: "Manage recurring site-access windows used as hard scheduling constraints",
 		APIPath:     "/api/location",
-		Actions: []Action{
+		Actions: append([]Action{
 			{
 				Name:        "list",
 				Description: "List access windows for one public location GUID",
@@ -79,6 +79,6 @@ func init() {
 					{Name: "expected-updated-at", BodyName: "expectedUpdatedAtUtc", Description: "Current UpdatedAtUtc value in ISO 8601 format", Required: true, Type: "string"},
 				},
 			},
-		},
+		}, locationAccessReviewedActions()...),
 	})
 }
