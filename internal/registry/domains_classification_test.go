@@ -214,3 +214,14 @@ func TestClassificationDeleteRejectsIncompleteMetadataBeforeTransport(t *testing
 		}
 	}
 }
+
+func TestClassificationWorkordersUseBoundedGuidRelationshipRoute(t *testing.T) {
+	for _, domain := range []string{"category", "tag"} {
+		action := findDomainAction(t, domain, "workorders")
+		if action.HTTPMethod != "GET" || action.RESTPath != "by-guid/{guid}/workorders" || len(action.Args) != 1 || action.Args[0].Type != "non-empty-uuid" {
+			t.Fatalf("%s relationship route is not GUID based", domain)
+		}
+		actionFlagByName(t, action, "page")
+		actionFlagByName(t, action, "page-size")
+	}
+}
