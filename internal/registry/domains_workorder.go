@@ -65,6 +65,22 @@ func init() {
 				},
 			},
 			{
+				Name: "list-preview",
+				Description: "Preview the checklists and task lists a new work order gets automatically from its assets " +
+					"(and their primary and linked asset types), asset group members, parts, tools and chemicals",
+				ToolName:   "UteamupWorkorderListPreview",
+				HTTPMethod: "POST",
+				RESTPath:   "list-preview",
+				Flags: []FlagDef{
+					{Name: "asset-guids", BodyName: "assetGuids", Description: "Asset GUIDs, repeatable or comma-separated", Type: "stringSlice"},
+					{Name: "asset-group-guids", BodyName: "assetGroupGuids", Description: "Asset group GUIDs; every active member counts", Type: "stringSlice"},
+					{Name: "part-guids", BodyName: "partGuids", Description: "Part GUIDs, repeatable or comma-separated", Type: "stringSlice"},
+					{Name: "tool-guids", BodyName: "toolGuids", Description: "Tool GUIDs, repeatable or comma-separated", Type: "stringSlice"},
+					{Name: "chemical-guids", BodyName: "chemicalGuids", Description: "Chemical GUIDs, repeatable or comma-separated", Type: "stringSlice"},
+					{Name: "maintenance-type", BodyName: "maintenanceType", Description: "Maintenance type of the new work order, e.g. PreventiveScheduled", Type: "string"},
+				},
+			},
+			{
 				Name:        "create",
 				Description: "Create a workorder using GUID-only entity references and a retry-safe idempotency key",
 				ToolName:    "UteamupWorkorderCreate",
