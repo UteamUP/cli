@@ -4,7 +4,7 @@ func init() {
 	Register(&Domain{
 		Name:        "compliance-code",
 		Description: "Manage compliance codes",
-		Actions: append(crudActions("ComplianceCode"), Action{
+		Actions: append(append(crudActions("ComplianceCode"), locationComplianceActions()...), Action{
 			Name:         "list-for-entity",
 			Description:  "List compliance codes assigned to an inventory entity public GUID",
 			ToolName:     "UteamupComplianceCodeListForEntity",
@@ -12,7 +12,7 @@ func init() {
 			RESTPath:     "entity/{entityType}/by-guid/{entityGuid}/codes",
 			HTTPMethod:   "GET",
 			Args: []ArgDef{
-				{Name: "entityType", Description: "asset, tool, part, or chemical", Required: true, Type: "string", AllowedValues: []string{"asset", "tool", "part", "chemical"}},
+				{Name: "entityType", Description: "asset, tool, part, chemical, or location", Required: true, Type: "string", AllowedValues: []string{"asset", "tool", "part", "chemical", "location"}},
 				{Name: "entityGuid", Description: "Inventory entity public GUID", Required: true, Type: "uuid"},
 			},
 		}),

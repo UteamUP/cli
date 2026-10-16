@@ -774,6 +774,9 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		}
 	}
 
+	if err := validateLocationComplianceOriginal(action, toolArgs); err != nil {
+		return err
+	}
 	if err := validateLocationKnowledgeOriginal(action, toolArgs); err != nil {
 		return err
 	}
