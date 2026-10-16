@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -66,6 +67,15 @@ func TestEveryRegisteredActionPreservesPermissionDenial(t *testing.T) {
 						}
 						if flag.JSONFile || flag.RootJSONObjectFile || flag.UploadFile {
 							value = file
+							if original := reviewedOriginalFixture(action.ToolName, guid); original != "" {
+								value = filepath.Join(t.TempDir(), "original.json")
+								if err := os.WriteFile(value, []byte(original), 0600); err != nil {
+									t.Fatal(err)
+								}
+							}
+						}
+						if flag.Type == "string" && strings.HasPrefix(flag.Name, "expected-updated-at") {
+							value = rbacRevision
 						}
 						if flag.StrongETag {
 							value = `"rbac-version"`
@@ -105,6 +115,31 @@ func TestEveryRegisteredActionPreservesPermissionDenial(t *testing.T) {
 				})
 			}
 		}
+	}
+}
+
+// A canonical reviewed UTC revision (seven fractional digits, no trailing zero) that every
+// original-metadata validator accepts, so the request reaches the server and its 403 is observed.
+const rbacRevision = "2026-01-02T03:04:05.1234567Z"
+
+// reviewedOriginalFixture returns a complete original-operation body for actions whose client-side
+// validators refuse to send without one; any other action keeps the generic empty JSON file.
+func reviewedOriginalFixture(toolName, guid string) string {
+	const operation = `"idempotencyKey":"22222222-2222-4222-8222-222222222222","mutationOutcomeVersion":1`
+	switch toolName {
+	case "UteamupLocationKnowledgeLink":
+		return `{` + operation + `,"expectedLinkGuid":null}`
+	case "UteamupLocationKnowledgeUnlink":
+		return `{` + operation + `,"expectedLinkGuid":"` + guid + `"}`
+	case "UteamupLocationComplianceCodeCreate", "UteamupLocationAccessScheduleCreateReviewed", "UteamupLocationNodeCreate":
+		return `{` + operation + `}`
+	case "UteamupLocationComplianceCodeUpdate", "UteamupLocationComplianceCodeDelete",
+		"UteamupLocationNodeUpdate", "UteamupLocationNodeMove":
+		return `{` + operation + `,"expectedUpdatedAt":"` + rbacRevision + `"}`
+	case "UteamupLocationAccessScheduleUpdateReviewed", "UteamupLocationAccessScheduleDeleteReviewed":
+		return `{` + operation + `,"expectedUpdatedAtUtc":"` + rbacRevision + `"}`
+	default:
+		return ""
 	}
 }
 

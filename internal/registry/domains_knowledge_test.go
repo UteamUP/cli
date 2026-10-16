@@ -36,6 +36,9 @@ func TestKnowledgeDomainWired(t *testing.T) {
 		"linked":        "UteamupKnowledgeArticleGetLinked",
 		"link":          "UteamupKnowledgeArticleLinkEntity",
 		"unlink":        "UteamupKnowledgeArticleUnlinkEntity",
+		// Reviewed Location relations (domains_location_knowledge.go).
+		"location-link":   "UteamupLocationKnowledgeLink",
+		"location-unlink": "UteamupLocationKnowledgeUnlink",
 	}
 	got := map[string]string{}
 	for _, a := range d.Actions {
