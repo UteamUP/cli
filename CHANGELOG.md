@@ -5,6 +5,33 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.9.0](https://github.com/UteamUP/cli/compare/4.8.0...4.9.0) (2026-10-16)
+
+
+### Features
+
+* add reviewed location access schedule contracts ([c724233](https://github.com/UteamUP/cli/commit/c7242332aa06b9bc7aea9117a7a0b71f967a885c))
+* add reviewed Location compliance commands ([5baf934](https://github.com/UteamUP/cli/commit/5baf9342e1ba3e21819e52b6e611f5f8235ac765))
+* expose scoped classification workorders in CLI ([3853f9a](https://github.com/UteamUP/cli/commit/3853f9ac48ae7ab2d994aec4990b5200835e83d2))
+* preserve customer mutation identity in CLI requests ([779a3aa](https://github.com/UteamUP/cli/commit/779a3aa929dfa4cf9c4bb75877040775ff446c2e))
+* **registry:** mcpconnections domain for AI assistant links ([8015533](https://github.com/UteamUP/cli/commit/80155339b1f7297ddd627dcfd0d7b47489bd1da5))
+* **registry:** workorder list-preview command ([4000620](https://github.com/UteamUP/cli/commit/40006206a2916d4d73766b62cfd5be3b19ce6ed8))
+* route location mutations with original receipt metadata ([de325d9](https://github.com/UteamUP/cli/commit/de325d9f0d0f9dddfcfdc0d7cbfb3d2e6f59a903))
+* support reviewed location knowledge links and receipts ([bbe67ec](https://github.com/UteamUP/cli/commit/bbe67ec1b595f54c370c3f1eb401c1bf79eea1c0))
+* support scoped location hierarchy mutation contracts ([104e153](https://github.com/UteamUP/cli/commit/104e153b9b528e29a47f873ae08e07c93c59349e))
+* use reviewed GUID classification writes in CLI ([2d48c35](https://github.com/UteamUP/cli/commit/2d48c35f0689917570f1783662b159ecbd0f7162))
+
+
+### Bug Fixes
+
+* route customer CLI actions through GUID endpoints ([3dda3b0](https://github.com/UteamUP/cli/commit/3dda3b00921bf5df47496ebb0abfebb9b89064e1))
+* use public team GUIDs and support original mutation metadata ([484d54f](https://github.com/UteamUP/cli/commit/484d54fb182021d600f7f29c37bba117d39d644f))
+
+
+### Tests
+
+* **registry:** cover reviewed Location actions in knowledge and RBAC tests ([72d13d8](https://github.com/UteamUP/cli/commit/72d13d864497ae988b9320b7b587f49467fd45dc))
+
 ## [4.8.0](https://github.com/UteamUP/cli/compare/4.7.0...4.8.0) (2026-10-15)
 
 
