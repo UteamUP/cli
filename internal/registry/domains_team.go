@@ -28,7 +28,7 @@ func teamActions() []Action {
 var teamRevisionPattern = regexp.MustCompile(`^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,7})?Z$`)
 
 func validateTeamDeleteMetadata(cmd *cobra.Command, action Action) error {
-	if action.ToolName != "UteamupTeamDelete" && action.ToolName != "UteamupCategoryDelete" && action.ToolName != "UteamupTagDelete" {
+	if action.ToolName != "UteamupTeamDelete" && action.ToolName != "UteamupCategoryDelete" && action.ToolName != "UteamupTagDelete" && action.ToolName != "UteamupLocationDelete" {
 		return nil
 	}
 	flags := []string{"idempotency-key", "expected-updated-at", "mutation-outcome-version"}

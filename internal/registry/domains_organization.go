@@ -1,7 +1,7 @@
 package registry
 
 func init() {
-	Register(&Domain{Name: "location", Aliases: []string{"locations", "loc"}, Description: "Manage locations", Actions: crudActions("Location")})
+	Register(&Domain{Name: "location", Aliases: []string{"locations", "loc"}, Description: "Manage locations", APIPath: "/api/location", Actions: locationActions()})
 	Register(&Domain{Name: "floor-plan", Description: "Manage floor plans", Actions: crudActions("FloorPlan")})
 	Register(&Domain{Name: "category", Aliases: []string{"categories", "cat"}, Description: "Manage categories", APIPath: "/api/category", Actions: classificationActions("Category")})
 	Register(&Domain{Name: "currency", Aliases: []string{"currencies"}, Description: "Manage currencies", Actions: crudActions("Currency")})
