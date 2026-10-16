@@ -3,7 +3,9 @@ package registry
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"regexp"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -121,20 +123,57 @@ func validateContactLogicalParents(cmd *cobra.Command, action Action) error {
 	return nil
 }
 
-// Customer mutations use normal online REST contracts. Confirmation does not
-// imply idempotency: reconcile an uncertain write before creating another.
+// Customer mutations preserve legacy responses unless original receipt metadata
+// is supplied. Never generate replacement operation keys or revisions on retry.
 func customerActions() []Action {
 	identity := []ArgDef{{Name: "customerGuid", Description: "Customer public GUID", Required: true, Type: "non-empty-uuid"}}
 	fields := jsonFlag()
 	fields.Required = true
-	fields.Description = "Reviewed customer JSON; use contactGuids, teamGuids and currencyGuid for references"
+	fields.Description = "Reviewed customer JSON with public GUID references; optional idempotencyKey and mutationOutcomeVersion=1 (plus expectedUpdatedAt on update) negotiate a minimal outcome; retain unchanged on retry"
 	confirmation := FlagDef{Name: "confirm", Description: "Confirm this customer change; reconcile uncertain outcomes before retrying", Type: "bool", Required: true, MustBeTrue: true, LocalOnly: true}
 	return []Action{
 		{Name: "list", Description: "List visible customers", ToolName: "UteamupCustomerList", HTTPMethod: "GET", Flags: paginationFlags()},
 		{Name: "get", Description: "Get a customer by public GUID", ToolName: "UteamupCustomerGet", HTTPMethod: "GET", RESTPath: "{customerGuid}", Args: identity},
 		{Name: "create", Description: "Create a customer from reviewed JSON", ToolName: "UteamupCustomerCreate", HTTPMethod: "POST", Flags: []FlagDef{fields, confirmation}},
 		{Name: "update", Description: "Update a customer by public GUID", ToolName: "UteamupCustomerUpdate", HTTPMethod: "PUT", RESTPath: "{customerGuid}", Args: identity, Flags: []FlagDef{fields, confirmation}},
-		{Name: "delete", Description: "Delete a customer after explicit confirmation", ToolName: "UteamupCustomerDelete", HTTPMethod: "DELETE", RESTPath: "{customerGuid}", Args: identity, Flags: []FlagDef{confirmation}},
+		{Name: "delete", Description: "Delete a customer after explicit confirmation", ToolName: "UteamupCustomerDelete", HTTPMethod: "DELETE", RESTPath: "{customerGuid}", Args: identity, Flags: []FlagDef{confirmation,
+			{Name: "idempotency-key", Description: "Original nonempty operation GUID; supply all three mutation metadata flags together", Type: "non-empty-uuid", QueryName: "idempotencyKey"},
+			{Name: "expected-updated-at", Description: "Exact canonical reviewed UTC revision (seconds or up to seven fractional digits, without trailing zeros); retain unchanged on retry", Type: "string", QueryName: "expectedUpdatedAt"},
+			{Name: "mutation-outcome-version", Description: "Minimal outcome version (1); requires original operation and reviewed revision", Type: "int", QueryName: "mutationOutcomeVersion"},
+		}},
 		{Name: "search", Description: "Search visible customer names", ToolName: "UteamupCustomerSearch", HTTPMethod: "GET", UseDomainBasePath: true, Args: []ArgDef{{Name: "query", QueryName: "nameFilter", Description: "Customer name filter", Required: true, Type: "string"}}, Flags: paginationFlags()},
 	}
+}
+
+var customerRevisionPattern = regexp.MustCompile(`^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,7})?Z$`)
+
+func validateCustomerDeleteMetadata(cmd *cobra.Command, action Action) error {
+	if action.ToolName != "UteamupCustomerDelete" {
+		return nil
+	}
+	flags := []string{"idempotency-key", "expected-updated-at", "mutation-outcome-version"}
+	supplied := 0
+	for _, name := range flags {
+		if cmd.Flags().Changed(name) {
+			supplied++
+		}
+	}
+	if supplied == 0 {
+		return nil
+	}
+	if supplied != len(flags) {
+		return fmt.Errorf("Customer delete requires all three original mutation metadata flags together")
+	}
+	key, _ := cmd.Flags().GetString("idempotency-key")
+	version, _ := cmd.Flags().GetInt("mutation-outcome-version")
+	if !uuidValuePattern.MatchString(key) || strings.EqualFold(key, emptyUUIDValue) || version != 1 {
+		return fmt.Errorf("Customer delete requires a nonempty operation GUID and mutation outcome version 1")
+	}
+	revision, _ := cmd.Flags().GetString("expected-updated-at")
+	const layout = "2006-01-02T15:04:05.9999999Z"
+	parsed, err := time.Parse(layout, revision)
+	if !customerRevisionPattern.MatchString(revision) || err != nil || parsed.Year() < 1 || parsed.Format(layout) != revision || parsed.IsZero() {
+		return fmt.Errorf("Customer delete requires the exact canonical original UTC revision, with at most seven fractional digits and no trailing zeros")
+	}
+	return nil
 }
