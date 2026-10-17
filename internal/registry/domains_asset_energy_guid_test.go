@@ -13,7 +13,7 @@ func TestAssetEnergyUsesBoundedGuidReadRoutes(t *testing.T) {
 		if name == "summary" {
 			wantPath += "/summary"
 		}
-		path, _ := buildRESTPath(domain, action, nil)
+		path, _ := buildRESTPath(domain, *action, nil)
 		if action.MCPOnly || action.RESTPath != wantPath || path != "/api/assets/"+wantPath {
 			t.Fatalf("%s is not bound to the existing bounded read: %+v, %s", name, action, path)
 		}
