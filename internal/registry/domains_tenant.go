@@ -111,6 +111,8 @@ func init() {
 				Name:        "invite-defaults-get",
 				Description: "Get the per-tenant invite-defaults configuration (auto-assign license + role)",
 				ToolName:    "UteamupTenantInviteDefaultsGet",
+				HTTPMethod:  "GET",
+				RESTPath:    "{tenantGuidToGet}/invite-defaults",
 				Args: []ArgDef{
 					{Name: "tenantGuidToGet", Description: "Tenant GUID", Required: true, Type: "string"},
 				},
@@ -119,14 +121,16 @@ func init() {
 				Name:        "invite-defaults-set",
 				Description: "Update the per-tenant invite-defaults configuration",
 				ToolName:    "UteamupTenantInviteDefaultsSet",
+				HTTPMethod:  "PATCH",
+				RESTPath:    "{tenantGuidToUpdate}/invite-defaults",
 				Args: []ArgDef{
 					{Name: "tenantGuidToUpdate", Description: "Tenant GUID", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
-					{Name: "auto-license", Description: "Enable auto-assign license on invite", Type: "bool"},
-					{Name: "license-type", Description: "License type to auto-assign: 0=Regular, 1=Helpdesk", Type: "int"},
-					{Name: "auto-role", Description: "Enable auto-assign role on invite", Type: "bool"},
-					{Name: "role-id", Description: "GUID of the default tenant-scoped role to auto-assign", Type: "string"},
+					{Name: "auto-license", BodyName: "autoAssignLicenseOnInvite", Description: "Enable auto-assign license on invite", Type: "bool"},
+					{Name: "license-type", BodyName: "defaultLicenseType", Description: "License type to auto-assign: 0=Regular, 1=Helpdesk", Type: "int"},
+					{Name: "auto-role", BodyName: "autoAssignRoleOnInvite", Description: "Enable auto-assign role on invite", Type: "bool"},
+					{Name: "role-id", BodyName: "defaultInviteRoleId", Description: "GUID of the default tenant-scoped role to auto-assign", Type: "string"},
 				},
 			},
 			{

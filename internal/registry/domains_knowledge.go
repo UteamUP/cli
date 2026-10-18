@@ -84,8 +84,8 @@ func init() {
 			Action{Name: "archive", Description: "Archive (soft-delete) a document by GUID", ToolName: "UteamupDocumentArchive", HTTPMethod: "DELETE", RESTPath: "{documentGuid}", Args: documentGUIDArg()},
 			Action{Name: "unarchive", Description: "Restore a document from archive by GUID", ToolName: "UteamupDocumentUnarchive", HTTPMethod: "POST", RESTPath: "{documentGuid}/unarchive", Args: documentGUIDArg()},
 			Action{Name: "list-archived", Description: "List archived documents", ToolName: "UteamupDocumentListArchived", RESTPath: "archived"},
-			Action{Name: "get-metadata", Description: "Get extracted metadata (EXIF / PDF DocInfo / OOXML core / camera / GPS) for a document by GUID", ToolName: "UteamupDocumentGetMetadata", Args: []ArgDef{{Name: "guid", Description: "Document public GUID", Required: true}}},
-			Action{Name: "get-timeline", Description: "Get the document timeline strip (ordered by CapturedAt ASC) for a date range", ToolName: "UteamupDocumentGetTimeline", Flags: []FlagDef{
+			Action{Name: "get-metadata", Description: "Get extracted metadata (EXIF / PDF DocInfo / OOXML core / camera / GPS) for a document by GUID", ToolName: "UteamupDocumentGetMetadata", HTTPMethod: "GET", RESTPath: "{guid}/metadata", Args: []ArgDef{{Name: "guid", Description: "Document public GUID", Required: true}}},
+			Action{Name: "get-timeline", Description: "Get the document timeline strip (ordered by CapturedAt ASC) for a date range", ToolName: "UteamupDocumentGetTimeline", HTTPMethod: "GET", RESTPath: "timeline", Flags: []FlagDef{
 				{Name: "from", Description: "Range start (ISO 8601). Default: now - 90 days.", Default: ""},
 				{Name: "to", Description: "Range end (ISO 8601). Default: now.", Default: ""},
 				{Name: "types", Description: "Comma-separated content-type filter", Default: ""},

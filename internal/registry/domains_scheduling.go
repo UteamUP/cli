@@ -40,6 +40,8 @@ func init() {
 				Name:        "workorder-options",
 				Description: "Rank qualified and available technicians for a workorder window",
 				ToolName:    "UteamupScheduleAssignmentGetWorkorderOptions",
+				// The ranked technician options exist only as an MCP tool.
+				MCPOnly: true,
 				Args: []ArgDef{
 					{Name: "workorderGuid", Description: "Workorder GUID", Required: true, Type: "uuid"},
 				},
@@ -49,10 +51,11 @@ func init() {
 				},
 			},
 			{
-				Name:        "create-by-guid",
-				Description: "Create a revalidated GUID-based workorder assignment",
-				ToolName:    "UteamupScheduleAssignmentCreateByGuid",
-				HTTPMethod:  "POST",
+				Name:              "create-by-guid",
+				Description:       "Create a revalidated GUID-based workorder assignment",
+				ToolName:          "UteamupScheduleAssignmentCreateByGuid",
+				UseDomainBasePath: true,
+				HTTPMethod:        "POST",
 				Args: []ArgDef{
 					{Name: "workorderGuid", Description: "Workorder GUID", Required: true, Type: "uuid"},
 					{Name: "technicianGuid", Description: "Technician user GUID", Required: true, Type: "uuid"},

@@ -13,10 +13,11 @@ func init() {
 	}
 	Register(&Domain{Name: "workorder-template", Aliases: []string{"wot"}, Description: "Manage work order templates", Actions: append(workorderTemplateActions,
 		Action{
-			Name:        "active",
-			Description: "List bounded active tenant workorder templates",
-			ToolName:    "UteamupWorkorderTemplateGetActive",
-			HTTPMethod:  "GET",
+			Name:              "active",
+			Description:       "List bounded active tenant workorder templates",
+			ToolName:          "UteamupWorkorderTemplateGetActive",
+			UseDomainBasePath: true,
+			HTTPMethod:        "GET",
 			Flags: []FlagDef{
 				{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
 				{Name: "page-size", Short: "s", Description: "Items per page (max 100)", Default: 20, Type: "int"},
@@ -63,6 +64,8 @@ func init() {
 			Name:        "run-schedule-now",
 			Description: "Generate one workorder right now from a configured template schedule (the manual \"Generate now\" QA action). Reuses the existing template-to-workorder path, updates LastCreatedDate / WorkordersCreated / LastGeneratedWorkorderGuid on the schedule, and does NOT advance NextCreateDate.",
 			ToolName:    "UteamupWorkorderTemplateRunScheduleNow",
+			HTTPMethod:  "POST",
+			RESTPath:    "schedules/{scheduleGuid}/runnow",
 			Args: []ArgDef{
 				{Name: "scheduleGuid", Description: "External GUID of the workorder-template schedule (required)", Required: true, Type: "string"},
 			},
@@ -71,6 +74,8 @@ func init() {
 			Name:        "analysis-preview",
 			Description: "Preview how many completed workorders are linked to a template and the AI-credit cost to analyze them (5 credits each). Does NOT charge credits.",
 			ToolName:    "UteamupWorkorderTemplateAnalyzePreview",
+			HTTPMethod:  "GET",
+			RESTPath:    "{templateGuid}/analysis/preview",
 			Flags: []FlagDef{
 				{Name: "template", BodyName: "templateGuid", Description: "Public GUID of the workorder template (required)", Required: true, Type: "string"},
 			},
@@ -79,6 +84,8 @@ func init() {
 			Name:        "analyze",
 			Description: "Analyze a template's completed workorders with AI and return suggested enhancements (description, checklist/task lists, tools/chemicals, estimated duration/cost). Charges 5 AI credits per analyzed workorder; preview first with analysis-preview.",
 			ToolName:    "UteamupWorkorderTemplateAnalyze",
+			HTTPMethod:  "POST",
+			RESTPath:    "{templateGuid}/analysis/analyze",
 			Flags: []FlagDef{
 				{Name: "template", BodyName: "templateGuid", Description: "Public GUID of the workorder template (required)", Required: true, Type: "string"},
 			},
@@ -168,6 +175,8 @@ func init() {
 			Name:        "translate",
 			Description: "Translate authored content into other languages using AI. Charges 2 AI credits per target language (supported: en, is, pl, de, es).",
 			ToolName:    "UteamupLanguageTranslate",
+			HTTPMethod:  "POST",
+			RESTPath:    "translate",
 			Flags: []FlagDef{
 				{Name: "source-text", BodyName: "sourceText", Description: "The text to translate (required)", Required: true, Type: "string"},
 				{Name: "source-lang", BodyName: "sourceLanguage", Description: "Source language code: en|is|pl|de|es (required)", Required: true, Type: "string"},

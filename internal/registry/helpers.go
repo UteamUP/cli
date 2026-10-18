@@ -1,5 +1,23 @@
 package registry
 
+import (
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
+)
+
+// newRequestGUID returns a random version-4 GUID string.
+func newRequestGUID() (string, error) {
+	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	bytes[6] = (bytes[6] & 0x0f) | 0x40
+	bytes[8] = (bytes[8] & 0x3f) | 0x80
+	encoded := hex.EncodeToString(bytes)
+	return fmt.Sprintf("%s-%s-%s-%s-%s", encoded[0:8], encoded[8:12], encoded[12:16], encoded[16:20], encoded[20:32]), nil
+}
+
 // paginationFlags returns standard pagination flags used across most list actions.
 func paginationFlags() []FlagDef {
 	return []FlagDef{

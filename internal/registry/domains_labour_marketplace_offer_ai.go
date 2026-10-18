@@ -15,9 +15,11 @@ func init() {
 				HTTPMethod:  "GET",
 			},
 			{
-				Name:        "compare",
-				Description: "Explain current offer differences; never selects, ranks, accepts, or rejects a provider",
-				ToolName:    "UteamupLabourMarketplaceOfferComparison",
+				Name:              "compare",
+				Description:       "Explain current offer differences; never selects, ranks, accepts, or rejects a provider",
+				ToolName:          "UteamupLabourMarketplaceOfferComparison",
+				HTTPMethod:        "POST",
+				UseDomainBasePath: true,
 				Flags: []FlagDef{
 					{Name: "job-guid", Description: "Buyer-owned labour job GUID", Required: true, Type: "string"},
 					{Name: "revision-guids", Description: "Current offer revision GUIDs (repeatable or comma-separated; omit for latest per applicant)", Type: "stringSlice"},

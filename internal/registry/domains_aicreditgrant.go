@@ -19,10 +19,11 @@ func init() {
 		APIPath:     "/api/aicreditgrant",
 		Actions: []Action{
 			{
-				Name:        "issue",
-				Description: "Issue AI credits to a tenant (auto-applied, or claim-gated when --requires-claim is set). Global-admin only.",
-				ToolName:    "UteamupAiCreditGrantIssue",
-				HTTPMethod:  "POST",
+				Name:              "issue",
+				Description:       "Issue AI credits to a tenant (auto-applied, or claim-gated when --requires-claim is set). Global-admin only.",
+				ToolName:          "UteamupAiCreditGrantIssue",
+				UseDomainBasePath: true,
+				HTTPMethod:        "POST",
 				Flags: []FlagDef{
 					{Name: "tenant-guid", Description: "Tenant GUID to grant the credits to (required)", Required: true, Type: "string"},
 					{Name: "amount", Description: "Number of AI credits to grant (required)", Required: true, Type: "int"},

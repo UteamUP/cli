@@ -11,15 +11,16 @@ func init() {
 		Description: "AI-assisted knowledge page generation and translation (UPMate)",
 		Actions: []Action{
 			{Name: "translate", Description: "Translate a knowledge page (by GUID) into the given languages", ToolName: "UteamupKnowledgeAiTranslate",
+				HTTPMethod: "POST", RESTBasePath: "/api/knowledgearticle", RESTPath: "by-guid/{articleGuid}/upmate-translate",
 				Args: []ArgDef{{Name: "articleGuid", Description: "Knowledge page (article) GUID to translate", Required: true, Type: "string"}},
 				Flags: []FlagDef{
 					{Name: "languages", Short: "l", BodyName: "targetLanguages", Description: "Target language codes to fill (subset of is/pl/de/es); repeatable or comma-separated", Required: true, Type: "stringSlice"},
 				}},
 			{Name: "generate-from-text", Description: "Generate a new knowledge page from pasted text", ToolName: "UteamupKnowledgeAiGenerateFromText",
+				// No REST endpoint generates a knowledge page from text; the MCP tool takes one request object.
+				MCPOnly: true,
 				Flags: []FlagDef{
-					{Name: "space-guid", BodyName: "spaceGuid", Description: "GUID of the space to create the page in", Required: true, Type: "string"},
-					{Name: "text", BodyName: "text", Description: "Source text to summarize into a page", Required: true, Type: "string"},
-					{Name: "parent-article-guid", BodyName: "parentArticleGuid", Description: "Optional parent page GUID to nest the new page under", Type: "string"},
+					{Name: "request-file", Short: "f", BodyName: "request", Description: "JSON file with spaceGuid, text, and optional parentArticleGuid", Required: true, Type: "string", JSONFile: true},
 				}},
 		},
 	})

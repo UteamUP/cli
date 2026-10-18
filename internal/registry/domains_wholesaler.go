@@ -27,9 +27,11 @@ func init() {
 				},
 			},
 			{
-				Name:        "applications",
-				Description: "List wholesaler applications",
-				ToolName:    "UteamupWholesalerApplicationsList",
+				Name:         "applications",
+				Description:  "List wholesaler applications",
+				ToolName:     "UteamupWholesalerApplicationsList",
+				HTTPMethod:   "GET",
+				RESTBasePath: "/api/wholesaler/application",
 				Flags: []FlagDef{
 					{Name: "status", Description: "PendingApproval | InfoRequested | Approved | Rejected | Withdrawn", Type: "string"},
 				},
@@ -38,6 +40,8 @@ func init() {
 				Name:        "catalog",
 				Description: "Get a wholesaler's catalog",
 				ToolName:    "UteamupWholesalerCatalogGet",
+				HTTPMethod:  "GET",
+				RESTPath:    "{guid}/catalog",
 				Flags: []FlagDef{
 					{Name: "guid", Short: "g", Description: "Wholesaler GUID", Required: true, Type: "string"},
 				},
@@ -46,6 +50,8 @@ func init() {
 				Name:        "me",
 				Description: "Get your own wholesaler (portal self-view)",
 				ToolName:    "UteamupWholesalerMyGet",
+				HTTPMethod:  "GET",
+				RESTPath:    "me",
 			},
 		},
 	})

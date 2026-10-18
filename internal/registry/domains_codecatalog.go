@@ -75,6 +75,8 @@ func init() {
 				Name:        "deactivate-by-guid",
 				Description: "Deactivate a code catalog entry by ExternalGuid (cascades to descendants)",
 				ToolName:    "UteamupCodingsystemDeactivateEntryByGuid",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "entries/by-guid/{guid}",
 				Args: []ArgDef{
 					{Name: "guid", Description: "Entry ExternalGuid", Required: true, Type: "string"},
 				},
@@ -122,20 +124,26 @@ func init() {
 				},
 			},
 			{
-				Name:        "remove-asset-assignment",
-				Description: "Remove the code assignment from an asset by its ExternalGuid — preserves audit log",
-				ToolName:    "UteamupCodingsystemRemoveAssetAssignment",
+				Name:         "remove-asset-assignment",
+				Description:  "Remove the code assignment from an asset by its ExternalGuid — preserves audit log",
+				ToolName:     "UteamupCodingsystemRemoveAssetAssignment",
+				HTTPMethod:   "DELETE",
+				RESTBasePath: "/api/asset",
+				RESTPath:     "by-guid/{assetGuid}/codeassignment",
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset ExternalGuid", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset ExternalGuid", Required: true, Type: "string"},
 				},
 			},
 			{
-				Name:        "assign-asset",
-				Description: "Assign a code-catalog entry to an asset by their ExternalGuids — GUID-first; preserves audit log. Folded in from prod bug 81e76313.",
-				ToolName:    "UteamupCodingsystemAssignAsset",
+				Name:         "assign-asset",
+				Description:  "Assign a code-catalog entry to an asset by their ExternalGuids — GUID-first; preserves audit log. Folded in from prod bug 81e76313.",
+				ToolName:     "UteamupCodingsystemAssignAsset",
+				HTTPMethod:   "POST",
+				RESTBasePath: "/api/asset",
+				RESTPath:     "by-guid/{assetGuid}/codeassignment",
 				Args: []ArgDef{
-					{Name: "asset-guid", Description: "Asset ExternalGuid", Required: true, Type: "string"},
-					{Name: "code-catalog-entry-guid", Description: "Target code-catalog entry ExternalGuid", Required: true, Type: "string"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset ExternalGuid", Required: true, Type: "string"},
+					{Name: "code-catalog-entry-guid", BodyName: "codeCatalogEntryGuid", Description: "Target code-catalog entry ExternalGuid", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
 					{Name: "aspect", Description: "Per-assignment IEC 81346-2 aspect override — one of Function, Location, Product, Terminal. Omit to inherit from the catalog entry (which itself may inherit from the level).", Type: "string"},
@@ -145,8 +153,10 @@ func init() {
 				Name:        "history",
 				Description: "Fetch the full chronological history timeline for one industry code — images, documents, work orders, asset edits, journals, and inventory additions. Cursor-paginated.",
 				ToolName:    "UteamupCodecatalogHistory",
+				HTTPMethod:  "GET",
+				RESTPath:    "{codeGuid}/history",
 				Args: []ArgDef{
-					{Name: "code-guid", Description: "External Guid of the code whose timeline to fetch", Required: true, Type: "string"},
+					{Name: "code-guid", BodyName: "codeGuid", Description: "External Guid of the code whose timeline to fetch", Required: true, Type: "string"},
 				},
 				Flags: []FlagDef{
 					{Name: "types", Description: "Comma-separated EntityType filter (Image,Document,Workorder,Asset,Journal,AssetPart,AssetTool,AssetChemical)", Type: "string"},

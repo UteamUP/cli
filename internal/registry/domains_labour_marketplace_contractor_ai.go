@@ -15,10 +15,11 @@ func init() {
 				HTTPMethod:  "GET",
 			},
 			{
-				Name:        "draft",
-				Description: "Draft editable application content; never submits an application or proves qualifications",
-				ToolName:    "UteamupLabourMarketplaceContractorApplicationDraftCreate",
-				HTTPMethod:  "POST",
+				Name:              "draft",
+				Description:       "Draft editable application content; never submits an application or proves qualifications",
+				ToolName:          "UteamupLabourMarketplaceContractorApplicationDraftCreate",
+				UseDomainBasePath: true,
+				HTTPMethod:        "POST",
 				Flags: []FlagDef{
 					{Name: "job-guid", BodyName: "jobGuid", Description: "Open labour job GUID", Required: true, Type: "string"},
 					{Name: "provider-party-guid", BodyName: "providerPartyGuid", Description: "Owned contractor party profile GUID", Required: true, Type: "string"},

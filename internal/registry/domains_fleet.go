@@ -101,6 +101,7 @@ func init() {
 			},
 			{
 				Name: "summary", Description: "Summarize fuel usage for an asset", ToolName: "UteamupFuelTransactionGetSummary",
+				HTTPMethod: "GET", RESTPath: "asset/{assetGuid}/summary",
 				Args: []ArgDef{{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "string"}},
 				Flags: []FlagDef{
 					{Name: "date-from", Description: "Optional UTC period start", Type: "string"},
@@ -109,6 +110,7 @@ func init() {
 			},
 			{
 				Name: "efficiency", Description: "Calculate fuel efficiency for an asset", ToolName: "UteamupFuelTransactionGetEfficiency",
+				HTTPMethod: "GET", RESTPath: "asset/{assetGuid}/efficiency",
 				Args: []ArgDef{{Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "string"}},
 			},
 		},
@@ -137,18 +139,23 @@ func init() {
 	Register(&Domain{
 		Name:        "fleet-contact",
 		Description: "Manage GUID-first fleet asset contact associations",
+		// FleetAssetContactController is routed api/v1/assets/{assetGuid}/contacts; there is
+		// no /api/fleetcontact, so every action names its own path.
 		Actions: []Action{
 			{
 				Name: "list", Description: "List contacts linked to an asset", ToolName: "UteamupFleetAssetContactList",
+				HTTPMethod: "GET", RESTBasePath: "/api/v1/assets", RESTPath: "{assetExternalGuid}/contacts",
 				Args: []ArgDef{{Name: "assetExternalGuid", Description: "Public asset GUID", Required: true, Type: "string"}},
 			},
 			{
 				Name: "add", Description: "Link a contact to an asset", ToolName: "UteamupFleetAssetContactAdd",
+				HTTPMethod: "POST", RESTBasePath: "/api/v1/assets", RESTPath: "{assetExternalGuid}/contacts",
 				Args:  []ArgDef{{Name: "assetExternalGuid", Description: "Public asset GUID", Required: true, Type: "string"}},
 				Flags: []FlagDef{jsonFlag()},
 			},
 			{
 				Name: "delete", Description: "Remove a contact association from an asset", ToolName: "UteamupFleetAssetContactDelete",
+				HTTPMethod: "DELETE", RESTBasePath: "/api/v1/assets", RESTPath: "{assetExternalGuid}/contacts/{associationExternalGuid}",
 				Args: []ArgDef{
 					{Name: "assetExternalGuid", Description: "Public asset GUID", Required: true, Type: "string"},
 					{Name: "associationExternalGuid", Description: "Public asset-contact association GUID", Required: true, Type: "string"},

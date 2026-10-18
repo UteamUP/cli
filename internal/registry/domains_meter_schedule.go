@@ -97,7 +97,11 @@ func init() {
 				Name:        "overdue",
 				Description: "List overdue meter reading schedules",
 				ToolName:    "UteamupMeterscheduleGetOverdue",
-				Flags:       paginationFlags(),
+				HTTPMethod:  "GET",
+				// Overdue schedules are the list endpoint filtered with overdueOnly=true.
+				UseDomainBasePath: true,
+				Flags: append(paginationFlags(),
+					FlagDef{Name: "overdue-only", QueryName: "overdueOnly", Description: "Only overdue schedules", Default: true, Type: "bool"}),
 			},
 			{
 				Name:        "compliance-summary",
@@ -155,9 +159,12 @@ func init() {
 				},
 			},
 			{
-				Name:        "record-workorder",
-				Description: "Record a meter reading against a workorder; closes the workorder once all its required readings are complete",
-				ToolName:    "UteamupMeterscheduleRecordWorkorder",
+				Name:         "record-workorder",
+				Description:  "Record a meter reading against a workorder; closes the workorder once all its required readings are complete",
+				ToolName:     "UteamupMeterscheduleRecordWorkorder",
+				HTTPMethod:   "POST",
+				RESTBasePath: "/api/workorders",
+				RESTPath:     "by-guid/{workorderGuid}/meter-readings",
 				Flags: []FlagDef{
 					{Name: "workorder-guid", Description: "Workorder external Guid to record the reading against", Required: true, Type: "string"},
 					{Name: "attribute-definition-guid", Description: "Attribute definition external Guid for the meter being read", Required: true, Type: "string"},

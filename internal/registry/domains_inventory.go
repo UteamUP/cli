@@ -211,6 +211,8 @@ func init() {
 				Name:        "po-marketplace-draft",
 				Description: "Create a Draft purchase order from an accepted marketplace offer",
 				ToolName:    "UteamupStockCreateMarketplacePurchaseOrderDraft",
+				// No REST endpoint creates this draft on its own; only the MCP tool does.
+				MCPOnly: true,
 				Args: []ArgDef{
 					{Name: "requirementGuid", Description: "Accepted requirement GUID", Required: true, Type: "uuid"},
 					{Name: "offerGuid", Description: "Accepted offer GUID", Required: true, Type: "uuid"},
@@ -1044,6 +1046,8 @@ func init() {
 				Name:        "optimization-prepare",
 				Description: "Revalidate the selected replenishment action and create an approval-bound UPMate review run without executing it",
 				ToolName:    "UteamupStockPrepareOptimizationRun",
+				// REST wants a nested proposal body; the MCP tool takes these flags as-is.
+				MCPOnly: true,
 				Flags: []FlagDef{
 					{Name: "stock-item-guid", BodyName: "stockItemGuid", Description: "Destination stock item GUID", Required: true, Type: "string"},
 					{Name: "idempotency-guid", BodyName: "idempotencyGuid", Description: "Caller-generated retry-safe GUID", Required: true, Type: "string"},

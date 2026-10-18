@@ -19,7 +19,7 @@ func init() {
 			// my-projects mirrors GET /api/project/my-projects — lists projects
 			// containing workorders assigned to the authenticated user.
 			// Requires backend MediatR handler registered for UteamupProjectMyProjects.
-			{Name: "my-projects", Description: "List projects where the current user has assigned workorders", ToolName: "UteamupProjectMyProjects"},
+			{Name: "my-projects", Description: "List projects where the current user has assigned workorders", ToolName: "UteamupProjectMyProjects", HTTPMethod: "GET", RESTPath: "my-projects"},
 			// GUID-keyed field setters on ProjectController. Both identifiers ride
 			// the URL (no body) — the int-keyed originals are [Obsolete] on the
 			// backend, so the CLI only exposes the by-guid routes.

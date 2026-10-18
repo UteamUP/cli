@@ -8,10 +8,11 @@ func init() {
 		APIPath:     "/api/planmigration",
 		Actions: []Action{
 			{
-				Name:        "migrate",
-				Description: "Migrate every subscription from one plan to another. Dry-run by default — pass --dry-run=false to execute.",
-				ToolName:    "UteamupPlanMigrationRun",
-				HTTPMethod:  "POST",
+				Name:              "migrate",
+				Description:       "Migrate every subscription from one plan to another. Dry-run by default — pass --dry-run=false to execute.",
+				ToolName:          "UteamupPlanMigrationRun",
+				UseDomainBasePath: true,
+				HTTPMethod:        "POST",
 				Flags: []FlagDef{
 					{Name: "from-plan-guid", Description: "Source plan GUID (required)", Required: true, Type: "string"},
 					{Name: "to-plan-guid", Description: "Target plan GUID (required)", Required: true, Type: "string"},

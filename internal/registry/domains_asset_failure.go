@@ -26,6 +26,8 @@ func init() {
 				Name:        "by-asset",
 				Description: "List failure records for an asset GUID",
 				ToolName:    "UteamupAssetfailureGetByAsset",
+				HTTPMethod:  "GET",
+				RESTPath:    "asset/by-guid/{assetGuid}",
 				Args: []ArgDef{{
 					Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "uuid",
 				}},
@@ -34,6 +36,8 @@ func init() {
 				Name:        "statistics",
 				Description: "Get failure statistics for an asset GUID",
 				ToolName:    "UteamupAssetfailureGetStatistics",
+				// The REST statistics route is disabled ([NonAction]); only the MCP tool serves it.
+				MCPOnly: true,
 				Args: []ArgDef{{
 					Name: "assetGuid", Description: "Public asset GUID", Required: true, Type: "uuid",
 				}},
@@ -77,7 +81,10 @@ func init() {
 				}},
 				Flags: []FlagDef{jsonFlag()},
 			},
-			{Name: "resolve", Description: "Resolve a failure record", ToolName: "UteamupAssetfailureResolve", Flags: []FlagDef{jsonFlag()}},
+			{Name: "resolve", Description: "Resolve a failure record", ToolName: "UteamupAssetfailureResolve",
+				// REST resolve is disabled; the MCP tool takes one AssetFailureResolveModel.
+				MCPOnly: true,
+				Flags:   []FlagDef{{Name: "request-file", Short: "f", BodyName: "model", Description: "JSON file with failureGuid, resolution, and optional rootCause, repairCost, partsReplaced, notes, requiresFollowUp, followUpDate", Required: true, Type: "string", JSONFile: true}}},
 			{
 				Name:        "delete",
 				Description: "Delete a failure record by GUID",
@@ -90,6 +97,8 @@ func init() {
 				Name:        "classify",
 				Description: "Classify a failure record by GUID",
 				ToolName:    "UteamupAssetfailureClassify",
+				// REST has no classify endpoint (only a full-record PUT), so this goes through MCP.
+				MCPOnly: true,
 				Args: []ArgDef{{
 					Name: "failureGuid", Description: "Public failure GUID", Required: true, Type: "uuid",
 				}},

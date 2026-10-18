@@ -33,10 +33,11 @@ func init() {
 				ToolName:    "UteamupNotificationPreferenceGet",
 			},
 			{
-				Name:        "set",
-				Description: "Partially update the signed-in user's workorder notification preferences (omit flags to leave them unchanged)",
-				ToolName:    "UteamupNotificationPreferenceSet",
-				HTTPMethod:  "PUT",
+				Name:              "set",
+				Description:       "Partially update the signed-in user's workorder notification preferences (omit flags to leave them unchanged)",
+				ToolName:          "UteamupNotificationPreferenceSet",
+				UseDomainBasePath: true,
+				HTTPMethod:        "PUT",
 				Flags: []FlagDef{
 					{Name: "due-window-start", Description: "Hours before the due date when reminders start (upper thumb, 1..24)", Type: "int", BodyName: "dueDateWindowStartHours"},
 					{Name: "due-window-end", Description: "Hours before the due date when reminders stop (lower thumb, 1..24, must be < start)", Type: "int", BodyName: "dueDateWindowEndHours"},

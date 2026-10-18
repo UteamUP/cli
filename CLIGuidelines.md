@@ -427,6 +427,12 @@ so the HTTP method and URL are built from the action's `Name`, the domain's
 | `delete`        | `DELETE`    | `{basePath}/{id|externalGuid}`                   |
 | `search`        | `GET`       | `{basePath}/search` (or `{basePath}/{RESTPath}`)  |
 
+Any other action name (`get-by-guid`, `assign-asset`, `overdue`, …) has no default route:
+it MUST set `RESTPath` (and usually `HTTPMethod`), `RESTBasePath`, `UseDomainBasePath: true`
+when the domain path itself is the endpoint, or `MCPOnly: true` when no REST endpoint exists.
+Without one, the request silently goes to `{basePath}` and returns the domain's list or hits its
+create endpoint. `TestEveryNonStandardRESTActionDeclaresItsRoute` fails the build for such an action.
+
 GUID-first domains (every new domain, per `Guidelines/ApiGuidelines.md`)
 should declare their positional arg as `externalGuid`; legacy integer-id domains
 can keep `id`. `buildRESTPath` accepts either.

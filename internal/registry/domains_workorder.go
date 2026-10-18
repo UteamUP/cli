@@ -104,6 +104,8 @@ func init() {
 				Name:        "closeout-prepare",
 				Description: "Build an evidence-bound workorder closeout preview",
 				ToolName:    "UteamupWorkorderPrepareCloseoutByGuid",
+				// No REST endpoint exists for UPMate closeout; only the MCP tool does.
+				MCPOnly: true,
 				Args: []ArgDef{
 					{Name: "workorderGuid", Description: "Workorder GUID", Required: true, Type: "uuid"},
 					{Name: "runGuid", Description: "UPMate operations run GUID", Required: true, Type: "uuid"},
@@ -113,6 +115,7 @@ func init() {
 				Name:        "closeout-complete",
 				Description: "Complete an evidence-bound closeout after authorized sign-off",
 				ToolName:    "UteamupWorkorderCompleteCloseoutByGuid",
+				MCPOnly:     true,
 				Args: []ArgDef{
 					{Name: "workorderGuid", Description: "Workorder GUID", Required: true, Type: "uuid"},
 					{Name: "runGuid", Description: "UPMate operations run GUID", Required: true, Type: "uuid"},
@@ -169,13 +172,15 @@ func init() {
 				Name:        "quick-close",
 				Description: "Create and immediately close a work order from a Quick Close template in a single action. Subject to the MCP/CLI rate-limit tier (5/min, 50/day).",
 				ToolName:    "UteamupWorkorderQuickClose",
+				HTTPMethod:  "POST",
+				RESTPath:    "quick-close",
 				Flags: []FlagDef{
-					{Name: "template", Description: "External GUID of the Quick Close template (required)", Required: true, Type: "string"},
-					{Name: "asset", Description: "External GUID of the asset the work was performed on (required)", Required: true, Type: "string"},
-					{Name: "note", Description: "Resolution note — what was done (3–4000 chars, required)", Required: true, Type: "string"},
-					{Name: "idempotency-key", Description: "Client-generated GUID used to deduplicate retries. Optional — if omitted the CLI generates one per invocation.", Type: "string"},
-					{Name: "industry-code", Description: "Optional external GUID of the industry/coding-catalog entry (informational)", Type: "string"},
-					{Name: "performed-at", Description: "Optional UTC timestamp of when the work was performed (ISO 8601). Must be within the last 30 days and not in the future.", Type: "string"},
+					{Name: "template", BodyName: "templateGuid", Description: "External GUID of the Quick Close template (required)", Required: true, Type: "string"},
+					{Name: "asset", BodyName: "assetGuid", Description: "External GUID of the asset the work was performed on (required)", Required: true, Type: "string"},
+					{Name: "note", BodyName: "resolutionNote", Description: "Resolution note — what was done (3–4000 chars, required)", Required: true, Type: "string"},
+					{Name: "idempotency-key", HeaderName: "Idempotency-Key", GenerateGUIDIfEmpty: true, Description: "GUID that deduplicates retries. Optional — if omitted the CLI generates one and prints it; pass that value again to retry safely.", Type: "string"},
+					{Name: "industry-code", BodyName: "industryCodeGuid", Description: "Optional external GUID of the industry/coding-catalog entry (informational)", Type: "string"},
+					{Name: "performed-at", BodyName: "performedAt", Description: "Optional UTC timestamp of when the work was performed (ISO 8601). Must be within the last 30 days and not in the future.", Type: "string"},
 				},
 			},
 		},

@@ -73,11 +73,12 @@ func init() {
 				},
 			},
 			{
-				Name:        "draft-create",
-				Description: "Create one explicit policy draft from a complete schema-v2 request",
-				ToolName:    "UteamupQualityPolicyDraftCreate",
-				HTTPMethod:  "POST",
-				Flags:       qualityAuditCreateMutationFlags("quality-policy"),
+				Name:              "draft-create",
+				Description:       "Create one explicit policy draft from a complete schema-v2 request",
+				ToolName:          "UteamupQualityPolicyDraftCreate",
+				UseDomainBasePath: true,
+				HTTPMethod:        "POST",
+				Flags:             qualityAuditCreateMutationFlags("quality-policy"),
 			},
 			{
 				Name:        "draft-update",

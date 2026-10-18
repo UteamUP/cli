@@ -21,16 +21,18 @@ func init() {
 		APIPath: "/api/userpreferences",
 		Actions: []Action{
 			{
-				Name:        "get-preferences",
-				Description: "Get the signed-in user's UI preferences (Bug & Feature widget, Feature Preview widget, show restore banner)",
-				ToolName:    "UteamupUserPreferencesGet",
-				HTTPMethod:  "GET",
+				Name:              "get-preferences",
+				Description:       "Get the signed-in user's UI preferences (Bug & Feature widget, Feature Preview widget, show restore banner)",
+				ToolName:          "UteamupUserPreferencesGet",
+				UseDomainBasePath: true,
+				HTTPMethod:        "GET",
 			},
 			{
-				Name:        "set-preferences",
-				Description: "Partially update the signed-in user's UI preferences (omit flags to leave them unchanged)",
-				ToolName:    "UteamupUserPreferencesSet",
-				HTTPMethod:  "PUT",
+				Name:              "set-preferences",
+				Description:       "Partially update the signed-in user's UI preferences (omit flags to leave them unchanged)",
+				ToolName:          "UteamupUserPreferencesSet",
+				UseDomainBasePath: true,
+				HTTPMethod:        "PUT",
 				Flags: []FlagDef{
 					{Name: "enable-bug-and-feature-widget", Description: "Enable/disable the Bug & Feature capture widget", Type: "bool"},
 					{Name: "enable-feature-preview-widget", Description: "Enable/disable the Feature Preview widget (bounded by tenant plan cap)", Type: "bool"},

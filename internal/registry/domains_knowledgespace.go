@@ -33,10 +33,13 @@ func init() {
 			{Name: "delete", Description: "Delete a space by GUID", ToolName: "UteamupKnowledgeSpaceDelete",
 				Args: []ArgDef{{Name: "spaceGuid", Description: "Knowledge space GUID", Required: true, Type: "string"}}},
 			{Name: "usage", Description: "Report usage (space/page/sub-page counts vs plan caps) for a space by GUID", ToolName: "UteamupKnowledgeSpaceUsage",
+				HTTPMethod: "GET", RESTPath: "by-guid/{spaceGuid}/usage",
 				Args: []ArgDef{{Name: "spaceGuid", Description: "Knowledge space GUID", Required: true, Type: "string"}}},
 			{Name: "list-members", Description: "List a space's members by GUID", ToolName: "UteamupKnowledgeSpaceListMembers",
+				HTTPMethod: "GET", RESTPath: "by-guid/{spaceGuid}/members",
 				Args: []ArgDef{{Name: "spaceGuid", Description: "Knowledge space GUID", Required: true, Type: "string"}}},
 			{Name: "add-member", Description: "Add a member to a space by GUID", ToolName: "UteamupKnowledgeSpaceAddMember",
+				HTTPMethod: "POST", RESTPath: "by-guid/{spaceGuid}/members",
 				Args: []ArgDef{{Name: "spaceGuid", Description: "Knowledge space GUID", Required: true, Type: "string"}},
 				Flags: []FlagDef{
 					{Name: "user-guid", BodyName: "userGuid", Description: "User GUID to add", Required: true, Type: "string"},

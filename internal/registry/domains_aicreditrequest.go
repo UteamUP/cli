@@ -20,10 +20,11 @@ func init() {
 		APIPath:     "/api/aicreditrequest",
 		Actions: []Action{
 			{
-				Name:        "submit",
-				Description: "Submit a custom AI-credit request for the current tenant (tenant owner).",
-				ToolName:    "UteamupAiCreditRequestSubmit",
-				HTTPMethod:  "POST",
+				Name:              "submit",
+				Description:       "Submit a custom AI-credit request for the current tenant (tenant owner).",
+				ToolName:          "UteamupAiCreditRequestSubmit",
+				UseDomainBasePath: true,
+				HTTPMethod:        "POST",
 				Flags: []FlagDef{
 					{Name: "requested-monthly-credits", BodyName: "requestedMonthlyCredits", Description: "Credits wanted per month (required)", Required: true, Type: "int"},
 					{Name: "billing-cycle", BodyName: "billingCycle", Description: "Billing cycle: monthly or annual (default annual)", Type: "string"},

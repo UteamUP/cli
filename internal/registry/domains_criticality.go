@@ -9,10 +9,11 @@ func init() {
 		APIPath: "/api/assetcriticalityassessment",
 		Actions: []Action{
 			{
-				Name:        "assess",
-				Description: "Create a criticality assessment for an asset",
-				ToolName:    "UteamupCriticalityAssess",
-				HTTPMethod:  "POST",
+				Name:              "assess",
+				Description:       "Create a criticality assessment for an asset",
+				ToolName:          "UteamupCriticalityAssess",
+				UseDomainBasePath: true,
+				HTTPMethod:        "POST",
 				Flags: []FlagDef{
 					{Name: "asset-guid", Description: "Public asset GUID", Required: true, Type: "string"},
 					{Name: "consequence-score", Description: "Consequence score (1-5); the highest breakdown dimension replaces it", Required: true, Type: "int"},

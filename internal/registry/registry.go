@@ -106,6 +106,9 @@ type FlagDef struct {
 	// StrongETag accepts the opaque token returned by an API response and sends
 	// it as one validated, quoted strong ETag header value.
 	StrongETag bool
+	// GenerateGUIDIfEmpty sends a fresh GUID in HeaderName when the flag is not given,
+	// and prints it so the caller can pass the same value again to retry safely.
+	GenerateGUIDIfEmpty bool
 	// AllowedValues constrains a string flag to exact, stable values. It is
 	// required for a flag that fills a `{name}` placeholder in RESTPath — the
 	// expansion does not escape, so an unconstrained flag there would let a
@@ -707,6 +710,15 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 					headers[flag.HeaderName] = dv
 					headerValue = dv
 				}
+			}
+			if headerValue == "" && flag.GenerateGUIDIfEmpty {
+				generated, err := newRequestGUID()
+				if err != nil {
+					return fmt.Errorf("generate --%s: %w", flag.Name, err)
+				}
+				headers[flag.HeaderName] = generated
+				headerValue = generated
+				fmt.Fprintf(cmd.ErrOrStderr(), "Using generated --%s %s; pass it again to retry this request safely.\n", flag.Name, generated)
 			}
 			if flag.MirrorHeaderInBody && headerValue != "" {
 				fieldName := flag.BodyName

@@ -9,10 +9,11 @@ func init() {
 		APIPath: "/api/assetconditionassessment",
 		Actions: []Action{
 			{
-				Name:        "assess",
-				Description: "Create a condition assessment for an asset",
-				ToolName:    "UteamupConditionAssess",
-				HTTPMethod:  "POST",
+				Name:              "assess",
+				Description:       "Create a condition assessment for an asset",
+				ToolName:          "UteamupConditionAssess",
+				UseDomainBasePath: true,
+				HTTPMethod:        "POST",
 				Flags: []FlagDef{
 					{Name: "asset-guid", Description: "Public asset GUID", Required: true, Type: "string"},
 					{Name: "overall-grade", Description: "Overall condition grade", Required: true, Type: "int"},
