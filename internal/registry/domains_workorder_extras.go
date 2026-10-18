@@ -55,6 +55,7 @@ func init() {
 				{Name: "estimated-cost", BodyName: "estimatedCost", Description: "Optional non-negative estimated cost", Type: "float"},
 				{Name: "start-date-utc", BodyName: "startDateUtc", Description: "Optional ISO-8601 UTC start", Type: "string"},
 				{Name: "due-date-utc", BodyName: "dueDateUtc", Description: "Optional ISO-8601 UTC due time", Type: "string"},
+				{Name: "create-prerequisites", BodyName: "createPrerequisites", Description: "Also create and link the template's prerequisite workorders", Type: "bool"},
 				{Name: "idempotency-key", HeaderName: "Idempotency-Key", Description: "Stable retry key for this create", Type: "string"},
 			},
 		},
