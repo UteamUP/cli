@@ -120,6 +120,6 @@ func init() {
 			},
 		},
 	})
-	Register(&Domain{Name: "skill", Aliases: []string{"skills"}, Description: "Manage skills", Actions: crudActions("Skill")})
+	Register(&Domain{Name: "skill", Aliases: []string{"skills"}, Description: "Manage skills", Actions: append(crudActions("Skill"), personalSkillActions()...)})
 	Register(&Domain{Name: "team", Aliases: []string{"teams"}, Description: "Manage teams by public GUID", APIPath: "/api/team", Actions: teamActions()})
 }
