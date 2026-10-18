@@ -113,6 +113,34 @@ func TestAssetListWithoutFilterSendsNoNameFilter(t *testing.T) {
 	}
 }
 
+// These read actions once had no RESTPath and fell through to GET /api/asset, so they
+// silently returned the first page of the asset list instead of the asset asked for.
+func TestAssetGuidReadsRouteToTheirOwnEndpoints(t *testing.T) {
+	const guid = "9825f027-1b40-43fb-b224-1983849be941"
+	cases := []struct {
+		action string
+		path   string
+	}{
+		{"get-by-guid", "/api/asset/by-guid/" + guid},
+		{"get-assigned-stock", "/api/asset/by-guid/" + guid + "/stock"},
+		{"get-documents-aggregated", "/api/asset/by-guid/" + guid + "/documents/aggregated"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.action, func(t *testing.T) {
+			request := runAssetCommand(t, tc.action, guid)
+			if request.Method != http.MethodGet {
+				t.Errorf("method = %s, want GET", request.Method)
+			}
+			if request.URL.Path != tc.path {
+				t.Errorf("path = %q, want %q", request.URL.Path, tc.path)
+			}
+			if request.URL.RawQuery != "" {
+				t.Errorf("the GUID must be in the path, not the query: %q", request.URL.RawQuery)
+			}
+		})
+	}
+}
+
 func findAssetDomain(t *testing.T) *Domain {
 	t.Helper()
 	for _, dom := range DefaultRegistry.Domains() {

@@ -39,6 +39,8 @@ func init() {
 				Name:        "get-by-guid",
 				Description: "Get asset details by stable ExternalGuid (URL-safe, survives migrations)",
 				ToolName:    "UteamupAssetGetByGuid",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-guid/{guid}",
 				Args:        []ArgDef{{Name: "guid", Description: "Asset ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
 			},
 			{
@@ -66,12 +68,16 @@ func init() {
 				Name:        "get-assigned-stock",
 				Description: "Get parts/tools/chemicals assigned to an asset, with the stock locations each item sits in (quantity + low-stock state)",
 				ToolName:    "UteamupAssetGetAssignedStock",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-guid/{assetGuid}/stock",
 				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
 			},
 			{
 				Name:        "get-documents-aggregated",
 				Description: "Get ALL documents for an asset grouped by source — the asset's own documents plus its assigned parts', tools', chemicals', and industry code's documents (each tagged with sourceType/sourceGuid/sourceName)",
 				ToolName:    "UteamupAssetGetAggregatedDocuments",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-guid/{assetGuid}/documents/aggregated",
 				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
 			},
 			{
