@@ -100,7 +100,7 @@ func init() {
 			{
 				// Unlike update (a full replace), patch sends only the flags you pass.
 				Name:        "patch",
-				Description: "Change only the fields you pass on an asset by public GUID. An empty string clears a text field; 00000000-0000-0000-0000-000000000000 clears a category, location or floor.",
+				Description: "Change only the fields you pass on an asset by public GUID. An empty string clears a text field; 00000000-0000-0000-0000-000000000000 clears a category, location, floor or manufacturer.",
 				ToolName:    "UteamupAssetPatch",
 				HTTPMethod:  "PATCH",
 				RESTPath:    "by-guid/{assetGuid}",
@@ -113,6 +113,7 @@ func init() {
 					{Name: "category-guid", Description: "Category GUID (the empty GUID clears it)", Type: "uuid"},
 					{Name: "location-guid", Description: "Location GUID (the empty GUID clears it; without --location-floor-guid the floor is cleared)", Type: "uuid"},
 					{Name: "location-floor-guid", Description: "Floor or room GUID within the location (the empty GUID clears it)", Type: "uuid"},
+					{Name: "manufacturer-vendor-guid", Description: "GUID of the vendor that made the asset, not who sells it (the empty GUID clears it)", Type: "uuid"},
 					// No Default: a bool flag with a default is always sent, which would flip the asset.
 					{Name: "is-active", Description: "Set active (true) or inactive (false)", Type: "bool"},
 					{Name: "tool-guids", Description: "Complete set of linked tool GUIDs, repeatable or comma-separated (--tool-guids= removes every tool)", Type: "stringSlice"},

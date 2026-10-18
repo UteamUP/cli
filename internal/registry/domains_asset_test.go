@@ -240,18 +240,19 @@ func TestAssetPatchAction(t *testing.T) {
 		typ  string
 		body string
 	}{
-		"name":                    {"string", "name"},
-		"serial-number":           {"string", "serialNumber"},
-		"reference-number":        {"string", "referenceNumber"},
-		"model-number":            {"string", "modelNumber"},
-		"category-guid":           {"uuid", "categoryGuid"},
-		"location-guid":           {"uuid", "locationGuid"},
-		"location-floor-guid":     {"uuid", "locationFloorGuid"},
-		"is-active":               {"bool", "isActive"},
-		"tool-guids":              {"stringSlice", "toolGuids"},
-		"chemical-guids":          {"stringSlice", "chemicalGuids"},
-		"asset-parts-file":        {"string", "assetParts"},
-		"expected-updated-at-utc": {"string", "expectedUpdatedAtUtc"},
+		"name":                     {"string", "name"},
+		"serial-number":            {"string", "serialNumber"},
+		"reference-number":         {"string", "referenceNumber"},
+		"model-number":             {"string", "modelNumber"},
+		"category-guid":            {"uuid", "categoryGuid"},
+		"location-guid":            {"uuid", "locationGuid"},
+		"location-floor-guid":      {"uuid", "locationFloorGuid"},
+		"manufacturer-vendor-guid": {"uuid", "manufacturerVendorGuid"},
+		"is-active":                {"bool", "isActive"},
+		"tool-guids":               {"stringSlice", "toolGuids"},
+		"chemical-guids":           {"stringSlice", "chemicalGuids"},
+		"asset-parts-file":         {"string", "assetParts"},
+		"expected-updated-at-utc":  {"string", "expectedUpdatedAtUtc"},
 	}
 	if len(action.Flags) != len(want) {
 		t.Errorf("patch has %d flags, want %d", len(action.Flags), len(want))
