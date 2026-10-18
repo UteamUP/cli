@@ -5,7 +5,7 @@ package registry
 func listTemplateActions(toolPrefix string) []Action {
 	modelFile := jsonFlag()
 	modelFile.Required = true
-	modelFile.Description = "JSON template model: name, items/tasks, and workorderMaintenanceTypes (empty = all types); checklist items retain externalGuid and may have a condition referencing an earlier step"
+	modelFile.Description = "JSON template model: name, items/tasks, and workorderMaintenanceTypes (empty = all types); checklist items retain externalGuid and may have a condition, or several paths in conditions, each referencing an earlier step"
 	return []Action{
 		{Name: "list", Description: "List templates", ToolName: "Uteamup" + toolPrefix + "List", HTTPMethod: "GET", Flags: paginationFlags()},
 		{Name: "get", Description: "Get a template by public GUID", ToolName: "Uteamup" + toolPrefix + "Get", HTTPMethod: "GET", RESTPath: "{externalGuid}", Args: externalGUIDArg()},
