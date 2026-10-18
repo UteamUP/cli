@@ -123,3 +123,46 @@ func TestContractAndWarrantyDomainsUsePluralControllerPaths(t *testing.T) {
 		}
 	}
 }
+
+// The contract get, update and delete commands address a contract by public GUID through the
+// by-guid routes, never the obsolete integer routes.
+func TestContractDomainAddressesRecordsByPublicGuid(t *testing.T) {
+	var domain *Domain
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name == "contract" {
+			domain = d
+			break
+		}
+	}
+	if domain == nil {
+		t.Fatal("expected the contract domain to be registered")
+	}
+
+	want := map[string]struct{ method, tool string }{
+		"get":    {"GET", "UteamupContractGetByGuid"},
+		"update": {"PUT", "UteamupContractUpdateByGuid"},
+		"delete": {"DELETE", "UteamupContractDeleteByGuid"},
+	}
+	for _, action := range domain.Actions {
+		for _, arg := range action.Args {
+			if arg.Name == "id" || arg.Type == "int" {
+				t.Errorf("%s exposes legacy integer argument %+v", action.Name, arg)
+			}
+		}
+		expected, ok := want[action.Name]
+		if !ok {
+			continue
+		}
+		delete(want, action.Name)
+		if action.HTTPMethod != expected.method || action.RESTPath != "by-guid/{contractGuid}" || action.ToolName != expected.tool {
+			t.Errorf("%s = %s %s (%s), want %s by-guid/{contractGuid} (%s)",
+				action.Name, action.HTTPMethod, action.RESTPath, action.ToolName, expected.method, expected.tool)
+		}
+		if len(action.Args) != 1 || action.Args[0].Name != "contractGuid" || !action.Args[0].Required {
+			t.Errorf("%s args = %+v, want one required contractGuid", action.Name, action.Args)
+		}
+	}
+	for name := range want {
+		t.Errorf("contract domain is missing the %s action", name)
+	}
+}

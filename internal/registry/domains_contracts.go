@@ -9,17 +9,46 @@ func init() {
 		Aliases:     []string{"contracts"},
 		APIPath:     "/api/contracts",
 		Description: "Manage contracts",
-		Actions: append(crudActions("Contract"), Action{
-			Name:        "list-for-entity",
-			Description: "List contracts linked to an inventory entity public GUID",
-			ToolName:    "UteamupContractListForEntity",
-			RESTPath:    "{entityType}/by-guid/{entityGuid}",
-			HTTPMethod:  "GET",
-			Args: []ArgDef{
-				{Name: "entityType", Description: "asset, tool, part, or chemical", Required: true, Type: "string", AllowedValues: []string{"asset", "tool", "part", "chemical"}},
-				{Name: "entityGuid", Description: "Inventory entity public GUID", Required: true, Type: "uuid"},
+		Actions: []Action{
+			{Name: "list", Description: "List records", ToolName: "UteamupContractList", Flags: paginationFlags()},
+			{
+				Name:        "get",
+				Description: "Get a contract by public GUID, with its people, price and billing period",
+				ToolName:    "UteamupContractGetByGuid",
+				HTTPMethod:  "GET",
+				RESTPath:    "by-guid/{contractGuid}",
+				Args:        []ArgDef{{Name: "contractGuid", Description: "Public contract GUID", Required: true, Type: "string"}},
 			},
-		}),
+			{Name: "create", Description: "Create a record", ToolName: "UteamupContractCreate", Flags: []FlagDef{jsonFlag()}},
+			{
+				Name:        "update",
+				Description: "Update a contract by public GUID (every field is replaced)",
+				ToolName:    "UteamupContractUpdateByGuid",
+				HTTPMethod:  "PUT",
+				RESTPath:    "by-guid/{contractGuid}",
+				Args:        []ArgDef{{Name: "contractGuid", Description: "Public contract GUID", Required: true, Type: "string"}},
+				Flags:       []FlagDef{jsonFlag()},
+			},
+			{
+				Name:        "delete",
+				Description: "Delete a contract by public GUID",
+				ToolName:    "UteamupContractDeleteByGuid",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "by-guid/{contractGuid}",
+				Args:        []ArgDef{{Name: "contractGuid", Description: "Public contract GUID", Required: true, Type: "string"}},
+			},
+			{
+				Name:        "list-for-entity",
+				Description: "List contracts linked to an inventory entity public GUID",
+				ToolName:    "UteamupContractListForEntity",
+				RESTPath:    "{entityType}/by-guid/{entityGuid}",
+				HTTPMethod:  "GET",
+				Args: []ArgDef{
+					{Name: "entityType", Description: "asset, tool, part, or chemical", Required: true, Type: "string", AllowedValues: []string{"asset", "tool", "part", "chemical"}},
+					{Name: "entityGuid", Description: "Inventory entity public GUID", Required: true, Type: "uuid"},
+				},
+			},
+		},
 	})
 	Register(&Domain{
 		Name:        "contractor",
