@@ -7,6 +7,7 @@ func TestProjectGovernanceDomainsAreGuidFirst(t *testing.T) {
 		"project-field-context",
 		"project-member",
 		"project-dependency",
+		"project-prerequisite",
 		"project-activity",
 		"project-comment",
 		"project-baseline",
@@ -59,6 +60,9 @@ func TestProjectGovernanceMutationRoutes(t *testing.T) {
 		{"project-member", "add", "POST", "{projectGuid}/members", "UteamupProjectMembersAdd"},
 		{"project-member", "update", "PUT", "{projectGuid}/members/{memberGuid}", "UteamupProjectMembersUpdate"},
 		{"project-dependency", "remove", "DELETE", "{projectGuid}/dependencies/{dependencyGuid}", "UteamupProjectDependenciesRemove"},
+		{"project-prerequisite", "list", "", "{projectGuid}/prerequisites", "UteamupProjectPrerequisitesList"},
+		{"project-prerequisite", "add", "POST", "{projectGuid}/prerequisites", "UteamupProjectPrerequisitesAdd"},
+		{"project-prerequisite", "remove", "DELETE", "{projectGuid}/prerequisites/{dependencyGuid}", "UteamupProjectPrerequisitesRemove"},
 		{"project-comment", "update", "PUT", "{projectGuid}/comments/{commentGuid}", "UteamupProjectCommentsUpdate"},
 		{"project-baseline", "capture", "POST", "{projectGuid}/baselines", "UteamupProjectBaselinesCapture"},
 		{"project-baseline", "scope", "", "{projectGuid}/baselines/{baselineGuid}/scope", "UteamupProjectBaselineScopeGet"},
@@ -91,5 +95,17 @@ func TestProjectChangeDecisionsAcceptVersionedPayload(t *testing.T) {
 		if !found {
 			t.Errorf("%s must accept requestGuid, expectedUpdatedAt and the inspected review fingerprint", name)
 		}
+	}
+}
+
+func TestProjectPrerequisiteAddSendsOnlyThePrerequisiteGuid(t *testing.T) {
+	action := findDomainAction(t, "project-prerequisite", "add")
+	if len(action.Flags) != 1 {
+		t.Fatalf("add flags = %d, want 1", len(action.Flags))
+	}
+	flag := action.Flags[0]
+	if flag.Name != "prerequisite-project-guid" || flag.BodyName != "prerequisiteProjectGuid" ||
+		flag.Type != "non-empty-uuid" || !flag.Required {
+		t.Fatalf("unexpected add flag: %+v", flag)
 	}
 }

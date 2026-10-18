@@ -54,6 +54,21 @@ func init() {
 	})
 
 	Register(&Domain{
+		Name:        "project-prerequisite",
+		Aliases:     []string{"project-prerequisites", "project-prereq"},
+		Description: "Link prerequisite projects; a project cannot start until its prerequisites are completed",
+		APIPath:     "/api/projects",
+		Actions: []Action{
+			{Name: "list", Description: "List the projects one project waits on and the projects it blocks", ToolName: "UteamupProjectPrerequisitesList", RESTPath: "{projectGuid}/prerequisites", Args: projectGUIDArgument},
+			{Name: "add", Description: "Link a prerequisite project (rejects self-links, duplicates and loops)", ToolName: "UteamupProjectPrerequisitesAdd", HTTPMethod: "POST", RESTPath: "{projectGuid}/prerequisites", Args: projectGUIDArgument,
+				Flags: []FlagDef{
+					{Name: "prerequisite-project-guid", BodyName: "prerequisiteProjectGuid", Description: "GUID of the project to wait on", Type: "non-empty-uuid", Required: true},
+				}},
+			{Name: "remove", Description: "Remove a prerequisite link from either project it connects", ToolName: "UteamupProjectPrerequisitesRemove", HTTPMethod: "DELETE", RESTPath: "{projectGuid}/prerequisites/{dependencyGuid}", Args: projectResourceArguments("dependencyGuid", "Prerequisite link GUID")},
+		},
+	})
+
+	Register(&Domain{
 		Name:        "project-activity",
 		Description: "Read the project activity trail",
 		APIPath:     "/api/projects",
