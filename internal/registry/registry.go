@@ -169,8 +169,11 @@ type Action struct {
 	// delete convention — e.g. `comments-add` (POST), `attachments-delete`
 	// (DELETE). Empty = derived from Action.Name via the HTTPMethod map.
 	HTTPMethod string
-	Args       []ArgDef
-	Flags      []FlagDef
+	// FormBody sends the request body as multipart/form-data fields instead of JSON, for
+	// endpoints that bind a [FromForm] model; a JSON body there binds to nothing.
+	FormBody bool
+	Args     []ArgDef
+	Flags    []FlagDef
 	// RejectExtraArgs opts an action into rejecting undeclared positional input
 	// before creating a client. Existing actions retain their current behavior.
 	RejectExtraArgs bool
@@ -853,6 +856,8 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		}
 		if uploadPath != "" {
 			result, err = apiClient.CallRESTUpload(ctx, httpMethod, restPath, uploadField, uploadPath, toolArgs, headers, action.Name)
+		} else if action.FormBody {
+			result, err = apiClient.CallRESTForm(ctx, httpMethod, restPath, toolArgs, headers)
 		} else {
 			result, err = apiClient.CallREST(ctx, httpMethod, restPath, toolArgs, headers, action.Name)
 		}

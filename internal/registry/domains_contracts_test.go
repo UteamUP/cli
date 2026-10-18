@@ -166,3 +166,21 @@ func TestContractDomainAddressesRecordsByPublicGuid(t *testing.T) {
 		t.Errorf("contract domain is missing the %s action", name)
 	}
 }
+
+// ContractsController binds [FromForm] models: a JSON body binds nothing and the API answers
+// "Title is required", so create and update must send form fields.
+func TestContractCreateAndUpdateSendFormData(t *testing.T) {
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name != "contract" {
+			continue
+		}
+		for _, action := range d.Actions {
+			wantForm := action.Name == "create" || action.Name == "update"
+			if action.FormBody != wantForm {
+				t.Errorf("%s FormBody = %v, want %v", action.Name, action.FormBody, wantForm)
+			}
+		}
+		return
+	}
+	t.Fatal("expected the contract domain to be registered")
+}

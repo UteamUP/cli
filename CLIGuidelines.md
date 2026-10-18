@@ -431,6 +431,12 @@ GUID-first domains (every new domain, per `Guidelines/ApiGuidelines.md`)
 should declare their positional arg as `externalGuid`; legacy integer-id domains
 can keep `id`. `buildRESTPath` accepts either.
 
+Request bodies are JSON. When the backend action binds a `[FromForm]` model (contract
+create and update, for example), set `FormBody: true` on the action: the CLI then sends
+multipart/form-data with PascalCase keys and repeated keys for lists, as the web app does.
+A JSON body sent to a `[FromForm]` endpoint binds nothing, so the API answers with
+validation errors such as "Title is required".
+
 ### CSRF header on mutating calls
 
 `CallREST` sets `X-Requested-With: XMLHttpRequest` on every outgoing request.

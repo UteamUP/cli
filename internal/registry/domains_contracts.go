@@ -19,13 +19,15 @@ func init() {
 				RESTPath:    "by-guid/{contractGuid}",
 				Args:        []ArgDef{{Name: "contractGuid", Description: "Public contract GUID", Required: true, Type: "string"}},
 			},
-			{Name: "create", Description: "Create a record", ToolName: "UteamupContractCreate", Flags: []FlagDef{jsonFlag()}},
+			// ContractsController binds [FromForm] models, so create and update send form fields.
+			{Name: "create", Description: "Create a contract", ToolName: "UteamupContractCreate", FormBody: true, Flags: []FlagDef{jsonFlag()}},
 			{
 				Name:        "update",
 				Description: "Update a contract by public GUID (every field is replaced)",
 				ToolName:    "UteamupContractUpdateByGuid",
 				HTTPMethod:  "PUT",
 				RESTPath:    "by-guid/{contractGuid}",
+				FormBody:    true,
 				Args:        []ArgDef{{Name: "contractGuid", Description: "Public contract GUID", Required: true, Type: "string"}},
 				Flags:       []FlagDef{jsonFlag()},
 			},

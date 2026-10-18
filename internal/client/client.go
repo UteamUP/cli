@@ -14,6 +14,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -305,9 +307,117 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 		}
 	}
 
+	return c.sendREST(ctx, method, path, fullURL, bodyBytes, "application/json", token, extraHeaders)
+}
+
+// CallRESTForm sends params as multipart/form-data fields for endpoints that bind a
+// [FromForm] model (for example contract create and update). Keys are PascalCased and
+// lists become repeated keys, matching the web app's FormData. Auth, tenant, CSRF and
+// retry behaviour are the same as CallREST.
+func (c *APIClient) CallRESTForm(ctx context.Context, method, path string, params map[string]any, extraHeaders map[string]string) (json.RawMessage, error) {
+	token, err := auth.LoadTokenForOrigin(c.baseURL, c.profile)
+	if err != nil {
+		return nil, clierrors.NewAuthError("loading token", err)
+	}
+	if token == nil || !token.IsValid() {
+		return nil, &clierrors.NotAuthenticatedError{}
+	}
+
+	bodyBytes, contentType, err := EncodeFormFields(params)
+	if err != nil {
+		return nil, err
+	}
+	return c.sendREST(ctx, method, path, c.baseURL+path, bodyBytes, contentType, token, extraHeaders)
+}
+
+// EncodeFormFields builds a multipart/form-data body from request params. Nested objects
+// are rejected rather than dropped, because a [FromForm] binder cannot read them and
+// silently losing a field would save the wrong record.
+func EncodeFormFields(params map[string]any) ([]byte, string, error) {
+	keys := make([]string, 0, len(params))
+	for key := range params {
+		if key != "id" {
+			keys = append(keys, key)
+		}
+	}
+	sort.Strings(keys)
+
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+	for _, key := range keys {
+		name := pascalCase(key)
+		values, err := formValues(key, params[key])
+		if err != nil {
+			return nil, "", err
+		}
+		for _, value := range values {
+			if err := writer.WriteField(name, value); err != nil {
+				return nil, "", fmt.Errorf("building form body: %w", err)
+			}
+		}
+	}
+	if err := writer.Close(); err != nil {
+		return nil, "", fmt.Errorf("building form body: %w", err)
+	}
+	return buf.Bytes(), writer.FormDataContentType(), nil
+}
+
+func formValues(key string, value any) ([]string, error) {
+	if list, ok := value.([]any); ok {
+		values := make([]string, 0, len(list))
+		for _, item := range list {
+			if item == nil {
+				continue
+			}
+			text, err := formScalar(key, item)
+			if err != nil {
+				return nil, err
+			}
+			values = append(values, text)
+		}
+		return values, nil
+	}
+	if value == nil {
+		return nil, nil
+	}
+	text, err := formScalar(key, value)
+	if err != nil {
+		return nil, err
+	}
+	return []string{text}, nil
+}
+
+func formScalar(key string, value any) (string, error) {
+	switch v := value.(type) {
+	case string:
+		return v, nil
+	case bool:
+		return strconv.FormatBool(v), nil
+	case json.Number:
+		return v.String(), nil
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64), nil
+	case int:
+		return strconv.Itoa(v), nil
+	case int64:
+		return strconv.FormatInt(v, 10), nil
+	default:
+		return "", fmt.Errorf("field %q cannot be sent as form data: only text, numbers, booleans and lists of them are supported", key)
+	}
+}
+
+func pascalCase(key string) string {
+	if key == "" {
+		return key
+	}
+	return strings.ToUpper(key[:1]) + key[1:]
+}
+
+// sendREST performs one REST request with retries, auth, tenant and CSRF headers.
+func (c *APIClient) sendREST(ctx context.Context, method, path, fullURL string, bodyBytes []byte, contentType string, token *auth.TokenData, extraHeaders map[string]string) (json.RawMessage, error) {
 	var result json.RawMessage
 
-	err = RetryWithBackoff(ctx, c.logger, fmt.Sprintf("REST %s %s", method, path), c.retryOptionsForRequest(method), func() error {
+	err := RetryWithBackoff(ctx, c.logger, fmt.Sprintf("REST %s %s", method, path), c.retryOptionsForRequest(method), func() error {
 		// Each attempt must start at byte zero. Reusing a consumed reader turns
 		// an otherwise idempotent retry into an empty or truncated request.
 		var bodyReader io.Reader
@@ -318,7 +428,7 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 		if err != nil {
 			return fmt.Errorf("creating request: %w", err)
 		}
-		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Content-Type", contentType)
 		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 		// CSRF guard on mutating endpoints requires a non-simple-header marker —
 		// the backend rejects any POST/PUT/PATCH/DELETE without
