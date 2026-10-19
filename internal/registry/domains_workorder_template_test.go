@@ -131,3 +131,45 @@ func TestWorkorderTemplateListFiltersByProjectGuid(t *testing.T) {
 		}
 	}
 }
+
+func TestWorkorderTemplateDomainHasScheduleListAndCreate(t *testing.T) {
+	d := findDomain("workorder-template")
+	if d == nil {
+		t.Fatal("expected workorder-template domain to be registered")
+	}
+
+	actions := map[string]*Action{}
+	for i := range d.Actions {
+		actions[d.Actions[i].Name] = &d.Actions[i]
+	}
+
+	list := actions["schedule-list"]
+	if list == nil {
+		t.Fatal("expected schedule-list action")
+	}
+	if list.ToolName != "UteamupWorkorderTemplateScheduleList" || list.HTTPMethod != "GET" || list.RESTPath != "{templateGuid}/schedules" {
+		t.Errorf("schedule-list wired to %s %s %s", list.ToolName, list.HTTPMethod, list.RESTPath)
+	}
+
+	create := actions["schedule-create"]
+	if create == nil {
+		t.Fatal("expected schedule-create action")
+	}
+	if create.ToolName != "UteamupWorkorderTemplateScheduleCreate" || create.HTTPMethod != "POST" || create.RESTPath != "schedules" {
+		t.Errorf("schedule-create wired to %s %s %s", create.ToolName, create.HTTPMethod, create.RESTPath)
+	}
+	required := map[string]bool{}
+	bodyNames := map[string]string{}
+	for _, f := range create.Flags {
+		required[f.Name] = f.Required
+		bodyNames[f.Name] = f.BodyName
+	}
+	for _, name := range []string{"template", "name", "start-date"} {
+		if !required[name] {
+			t.Errorf("schedule-create: --%s must be required", name)
+		}
+	}
+	if bodyNames["template"] != "workorderTemplateGuid" {
+		t.Errorf("schedule-create: --template must send workorderTemplateGuid, got %q", bodyNames["template"])
+	}
+}
