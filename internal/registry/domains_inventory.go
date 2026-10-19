@@ -360,7 +360,7 @@ func init() {
 			Action{
 				Name:        "location-create",
 				Description: "Create a stock location (store or warehouse) at an existing physical location",
-				ToolName:    "UteamupStockCreateLocation",
+				ToolName:    "UteamupStockLocationCreate",
 				HTTPMethod:  "POST",
 				RESTPath:    "locations",
 				Flags: []FlagDef{
@@ -373,7 +373,7 @@ func init() {
 			Action{
 				Name:        "location-update",
 				Description: "Update a stock location; only the flags given change",
-				ToolName:    "UteamupStockUpdateLocation",
+				ToolName:    "UteamupStockLocationUpdate",
 				HTTPMethod:  "PUT",
 				RESTPath:    "locations/{stockGuid}",
 				Flags: []FlagDef{
@@ -387,7 +387,7 @@ func init() {
 			Action{
 				Name:        "location-delete",
 				Description: "Delete an empty stock location; refused while it holds stock items or history",
-				ToolName:    "UteamupStockDeleteLocation",
+				ToolName:    "UteamupStockLocationDelete",
 				HTTPMethod:  "DELETE",
 				RESTPath:    "locations/{stockGuid}",
 				Flags: []FlagDef{

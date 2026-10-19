@@ -2126,9 +2126,9 @@ func TestStockLocationWriteActionsAreWired(t *testing.T) {
 		t.Fatal("stock domain missing")
 	}
 	want := map[string]struct{ tool, method, path string }{
-		"location-create": {"UteamupStockCreateLocation", "POST", "locations"},
-		"location-update": {"UteamupStockUpdateLocation", "PUT", "locations/{stockGuid}"},
-		"location-delete": {"UteamupStockDeleteLocation", "DELETE", "locations/{stockGuid}"},
+		"location-create": {"UteamupStockLocationCreate", "POST", "locations"},
+		"location-update": {"UteamupStockLocationUpdate", "PUT", "locations/{stockGuid}"},
+		"location-delete": {"UteamupStockLocationDelete", "DELETE", "locations/{stockGuid}"},
 	}
 	for name, w := range want {
 		var action *Action
