@@ -34,7 +34,7 @@ func init() {
 			{
 				Name:        "create",
 				Description: "Submit a new bug or feature request",
-				ToolName:    "UteamupBugsAndFeaturesCreate",
+				ToolName:    "UteamupBugReportCreate",
 				Flags: []FlagDef{
 					{Name: "type", Description: "Bug or Feature", Default: "Bug", Type: "string"},
 					{Name: "platform", Description: "Which product this is about (Frontend, Backend, Mobile, MacOsApp, WindowsApp, LinuxApp, Cli, Mcp)", Default: "Cli", Type: "string"},
@@ -150,7 +150,7 @@ func init() {
 			{
 				Name:        "conversation",
 				Description: "Read the reporter-facing conversation on a bug: the original report (title, description, status), the reporter-facing status timeline, and the comments shared with the reporter. Authorized to the report's submitter or any global admin.",
-				ToolName:    "UteamupBugsAndFeaturesConversation",
+				ToolName:    "UteamupBugReportGetConversation",
 				HTTPMethod:  "GET",
 				RESTPath:    "{bugExternalGuid}/conversation",
 				Args: []ArgDef{
@@ -160,7 +160,7 @@ func init() {
 			{
 				Name:        "mine",
 				Description: "List the bugs/features submitted by the current user (the caller's own reports), newest activity first. Slim reporter-safe projection — powers the 'My reports' page.",
-				ToolName:    "UteamupBugsAndFeaturesMine",
+				ToolName:    "UteamupBugReportListMine",
 				HTTPMethod:  "GET",
 				RESTPath:    "mine",
 				Args:        []ArgDef{},

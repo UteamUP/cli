@@ -306,7 +306,7 @@ func TestBugsAndFeaturesReporterConversation(t *testing.T) {
 
 // TestBugsAndFeaturesMine locks in the `mine` read action that powers the
 // reporter "My reports" page: GET against the static `mine` suffix, tool
-// UteamupBugsAndFeaturesMine, no positional args. Keeps the CLI in lockstep
+// UteamupBugReportListMine, no positional args. Keeps the CLI in lockstep
 // with the backend BugsAndFeaturesController `[HttpGet("mine")]` endpoint.
 func TestBugsAndFeaturesMine(t *testing.T) {
 	var domain *Domain
@@ -330,8 +330,8 @@ func TestBugsAndFeaturesMine(t *testing.T) {
 	if mineAction == nil {
 		t.Fatal("mine action not registered")
 	}
-	if mineAction.ToolName != "UteamupBugsAndFeaturesMine" {
-		t.Errorf("mine ToolName = %q, want UteamupBugsAndFeaturesMine", mineAction.ToolName)
+	if mineAction.ToolName != "UteamupBugReportListMine" {
+		t.Errorf("mine ToolName = %q, want UteamupBugReportListMine", mineAction.ToolName)
 	}
 	if mineAction.HTTPMethod != "GET" {
 		t.Errorf("mine HTTPMethod = %q, want GET", mineAction.HTTPMethod)
