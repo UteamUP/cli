@@ -9,8 +9,10 @@ func locationActions() []Action {
 	fields.Description = "Reviewed JSON; optional idempotencyKey and mutationOutcomeVersion=1 (plus exact expectedUpdatedAt for update) negotiate a minimal receipt. Retain original JSON unchanged after uncertain delivery"
 	confirmation := FlagDef{Name: "confirm", Description: "Confirm the reviewed location change", Type: "bool", Required: true, MustBeTrue: true, LocalOnly: true}
 	return append([]Action{
-		{Name: "list", Description: "List visible records", ToolName: "Uteamup" + domain + "List", Flags: paginationFlags()},
-		{Name: "get", Description: "Get by public GUID", ToolName: "Uteamup" + domain + "Get", RESTPath: "{locationGuid}", Args: identity},
+		{Name: "list", Description: "List visible records; --search matches part of the name, ignoring case", ToolName: "Uteamup" + domain + "List", Flags: append(paginationFlags(),
+			FlagDef{Name: "search", Description: "Case-insensitive part of the location name; a hyphen also matches an en or em dash", Type: "string", QueryName: "nameFilter"})},
+		{Name: "get", Description: "Get by public GUID", ToolName: "Uteamup" + domain + "GetByGuid", RESTPath: "{locationGuid}", Args: identity},
+		{Name: "node-tree", Description: "Read the floors, rooms and areas inside a location", ToolName: "UteamupLocationNodeTree", HTTPMethod: "GET", RESTPath: "{locationGuid}/nodes", Args: identity},
 		{Name: "create", Description: "Create from reviewed JSON", ToolName: "Uteamup" + domain + "Create", Flags: []FlagDef{fields, confirmation}},
 		{Name: "update", Description: "Update the reviewed public GUID", ToolName: "Uteamup" + domain + "Update", RESTPath: "{locationGuid}", Args: identity, Flags: []FlagDef{fields, confirmation}},
 		{Name: "delete", Description: "Delete the reviewed public GUID; domain association restrictions still apply", ToolName: "Uteamup" + domain + "Delete", RESTPath: "{locationGuid}", Args: identity, Flags: []FlagDef{confirmation,
