@@ -358,6 +358,43 @@ func init() {
 				},
 			},
 			Action{
+				Name:        "location-create",
+				Description: "Create a stock location (store or warehouse) at an existing physical location",
+				ToolName:    "UteamupStockCreateLocation",
+				HTTPMethod:  "POST",
+				RESTPath:    "locations",
+				Flags: []FlagDef{
+					{Name: "name", Description: "Stock location name (required)", Type: "string", Required: true},
+					{Name: "location-guid", Description: "Physical location GUID the store sits in (required)", Type: "string", Required: true},
+					{Name: "category-guid", Description: "Category GUID (required)", Type: "string", Required: true},
+					{Name: "description", Description: "Optional description", Type: "string"},
+				},
+			},
+			Action{
+				Name:        "location-update",
+				Description: "Update a stock location; only the flags given change",
+				ToolName:    "UteamupStockUpdateLocation",
+				HTTPMethod:  "PUT",
+				RESTPath:    "locations/{stockGuid}",
+				Flags: []FlagDef{
+					{Name: "stock-guid", Description: "Stock location GUID", Type: "string", Required: true},
+					{Name: "name", Description: "New name", Type: "string"},
+					{Name: "description", Description: "New description", Type: "string"},
+					{Name: "location-guid", Description: "Move to this physical location GUID", Type: "string"},
+					{Name: "category-guid", Description: "New category GUID", Type: "string"},
+				},
+			},
+			Action{
+				Name:        "location-delete",
+				Description: "Delete an empty stock location; refused while it holds stock items or history",
+				ToolName:    "UteamupStockDeleteLocation",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "locations/{stockGuid}",
+				Flags: []FlagDef{
+					{Name: "stock-guid", Description: "Stock location GUID", Type: "string", Required: true},
+				},
+			},
+			Action{
 				Name:        "bins",
 				Description: "List the bin hierarchy of a stock location",
 				ToolName:    "UteamupStockListBins",

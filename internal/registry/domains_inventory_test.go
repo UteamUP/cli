@@ -2119,3 +2119,34 @@ func TestStockTransferPreparationAndReviewedIntent(t *testing.T) {
 		t.Fatal("selected public GUID applies only to existing destinations")
 	}
 }
+
+func TestStockLocationWriteActionsAreWired(t *testing.T) {
+	d := findDomain("stock")
+	if d == nil {
+		t.Fatal("stock domain missing")
+	}
+	want := map[string]struct{ tool, method, path string }{
+		"location-create": {"UteamupStockCreateLocation", "POST", "locations"},
+		"location-update": {"UteamupStockUpdateLocation", "PUT", "locations/{stockGuid}"},
+		"location-delete": {"UteamupStockDeleteLocation", "DELETE", "locations/{stockGuid}"},
+	}
+	for name, w := range want {
+		var action *Action
+		for i := range d.Actions {
+			if d.Actions[i].Name == name {
+				action = &d.Actions[i]
+			}
+		}
+		if action == nil {
+			t.Fatalf("%s action missing", name)
+		}
+		if action.ToolName != w.tool || action.HTTPMethod != w.method || action.RESTPath != w.path {
+			t.Errorf("%s wired to %s %s %s", name, action.ToolName, action.HTTPMethod, action.RESTPath)
+		}
+	}
+	for _, f := range findAction(d, "location-create").Flags {
+		if (f.Name == "name" || f.Name == "location-guid" || f.Name == "category-guid") && !f.Required {
+			t.Errorf("location-create: --%s must be required", f.Name)
+		}
+	}
+}
