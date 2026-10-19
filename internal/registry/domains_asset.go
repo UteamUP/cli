@@ -57,6 +57,35 @@ func init() {
 				},
 			},
 			{
+				Name:        "purchase-get",
+				Description: "Purchase price and valuation inputs: cost, currency, purchase date, lifespan, depreciation method and residual value (needs AssetCost.View)",
+				ToolName:    "UteamupAssetPurchaseGet",
+				HTTPMethod:  "GET",
+				RESTPath:    "{assetGuid}/purchase",
+				Args: []ArgDef{
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset GUID", Type: "non-empty-uuid", Required: true},
+				},
+			},
+			{
+				// The REST PUT replaces the whole purchase record, so an omitted flag clears that field.
+				Name:        "purchase-update",
+				Description: "Replace an asset's purchase price and valuation inputs. Every field you omit is cleared, so pass them all (read them with purchase-get first). Needs Asset.Update and AssetCost.View.",
+				ToolName:    "UteamupAssetPurchaseUpdate",
+				HTTPMethod:  "PUT",
+				RESTPath:    "{assetGuid}/purchase",
+				Args: []ArgDef{
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset GUID", Type: "non-empty-uuid", Required: true},
+				},
+				Flags: []FlagDef{
+					{Name: "purchase-cost", Description: "What the asset cost to buy (0 to 1,000,000,000)", Type: "decimal"},
+					{Name: "purchase-currency", Description: "ISO 4217 currency of the purchase cost, e.g. EUR", Type: "string"},
+					{Name: "purchase-date", Description: "Date the asset was bought, e.g. 2025-03-01", Type: "string"},
+					{Name: "expected-lifespan-years", Description: "Expected lifespan in years (1 to 100)", Type: "int"},
+					{Name: "depreciation-method", Description: "None, StraightLine or DecliningBalance (StraightLine and DecliningBalance need cost, purchase date and lifespan)", Type: "string", AllowedValues: []string{"None", "StraightLine", "DecliningBalance"}},
+					{Name: "residual-value", Description: "Value at the end of its life; not more than the purchase cost", Type: "decimal"},
+				},
+			},
+			{
 				Name:        "duplicate",
 				Description: "Duplicate a coded asset — deep-copies it and assigns the next code instance (e.g. GE0101 → GE0102). Requires Asset.Create permission.",
 				ToolName:    "UteamupAssetDuplicate",
@@ -106,7 +135,7 @@ func init() {
 			{
 				// Unlike update (a full replace), patch sends only the flags you pass.
 				Name:        "patch",
-				Description: "Change only the fields you pass on an asset by public GUID. An empty string clears a text field; 00000000-0000-0000-0000-000000000000 clears a category, location, floor or manufacturer.",
+				Description: "Change only the fields you pass on an asset by public GUID. An empty string clears a text field; 00000000-0000-0000-0000-000000000000 clears a category, location, floor or manufacturer; 0001-01-01 clears a date.",
 				ToolName:    "UteamupAssetPatch",
 				HTTPMethod:  "PATCH",
 				RESTPath:    "by-guid/{assetGuid}",
@@ -116,6 +145,13 @@ func init() {
 					{Name: "serial-number", Description: "New serial number (empty clears it)", Type: "string"},
 					{Name: "reference-number", Description: "New reference number (empty clears it)", Type: "string"},
 					{Name: "model-number", Description: "New model number (empty clears it)", Type: "string"},
+					{Name: "upc-number", Description: "New UPC number (empty clears it)", Type: "string"},
+					{Name: "description", Description: "New description, up to 32,000 characters (empty clears it)", Type: "string"},
+					{Name: "notes", Description: "New notes, up to 8,000 characters (empty clears them)", Type: "string"},
+					{Name: "additional-info", Description: "New additional info, up to 8,000 characters (empty clears it)", Type: "string"},
+					{Name: "purchase-date", Description: "Purchase date, e.g. 2025-03-01 (0001-01-01 clears it)", Type: "string"},
+					{Name: "installation-date", Description: "Installation date, not before the purchase date (0001-01-01 clears it)", Type: "string"},
+					{Name: "expected-replacement-date", Description: "Planned replacement date, not before the installation or purchase date (0001-01-01 clears it)", Type: "string"},
 					{Name: "category-guid", Description: "Category GUID (the empty GUID clears it)", Type: "uuid"},
 					{Name: "location-guid", Description: "Location GUID (the empty GUID clears it; without --location-floor-guid the floor is cleared)", Type: "uuid"},
 					{Name: "location-floor-guid", Description: "Floor or room GUID within the location (the empty GUID clears it)", Type: "uuid"},

@@ -1,6 +1,9 @@
 package registry
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -22,7 +25,9 @@ func runAssetCommand(t *testing.T, cliArgs ...string) *http.Request {
 
 	var received *http.Request
 	server := httptest.NewTLSServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		body, _ := io.ReadAll(request.Body)
 		received = request.Clone(request.Context())
+		received.Body = io.NopCloser(bytes.NewReader(body))
 		response.Header().Set("Content-Type", "application/json")
 		_, _ = response.Write([]byte(`{"assets":[],"currentPage":1,"pageSize":25,"totalItems":0,"totalPages":0}`))
 	}))
@@ -268,19 +273,26 @@ func TestAssetPatchAction(t *testing.T) {
 		typ  string
 		body string
 	}{
-		"name":                     {"string", "name"},
-		"serial-number":            {"string", "serialNumber"},
-		"reference-number":         {"string", "referenceNumber"},
-		"model-number":             {"string", "modelNumber"},
-		"category-guid":            {"uuid", "categoryGuid"},
-		"location-guid":            {"uuid", "locationGuid"},
-		"location-floor-guid":      {"uuid", "locationFloorGuid"},
-		"manufacturer-vendor-guid": {"uuid", "manufacturerVendorGuid"},
-		"is-active":                {"bool", "isActive"},
-		"tool-guids":               {"stringSlice", "toolGuids"},
-		"chemical-guids":           {"stringSlice", "chemicalGuids"},
-		"asset-parts-file":         {"string", "assetParts"},
-		"expected-updated-at-utc":  {"string", "expectedUpdatedAtUtc"},
+		"name":                      {"string", "name"},
+		"serial-number":             {"string", "serialNumber"},
+		"reference-number":          {"string", "referenceNumber"},
+		"model-number":              {"string", "modelNumber"},
+		"upc-number":                {"string", "upcNumber"},
+		"description":               {"string", "description"},
+		"notes":                     {"string", "notes"},
+		"additional-info":           {"string", "additionalInfo"},
+		"purchase-date":             {"string", "purchaseDate"},
+		"installation-date":         {"string", "installationDate"},
+		"expected-replacement-date": {"string", "expectedReplacementDate"},
+		"category-guid":             {"uuid", "categoryGuid"},
+		"location-guid":             {"uuid", "locationGuid"},
+		"location-floor-guid":       {"uuid", "locationFloorGuid"},
+		"manufacturer-vendor-guid":  {"uuid", "manufacturerVendorGuid"},
+		"is-active":                 {"bool", "isActive"},
+		"tool-guids":                {"stringSlice", "toolGuids"},
+		"chemical-guids":            {"stringSlice", "chemicalGuids"},
+		"asset-parts-file":          {"string", "assetParts"},
+		"expected-updated-at-utc":   {"string", "expectedUpdatedAtUtc"},
 	}
 	if len(action.Flags) != len(want) {
 		t.Errorf("patch has %d flags, want %d", len(action.Flags), len(want))
@@ -367,4 +379,78 @@ func TestAssetEditCodeAssignmentAction(t *testing.T) {
 			t.Errorf("%s flag must be optional (leave-unchanged semantics)", want.name)
 		}
 	}
+}
+
+func TestAssetPatchSendsOnlyThePassedTextAndDateFields(t *testing.T) {
+	const guid = "9825f027-1b40-43fb-b224-1983849be941"
+
+	request := runAssetCommand(t, "patch", guid, "--description", "Main feed pump", "--purchase-date", "0001-01-01")
+
+	if request.Method != http.MethodPatch || request.URL.Path != "/api/asset/by-guid/"+guid {
+		t.Fatalf("route = %s %s, want PATCH /api/asset/by-guid/%s", request.Method, request.URL.Path, guid)
+	}
+	var body map[string]any
+	if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	want := map[string]any{"description": "Main feed pump", "purchaseDate": "0001-01-01"}
+	if len(body) != len(want) {
+		t.Errorf("body = %v, want only %v (an unsent field must stay out of a PATCH)", body, want)
+	}
+	for key, value := range want {
+		if body[key] != value {
+			t.Errorf("body[%s] = %v, want %v", key, body[key], value)
+		}
+	}
+}
+
+func TestAssetPurchaseActionsUseThePurchaseRoute(t *testing.T) {
+	const guid = "9825f027-1b40-43fb-b224-1983849be941"
+	path := "/api/asset/" + guid + "/purchase"
+
+	get := runAssetCommand(t, "purchase-get", guid)
+	if get.Method != http.MethodGet || get.URL.Path != path {
+		t.Errorf("purchase-get = %s %s, want GET %s", get.Method, get.URL.Path, path)
+	}
+
+	update := runAssetCommand(t, "purchase-update", guid,
+		"--purchase-cost", "12500.50", "--purchase-currency", "EUR", "--purchase-date", "2025-03-01",
+		"--expected-lifespan-years", "10", "--depreciation-method", "StraightLine", "--residual-value", "500")
+	if update.Method != http.MethodPut || update.URL.Path != path {
+		t.Fatalf("purchase-update = %s %s, want PUT %s", update.Method, update.URL.Path, path)
+	}
+	raw, _ := io.ReadAll(update.Body)
+	var body map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &body); err != nil {
+		t.Fatalf("decode body %s: %v", raw, err)
+	}
+	want := map[string]string{
+		"purchaseCost":          "12500.50",
+		"purchaseCurrency":      `"EUR"`,
+		"purchaseDate":          `"2025-03-01"`,
+		"expectedLifespanYears": "10",
+		"depreciationMethod":    `"StraightLine"`,
+		"residualValue":         "500",
+	}
+	for key, value := range want {
+		if string(body[key]) != value {
+			t.Errorf("body[%s] = %s, want %s (full body %s)", key, body[key], value, raw)
+		}
+	}
+	if _, sent := body["assetGuid"]; sent {
+		t.Errorf("the asset GUID belongs in the path, not the body: %s", raw)
+	}
+}
+
+func TestAssetPurchaseUpdateRejectsAnUnknownDepreciationMethod(t *testing.T) {
+	action := findAssetAction(t, "purchase-update")
+	for _, flag := range action.Flags {
+		if flag.Name == "depreciation-method" {
+			if len(flag.AllowedValues) != 3 {
+				t.Errorf("depreciation-method AllowedValues = %v, want None, StraightLine, DecliningBalance", flag.AllowedValues)
+			}
+			return
+		}
+	}
+	t.Fatal("purchase-update has no depreciation-method flag")
 }
