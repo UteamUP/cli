@@ -503,14 +503,13 @@ func init() {
 			Args: []ArgDef{
 				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
 			},
-			Flags: []FlagDef{
+			Flags: append([]FlagDef{
 				{Name: "section-type", BodyName: "sectionType", Required: true, Type: "int", Description: "Section type enum value"},
 				{Name: "title", Type: "string", Description: "Section title; required for custom sections"},
 				{Name: "content", Type: "string", Description: "Section content"},
 				{Name: "sort-order", BodyName: "sortOrder", Type: "int", Description: "Optional unique sort order"},
 				{Name: "required", BodyName: "isRequired", Type: "bool", Description: "Require completion before submit"},
-				handoverConcurrencyFlag(),
-			},
+			}, handoverMutationFlags()...),
 		},
 		Action{
 			Name:        "section-update",
@@ -522,13 +521,12 @@ func init() {
 				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
 				{Name: "sectionGuid", Description: "Section ExternalGuid", Required: true, Type: "uuid"},
 			},
-			Flags: []FlagDef{
+			Flags: append([]FlagDef{
 				{Name: "title", Type: "string", Description: "Updated title"},
 				{Name: "content", Type: "string", Description: "Updated content"},
 				{Name: "completed", BodyName: "isCompleted", Type: "bool", Description: "Completion state"},
 				{Name: "sort-order", BodyName: "sortOrder", Type: "int", Description: "Unique sort order"},
-				handoverConcurrencyFlag(),
-			},
+			}, handoverMutationFlags()...),
 		},
 		Action{
 			Name:        "section-delete",
@@ -540,7 +538,7 @@ func init() {
 				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
 				{Name: "sectionGuid", Description: "Section ExternalGuid", Required: true, Type: "uuid"},
 			},
-			Flags: []FlagDef{handoverConcurrencyFlag()},
+			Flags: handoverMutationFlags(),
 		},
 		Action{
 			Name:        "sections-reorder",
@@ -551,10 +549,9 @@ func init() {
 			Args: []ArgDef{
 				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
 			},
-			Flags: []FlagDef{
+			Flags: append([]FlagDef{
 				{Name: "section-guids", BodyName: "sectionGuids", Required: true, Type: "stringSlice", Description: "Every section GUID in the desired order"},
-				handoverConcurrencyFlag(),
-			},
+			}, handoverMutationFlags()...),
 		},
 		Action{
 			Name:        "section-links",
