@@ -39,6 +39,7 @@ func TestFloorplanSceneActionsResolveToRealControllerRoutes(t *testing.T) {
 		path           string
 	}{
 		{"get", "GET", "/api/floorplanscene/location/l"},
+		{"items", "GET", "/api/floorplanscene/location/l/items"},
 		{"save", "PUT", "/api/floorplanscene/location/l"},
 		{"delete", "DELETE", "/api/floorplanscene/location/l"},
 		{"estimate", "GET", "/api/floorplanscene/location/l/generate-estimate"},
@@ -71,10 +72,11 @@ func TestFloorplanSceneActionsResolveToRealControllerRoutes(t *testing.T) {
 
 func TestFloorplanSceneMCPToolNamesMatchTheBackendTools(t *testing.T) {
 	t.Parallel()
-	// The backend registers exactly these four tools; estimate has none and its
+	// The backend registers exactly these five tools; estimate has none and its
 	// ToolName is metadata only.
 	for action, tool := range map[string]string{
 		"get":      "UteamupFloorplanSceneGet",
+		"items":    "uteamup_floorplan_scene_items",
 		"save":     "UteamupFloorplanSceneSave",
 		"delete":   "UteamupFloorplanSceneDelete",
 		"generate": "UteamupFloorplanSceneGenerate",

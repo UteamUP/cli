@@ -18,6 +18,16 @@ func init() {
 				},
 			},
 			{
+				Name:        "items",
+				Description: "List the assets, parts, tools and chemicals placed in a location's 3D scene; kinds you cannot view come back restricted",
+				ToolName:    "uteamup_floorplan_scene_items",
+				HTTPMethod:  "GET",
+				RESTPath:    "location/{locationGuid}/items",
+				Args: []ArgDef{
+					{Name: "locationGuid", Description: "Location GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
 				Name:        "save",
 				Description: "Create or replace a location's 3D scene; a stale expected version is refused with 409",
 				ToolName:    "UteamupFloorplanSceneSave",
