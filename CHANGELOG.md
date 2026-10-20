@@ -5,6 +5,64 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.9.0](https://github.com/UteamUP/cli/compare/4.8.0...4.9.0) (2026-10-19)
+
+
+### Features
+
+* add canonical personal qualification CLI actions ([b138776](https://github.com/UteamUP/cli/commit/b1387763ed7cf648a18644cdf6bd179cf758d797))
+* add reviewed location access schedule contracts ([c724233](https://github.com/UteamUP/cli/commit/c7242332aa06b9bc7aea9117a7a0b71f967a885c))
+* add reviewed Location compliance commands ([5baf934](https://github.com/UteamUP/cli/commit/5baf9342e1ba3e21819e52b6e611f5f8235ac765))
+* **asset:** add --manufacturer-vendor-guid to asset patch ([43b3d83](https://github.com/UteamUP/cli/commit/43b3d836f5aca061f9dc5c879934222d698fa912))
+* **asset:** patch text and lifecycle dates and manage purchase price ([c923fbd](https://github.com/UteamUP/cli/commit/c923fbdc6cd28550c8d64a582f06d3248fac4b81))
+* **cli:** floorplan-scene domain ([1fd5ebc](https://github.com/UteamUP/cli/commit/1fd5ebc0c145efd543c48060f21c6dd42f505d75))
+* **cli:** project-prerequisite domain ([9a73e9c](https://github.com/UteamUP/cli/commit/9a73e9c6eca86d2fbca9032059f5ffc65d83b799))
+* **cli:** workorder-dependency and template prerequisite domains ([dbb638e](https://github.com/UteamUP/cli/commit/dbb638eb82387365c914c01292a1415fc8cc48d8))
+* **contract:** address contracts by public GUID ([0acdda6](https://github.com/UteamUP/cli/commit/0acdda6645cbb747b39f776b8e296ed4957ff1e0))
+* expose scoped classification workorders in CLI ([3853f9a](https://github.com/UteamUP/cli/commit/3853f9ac48ae7ab2d994aec4990b5200835e83d2))
+* **location:** name search, GUID get tool name and node-tree read ([624825b](https://github.com/UteamUP/cli/commit/624825b67db608c7f4d27150f5d007c5dbdc7fb7))
+* preserve customer mutation identity in CLI requests ([779a3aa](https://github.com/UteamUP/cli/commit/779a3aa929dfa4cf9c4bb75877040775ff446c2e))
+* **registry:** mcpconnections domain for AI assistant links ([8015533](https://github.com/UteamUP/cli/commit/80155339b1f7297ddd627dcfd0d7b47489bd1da5))
+* **registry:** workorder list-preview command ([4000620](https://github.com/UteamUP/cli/commit/40006206a2916d4d73766b62cfd5be3b19ce6ed8))
+* route location mutations with original receipt metadata ([de325d9](https://github.com/UteamUP/cli/commit/de325d9f0d0f9dddfcfdc0d7cbfb3d2e6f59a903))
+* **stock:** create, update and delete stock locations ([70845e7](https://github.com/UteamUP/cli/commit/70845e726f2a7f71587e98bdc3bfee5a570bbae5))
+* support reviewed location knowledge links and receipts ([bbe67ec](https://github.com/UteamUP/cli/commit/bbe67ec1b595f54c370c3f1eb401c1bf79eea1c0))
+* support scoped location hierarchy mutation contracts ([104e153](https://github.com/UteamUP/cli/commit/104e153b9b528e29a47f873ae08e07c93c59349e))
+* use reviewed GUID classification writes in CLI ([2d48c35](https://github.com/UteamUP/cli/commit/2d48c35f0689917570f1783662b159ecbd0f7162))
+* **workorder-template:** list and create template schedules ([a240e37](https://github.com/UteamUP/cli/commit/a240e3723fbded05a470bd0318b95cf4447d2a28))
+
+
+### Bug Fixes
+
+* **asset:** route get-by-guid, assigned stock and aggregated documents ([ab266d3](https://github.com/UteamUP/cli/commit/ab266d3ec2b5dd69445331bc2f844403c584a2dc))
+* **contract:** send contract create and update as form data ([b2e12cb](https://github.com/UteamUP/cli/commit/b2e12cbed03d4440389d73938cda41b7a1f81116))
+* forward original retry keys for handover section commands ([a09aff6](https://github.com/UteamUP/cli/commit/a09aff63e24f9729d9d7a56c5b4559a7655cd153))
+* **registry:** give every non-standard action a real route ([a64a718](https://github.com/UteamUP/cli/commit/a64a718639f5435275eda38f6f5207cda43bb81d))
+* route customer CLI actions through GUID endpoints ([3dda3b0](https://github.com/UteamUP/cli/commit/3dda3b00921bf5df47496ebb0abfebb9b89064e1))
+* use public GUIDs and bounded asset energy reads ([a9f38a4](https://github.com/UteamUP/cli/commit/a9f38a4bdc8b2c73ea58b70d3f2d40d913cdf68c))
+* use public team GUIDs and support original mutation metadata ([484d54f](https://github.com/UteamUP/cli/commit/484d54fb182021d600f7f29c37bba117d39d644f))
+
+
+### Miscellaneous
+
+* **bugs:** point create, mine and conversation at the new MCP tool names ([90cf92a](https://github.com/UteamUP/cli/commit/90cf92af265e2ed4dd554c67362edca892d9b361))
+
+
+### Code Refactoring
+
+* **stock:** follow the renamed stock location MCP tools ([940ead6](https://github.com/UteamUP/cli/commit/940ead68119b08e85fa333284105f54d78d90144))
+
+
+### Documentation
+
+* **lists:** mention several checklist paths in the template file help ([318b98d](https://github.com/UteamUP/cli/commit/318b98d9630e80ef1b6c0bdc11f5b322bc7f151e))
+
+
+### Tests
+
+* pass an action value to energy route assertions ([26b65fe](https://github.com/UteamUP/cli/commit/26b65fe082e50aafc81de537cde7bb440a13ba12))
+* **registry:** cover reviewed Location actions in knowledge and RBAC tests ([72d13d8](https://github.com/UteamUP/cli/commit/72d13d864497ae988b9320b7b587f49467fd45dc))
+
 ## [4.8.0](https://github.com/UteamUP/cli/compare/4.7.0...4.8.0) (2026-10-15)
 
 
