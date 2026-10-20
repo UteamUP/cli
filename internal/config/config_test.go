@@ -2,10 +2,14 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
+
+	clierrors "github.com/uteamup/cli/internal/errors"
 )
 
 func TestDefaultConfig(t *testing.T) {
@@ -183,7 +187,9 @@ func TestLoadMissingConfigReturnsSetupGuidance(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
-	if _, err := Load(); err == nil || !os.IsNotExist(err) {
+	_, err := Load()
+	var configErr *clierrors.ConfigError
+	if !errors.As(err, &configErr) || !strings.Contains(err.Error(), "uteamup config init") {
 		t.Fatalf("Load error = %v, want the missing-config setup error", err)
 	}
 }
