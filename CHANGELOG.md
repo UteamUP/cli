@@ -5,6 +5,34 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0](https://github.com/UteamUP/cli/compare/4.9.0...5.0.0) (2026-10-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **security:** `login --api-key=KEY --api-secret=SECRET` is refused; use --api-key-auth, --api-key-file / --api-secret-file or --api-secret-stdin.
+
+### Features
+
+* **floorplan-scene:** add scan draft read commands ([ed7a151](https://github.com/UteamUP/cli/commit/ed7a15136032f1ba63b9a8ec55fa52564e39a0a5))
+* **model3d:** add the 3D model library and scene items commands ([98f2825](https://github.com/UteamUP/cli/commit/98f2825b6ae9beda5f9d2feee7225271f15f0b8e))
+* **model3d:** model3d-catalogue domain for the cross-tenant 3D model catalogue ([8b1ead1](https://github.com/UteamUP/cli/commit/8b1ead1123b41d0ec624d39815186d4d0708d75a))
+
+
+### Bug Fixes
+
+* **security:** keep API credentials off the command line and private files owner-only ([95a7269](https://github.com/UteamUP/cli/commit/95a7269ec3053ea10c07b2099496a5a7621c53e0))
+
+
+### Code Refactoring
+
+* **floorplan-scene:** take scan draft GUIDs as positional args ([303b725](https://github.com/UteamUP/cli/commit/303b725e84bd2c1396038690e652824e95fc1b70))
+
+
+### Tests
+
+* **cli:** expect the setup-guidance config error when the config file is missing ([2157998](https://github.com/UteamUP/cli/commit/2157998f1a1628aaf9b16cbd4a519987ca25967b))
+
 ## [4.9.0](https://github.com/UteamUP/cli/compare/4.8.0...4.9.0) (2026-10-19)
 
 
