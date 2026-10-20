@@ -87,8 +87,8 @@ func init() {
 				ToolName:    "uteamup_floorplan_scan_draft_list",
 				HTTPMethod:  "GET",
 				RESTPath:    "location/{locationGuid}/scan-drafts",
-				Flags: []FlagDef{
-					{Name: "location-guid", BodyName: "locationGuid", Description: "Location GUID", Required: true, Type: "uuid"},
+				Args: []ArgDef{
+					{Name: "locationGuid", Description: "Location GUID", Required: true, Type: "uuid"},
 				},
 			},
 			{
@@ -97,9 +97,9 @@ func init() {
 				ToolName:    "uteamup_floorplan_scan_draft_get",
 				HTTPMethod:  "GET",
 				RESTPath:    "location/{locationGuid}/scan-drafts/{draftGuid}",
-				Flags: []FlagDef{
-					{Name: "location-guid", BodyName: "locationGuid", Description: "Location GUID", Required: true, Type: "uuid"},
-					{Name: "draft-guid", BodyName: "draftGuid", Description: "Scan draft GUID", Required: true, Type: "uuid"},
+				Args: []ArgDef{
+					{Name: "locationGuid", Description: "Location GUID", Required: true, Type: "uuid"},
+					{Name: "draftGuid", Description: "Scan draft GUID", Required: true, Type: "uuid"},
 				},
 			},
 		},

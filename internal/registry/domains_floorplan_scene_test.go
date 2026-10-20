@@ -92,24 +92,25 @@ func TestFloorplanSceneMCPToolNamesMatchTheBackendTools(t *testing.T) {
 	}
 }
 
-func TestFloorplanSceneBoundaryIsLocationGuidOnly(t *testing.T) {
+func TestFloorplanSceneBoundaryIsGuidOnly(t *testing.T) {
 	t.Parallel()
 	domain := findDomain("floorplan-scene")
 	if domain == nil {
 		t.Fatal("floorplan-scene domain is not registered")
 	}
 	for _, action := range domain.Actions {
-		if strings.HasPrefix(action.Name, "scan-draft") {
-			// Scan draft reads take their GUIDs as flags; TestFloorplanSceneScanDraftReadsRequireGuidFlags covers them.
+		wantArgs := []string{"locationGuid"}
+		if action.Name == "scan-draft" {
+			wantArgs = []string{"locationGuid", "draftGuid"}
+		}
+		if len(action.Args) != len(wantArgs) {
+			t.Errorf("%s args = %+v, want %v", action.Name, action.Args, wantArgs)
 			continue
 		}
-		if len(action.Args) != 1 {
-			t.Errorf("%s args = %+v, want a single locationGuid", action.Name, action.Args)
-			continue
-		}
-		arg := action.Args[0]
-		if arg.Name != "locationGuid" || arg.Type != "uuid" || !arg.Required {
-			t.Errorf("%s arg = %+v, want a required uuid locationGuid", action.Name, arg)
+		for i, arg := range action.Args {
+			if arg.Name != wantArgs[i] || arg.Type != "uuid" || !arg.Required {
+				t.Errorf("%s arg %d = %+v, want a required uuid %s", action.Name, i, arg, wantArgs[i])
+			}
 		}
 		for _, flag := range action.Flags {
 			if flag.Type == "int" && strings.HasSuffix(flag.Name, "-id") {
@@ -153,28 +154,17 @@ func TestFloorplanSceneSaveSendsTheSaveModel(t *testing.T) {
 	}
 }
 
-func TestFloorplanSceneScanDraftReadsRequireGuidFlags(t *testing.T) {
+func TestFloorplanSceneScanDraftReadsTakePositionalGuids(t *testing.T) {
 	t.Parallel()
-	for action, wantFlags := range map[string][]string{
-		"scan-drafts": {"location-guid"},
-		"scan-draft":  {"location-guid", "draft-guid"},
-	} {
+	for _, action := range []string{"scan-drafts", "scan-draft"} {
 		_, a := floorplanSceneAction(t, action)
-		if len(a.Args) != 0 {
-			t.Errorf("%s args = %+v, want none — the GUIDs are flags", action, a.Args)
+		if len(a.Flags) != 0 {
+			t.Errorf("%s flags = %+v, want none — the GUIDs are positional", action, a.Flags)
 		}
-		if len(a.Flags) != len(wantFlags) {
-			t.Fatalf("%s declares %d flags, want %v", action, len(a.Flags), wantFlags)
-		}
-		for i, name := range wantFlags {
-			flag := a.Flags[i]
-			// BodyName must match the RESTPath placeholder or the GUID never reaches the URL.
-			bodyName := toCamelCase(name)
-			if flag.Name != name || flag.BodyName != bodyName || flag.Type != "uuid" || !flag.Required {
-				t.Errorf("%s flag %d = %+v, want required uuid --%s with BodyName %s", action, i, flag, name, bodyName)
-			}
-			if !strings.Contains(a.RESTPath, "{"+bodyName+"}") {
-				t.Errorf("%s RESTPath %q has no {%s} placeholder", action, a.RESTPath, bodyName)
+		for _, arg := range a.Args {
+			// The arg name must match the RESTPath placeholder or the GUID never reaches the URL.
+			if !strings.Contains(a.RESTPath, "{"+arg.Name+"}") {
+				t.Errorf("%s RESTPath %q has no {%s} placeholder", action, a.RESTPath, arg.Name)
 			}
 		}
 	}
