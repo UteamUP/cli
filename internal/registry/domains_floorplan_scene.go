@@ -81,6 +81,27 @@ func init() {
 					{Name: "locationGuid", Description: "Location GUID", Required: true, Type: "uuid"},
 				},
 			},
+			{
+				Name:        "scan-drafts",
+				Description: "List the room-scan drafts uploaded for a location, with their processing status",
+				ToolName:    "uteamup_floorplan_scan_draft_list",
+				HTTPMethod:  "GET",
+				RESTPath:    "location/{locationGuid}/scan-drafts",
+				Flags: []FlagDef{
+					{Name: "location-guid", BodyName: "locationGuid", Description: "Location GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name:        "scan-draft",
+				Description: "Get one scan draft with its draft level and placement suggestions",
+				ToolName:    "uteamup_floorplan_scan_draft_get",
+				HTTPMethod:  "GET",
+				RESTPath:    "location/{locationGuid}/scan-drafts/{draftGuid}",
+				Flags: []FlagDef{
+					{Name: "location-guid", BodyName: "locationGuid", Description: "Location GUID", Required: true, Type: "uuid"},
+					{Name: "draft-guid", BodyName: "draftGuid", Description: "Scan draft GUID", Required: true, Type: "uuid"},
+				},
+			},
 		},
 	})
 }

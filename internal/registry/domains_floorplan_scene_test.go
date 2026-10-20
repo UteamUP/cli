@@ -33,7 +33,7 @@ func TestFloorplanSceneActionsResolveToRealControllerRoutes(t *testing.T) {
 		t.Fatalf("Aliases = %v, want [scene3d]", domain.Aliases)
 	}
 
-	location := map[string]any{"locationGuid": "l"}
+	location := map[string]any{"locationGuid": "l", "draftGuid": "d"}
 	tests := []struct {
 		action, method string
 		path           string
@@ -44,6 +44,8 @@ func TestFloorplanSceneActionsResolveToRealControllerRoutes(t *testing.T) {
 		{"delete", "DELETE", "/api/floorplanscene/location/l"},
 		{"estimate", "GET", "/api/floorplanscene/location/l/generate-estimate"},
 		{"generate", "POST", "/api/floorplanscene/location/l/generate"},
+		{"scan-drafts", "GET", "/api/floorplanscene/location/l/scan-drafts"},
+		{"scan-draft", "GET", "/api/floorplanscene/location/l/scan-drafts/d"},
 	}
 	if len(tests) != len(domain.Actions) {
 		t.Fatalf("route table covers %d actions but the domain declares %d", len(tests), len(domain.Actions))
@@ -72,14 +74,16 @@ func TestFloorplanSceneActionsResolveToRealControllerRoutes(t *testing.T) {
 
 func TestFloorplanSceneMCPToolNamesMatchTheBackendTools(t *testing.T) {
 	t.Parallel()
-	// The backend registers exactly these five tools; estimate has none and its
+	// The backend registers exactly these seven tools; estimate has none and its
 	// ToolName is metadata only.
 	for action, tool := range map[string]string{
-		"get":      "UteamupFloorplanSceneGet",
-		"items":    "uteamup_floorplan_scene_items",
-		"save":     "UteamupFloorplanSceneSave",
-		"delete":   "UteamupFloorplanSceneDelete",
-		"generate": "UteamupFloorplanSceneGenerate",
+		"get":         "UteamupFloorplanSceneGet",
+		"items":       "uteamup_floorplan_scene_items",
+		"save":        "UteamupFloorplanSceneSave",
+		"delete":      "UteamupFloorplanSceneDelete",
+		"generate":    "UteamupFloorplanSceneGenerate",
+		"scan-drafts": "uteamup_floorplan_scan_draft_list",
+		"scan-draft":  "uteamup_floorplan_scan_draft_get",
 	} {
 		_, a := floorplanSceneAction(t, action)
 		if a.ToolName != tool {
@@ -95,6 +99,10 @@ func TestFloorplanSceneBoundaryIsLocationGuidOnly(t *testing.T) {
 		t.Fatal("floorplan-scene domain is not registered")
 	}
 	for _, action := range domain.Actions {
+		if strings.HasPrefix(action.Name, "scan-draft") {
+			// Scan draft reads take their GUIDs as flags; TestFloorplanSceneScanDraftReadsRequireGuidFlags covers them.
+			continue
+		}
 		if len(action.Args) != 1 {
 			t.Errorf("%s args = %+v, want a single locationGuid", action.Name, action.Args)
 			continue
@@ -140,6 +148,33 @@ func TestFloorplanSceneSaveSendsTheSaveModel(t *testing.T) {
 			// An untyped non-int default panics in buildActionCommand's int assertion.
 			if v, ok := flag.Default.(int); !ok || v != 0 {
 				t.Errorf("expected-version default = %#v, want int 0", flag.Default)
+			}
+		}
+	}
+}
+
+func TestFloorplanSceneScanDraftReadsRequireGuidFlags(t *testing.T) {
+	t.Parallel()
+	for action, wantFlags := range map[string][]string{
+		"scan-drafts": {"location-guid"},
+		"scan-draft":  {"location-guid", "draft-guid"},
+	} {
+		_, a := floorplanSceneAction(t, action)
+		if len(a.Args) != 0 {
+			t.Errorf("%s args = %+v, want none — the GUIDs are flags", action, a.Args)
+		}
+		if len(a.Flags) != len(wantFlags) {
+			t.Fatalf("%s declares %d flags, want %v", action, len(a.Flags), wantFlags)
+		}
+		for i, name := range wantFlags {
+			flag := a.Flags[i]
+			// BodyName must match the RESTPath placeholder or the GUID never reaches the URL.
+			bodyName := toCamelCase(name)
+			if flag.Name != name || flag.BodyName != bodyName || flag.Type != "uuid" || !flag.Required {
+				t.Errorf("%s flag %d = %+v, want required uuid --%s with BodyName %s", action, i, flag, name, bodyName)
+			}
+			if !strings.Contains(a.RESTPath, "{"+bodyName+"}") {
+				t.Errorf("%s RESTPath %q has no {%s} placeholder", action, a.RESTPath, bodyName)
 			}
 		}
 	}
