@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/uteamup/cli/internal/imageanalyzer/models"
+	"github.com/uteamup/cli/internal/security"
 )
 
 // DetectDuplicates finds duplicate images by SHA-256 hash.
@@ -27,7 +28,7 @@ func DetectDuplicates(images []models.ImageInfo) (unique []models.ImageInfo, dup
 				hashPreview = hashPreview[:12]
 			}
 			log.Printf("duplicate detected: %s is a duplicate of %s (hash %s)",
-				img.Filename, kept.Filename, hashPreview)
+				security.SafeText(img.Filename), security.SafeText(kept.Filename), hashPreview)
 		} else {
 			seen[img.SHA256Hash] = img
 			unique = append(unique, img)

@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/uteamup/cli/internal/imageanalyzer/checkpoint"
+	"github.com/uteamup/cli/internal/security"
 	"gopkg.in/yaml.v3"
 )
 
@@ -107,15 +108,15 @@ func LoadConfig(configPath string, opts ...Option) (*AppConfig, error) {
 	cfg := DefaultConfig()
 
 	// Read YAML file if it exists.
-	data, err := os.ReadFile(configPath)
+	data, err := security.ReadFile(configPath, security.MaximumConfigFileBytes)
 	if err == nil {
 		decoder := yaml.NewDecoder(bytes.NewReader(data))
 		decoder.KnownFields(true)
 		if err := decoder.Decode(cfg); err != nil {
-			return nil, fmt.Errorf("parsing config file %s: %w", configPath, err)
+			return nil, fmt.Errorf("parsing config file %s: %s", security.SafeText(configPath), security.SafeText(err.Error()))
 		}
 	} else if !os.IsNotExist(err) {
-		return nil, fmt.Errorf("reading config file %s: %w", configPath, err)
+		return nil, fmt.Errorf("reading config file %s: %s", security.SafeText(configPath), security.SafeText(err.Error()))
 	}
 
 	// Ensure defaults are applied for zero-value fields after YAML unmarshal.

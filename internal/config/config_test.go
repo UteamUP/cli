@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -56,6 +57,50 @@ func TestValidateMissingActiveProfile(t *testing.T) {
 	}
 }
 
+func TestNormalizeTrustedBlobOriginsRequiresExactHTTPSOrigins(t *testing.T) {
+	got, err := NormalizeTrustedBlobOrigins([]string{
+		" https://Blob.Internal.Example:443/ ",
+		"https://blob.internal.example",
+		"https://storage.example:8443",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 || got[0] != "https://blob.internal.example" || got[1] != "https://storage.example:8443" {
+		t.Fatalf("normalized origins = %#v", got)
+	}
+
+	for _, invalid := range []string{
+		"http://blob.internal.example",
+		"https://*.internal.example",
+		"https://blob.internal.example/path",
+		"https://user:pass@blob.internal.example",
+		"https://blob.internal.example?token=value",
+	} {
+		if _, err := NormalizeTrustedBlobOrigins([]string{invalid}); err == nil {
+			t.Errorf("accepted non-origin trusted Blob value %q", invalid)
+		}
+	}
+}
+
+func TestValidateCanonicalizesTrustedBlobOriginsPerProfile(t *testing.T) {
+	cfg := &Config{
+		ActiveProfile: "production",
+		Profiles: map[string]Profile{
+			"production": {
+				BaseURL:            "https://api.uteamup.com",
+				TrustedBlobOrigins: []string{"https://Storage.Example:443/"},
+			},
+		},
+	}
+	if err := validate(cfg); err != nil {
+		t.Fatal(err)
+	}
+	if got := cfg.Profiles["production"].TrustedBlobOrigins; len(got) != 1 || got[0] != "https://storage.example" {
+		t.Fatalf("trusted Blob origins = %#v", got)
+	}
+}
+
 func TestSaveAndLoad(t *testing.T) {
 	// Use a temp directory instead of home
 	tmpDir := t.TempDir()
@@ -64,12 +109,13 @@ func TestSaveAndLoad(t *testing.T) {
 
 	cfg := DefaultConfig()
 	cfg.Profiles["production"] = Profile{
-		Name:           "Test Production",
-		APIKey:         "12345678901234567890123456789012",
-		BaseURL:        "https://api.uteamup.com",
-		LogLevel:       "DEBUG",
-		RequestTimeout: 15000,
-		MaxRetries:     5,
+		Name:               "Test Production",
+		APIKey:             "12345678901234567890123456789012",
+		BaseURL:            "https://api.uteamup.com",
+		TrustedBlobOrigins: []string{"https://blob.internal.example:8443"},
+		LogLevel:           "DEBUG",
+		RequestTimeout:     15000,
+		MaxRetries:         5,
 	}
 
 	// Save to temp path
@@ -102,6 +148,43 @@ func TestSaveAndLoad(t *testing.T) {
 	}
 	if p.MaxRetries != 5 {
 		t.Errorf("expected 5 retries, got %d", p.MaxRetries)
+	}
+	if len(p.TrustedBlobOrigins) != 1 || p.TrustedBlobOrigins[0] != "https://blob.internal.example:8443" {
+		t.Errorf("unexpected trusted Blob origins: %#v", p.TrustedBlobOrigins)
+	}
+}
+
+func TestConfigPersistenceUsesPrivatePermissionsAndRejectsPublicFiles(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	if err := Save(DefaultConfig()); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(home, ".uteamup", "config.json")
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0600 {
+		t.Fatalf("config permissions = %04o, want 0600", info.Mode().Perm())
+	}
+	if runtime.GOOS != "windows" {
+		if err := os.Chmod(path, 0644); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := Load(); err == nil {
+			t.Fatal("public config with credentials accepted")
+		}
+	}
+}
+
+func TestLoadMissingConfigReturnsSetupGuidance(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	if _, err := Load(); err == nil || !os.IsNotExist(err) {
+		t.Fatalf("Load error = %v, want the missing-config setup error", err)
 	}
 }
 

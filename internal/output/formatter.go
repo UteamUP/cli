@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/uteamup/cli/internal/security"
 	"gopkg.in/yaml.v3"
 )
 
@@ -46,7 +47,7 @@ func printJSON(data json.RawMessage) error {
 	var pretty bytes.Buffer
 	if err := json.Indent(&pretty, data, "", "  "); err != nil {
 		// Fall back to raw output
-		fmt.Println(string(data))
+		fmt.Println(security.SafeText(string(data)))
 		return nil
 	}
 	fmt.Println(pretty.String())

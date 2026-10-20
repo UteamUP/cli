@@ -14,6 +14,9 @@ import (
 
 var sourceIdentities sync.Map
 
+// MaximumConfigFileBytes bounds user-provided CLI YAML configuration files.
+const MaximumConfigFileBytes int64 = 64 * 1024
+
 func BindSource(path string, info os.FileInfo) {
 	absolute, _ := filepath.Abs(path)
 	sourceIdentities.Store(absolute, info)
@@ -74,6 +77,42 @@ func ReadFile(path string, maximum int64) ([]byte, error) {
 	return ReadLimit(file, maximum)
 }
 
+// ReadPrivateFile reads a bounded regular file only when its permissions are private.
+func ReadPrivateFile(path string, maximum int64) ([]byte, error) {
+	file, err := OpenRegular(path, maximum)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if err := validatePrivateFile(file, info); err != nil {
+		return nil, err
+	}
+	return ReadLimit(file, maximum)
+}
+
+// RemoveFile removes one regular file through a no-symlink, descriptor-anchored parent.
+func RemoveFile(path string) error {
+	root, err := OpenDirectory(filepath.Dir(path))
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+
+	name := filepath.Base(path)
+	info, err := root.Lstat(name)
+	if err != nil {
+		return err
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("refusing to remove a non-regular file")
+	}
+	return root.Remove(name)
+}
+
 // OpenDirectory anchors every traversal step to a descriptor and rejects symbolic links.
 func OpenDirectory(path string) (*os.Root, error) {
 	absolute, err := filepath.Abs(path)
@@ -102,7 +141,11 @@ func OpenDirectory(path string) (*os.Root, error) {
 			continue
 		}
 		info, err := root.Lstat(part)
-		if err != nil || !info.IsDir() {
+		if err != nil {
+			root.Close()
+			return nil, err
+		}
+		if !info.IsDir() {
 			root.Close()
 			return nil, fmt.Errorf("parent must be an existing directory without symlinks")
 		}

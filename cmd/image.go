@@ -15,6 +15,7 @@ import (
 	iaconfig "github.com/uteamup/cli/internal/imageanalyzer/config"
 	"github.com/uteamup/cli/internal/imageanalyzer/pipeline"
 	"github.com/uteamup/cli/internal/mediaanalyzer"
+	"github.com/uteamup/cli/internal/security"
 )
 
 var (
@@ -62,18 +63,18 @@ Examples:
 		if err != nil {
 			return fmt.Errorf("loading CLI config: %w", err)
 		}
-		profile, err := cliConfig.ActiveProfileConfig()
+		profile, selectedName, err := selectedProfileConfig(cliConfig, profileName)
 		if err != nil {
-			return fmt.Errorf("loading active profile: %w", err)
+			return fmt.Errorf("loading selected profile: %w", err)
 		}
-		token, err := auth.LoadTokenForOrigin(profile.BaseURL, activeProfileName())
+		token, err := auth.LoadTokenForOrigin(profile.BaseURL, selectedName)
 		if err != nil {
 			return fmt.Errorf("loading authentication: %w", err)
 		}
 		if err := validateMediaTenant(profile, token); err != nil {
 			return err
 		}
-		apiClient, err := newMediaAPIClient(profile, imageTimeout)
+		apiClient, err := newMediaAPIClient(profile, selectedName, imageTimeout)
 		if err != nil {
 			return err
 		}
@@ -81,22 +82,22 @@ Examples:
 		// Resolve the image path to absolute.
 		absImagePath, err := filepath.Abs(imagePath)
 		if err != nil {
-			return fmt.Errorf("resolving image path: %w", err)
+			return fmt.Errorf("resolving image path: %s", security.SafeText(err.Error()))
 		}
 
 		// Check that the image path exists.
 		info, err := os.Stat(absImagePath)
 		if err != nil {
-			return fmt.Errorf("image path %q does not exist: %w", absImagePath, err)
+			return fmt.Errorf("image path %q does not exist: %s", security.SafeText(absImagePath), security.SafeText(err.Error()))
 		}
 		if !info.IsDir() {
-			return fmt.Errorf("image path %q is not a directory", absImagePath)
+			return fmt.Errorf("image path %q is not a directory", security.SafeText(absImagePath))
 		}
 
 		// Resolve output directory to absolute.
 		absOutputDir, err := filepath.Abs(imageOutputDir)
 		if err != nil {
-			return fmt.Errorf("resolving output path: %w", err)
+			return fmt.Errorf("resolving output path: %s", security.SafeText(err.Error()))
 		}
 
 		// Build config options from CLI flags.
@@ -141,7 +142,7 @@ Examples:
 		if errs := cfg.Validate(); len(errs) > 0 {
 			fmt.Fprintln(os.Stderr, "Configuration errors:")
 			for _, e := range errs {
-				fmt.Fprintf(os.Stderr, "  - %s\n", e)
+				fmt.Fprintf(os.Stderr, "  - %s\n", security.SafeText(e))
 			}
 			return fmt.Errorf("invalid configuration")
 		}
@@ -165,14 +166,14 @@ Examples:
 
 		// Print banner.
 		fmt.Printf("\n=== UteamUP Image Analyzer ===\n")
-		fmt.Printf("  Source:  %s\n", absImagePath)
-		fmt.Printf("  Output:  %s\n", absOutputDir)
+		fmt.Printf("  Source:  %s\n", security.SafeText(absImagePath))
+		fmt.Printf("  Output:  %s\n", security.SafeText(absOutputDir))
 		fmt.Printf("  Images:  %d found\n", imageCount)
 		tenantName := strings.TrimSpace(token.TenantName)
 		if tenantName == "" {
 			tenantName = "authenticated tenant"
 		}
-		fmt.Printf("  Tenant:  %s\n", tenantName)
+		fmt.Printf("  Tenant:  %s\n", security.SafeText(tenantName))
 		fmt.Printf("  AI:      server-governed route\n")
 		if imageDryRun {
 			fmt.Printf("  Mode:    DRY RUN (validation and upload scope only)\n")
@@ -205,11 +206,11 @@ Examples:
 		if err != nil {
 			return err
 		}
-		profile, err := cliConfig.ActiveProfileConfig()
+		profile, selectedName, err := selectedProfileConfig(cliConfig, profileName)
 		if err != nil {
 			return err
 		}
-		token, err := auth.LoadTokenForOrigin(profile.BaseURL, activeProfileName())
+		token, err := auth.LoadTokenForOrigin(profile.BaseURL, selectedName)
 		if err != nil {
 			return err
 		}
@@ -261,7 +262,7 @@ Examples:
 		if len(status.TypeBreakdown) > 0 {
 			fmt.Println("\n  Type breakdown:")
 			for entityType, count := range status.TypeBreakdown {
-				fmt.Printf("    %-15s %d\n", entityType, count)
+				fmt.Printf("    %-15s %d\n", security.SafeText(entityType), count)
 			}
 		}
 		fmt.Println("=============================")

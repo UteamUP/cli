@@ -2,7 +2,6 @@ package scanner
 
 import (
 	"fmt"
-	"github.com/uteamup/cli/internal/security"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/uteamup/cli/internal/imageanalyzer/imageutil"
 	"github.com/uteamup/cli/internal/imageanalyzer/models"
+	"github.com/uteamup/cli/internal/security"
 )
 
 // ImageScanner walks an image folder, extracts metadata, and discovers images.
@@ -60,7 +60,7 @@ func (s *ImageScanner) ScanFolder() ([]models.ImageInfo, error) {
 
 	err = filepath.WalkDir(s.imageFolder, func(path string, d os.DirEntry, walkErr error) error {
 		if walkErr != nil {
-			log.Printf("warning: walk error at %s: %v", path, walkErr)
+			log.Printf("warning: walk error at %s: %s", security.SafeText(path), security.SafeText(walkErr.Error()))
 			return nil
 		}
 
@@ -73,7 +73,7 @@ func (s *ImageScanner) ScanFolder() ([]models.ImageInfo, error) {
 			return nil
 		}
 		if d.Type()&os.ModeSymlink != 0 {
-			log.Printf("skipped symbolic link: %s", filepath.Base(path))
+			log.Printf("skipped symbolic link: %s", security.SafeText(filepath.Base(path)))
 			return nil
 		}
 
@@ -84,21 +84,21 @@ func (s *ImageScanner) ScanFolder() ([]models.ImageInfo, error) {
 
 		fi, err := d.Info()
 		if err != nil {
-			log.Printf("warning: cannot stat %s: %v", path, err)
+			log.Printf("warning: cannot stat %s: %s", security.SafeText(path), security.SafeText(err.Error()))
 			return nil
 		}
 		if !fi.Mode().IsRegular() {
-			log.Printf("skipped non-regular image: %s", filepath.Base(path))
+			log.Printf("skipped non-regular image: %s", security.SafeText(filepath.Base(path)))
 			return nil
 		}
 		maxBytes := int64(s.maxFileSizeMB) * 1024 * 1024
 		if fi.Size() <= 0 || fi.Size() > maxBytes {
-			log.Printf("skipped image %s: file size is outside the 1-%d MB limit", filepath.Base(path), s.maxFileSizeMB)
+			log.Printf("skipped image %s: file size is outside the 1-%d MB limit", security.SafeText(filepath.Base(path)), s.maxFileSizeMB)
 			return nil
 		}
 		security.BindSource(path, fi)
 		if !imageutil.IsValidImage(path) {
-			log.Printf("skipped invalid image: %s", filepath.Base(path))
+			log.Printf("skipped invalid image: %s", security.SafeText(filepath.Base(path)))
 			return nil
 		}
 
@@ -138,7 +138,7 @@ func (s *ImageScanner) ScanFolder() ([]models.ImageInfo, error) {
 		return images[i].Path < images[j].Path
 	})
 
-	log.Printf("scan complete: %d images found in %s", len(images), s.imageFolder)
+	log.Printf("scan complete: %d images found in %s", len(images), security.SafeText(s.imageFolder))
 	return images, nil
 }
 
@@ -147,7 +147,7 @@ func (s *ImageScanner) ScanFolder() ([]models.ImageInfo, error) {
 func ComputeSHA256Must(filePath string) string {
 	h, err := ComputeSHA256(filePath)
 	if err != nil {
-		log.Printf("sha256 failed for %s: %v", filePath, err)
+		log.Printf("sha256 failed for %s: %s", security.SafeText(filePath), security.SafeText(err.Error()))
 		return ""
 	}
 	return h

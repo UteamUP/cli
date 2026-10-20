@@ -257,3 +257,14 @@ func TestShiftHandoverSectionKeysReachNormalTransportWithoutLeakingIntoJson(t *t
 		})
 	}
 }
+
+// ShiftHandoverController binds [FromBody] on these DELETEs, so a query-string token never arrives.
+func TestShiftHandoverDeletesSendTheConcurrencyTokenAsJsonBody(t *testing.T) {
+	domain := findRegisteredDomain(t, "shift-handover")
+	for _, name := range []string{"section-delete", "carryover-delete"} {
+		action := findShiftHandoverAction(t, domain, name)
+		if action.HTTPMethod != "DELETE" || !action.JSONBody {
+			t.Errorf("%s must be a DELETE with JSONBody, got method %q JSONBody %v", name, action.HTTPMethod, action.JSONBody)
+		}
+	}
+}

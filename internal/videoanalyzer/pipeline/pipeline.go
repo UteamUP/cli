@@ -13,6 +13,7 @@ import (
 	"github.com/uteamup/cli/internal/imageanalyzer/grouper"
 	"github.com/uteamup/cli/internal/imageanalyzer/models"
 	"github.com/uteamup/cli/internal/mediaanalyzer"
+	"github.com/uteamup/cli/internal/security"
 	vaconfig "github.com/uteamup/cli/internal/videoanalyzer/config"
 	"github.com/uteamup/cli/internal/videoanalyzer/fileutil"
 	"github.com/uteamup/cli/internal/videoanalyzer/gps"
@@ -35,12 +36,12 @@ func (p *Pipeline) Run(ctx context.Context) error {
 
 	// ── Phase 1: Validate ──────────────────────────────────────────────
 	fmt.Println("\nPhase 1: Scanning for video files...")
-	log.Printf("Phase 1: Scanning folder=%s", p.config.Scan.VideoFolder)
+	log.Printf("Phase 1: Scanning folder=%s", security.SafeText(p.config.Scan.VideoFolder))
 
 	scanner := fileutil.NewScanner(p.config.Scan.MaxFileSizeMB, p.config.Scan.Recursive)
 	scanResult, err := scanner.ScanPath(p.config.Scan.VideoFolder)
 	if err != nil {
-		return fmt.Errorf("scanning for videos: %w", err)
+		return fmt.Errorf("scanning for videos: %s", security.SafeText(err.Error()))
 	}
 
 	fmt.Printf("  Videos found:  %d\n", len(scanResult.Videos))
@@ -48,14 +49,14 @@ func (p *Pipeline) Run(ctx context.Context) error {
 	fmt.Printf("  Skipped:       %d\n", len(scanResult.Skipped))
 
 	if len(scanResult.Videos) == 0 {
-		fmt.Printf("\nNo supported video files found in %s\n", p.config.Scan.VideoFolder)
+		fmt.Printf("\nNo supported video files found in %s\n", security.SafeText(p.config.Scan.VideoFolder))
 		return nil
 	}
 
 	if len(scanResult.GIFFiles) > 0 {
 		fmt.Println("\n  GIF files detected — use 'uteamup image analyze' to process them:")
 		for _, g := range scanResult.GIFFiles {
-			fmt.Printf("    %s\n", g)
+			fmt.Printf("    %s\n", security.SafeText(g))
 		}
 	}
 
@@ -105,7 +106,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 			return err
 		}
 		// Per-video header.
-		fmt.Printf("\n  ── Video %d/%d: %s (%s) ──\n", i+1, totalVideos, video.Filename, formatFileSize(video.SizeBytes))
+		fmt.Printf("\n  ── Video %d/%d: %s (%s) ──\n", i+1, totalVideos, security.SafeText(video.Filename), formatFileSize(video.SizeBytes))
 
 		// Per-video progress: 4 steps (upload → process → analyze → extract GPS).
 		videoBar := progressbar.NewOptions(4,
@@ -125,7 +126,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 		videoBar.Describe("    Uploading & processing")
 		analysis, err := p.analyzer.AnalyzeVideo(ctx, video.Path, string(video.MIMEType))
 		if err != nil {
-			return fmt.Errorf("analyzing video %q: %w", video.Filename, err)
+			return fmt.Errorf("analyzing video %q: %s", security.SafeText(video.Filename), security.SafeText(err.Error()))
 		}
 		results := analysis.Items
 		processedVideos++
@@ -143,7 +144,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 		videoBar.Describe("    Extracting GPS")
 		gpsData, found, gpsErr := gps.ExtractGPS(video.Path)
 		if gpsErr != nil {
-			log.Printf("Phase 2: GPS extraction error for %s: %v", video.Filename, gpsErr)
+			log.Printf("Phase 2: GPS extraction error for %s: %s", security.SafeText(video.Filename), security.SafeText(gpsErr.Error()))
 		}
 		if found {
 			gpsLocations = append(gpsLocations, videoGPSData{
@@ -227,28 +228,28 @@ func (p *Pipeline) Run(ctx context.Context) error {
 
 	csvPaths, err := exp.ExportCSVs(classified, unclassified)
 	if err != nil {
-		return fmt.Errorf("exporting CSVs: %w", err)
+		return fmt.Errorf("exporting CSVs: %s", security.SafeText(err.Error()))
 	}
 
 	for entityType, path := range csvPaths {
-		fmt.Printf("  %s → %s\n", entityType, path)
+		fmt.Printf("  %s → %s\n", security.SafeText(entityType), security.SafeText(path))
 	}
 
 	if len(vendors) > 0 {
 		vendorPath, err := exp.ExportVendorCSV(vendors)
 		if err != nil {
-			log.Printf("Phase 4: vendor CSV export error: %v", err)
+			log.Printf("Phase 4: vendor CSV export error: %s", security.SafeText(err.Error()))
 		} else {
-			fmt.Printf("  vendors → %s\n", vendorPath)
+			fmt.Printf("  vendors → %s\n", security.SafeText(vendorPath))
 		}
 	}
 
 	if len(locations) > 0 {
 		locationPath, err := exp.ExportLocationCSV(locations)
 		if err != nil {
-			log.Printf("Phase 4: location CSV export error: %v", err)
+			log.Printf("Phase 4: location CSV export error: %s", security.SafeText(err.Error()))
 		} else {
-			fmt.Printf("  locations → %s\n", locationPath)
+			fmt.Printf("  locations → %s\n", security.SafeText(locationPath))
 		}
 	}
 
@@ -260,9 +261,9 @@ func (p *Pipeline) Run(ctx context.Context) error {
 	fmt.Printf("  Groups:            %d\n", len(groups))
 	fmt.Printf("  Credits charged:   %d\n", totalCredits)
 	if credentialSource != "" {
-		fmt.Printf("  AI source:         %s", credentialSource)
+		fmt.Printf("  AI source:         %s", security.SafeText(credentialSource))
 		if modelAlias != "" {
-			fmt.Printf(" · %s", modelAlias)
+			fmt.Printf(" · %s", security.SafeText(modelAlias))
 		}
 		fmt.Println()
 	}

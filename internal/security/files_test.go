@@ -3,6 +3,7 @@ package security
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -27,7 +28,7 @@ func TestPrivateAtomicOutputRejectsSymlinks(t *testing.T) {
 		t.Fatal(err)
 	}
 	info, _ := os.Stat(regular)
-	if info.Mode().Perm() != 0600 {
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0600 {
 		t.Fatal(info.Mode())
 	}
 }
@@ -51,8 +52,10 @@ func TestBoundMediaSourceRejectsReplacementAndSymlink(t *testing.T) {
 func TestSecretAndTerminalBoundaries(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "secret")
 	os.WriteFile(path, []byte("credential"), 0644)
-	if _, err := SecretFile(path); err == nil {
-		t.Fatal("public secret file accepted")
+	if runtime.GOOS != "windows" {
+		if _, err := SecretFile(path); err == nil {
+			t.Fatal("public secret file accepted")
+		}
 	}
 	os.Chmod(path, 0600)
 	if got, err := SecretFile(path); err != nil || got != "credential" {
@@ -66,6 +69,63 @@ func TestSecretAndTerminalBoundaries(t *testing.T) {
 	}
 	if !strings.Contains(got, "safe") {
 		t.Fatal(got)
+	}
+}
+
+func TestReadPrivateFileRejectsPublicPermissionsAndSymlinks(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "private")
+	if err := os.WriteFile(path, []byte("credential"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if runtime.GOOS != "windows" {
+		if _, err := ReadPrivateFile(path, 1024); err == nil {
+			t.Fatal("public file accepted")
+		}
+	}
+	if err := os.Chmod(path, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := ReadPrivateFile(path, 1024); err != nil || string(got) != "credential" {
+		t.Fatalf("private file rejected: %v", err)
+	}
+	link := filepath.Join(dir, "link")
+	if err := os.Symlink(path, link); err != nil {
+		t.Skip(err)
+	}
+	if _, err := ReadPrivateFile(link, 1024); err == nil {
+		t.Fatal("symlink accepted")
+	}
+}
+
+func TestReadPrivateFilePreservesMissingParentError(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "missing", "secret")
+	if _, err := ReadPrivateFile(path, 1024); !os.IsNotExist(err) {
+		t.Fatalf("missing parent error = %v, want not-exist", err)
+	}
+}
+
+func TestRemoveFileRejectsSymlinksAndRemovesRegularFiles(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(dir, "target")
+	if err := os.WriteFile(target, []byte("preserve"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(dir, "link")
+	if err := os.Symlink(target, link); err != nil {
+		t.Skip(err)
+	}
+	if err := RemoveFile(link); err == nil {
+		t.Fatal("symlink accepted")
+	}
+	if got, err := os.ReadFile(target); err != nil || string(got) != "preserve" {
+		t.Fatalf("symlink target changed: %q, %v", got, err)
+	}
+	if err := RemoveFile(target); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(target); !os.IsNotExist(err) {
+		t.Fatalf("regular file remains: %v", err)
 	}
 }
 

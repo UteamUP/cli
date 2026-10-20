@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/uteamup/cli/internal/imageanalyzer/models"
+	"github.com/uteamup/cli/internal/security"
 )
 
 var (
@@ -64,7 +65,11 @@ func DetectIPhonePairs(images []models.ImageInfo) map[string][]string {
 		}
 
 		pairs[primary.Filename] = variantPaths
-		log.Printf("iPhone edit pair: %s -> %v", primary.Filename, variantPaths)
+		safeVariantPaths := make([]string, len(variantPaths))
+		for index, path := range variantPaths {
+			safeVariantPaths[index] = security.SafeText(path)
+		}
+		log.Printf("iPhone edit pair: %s -> %v", security.SafeText(primary.Filename), safeVariantPaths)
 	}
 
 	log.Printf("iPhone edit detection complete: %d pairs found", len(pairs))

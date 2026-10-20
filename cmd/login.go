@@ -51,8 +51,8 @@ for all subsequent commands until it expires or you run "uteamup logout".`,
 }
 
 func init() {
-	loginCmd.Flags().StringVar(&loginAPIKey, "api-key", "", "API key (32 characters) for OAuth 2.0 + PKCE auth")
-	loginCmd.Flags().StringVar(&loginAPISecret, "api-secret", "", "Rejected: use --api-secret-file or --api-secret-stdin")
+	loginCmd.Flags().StringVar(&loginAPIKey, "api-key", "", "Rejected for safety; use --api-key-file or --api-key-auth")
+	loginCmd.Flags().StringVar(&loginAPISecret, "api-secret", "", "Rejected for safety; use --api-secret-file or --api-secret-stdin")
 	loginCmd.Flags().StringVar(&loginSecretFile, "api-secret-file", "", "Owner-only API secret file")
 	loginCmd.Flags().BoolVar(&loginSecretStdin, "api-secret-stdin", false, "Read API secret from stdin")
 	loginCmd.Flags().StringVar(&loginKeyFile, "api-key-file", "", "Owner-only API key file")

@@ -418,6 +418,8 @@ func init() {
 			ToolName:    "UteamupShiftHandoverDeleteCarryOver",
 			HTTPMethod:  "DELETE",
 			RESTPath:    "by-guid/{handoverGuid}/carryovers/{carryOverGuid}",
+			// The backend reads the concurrency token from a JSON body on this DELETE.
+			JSONBody: true,
 			Args: []ArgDef{
 				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
 				{Name: "carryOverGuid", Description: "Carry-over ExternalGuid", Required: true, Type: "uuid"},
@@ -534,6 +536,8 @@ func init() {
 			ToolName:    "UteamupShiftHandoverDeleteSection",
 			HTTPMethod:  "DELETE",
 			RESTPath:    "by-guid/{handoverGuid}/sections/{sectionGuid}",
+			// The backend reads the concurrency token from a JSON body on this DELETE.
+			JSONBody: true,
 			Args: []ArgDef{
 				{Name: "handoverGuid", Description: "Shift handover ExternalGuid", Required: true, Type: "uuid"},
 				{Name: "sectionGuid", Description: "Section ExternalGuid", Required: true, Type: "uuid"},

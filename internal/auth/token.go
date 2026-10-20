@@ -51,7 +51,7 @@ func LoadToken() (*TokenData, error) {
 		return nil, err
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := security.ReadPrivateFile(path, security.MaximumConfigFileBytes)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -82,14 +82,8 @@ func SaveToken(token *TokenData) error {
 		return fmt.Errorf("marshaling token: %w", err)
 	}
 
-	// Write then rename, so a crash or a second CLI process never reads a half-written
-	// session (renewal rewrites this file on an ordinary command, not just on login).
 	path := filepath.Join(dir, tokenFileName)
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return security.WriteFile(path, data)
 }
 
 // ClearToken deletes the cached token file.
@@ -98,7 +92,7 @@ func ClearToken() error {
 	if err != nil {
 		return err
 	}
-	err = os.Remove(path)
+	err = security.RemoveFile(path)
 	if os.IsNotExist(err) {
 		return nil
 	}

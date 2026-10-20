@@ -201,6 +201,7 @@ func newDomainAPIClient(logger *logging.Logger, exportCfg *registry.ExportConfig
 	}
 	return client.NewAPIClient(profile.BaseURL, timeout, insecure, retryOpts, logger).
 		WithProfile(selectedName).
+		WithTrustedBlobOrigins(profile.TrustedBlobOrigins).
 		WithTenant(profile.TenantGUID), nil
 }
 

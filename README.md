@@ -321,6 +321,7 @@ Config is stored at `~/.uteamup/config.json`. Supports multiple profiles for dif
       "apiKey": "<32-char API key>",
       "secret": "<64+ char secret>",
       "baseUrl": "https://api.uteamup.com",
+      "trustedBlobOrigins": ["https://blob.internal.example:8443"],
       "logLevel": "INFO",
       "requestTimeout": 30000,
       "maxRetries": 3,
@@ -451,15 +452,20 @@ Authenticate with UteamUP.
 Usage: uteamup login [flags]
 
 Flags:
-  --api-key string      API key (32 characters) for OAuth 2.0 + PKCE auth
-  --api-secret string   API secret (64+ characters) for OAuth 2.0 + PKCE auth
+  --api-key-auth        Prompt for API credentials without echo
+  --api-key-file        Read the API key from an owner-only file
+  --api-secret-file     Read the API secret from an owner-only file
+  --api-secret-stdin    Read the API secret from stdin
+
+The `--api-key` and `--api-secret` value flags are rejected because command-line
+arguments can be exposed by process listings and shell history.
 ```
 
 **Examples:**
 ```bash
-uteamup login                              # Interactive email/password
-ut login --api-key=KEY --api-secret=SECRET  # API key auth
-ut login --api-key=KEY                      # API key (prompted for secret)
+uteamup login                                              # Interactive email/password
+ut login --api-key-auth                                   # Protected API credential prompt
+ut login --api-key-file key.txt --api-secret-file secret.txt
 ```
 
 ### `uteamup logout`
@@ -520,8 +526,13 @@ Manage CLI configuration.
 | `config set <key> <value>` | Set a value in the active profile |
 | `config profile <name>` | Switch active profile |
 
-**Valid keys for `config set`:** `baseUrl`, `apiKey`, `secret`, `logLevel`,
-`requestTimeout`, `maxRetries`, `name`, `exportJson`, `exportDir`
+**Valid keys for `config set`:** `baseUrl`, `logLevel`, `requestTimeout`,
+`maxRetries`, `name`, `exportJson`, `exportDir`, `trustedBlobOrigins`. Azure Blob
+HTTPS endpoints under `*.blob.core.windows.net` are trusted by default. Configure
+custom storage endpoints as a comma-separated list of exact HTTPS origins on the
+profile that needs them; the hostname, scheme, and port must match the SAS URL.
+Use an empty value to remove all custom origins. API credentials are not accepted
+as command-line arguments; enter them through the interactive `config init` flow.
 
 **Examples:**
 ```bash
@@ -529,6 +540,8 @@ uteamup config init
 ut config show
 ut config set baseUrl https://localhost:5002
 ut config set logLevel DEBUG
+ut config set trustedBlobOrigins https://blob.internal.example:8443
+ut config set trustedBlobOrigins "https://blob.internal.example:8443,https://storage.example.net"
 ut config profile development
 ```
 

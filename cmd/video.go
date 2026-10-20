@@ -11,6 +11,7 @@ import (
 	"github.com/uteamup/cli/internal/auth"
 	"github.com/uteamup/cli/internal/config"
 	"github.com/uteamup/cli/internal/mediaanalyzer"
+	"github.com/uteamup/cli/internal/security"
 	vaconfig "github.com/uteamup/cli/internal/videoanalyzer/config"
 	"github.com/uteamup/cli/internal/videoanalyzer/pipeline"
 )
@@ -55,25 +56,24 @@ Examples:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		videoPath := args[0]
 
-		token, err := auth.LoadToken()
-		if err != nil {
-			return fmt.Errorf("loading authentication: %w", err)
-		}
-
 		// Load CLI config for profile settings.
 		cliCfg, err := config.Load()
 		if err != nil {
 			return fmt.Errorf("loading CLI config: %w", err)
 		}
-		profile, err := cliCfg.ActiveProfileConfig()
+		profile, selectedName, err := selectedProfileConfig(cliCfg, profileName)
 		if err != nil {
-			return fmt.Errorf("loading active profile: %w", err)
+			return fmt.Errorf("loading selected profile: %w", err)
+		}
+		token, err := auth.LoadTokenForOrigin(profile.BaseURL, selectedName)
+		if err != nil {
+			return fmt.Errorf("loading authentication: %w", err)
 		}
 
 		if err := validateMediaTenant(profile, token); err != nil {
 			return err
 		}
-		apiClient, err := newMediaAPIClient(profile, videoTimeout)
+		apiClient, err := newMediaAPIClient(profile, selectedName, videoTimeout)
 		if err != nil {
 			return err
 		}
@@ -81,19 +81,19 @@ Examples:
 		// Resolve paths to absolute.
 		absVideoPath, err := filepath.Abs(videoPath)
 		if err != nil {
-			return fmt.Errorf("resolving video path: %w", err)
+			return fmt.Errorf("resolving video path: %s", security.SafeText(err.Error()))
 		}
 
 		// Check that the path exists.
 		_, err = os.Stat(absVideoPath)
 		if err != nil {
-			return fmt.Errorf("video path %q does not exist: %w", absVideoPath, err)
+			return fmt.Errorf("video path %q does not exist: %s", security.SafeText(absVideoPath), security.SafeText(err.Error()))
 		}
 
 		// Resolve output directory.
 		absOutputDir, err := filepath.Abs(videoOutputDir)
 		if err != nil {
-			return fmt.Errorf("resolving output path: %w", err)
+			return fmt.Errorf("resolving output path: %s", security.SafeText(err.Error()))
 		}
 
 		// Build config options from CLI flags.
@@ -124,20 +124,20 @@ Examples:
 		if errs := cfg.Validate(); len(errs) > 0 {
 			fmt.Fprintln(os.Stderr, "Configuration errors:")
 			for _, e := range errs {
-				fmt.Fprintf(os.Stderr, "  - %s\n", e)
+				fmt.Fprintf(os.Stderr, "  - %s\n", security.SafeText(e))
 			}
 			return fmt.Errorf("invalid configuration")
 		}
 
 		// Print banner.
 		fmt.Printf("\n=== UteamUP Video Analyzer ===\n")
-		fmt.Printf("  Source:  %s\n", absVideoPath)
-		fmt.Printf("  Output:  %s\n", absOutputDir)
+		fmt.Printf("  Source:  %s\n", security.SafeText(absVideoPath))
+		fmt.Printf("  Output:  %s\n", security.SafeText(absOutputDir))
 		tenantName := token.TenantName
 		if tenantName == "" {
 			tenantName = "authenticated tenant"
 		}
-		fmt.Printf("  Tenant:  %s\n", tenantName)
+		fmt.Printf("  Tenant:  %s\n", security.SafeText(tenantName))
 		fmt.Printf("  AI:      server-governed route\n")
 		if videoDryRun {
 			fmt.Printf("  Mode:    DRY RUN (validation and upload scope only)\n")

@@ -21,6 +21,7 @@ import (
 	"github.com/uteamup/cli/internal/imageanalyzer/models"
 	"github.com/uteamup/cli/internal/imageanalyzer/scanner"
 	"github.com/uteamup/cli/internal/mediaanalyzer"
+	"github.com/uteamup/cli/internal/security"
 )
 
 // Pipeline orchestrates the 4-phase image analysis pipeline.
@@ -40,7 +41,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 
 	// ── Phase 1: Scan ──────────────────────────────────────────────────
 	fmt.Println("\nPhase 1: Scanning images...")
-	log.Printf("Phase 1: Scanning images folder=%s", p.config.Scan.ImageFolder)
+	log.Printf("Phase 1: Scanning images folder=%s", security.SafeText(p.config.Scan.ImageFolder))
 
 	sc := scanner.NewScanner(
 		p.config.Scan.ImageFolder,
@@ -52,11 +53,11 @@ func (p *Pipeline) Run(ctx context.Context) error {
 
 	allImages, err := sc.ScanFolder()
 	if err != nil {
-		return fmt.Errorf("scanning folder: %w", err)
+		return fmt.Errorf("scanning folder: %s", security.SafeText(err.Error()))
 	}
 
 	if len(allImages) == 0 {
-		fmt.Println("No images found in folder:", p.config.Scan.ImageFolder)
+		fmt.Println("No images found in folder:", security.SafeText(p.config.Scan.ImageFolder))
 		return nil
 	}
 
@@ -111,18 +112,18 @@ func (p *Pipeline) Run(ctx context.Context) error {
 
 	cp, err := checkpoint.Load(p.config.Processing.CheckpointFile, p.config.Processing.CheckpointScope, p.config.Processing.Resume)
 	if err != nil {
-		return fmt.Errorf("loading checkpoint: %w", err)
+		return fmt.Errorf("loading checkpoint: %s", security.SafeText(err.Error()))
 	}
 
 	defer cp.Close()
 	if err := cp.AcquireLock(); err != nil {
-		return fmt.Errorf("checkpoint lock: %w", err)
+		return fmt.Errorf("checkpoint lock: %s", security.SafeText(err.Error()))
 	}
 	defer cp.ReleaseLock()
 
 	results, restored, err := restoreResults(cp.GetResults(), imagesToAnalyze, editPairs, p.config.Processing.ConfidenceThreshold)
 	if err != nil {
-		return fmt.Errorf("restoring checkpoint: %w", err)
+		return fmt.Errorf("restoring checkpoint: %s", security.SafeText(err.Error()))
 	}
 
 	totalImages := len(imagesToAnalyze)
@@ -156,7 +157,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 		}
 
 		// Per-image header.
-		fmt.Printf("\n  ── Image %d/%d: %s ──\n", i+1, totalImages, imageInfo.Filename)
+		fmt.Printf("\n  ── Image %d/%d: %s ──\n", i+1, totalImages, security.SafeText(imageInfo.Filename))
 
 		// Per-image progress: 3 steps (load → analyze → save).
 		imgBar := progressbar.NewOptions(3,
@@ -179,12 +180,12 @@ func (p *Pipeline) Run(ctx context.Context) error {
 			p.config.Scan.MaxImageDimension,
 		)
 		if err != nil {
-			log.Printf("Failed to load image %s: %v", imageInfo.Path, err)
-			failResult := createFailResult(imageInfo, fmt.Sprintf("Load error: %v", err))
+			log.Printf("Failed to load image %s: %s", security.SafeText(imageInfo.Path), security.SafeText(err.Error()))
+			failResult := createFailResult(imageInfo, security.SafeText(fmt.Sprintf("Load error: %v", err)))
 			results = append(results, failResult)
 			raw, _ := json.Marshal(failResult)
 			if err := cp.AddResult(imageInfo.SHA256Hash, raw); err != nil {
-				return fmt.Errorf("saving checkpoint: %w", err)
+				return fmt.Errorf("saving checkpoint: %s", security.SafeText(err.Error()))
 			}
 			_ = imgBar.Add(3)
 			_ = overallBar.Add(1)
@@ -196,7 +197,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 		imgBar.Describe("    Analyzing")
 		analysis, err := p.analyzer.AnalyzePhoto(ctx, imageInfo.Path, imgBytes)
 		if err != nil {
-			return fmt.Errorf("analyzing image %q: %w", imageInfo.Filename, err)
+			return fmt.Errorf("analyzing image %q: %s", security.SafeText(imageInfo.Filename), security.SafeText(err.Error()))
 		}
 		imageResults := analysis.Items
 		totalCredits += analysis.Receipt.CreditsCharged
@@ -216,7 +217,7 @@ func (p *Pipeline) Run(ctx context.Context) error {
 		// Checkpoint all results for this image.
 		raw, _ := json.Marshal(imageResults)
 		if err := cp.AddResult(imageInfo.SHA256Hash, raw); err != nil {
-			return fmt.Errorf("saving checkpoint: %w", err)
+			return fmt.Errorf("saving checkpoint: %s", security.SafeText(err.Error()))
 		}
 		_ = imgBar.Add(1)
 
@@ -271,34 +272,34 @@ func (p *Pipeline) Run(ctx context.Context) error {
 
 	csvFiles, err := exp.ExportCSVs(groups, unclassified)
 	if err != nil {
-		return fmt.Errorf("exporting CSVs: %w", err)
+		return fmt.Errorf("exporting CSVs: %s", security.SafeText(err.Error()))
 	}
 	for entityType, csvPath := range csvFiles {
-		fmt.Printf("  CSV written: %s -> %s\n", entityType, csvPath)
+		fmt.Printf("  CSV written: %s -> %s\n", security.SafeText(entityType), security.SafeText(csvPath))
 	}
 
 	if len(vendors) > 0 {
 		vendorPath, err := exp.ExportVendorCSV(vendors)
 		if err != nil {
-			log.Printf("Warning: failed to export vendor CSV: %v", err)
+			log.Printf("Warning: failed to export vendor CSV: %s", security.SafeText(err.Error()))
 		} else {
-			fmt.Printf("  CSV written: vendors -> %s\n", vendorPath)
+			fmt.Printf("  CSV written: vendors -> %s\n", security.SafeText(vendorPath))
 		}
 	}
 
 	if len(locations) > 0 {
 		locationPath, err := exp.ExportLocationCSV(locations)
 		if err != nil {
-			log.Printf("Warning: failed to export location CSV: %v", err)
+			log.Printf("Warning: failed to export location CSV: %s", security.SafeText(err.Error()))
 		} else {
-			fmt.Printf("  CSV written: locations -> %s\n", locationPath)
+			fmt.Printf("  CSV written: locations -> %s\n", security.SafeText(locationPath))
 		}
 	}
 
 	if p.config.Processing.RenameImages {
 		renameMap, err := exp.RenameImages(groups)
 		if err != nil {
-			return fmt.Errorf("renaming images: %w", err)
+			return fmt.Errorf("renaming images: %s", security.SafeText(err.Error()))
 		}
 		fmt.Printf("  Images renamed: %d\n", len(renameMap))
 	}
@@ -306,19 +307,19 @@ func (p *Pipeline) Run(ctx context.Context) error {
 	duration := time.Since(startTime).Seconds()
 	_, err = exp.GenerateSummaryReport(groups, unclassified, duration, duplicatesFound)
 	if err != nil {
-		return fmt.Errorf("generating summary report: %w", err)
+		return fmt.Errorf("generating summary report: %s", security.SafeText(err.Error()))
 	}
 
 	// Clean up checkpoint on success.
 	if err := cp.Delete(); err != nil {
-		return fmt.Errorf("cleaning checkpoint: %w", err)
+		return fmt.Errorf("cleaning checkpoint: %s", security.SafeText(err.Error()))
 	}
 
 	fmt.Printf("\n=== Pipeline complete in %.1fs ===\n", duration)
 	if credentialSource != "" {
-		fmt.Printf("  AI source: %s", credentialSource)
+		fmt.Printf("  AI source: %s", security.SafeText(credentialSource))
 		if modelAlias != "" {
-			fmt.Printf(" · %s", modelAlias)
+			fmt.Printf(" · %s", security.SafeText(modelAlias))
 		}
 		fmt.Println()
 	}

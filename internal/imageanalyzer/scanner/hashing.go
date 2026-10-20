@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/uteamup/cli/internal/security"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -16,6 +15,7 @@ import (
 	"github.com/corona10/goimagehash"
 
 	"github.com/uteamup/cli/internal/imageanalyzer/imageutil"
+	"github.com/uteamup/cli/internal/security"
 )
 
 const hashChunkSize = 8192 // 8 KiB
@@ -60,7 +60,7 @@ func ComputePerceptualHash(filePath string) (string, error) {
 	if imageutil.IsHEIC(filePath) {
 		jpegBytes, err := imageutil.ConvertHEICToJPEG(filePath)
 		if err != nil {
-			log.Printf("perceptual hash: HEIC conversion failed for %s: %v", filePath, err)
+			log.Printf("perceptual hash: HEIC conversion failed for %s: %s", security.SafeText(filePath), security.SafeText(err.Error()))
 			return "", nil
 		}
 		if err := imageutil.ValidateImageHeader(bytes.NewReader(jpegBytes)); err != nil {
@@ -68,7 +68,7 @@ func ComputePerceptualHash(filePath string) (string, error) {
 		}
 		decoded, _, err := image.Decode(bytes.NewReader(jpegBytes))
 		if err != nil {
-			log.Printf("perceptual hash: decode converted HEIC failed for %s: %v", filePath, err)
+			log.Printf("perceptual hash: decode converted HEIC failed for %s: %s", security.SafeText(filePath), security.SafeText(err.Error()))
 			return "", nil
 		}
 		img = decoded
@@ -87,7 +87,7 @@ func ComputePerceptualHash(filePath string) (string, error) {
 		}
 		decoded, _, err := image.Decode(f)
 		if err != nil {
-			log.Printf("perceptual hash: decode failed for %s: %v", filePath, err)
+			log.Printf("perceptual hash: decode failed for %s: %s", security.SafeText(filePath), security.SafeText(err.Error()))
 			return "", nil
 		}
 		img = decoded
@@ -95,7 +95,7 @@ func ComputePerceptualHash(filePath string) (string, error) {
 
 	hash, err := goimagehash.AverageHash(img)
 	if err != nil {
-		log.Printf("perceptual hash: average hash failed for %s: %v", filePath, err)
+		log.Printf("perceptual hash: average hash failed for %s: %s", security.SafeText(filePath), security.SafeText(err.Error()))
 		return "", nil
 	}
 

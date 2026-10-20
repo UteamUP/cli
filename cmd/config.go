@@ -143,10 +143,11 @@ var configSetCmd = &cobra.Command{
 	Short: "Set a configuration value",
 	Long: `Set a value in the active profile's configuration.
 
-Valid keys: baseUrl, apiKey, secret, logLevel, requestTimeout, maxRetries, exportJson, exportDir
+Valid keys: baseUrl, trustedBlobOrigins, logLevel, requestTimeout, maxRetries, exportJson, exportDir
 
 Examples:
   uteamup config set baseUrl https://localhost:5002
+  ut config set trustedBlobOrigins https://blob.internal.example:8443
   ut config set logLevel DEBUG
   ut config set exportJson true
   ut config set exportDir ~/my-exports`,
@@ -186,8 +187,17 @@ Examples:
 			profile.ExportJSON = strings.ToLower(value) == "true" || value == "1" || strings.ToLower(value) == "yes"
 		case "exportDir", "exportdir":
 			profile.ExportDir = value
+		case "trustedBlobOrigins", "trustedbloborigins":
+			var values []string
+			if strings.TrimSpace(value) != "" {
+				values = strings.Split(value, ",")
+			}
+			profile.TrustedBlobOrigins, err = config.NormalizeTrustedBlobOrigins(values)
+			if err != nil {
+				return fmt.Errorf("invalid trustedBlobOrigins: %w", err)
+			}
 		default:
-			return fmt.Errorf("unknown config key %q — valid keys: baseUrl, apiKey, secret, logLevel, requestTimeout, maxRetries, exportJson, exportDir", key)
+			return fmt.Errorf("unknown config key %q — valid keys: baseUrl, trustedBlobOrigins, logLevel, requestTimeout, maxRetries, exportJson, exportDir", key)
 		}
 
 		cfg.Profiles[cfg.ActiveProfile] = *profile
@@ -195,7 +205,11 @@ Examples:
 			return fmt.Errorf("saving config: %w", err)
 		}
 
-		fmt.Printf("Set %s = %s (profile: %s)\n", key, safeConfigDisplayValue(key, value), cfg.ActiveProfile)
+		displayValue := value
+		if key == "trustedBlobOrigins" || key == "trustedbloborigins" {
+			displayValue = strings.Join(profile.TrustedBlobOrigins, ",")
+		}
+		fmt.Printf("Set %s = %s (profile: %s)\n", key, safeConfigDisplayValue(key, displayValue), cfg.ActiveProfile)
 		return nil
 	},
 }

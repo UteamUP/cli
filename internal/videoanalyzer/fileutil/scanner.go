@@ -2,12 +2,13 @@ package fileutil
 
 import (
 	"fmt"
-	"github.com/uteamup/cli/internal/security"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 	"sort"
+
+	"github.com/uteamup/cli/internal/security"
 )
 
 // VideoFile holds metadata about a discovered video file.
@@ -66,7 +67,7 @@ func (s *Scanner) ScanPath(path string) (*ScanResult, error) {
 		}
 		fi, err := d.Info()
 		if err != nil {
-			log.Printf("skip %s: %v", p, err)
+			log.Printf("skip %s: %s", security.SafeText(p), security.SafeText(err.Error()))
 			return nil
 		}
 		s.processFile(p, fi, result)
@@ -87,13 +88,13 @@ func (s *Scanner) ScanPath(path string) (*ScanResult, error) {
 // category in the scan result.
 func (s *Scanner) processFile(path string, info os.FileInfo, result *ScanResult) {
 	if !info.Mode().IsRegular() {
-		log.Printf("skip %s: upload source is not a regular file", filepath.Base(path))
+		log.Printf("skip %s: upload source is not a regular file", security.SafeText(filepath.Base(path)))
 		result.Skipped = append(result.Skipped, path)
 		return
 	}
 	maxBytes := int64(s.maxFileSizeMB) * 1024 * 1024
 	if info.Size() <= 0 || info.Size() > maxBytes {
-		log.Printf("skip %s: file size is outside the 1-%d MB limit", filepath.Base(path), s.maxFileSizeMB)
+		log.Printf("skip %s: file size is outside the 1-%d MB limit", security.SafeText(filepath.Base(path)), s.maxFileSizeMB)
 		result.Skipped = append(result.Skipped, path)
 		return
 	}
@@ -101,13 +102,13 @@ func (s *Scanner) processFile(path string, info os.FileInfo, result *ScanResult)
 	security.BindSource(path, info)
 	mt, err := DetectMIME(path)
 	if err != nil {
-		log.Printf("skip %s: MIME detection failed: %v", filepath.Base(path), err)
+		log.Printf("skip %s: MIME detection failed: %s", security.SafeText(filepath.Base(path)), security.SafeText(err.Error()))
 		result.Skipped = append(result.Skipped, path)
 		return
 	}
 
 	if IsUnsupported(mt) {
-		log.Printf("skip %s: unsupported format", filepath.Base(path))
+		log.Printf("skip %s: unsupported format", security.SafeText(filepath.Base(path)))
 		result.Skipped = append(result.Skipped, path)
 		return
 	}

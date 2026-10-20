@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	clierrors "github.com/uteamup/cli/internal/errors"
+	"github.com/uteamup/cli/internal/security"
 )
 
 const (
@@ -26,15 +28,16 @@ type Config struct {
 
 // Profile holds connection settings for a single environment.
 type Profile struct {
-	Name           string `json:"name"`
-	APIKey         string `json:"apiKey,omitempty"`
-	Secret         string `json:"secret,omitempty"`
-	BaseURL        string `json:"baseUrl"`
-	LogLevel       string `json:"logLevel"`
-	RequestTimeout int    `json:"requestTimeout"`
-	MaxRetries     int    `json:"maxRetries"`
-	ExportJSON     bool   `json:"exportJson"`
-	ExportDir      string `json:"exportDir,omitempty"`
+	Name               string   `json:"name"`
+	APIKey             string   `json:"apiKey,omitempty"`
+	Secret             string   `json:"secret,omitempty"`
+	BaseURL            string   `json:"baseUrl"`
+	TrustedBlobOrigins []string `json:"trustedBlobOrigins,omitempty"`
+	LogLevel           string   `json:"logLevel"`
+	RequestTimeout     int      `json:"requestTimeout"`
+	MaxRetries         int      `json:"maxRetries"`
+	ExportJSON         bool     `json:"exportJson"`
+	ExportDir          string   `json:"exportDir,omitempty"`
 	// Tenant override — use a specific tenant instead of the logged-in default
 	TenantGUID string `json:"tenantGuid,omitempty"`
 }
@@ -64,7 +67,7 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := security.ReadPrivateFile(path, security.MaximumConfigFileBytes)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, &clierrors.ConfigError{
@@ -111,7 +114,7 @@ func Save(cfg *Config) error {
 	}
 
 	path := filepath.Join(dir, configFileName)
-	return os.WriteFile(path, data, 0600)
+	return security.WriteFile(path, data)
 }
 
 // ActiveProfile returns the currently active profile.
@@ -187,7 +190,41 @@ func validate(cfg *Config) error {
 			Message: fmt.Sprintf("profile %q not found in profiles", cfg.ActiveProfile),
 		}
 	}
+	for name, profile := range cfg.Profiles {
+		origins, err := NormalizeTrustedBlobOrigins(profile.TrustedBlobOrigins)
+		if err != nil {
+			return &clierrors.ConfigError{
+				Field:   "trustedBlobOrigins",
+				Message: fmt.Sprintf("profile %q has invalid trusted Blob origins: %v", name, err),
+			}
+		}
+		profile.TrustedBlobOrigins = origins
+		cfg.Profiles[name] = profile
+	}
 	return nil
+}
+
+// NormalizeTrustedBlobOrigins accepts exact HTTPS origins only. Wildcards,
+// paths, credentials, queries, and fragments cannot be used as trust entries.
+func NormalizeTrustedBlobOrigins(origins []string) ([]string, error) {
+	normalized := make([]string, 0, len(origins))
+	seen := make(map[string]struct{}, len(origins))
+	for _, value := range origins {
+		value = strings.TrimSpace(value)
+		if value == "" || strings.Contains(value, "*") {
+			return nil, fmt.Errorf("each entry must be an exact HTTPS origin")
+		}
+		origin, err := security.Origin(value)
+		if err != nil {
+			return nil, fmt.Errorf("%q must be an exact HTTPS origin", value)
+		}
+		if _, exists := seen[origin]; exists {
+			continue
+		}
+		seen[origin] = struct{}{}
+		normalized = append(normalized, origin)
+	}
+	return normalized, nil
 }
 
 // RedactedSummary returns a display-safe summary of the active profile.
@@ -219,6 +256,7 @@ func (c *Config) RedactedSummary() string {
 
 	return fmt.Sprintf(`Active Profile: %s (%s)
   Base URL:        %s
+  Trusted Blob Origins: %s
   API Key:         %s
   Secret:          %s
   Tenant GUID:     %s
@@ -228,10 +266,17 @@ func (c *Config) RedactedSummary() string {
   Export JSON:     %v
   Export Dir:      %s`,
 		c.ActiveProfile, p.Name,
-		p.BaseURL, apiKey, secret,
+		p.BaseURL, trustedBlobOriginsSummary(p.TrustedBlobOrigins), apiKey, secret,
 		tenantGUID,
 		p.LogLevel, p.RequestTimeout, p.MaxRetries,
 		p.ExportJSON, exportDir)
+}
+
+func trustedBlobOriginsSummary(origins []string) string {
+	if len(origins) == 0 {
+		return "(Azure Blob endpoints only)"
+	}
+	return strings.Join(origins, ", ")
 }
 
 func removeDeprecatedMediaSettings(path string, data []byte) error {
@@ -265,7 +310,7 @@ func removeDeprecatedMediaSettings(path string, data []byte) error {
 	if err != nil {
 		return fmt.Errorf("removing deprecated media credentials: %w", err)
 	}
-	if err := os.WriteFile(path, sanitized, 0o600); err != nil {
+	if err := security.WriteFile(path, sanitized); err != nil {
 		return fmt.Errorf("removing deprecated media credentials: %w", err)
 	}
 	return nil

@@ -74,14 +74,15 @@ type JSONRPCError struct {
 
 // APIClient communicates with the UteamUP backend.
 type APIClient struct {
-	profile   string
-	tenant    string
-	baseURL   string
-	timeout   time.Duration
-	insecure  bool
-	retryOpts RetryOptions
-	logger    *logging.Logger
-	requestID int
+	profile            string
+	tenant             string
+	baseURL            string
+	trustedBlobOrigins []string
+	timeout            time.Duration
+	insecure           bool
+	retryOpts          RetryOptions
+	logger             *logging.Logger
+	requestID          int
 }
 
 // NewAPIClient creates a new APIClient.
@@ -291,23 +292,49 @@ func (c *APIClient) CallREST(ctx context.Context, method, path string, params ma
 	if method == "GET" || method == "DELETE" {
 		query := buildQueryString(params, actionName)
 		fullURL = appendQueryString(fullURL, query)
-	} else {
-		// Remove positional args (id) from body — already in the URL
-		bodyParams := make(map[string]any)
-		for k, v := range params {
-			if k != "id" {
-				bodyParams[k] = v
-			}
-		}
-		if len(bodyParams) > 0 {
-			bodyBytes, err = json.Marshal(bodyParams)
-			if err != nil {
-				return nil, fmt.Errorf("marshaling body: %w", err)
-			}
-		}
+	} else if bodyBytes, err = jsonBody(params); err != nil {
+		return nil, err
 	}
 
 	return c.sendREST(ctx, method, path, fullURL, bodyBytes, "application/json", token, extraHeaders)
+}
+
+// CallRESTJSON sends params as a JSON body whatever the method, for DELETE endpoints that
+// bind a [FromBody] model (a query string there binds to nothing). Auth, tenant, CSRF and
+// retry behaviour are the same as CallREST.
+func (c *APIClient) CallRESTJSON(ctx context.Context, method, path string, params map[string]any, extraHeaders map[string]string) (json.RawMessage, error) {
+	token, err := auth.LoadTokenForOrigin(c.baseURL, c.profile)
+	if err != nil {
+		return nil, clierrors.NewAuthError("loading token", err)
+	}
+	if token == nil || !token.IsValid() {
+		return nil, &clierrors.NotAuthenticatedError{}
+	}
+
+	bodyBytes, err := jsonBody(params)
+	if err != nil {
+		return nil, err
+	}
+	return c.sendREST(ctx, method, path, c.baseURL+path, bodyBytes, "application/json", token, extraHeaders)
+}
+
+// jsonBody marshals params without the positional id, which already sits in the URL.
+// No params means no body.
+func jsonBody(params map[string]any) ([]byte, error) {
+	bodyParams := make(map[string]any)
+	for k, v := range params {
+		if k != "id" {
+			bodyParams[k] = v
+		}
+	}
+	if len(bodyParams) == 0 {
+		return nil, nil
+	}
+	bodyBytes, err := json.Marshal(bodyParams)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling body: %w", err)
+	}
+	return bodyBytes, nil
 }
 
 // CallRESTForm sends params as multipart/form-data fields for endpoints that bind a
@@ -484,6 +511,9 @@ func (c *APIClient) DownloadFile(ctx context.Context, rawURL, outputPath string)
 	if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil {
 		return 0, fmt.Errorf("download URL must be an absolute HTTPS URL")
 	}
+	if !isAuthorizedBlobOrigin(parsed, c.trustedBlobOrigins) {
+		return 0, fmt.Errorf("download URL origin is not trusted by the selected profile")
+	}
 	if err := EnsureDownloadOutputIsFree(outputPath); err != nil {
 		return 0, err
 	}
@@ -507,6 +537,39 @@ func (c *APIClient) DownloadFile(ctx context.Context, rawURL, outputPath string)
 		return 0, fmt.Errorf("download exceeds the %d byte limit", maxDownloadBytes)
 	}
 	return WriteDownloadFile(outputPath, resp.Body)
+}
+
+func isAuthorizedBlobOrigin(parsed *url.URL, trustedOrigins []string) bool {
+	origin, err := security.Origin(parsed.Scheme + "://" + parsed.Host)
+	if err != nil {
+		return false
+	}
+
+	host := strings.ToLower(parsed.Hostname())
+	if parsed.Port() == "" || parsed.Port() == "443" {
+		const suffix = ".blob.core.windows.net"
+		account := strings.TrimSuffix(host, suffix)
+		if account != host && len(account) >= 3 && len(account) <= 24 {
+			validAccount := true
+			for _, char := range account {
+				if (char < 'a' || char > 'z') && (char < '0' || char > '9') {
+					validAccount = false
+					break
+				}
+			}
+			if validAccount {
+				return true
+			}
+		}
+	}
+
+	for _, trusted := range trustedOrigins {
+		allowed, err := security.Origin(trusted)
+		if err == nil && allowed == origin {
+			return true
+		}
+	}
+	return false
 }
 
 // WriteDownloadFile copies r to a new local file. Existing files are never
@@ -895,6 +958,13 @@ func appendQueryString(rawURL, query string) string {
 }
 
 func (c *APIClient) WithProfile(profile string) *APIClient { c.profile = profile; return c }
+
+// WithTrustedBlobOrigins allows downloads from custom Blob endpoints explicitly
+// trusted by the selected config profile. Entries are exact HTTPS origins.
+func (c *APIClient) WithTrustedBlobOrigins(origins []string) *APIClient {
+	c.trustedBlobOrigins = append([]string(nil), origins...)
+	return c
+}
 
 // WithTenant pins the tenant a request names, overriding the one saved with the login: the profile's
 // tenantGuid or UTEAMUP_TENANT_GUID. The backend still refuses a tenant the caller is not a member of.

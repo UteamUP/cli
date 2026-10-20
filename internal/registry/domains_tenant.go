@@ -109,7 +109,7 @@ func init() {
 			},
 			{
 				Name:        "invite-defaults-get",
-				Description: "Get the per-tenant invite-defaults configuration (auto-assign license + role)",
+				Description: "Get the per-tenant invite-defaults configuration (auto-assign license, Radio seat + role)",
 				ToolName:    "UteamupTenantInviteDefaultsGet",
 				HTTPMethod:  "GET",
 				RESTPath:    "{tenantGuidToGet}/invite-defaults",
@@ -131,6 +131,7 @@ func init() {
 					{Name: "license-type", BodyName: "defaultLicenseType", Description: "License type to auto-assign: 0=Regular, 1=Helpdesk", Type: "int"},
 					{Name: "auto-role", BodyName: "autoAssignRoleOnInvite", Description: "Enable auto-assign role on invite", Type: "bool"},
 					{Name: "role-id", BodyName: "defaultInviteRoleId", Description: "GUID of the default tenant-scoped role to auto-assign", Type: "string"},
+					{Name: "auto-radio", BodyName: "autoAssignRadioLicenseOnInvite", Description: "Enable auto-assign Radio seat on invite", Type: "bool"},
 				},
 			},
 			{

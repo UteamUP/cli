@@ -16,9 +16,12 @@ const maxMediaTimeout = 15 * time.Minute
 
 var tenantGUIDPattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
 
-func newMediaAPIClient(profile *config.Profile, timeout time.Duration) (*client.APIClient, error) {
+func newMediaAPIClient(profile *config.Profile, profileName string, timeout time.Duration) (*client.APIClient, error) {
 	if profile == nil {
-		return nil, fmt.Errorf("active profile is required for media analysis")
+		return nil, fmt.Errorf("selected profile is required for media analysis")
+	}
+	if strings.TrimSpace(profileName) == "" {
+		return nil, fmt.Errorf("selected profile name is required for media analysis")
 	}
 	baseURL := strings.TrimSpace(profile.BaseURL)
 	if err := client.ValidateBaseURL(baseURL); err != nil {
@@ -40,7 +43,7 @@ func newMediaAPIClient(profile *config.Profile, timeout time.Duration) (*client.
 		BaseDelay:  time.Second,
 		MaxDelay:   10 * time.Second,
 	}
-	return client.NewAPIClient(baseURL, timeout, insecure, retries, logging.New(level)).WithProfile(activeProfileName()).WithTenant(profile.TenantGUID), nil
+	return client.NewAPIClient(baseURL, timeout, insecure, retries, logging.New(level)).WithProfile(profileName).WithTenant(profile.TenantGUID), nil
 }
 
 func validateMediaTenant(profile *config.Profile, token *auth.TokenData) error {
@@ -62,12 +65,4 @@ func validateMediaTenant(profile *config.Profile, token *auth.TokenData) error {
 		return fmt.Errorf("the active profile tenant does not match the authenticated tenant; sign in again")
 	}
 	return nil
-}
-
-func activeProfileName() string {
-	cfg, err := config.Load()
-	if err != nil {
-		return ""
-	}
-	return cfg.ActiveProfile
 }

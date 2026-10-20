@@ -3,19 +3,11 @@ package security
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 )
 
 func SecretFile(path string) (string, error) {
-	info, err := os.Lstat(path)
-	if err != nil {
-		return "", err
-	}
-	if info.Mode().Perm()&0077 != 0 {
-		return "", fmt.Errorf("secret file must be owner-only")
-	}
-	bytes, err := ReadFile(path, 64*1024)
+	bytes, err := ReadPrivateFile(path, 64*1024)
 	if err != nil {
 		return "", err
 	}

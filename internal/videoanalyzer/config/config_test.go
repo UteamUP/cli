@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/uteamup/cli/internal/security"
 )
 
 func TestDefaultConfigUsesBackendUploadLimit(t *testing.T) {
@@ -27,6 +29,32 @@ func TestLoadConfigRejectsLegacyProviderCredentials(t *testing.T) {
 	_, err := LoadConfig(path)
 	if err == nil || !strings.Contains(err.Error(), "field gemini not found") {
 		t.Fatalf("expected legacy provider config rejection, got %v", err)
+	}
+}
+
+func TestLoadConfigRejectsOversizedFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	contents := strings.Repeat("x", int(security.MaximumConfigFileBytes)+1)
+	if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadConfig(path); err == nil {
+		t.Fatal("oversized configuration was accepted")
+	}
+}
+
+func TestLoadConfigRejectsSymlink(t *testing.T) {
+	directory := t.TempDir()
+	target := filepath.Join(directory, "target.yaml")
+	if err := os.WriteFile(target, []byte("scan:\n  max_file_size_mb: 1\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(directory, "config.yaml")
+	if err := os.Symlink(target, link); err != nil {
+		t.Skip(err)
+	}
+	if _, err := LoadConfig(link); err == nil {
+		t.Fatal("symlink configuration was accepted")
 	}
 }
 
