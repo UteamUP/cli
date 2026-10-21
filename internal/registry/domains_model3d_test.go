@@ -39,6 +39,7 @@ func TestModel3DActionsResolveToRealControllerRoutes(t *testing.T) {
 		{"list", "GET", "/api/model3d", map[string]any{}},
 		{"get", "GET", "/api/model3d/" + guid, map[string]any{"externalGuid": guid}},
 		{"delete", "DELETE", "/api/model3d/" + guid, map[string]any{"externalGuid": guid}},
+		{"duplicate", "POST", "/api/model3d/" + guid + "/duplicate", map[string]any{"externalGuid": guid, "name": "Copy"}},
 		{"link", "PUT", "/api/model3d/link", map[string]any{}},
 		{"unlink", "PUT", "/api/model3d/link", map[string]any{}},
 		{"resolve", "GET", "/api/model3d/item/part/" + guid, map[string]any{"itemKind": "part", "itemGuid": guid}},
@@ -74,12 +75,13 @@ func TestModel3DActionsResolveToRealControllerRoutes(t *testing.T) {
 func TestModel3DToolNamesMatchTheBackendTools(t *testing.T) {
 	t.Parallel()
 	for action, tool := range map[string]string{
-		"list":    "uteamup_model3d_list",
-		"get":     "uteamup_model3d_get",
-		"delete":  "uteamup_model3d_delete",
-		"link":    "uteamup_model3d_link",
-		"unlink":  "uteamup_model3d_link",
-		"resolve": "uteamup_model3d_resolve",
+		"list":      "uteamup_model3d_list",
+		"get":       "uteamup_model3d_get",
+		"delete":    "uteamup_model3d_delete",
+		"duplicate": "uteamup_model3d_duplicate",
+		"link":      "uteamup_model3d_link",
+		"unlink":    "uteamup_model3d_link",
+		"resolve":   "uteamup_model3d_resolve",
 	} {
 		_, a := model3DAction(t, action)
 		if a.ToolName != tool {
@@ -135,6 +137,18 @@ func TestModel3DItemKindIsConstrainedToTheFourKinds(t *testing.T) {
 				t.Errorf("%s --item-kind allows %v, want %v", name, flag.AllowedValues, want)
 			}
 		}
+	}
+}
+
+func TestModel3DDuplicateRequiresANameSentInTheBody(t *testing.T) {
+	t.Parallel()
+	_, action := model3DAction(t, "duplicate")
+	if len(action.Flags) != 1 {
+		t.Fatalf("duplicate flags = %+v, want only --name", action.Flags)
+	}
+	name := action.Flags[0]
+	if name.Name != "name" || !name.Required || name.Type != "string" || name.QueryName != "" {
+		t.Fatalf("duplicate --name = %+v, want a required string body field (Model3DDuplicateModel.Name)", name)
 	}
 }
 

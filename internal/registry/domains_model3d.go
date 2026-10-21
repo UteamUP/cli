@@ -29,6 +29,19 @@ func init() {
 				},
 			},
 			{
+				Name:        "duplicate",
+				Description: "Copy a 3D model into a new, independent model that can be edited without changing the original",
+				ToolName:    "uteamup_model3d_duplicate",
+				HTTPMethod:  "POST",
+				RESTPath:    "{externalGuid}/duplicate",
+				Args: []ArgDef{
+					{Name: "externalGuid", Description: "GUID of the 3D model to copy", Required: true, Type: "non-empty-uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "name", Description: "Name of the copy (1-256 characters)", Required: true, Type: "string"},
+				},
+			},
+			{
 				Name:        "delete",
 				Description: "Delete a 3D model; one still used by items is refused unless --force unlinks them first",
 				ToolName:    "uteamup_model3d_delete",
