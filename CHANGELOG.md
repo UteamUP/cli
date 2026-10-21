@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.1](https://github.com/UteamUP/cli/compare/5.0.0...5.0.1) (2026-10-21)
+
+
+### Bug Fixes
+
+* **auth:** request the REST resource in the API-key token exchange ([71c829e](https://github.com/UteamUP/cli/commit/71c829e1714e947380dbb317d8869f1b83df3679))
+
 ## [5.0.0](https://github.com/UteamUP/cli/compare/4.9.0...5.0.0) (2026-10-20)
 
 
