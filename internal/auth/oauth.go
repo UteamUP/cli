@@ -433,7 +433,8 @@ func (a *Client) LoginWithAPIKey(apiKey, secret string) (*TokenData, error) {
 		return nil, clierrors.NewAuthError("no authorization code received", nil)
 	}
 
-	// Step 3: Token exchange
+	// Step 3: Token exchange. The CLI calls REST routes, so it names the REST resource (RFC 8707);
+	// a token issued for the MCP resource is refused everywhere except /mcp.
 	tokenData := url.Values{
 		"grant_type":    {"authorization_code"},
 		"code":          {code},
@@ -441,6 +442,7 @@ func (a *Client) LoginWithAPIKey(apiKey, secret string) (*TokenData, error) {
 		"client_secret": {secret},
 		"code_verifier": {verifier},
 		"redirect_uri":  {"urn:ietf:wg:oauth:2.0:oob"},
+		"resource":      {a.baseURL + "/api"},
 	}
 
 	tokenReq, err := http.NewRequest("POST", a.baseURL+"/oauth/token", strings.NewReader(tokenData.Encode()))
