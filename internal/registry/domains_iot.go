@@ -30,8 +30,8 @@ func init() {
 				HTTPMethod:   "GET",
 				RESTPath:     "telemetry/points",
 				Flags: []FlagDef{
-					{Name: "from", Description: "UTC range start (ISO-8601)", Type: "string"},
-					{Name: "to", Description: "UTC range end (ISO-8601)", Type: "string"},
+					{Name: "from", Description: "UTC range start (ISO-8601); default 24h before --to, range at most 90 days", Type: "string"},
+					{Name: "to", Description: "UTC range end (ISO-8601); default now", Type: "string"},
 					{Name: "device-guid", Description: "Device GUID filter", Type: "string"},
 					{Name: "asset-guid", Description: "Asset GUID filter", Type: "string"},
 					{Name: "attribute-definition-guid", Description: "Attribute definition GUID filter", Type: "string"},
