@@ -161,6 +161,8 @@ func init() {
 					{Name: "tool-guids", Description: "Complete set of linked tool GUIDs, repeatable or comma-separated (--tool-guids= removes every tool)", Type: "stringSlice"},
 					{Name: "chemical-guids", Description: "Complete set of linked chemical GUIDs, repeatable or comma-separated (--chemical-guids= removes every chemical)", Type: "stringSlice"},
 					{Name: "asset-parts-file", BodyName: "assetParts", Description: "JSON file with the complete set of part assignments: [{\"partGuid\": \"...\", \"assignedQuantity\": 2}] ([] removes every part)", Type: "string", JSONFile: true},
+					{Name: "asset-type-guids", Description: "Complete set of asset type GUIDs, repeatable or comma-separated; the first is primary unless --primary-asset-type-guid names another (--asset-type-guids= removes every type)", Type: "stringSlice"},
+					{Name: "primary-asset-type-guid", Description: "Primary asset type GUID; alone it is added to the current types if missing", Type: "uuid"},
 					{Name: "expected-updated-at-utc", Description: "The asset's updatedAt as last read; a newer stored value fails with asset_changed", Type: "string"},
 				},
 			},

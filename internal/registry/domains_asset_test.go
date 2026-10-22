@@ -292,6 +292,8 @@ func TestAssetPatchAction(t *testing.T) {
 		"tool-guids":                {"stringSlice", "toolGuids"},
 		"chemical-guids":            {"stringSlice", "chemicalGuids"},
 		"asset-parts-file":          {"string", "assetParts"},
+		"asset-type-guids":          {"stringSlice", "assetTypeGuids"},
+		"primary-asset-type-guid":   {"uuid", "primaryAssetTypeGuid"},
 		"expected-updated-at-utc":   {"string", "expectedUpdatedAtUtc"},
 	}
 	if len(action.Flags) != len(want) {
