@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -23,16 +24,26 @@ var (
 	loginSAML        bool
 	loginCompany     string
 	loginEmail       string
+	loginBrowser     bool
+	loginProvider    string
 )
 
 var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Authenticate with UteamUP",
-	Long: `Authenticate with UteamUP using email/password, company SSO, or API key.
+	Long: `Authenticate with UteamUP using email/password, the web sign-in, company SSO, or API key.
 
 Interactive login (email/password):
   uteamup login
   ut login
+
+Web sign-in (system browser; Microsoft, Google, Apple or any method the web offers):
+  ut login --browser
+  ut login --provider microsoft     # also google or apple; starts that sign-in at once
+
+The browser opens the UteamUP web app for the selected backend (api.uteamup.com ->
+app.uteamup.com, devback.uteamup.com -> dev.uteamup.com, localhost -> localhost:3000).
+Set UTEAMUP_WEB_BASE_URL for any other backend. Approve the CLI on the web page to finish.
 
 Company SSO (system browser):
   uteamup login --saml --company iteggs --profile dev
@@ -60,6 +71,8 @@ func init() {
 	loginCmd.Flags().BoolVar(&loginSAML, "saml", false, "Sign in through your company SAML identity provider")
 	loginCmd.Flags().StringVar(&loginCompany, "company", "", "Company code for SAML sign-in")
 	loginCmd.Flags().StringVar(&loginEmail, "email", "", "Find optional SAML sign-in using only this email's domain (requires --saml)")
+	loginCmd.Flags().BoolVar(&loginBrowser, "browser", false, "Sign in through the UteamUP web app in your browser")
+	loginCmd.Flags().StringVar(&loginProvider, "provider", "", "Start this web sign-in at once: "+strings.Join(auth.BrowserProviders, ", ")+" (implies --browser)")
 }
 
 func runLogin(cmd *cobra.Command, args []string) error {
@@ -72,6 +85,10 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	apiKeyLogin := loginKeyAuth || loginKeyFile != "" || loginSecretFile != "" || loginSecretStdin
 	if loginSAML && apiKeyLogin {
 		return fmt.Errorf("choose SAML login or API key login")
+	}
+	browserLogin := loginBrowser || loginProvider != ""
+	if browserLogin && (loginSAML || apiKeyLogin) {
+		return fmt.Errorf("choose browser login, SAML login or API key login")
 	}
 	if loginCompany != "" && !loginSAML {
 		return fmt.Errorf("--company requires --saml")
@@ -120,7 +137,19 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	var token *auth.TokenData
 	loginContext := cmd.Context()
 
-	if loginSAML {
+	if browserLogin {
+		webOrigin, webErr := auth.WebOrigin(origin, os.Getenv("UTEAMUP_WEB_BASE_URL"))
+		if webErr != nil {
+			return webErr
+		}
+		ctx, stop := signal.NotifyContext(loginContext, os.Interrupt)
+		defer stop()
+		loginContext = ctx
+		token, err = authClient.LoginWithBrowser(ctx, webOrigin, loginProvider, cmd.ErrOrStderr())
+		if err != nil {
+			return err
+		}
+	} else if loginSAML {
 		ctx, stop := signal.NotifyContext(loginContext, os.Interrupt)
 		defer stop()
 		loginContext = ctx
@@ -207,6 +236,8 @@ func runLogin(cmd *cobra.Command, args []string) error {
 		method = "API key"
 	} else if token.AuthMethod == "saml" {
 		method = "company SSO"
+	} else if token.AuthMethod == "browser" {
+		method = "web sign-in"
 	}
 	fmt.Printf("Authenticated successfully via %s.\n", method)
 	if token.Email != "" {

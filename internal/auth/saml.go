@@ -58,7 +58,7 @@ var samlTenantGUID = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA
 
 // TestSAML validates a disabled connection without replacing the owner's session.
 func (a *Client) TestSAML(ctx context.Context, tenantGUID, ownerToken string) error {
-	return a.testSaml(ctx, tenantGUID, ownerToken, launchSamlBrowser)
+	return a.testSaml(ctx, tenantGUID, ownerToken, launchSystemBrowser)
 }
 
 func (a *Client) testSaml(ctx context.Context, tenantGUID, ownerToken string, launch func(context.Context, string) error) error {
@@ -86,7 +86,7 @@ func (a *Client) testSaml(ctx context.Context, tenantGUID, ownerToken string, la
 func (a *Client) LoginWithSAML(ctx context.Context, company string) (*TokenData, error) {
 	reader := bufio.NewReader(os.Stdin)
 	interaction := samlInteraction{
-		launch: launchSamlBrowser,
+		launch: launchSystemBrowser,
 		prompt: func(ctx context.Context, status, email string) (string, error) {
 			if status == "link_required" {
 				fmt.Fprintf(os.Stderr, "Verify ownership of %s using the code sent by UteamUP.\n", security.SafeText(email))
@@ -122,25 +122,16 @@ func (a *Client) runSamlBrowser(ctx context.Context, target samlStartTarget, lau
 	if err != nil {
 		return "", "", fmt.Errorf("creating SAML state: %w", err)
 	}
-	listener, err := net.Listen("tcp4", "127.0.0.1:0")
+	loopback, err := listenLoopback(samlCallbackPath, state, fmt.Errorf("SAML sign-in was cancelled or refused; retry using your company code"))
 	if err != nil {
-		return "", "", fmt.Errorf("opening SAML callback listener: %w", err)
+		return "", "", err
 	}
-	defer listener.Close()
-	callback := make(chan samlCallback, 1)
-	server := &http.Server{
-		Handler:           samlCallbackHandler(state, listener.Addr().String(), callback),
-		ReadHeaderTimeout: 5 * time.Second,
-		IdleTimeout:       5 * time.Second,
-		MaxHeaderBytes:    8192,
-	}
-	defer server.Close()
-	go func() { _ = server.Serve(listener) }()
+	defer loopback.Close()
 	var start samlStartResponse
 	startPath := "/api/auth/saml/start"
 	request := map[string]string{
 		"clientId":    "cli",
-		"redirectUri": "http://" + listener.Addr().String() + samlCallbackPath,
+		"redirectUri": loopback.RedirectURI,
 		"state":       state, "codeChallenge": CodeChallenge(verifier), "codeChallengeMethod": "S256",
 	}
 	if target.tenantGUID != "" {
@@ -159,34 +150,69 @@ func (a *Client) runSamlBrowser(ctx context.Context, target samlStartTarget, lau
 	if err := launch(ctx, authorize.String()); err != nil {
 		return "", "", fmt.Errorf("opening SAML sign-in: %w", err)
 	}
-	select {
-	case result := <-callback:
-		_ = server.Close()
-		if result.err != nil {
-			return "", "", result.err
-		}
-		return result.code, verifier, nil
-	case <-ctx.Done():
+	code, err := loopback.wait(ctx)
+	if ctx.Err() != nil {
 		if target.tenantGUID != "" {
 			return "", "", fmt.Errorf("SAML setup test cancelled or timed out; retry tenant test-saml")
 		}
 		return "", "", fmt.Errorf("SAML sign-in cancelled or timed out; retry with --saml --company %s", security.SafeText(target.company))
 	}
+	if err != nil {
+		return "", "", err
+	}
+	return code, verifier, nil
 }
 
-type samlCallback struct {
+type loopbackCallback struct {
 	code string
 	err  error
 }
 
-func samlCallbackHandler(state, host string, callback chan<- samlCallback) http.Handler {
+// loopbackListener receives the one sign-in callback a browser flow sends to 127.0.0.1.
+type loopbackListener struct {
+	RedirectURI string
+	server      *http.Server
+	callback    chan loopbackCallback
+}
+
+// listenLoopback starts a listener on a random 127.0.0.1 port that accepts exactly one
+// callback on path carrying state. declined is the error for a callback that reports one.
+func listenLoopback(path, state string, declined error) (*loopbackListener, error) {
+	listener, err := net.Listen("tcp4", "127.0.0.1:0")
+	if err != nil {
+		return nil, fmt.Errorf("opening sign-in callback listener: %w", err)
+	}
+	callback := make(chan loopbackCallback, 1)
+	server := &http.Server{
+		Handler:           loopbackCallbackHandler(path, state, listener.Addr().String(), callback, declined),
+		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout:       5 * time.Second,
+		MaxHeaderBytes:    8192,
+	}
+	go func() { _ = server.Serve(listener) }()
+	return &loopbackListener{RedirectURI: "http://" + listener.Addr().String() + path, server: server, callback: callback}, nil
+}
+
+func (l *loopbackListener) Close() { _ = l.server.Close() }
+
+func (l *loopbackListener) wait(ctx context.Context) (string, error) {
+	select {
+	case result := <-l.callback:
+		l.Close()
+		return result.code, result.err
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+}
+
+func loopbackCallbackHandler(path, state, host string, callback chan<- loopbackCallback, declined error) http.Handler {
 	var completed atomic.Bool
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
 		query, err := url.ParseQuery(r.URL.RawQuery)
-		if err != nil || r.Method != http.MethodGet || r.Host != host || r.URL.Path != samlCallbackPath || len(r.URL.RawQuery) > 8192 || !validSamlCallback(query, state) {
+		if err != nil || r.Method != http.MethodGet || r.Host != host || r.URL.Path != path || len(r.URL.RawQuery) > 8192 || !validLoopbackCallback(query, state) {
 			http.Error(w, "Invalid sign-in callback. Return to UteamUP CLI.", http.StatusBadRequest)
 			return
 		}
@@ -194,9 +220,9 @@ func samlCallbackHandler(state, host string, callback chan<- samlCallback) http.
 			http.Error(w, "This sign-in callback was already received.", http.StatusGone)
 			return
 		}
-		result := samlCallback{code: query.Get("code")}
+		result := loopbackCallback{code: query.Get("code")}
 		if query.Get("error") != "" {
-			result.err = fmt.Errorf("SAML sign-in was cancelled or refused; retry using your company code")
+			result.err = declined
 		}
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write([]byte("Return to UteamUP CLI to finish sign-in. You can close this window."))
@@ -207,7 +233,7 @@ func samlCallbackHandler(state, host string, callback chan<- samlCallback) http.
 	})
 }
 
-func validSamlCallback(query url.Values, state string) bool {
+func validLoopbackCallback(query url.Values, state string) bool {
 	if len(query) != 2 || len(query["state"]) != 1 || subtle.ConstantTimeCompare([]byte(query.Get("state")), []byte(state)) != 1 {
 		return false
 	}
@@ -303,7 +329,8 @@ func (a *Client) samlPost(ctx context.Context, path string, data, result any, ow
 	return nil
 }
 
-func launchSamlBrowser(ctx context.Context, rawURL string) error {
+// launchSystemBrowser opens rawURL in the default browser.
+func launchSystemBrowser(ctx context.Context, rawURL string) error {
 	var command *exec.Cmd
 	switch runtime.GOOS {
 	case "darwin":

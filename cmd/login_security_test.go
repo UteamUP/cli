@@ -30,3 +30,28 @@ func TestLoginRejectsCredentialValuesFromArgv(t *testing.T) {
 		})
 	}
 }
+
+func TestLoginRejectsBrowserLoginCombinedWithAnotherMethod(t *testing.T) {
+	originalBrowser, originalProvider, originalSAML, originalKeyAuth := loginBrowser, loginProvider, loginSAML, loginKeyAuth
+	t.Cleanup(func() {
+		loginBrowser, loginProvider, loginSAML, loginKeyAuth = originalBrowser, originalProvider, originalSAML, originalKeyAuth
+	})
+
+	for _, testCase := range []struct {
+		name         string
+		browser      bool
+		provider     string
+		saml, apiKey bool
+	}{
+		{name: "browser and saml", browser: true, saml: true},
+		{name: "provider and api key", provider: "google", apiKey: true},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			loginBrowser, loginProvider, loginSAML, loginKeyAuth = testCase.browser, testCase.provider, testCase.saml, testCase.apiKey
+			err := runLogin(&cobra.Command{}, nil)
+			if err == nil || !strings.Contains(err.Error(), "choose browser login") {
+				t.Fatalf("expected a single-method rejection, got %v", err)
+			}
+		})
+	}
+}

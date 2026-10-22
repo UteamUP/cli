@@ -23,8 +23,8 @@ func TestSamlCallbackRejectsUnboundAndDuplicateParameters(t *testing.T) {
 		"code=one&state=secret&accessToken=sensitive", "state=secret", "error=&state=secret",
 	} {
 		t.Run(query, func(t *testing.T) {
-			callback := make(chan samlCallback, 1)
-			handler := samlCallbackHandler("secret", "127.0.0.1:54321", callback)
+			callback := make(chan loopbackCallback, 1)
+			handler := loopbackCallbackHandler(samlCallbackPath, "secret", "127.0.0.1:54321", callback, errors.New("declined"))
 			request := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:54321"+samlCallbackPath+"?"+query, nil)
 			response := httptest.NewRecorder()
 			handler.ServeHTTP(response, request)
@@ -36,8 +36,8 @@ func TestSamlCallbackRejectsUnboundAndDuplicateParameters(t *testing.T) {
 }
 
 func TestSamlCallbackRequiresExactMethodHostAndPathAndConsumesOnce(t *testing.T) {
-	callback := make(chan samlCallback, 1)
-	handler := samlCallbackHandler("secret", "127.0.0.1:54321", callback)
+	callback := make(chan loopbackCallback, 1)
+	handler := loopbackCallbackHandler(samlCallbackPath, "secret", "127.0.0.1:54321", callback, errors.New("declined"))
 	for _, invalid := range []struct{ method, target string }{
 		{http.MethodPost, "http://127.0.0.1:54321" + samlCallbackPath},
 		{http.MethodGet, "http://evil.example:54321" + samlCallbackPath},

@@ -102,6 +102,7 @@ Env vars override config file values:
 | `UTEAMUP_API_KEY` | `apiKey` |
 | `UTEAMUP_SECRET` | `secret` |
 | `UTEAMUP_API_BASE_URL` | `baseUrl` |
+| `UTEAMUP_WEB_BASE_URL` | Web app opened by `login --browser` (otherwise paired with the API host) |
 | `UTEAMUP_LOG_LEVEL` | `logLevel` |
 
 ---

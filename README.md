@@ -63,6 +63,8 @@ uteamup config init
 # 2. Authenticate
 uteamup login                    # interactive (email/password)
 # or
+ut login --browser                # web sign-in: Microsoft, Google, Apple, password, passkey
+# or
 uteamup login --saml --company iteggs --profile dev  # company SSO
 # or
 ut login --api-key-auth           # protected API key prompt
@@ -394,7 +396,24 @@ Uses the same OAuth 2.0 + PKCE flow as the MCP server. Requires an API key (32 c
 
 The API key and secret are read without echo, or from owner-only files.
 
-### Method 3: Company SSO (SAML)
+### Method 3: Web Sign-In (Microsoft, Google, Apple)
+
+```bash
+ut login --browser                 # choose any sign-in on the web page
+ut login --provider microsoft      # or google / apple: starts that sign-in at once
+```
+
+Opens the UteamUP web app for the selected backend in the system browser:
+`api.uteamup.com` → `app.uteamup.com`, `devback.uteamup.com` → `dev.uteamup.com`,
+`localhost` → `https://localhost:3000`. For any other backend, set
+`UTEAMUP_WEB_BASE_URL` to the address you sign in at. Sign in with any method the web
+offers, check the account and company shown, and press **Approve**. The page hands a
+single-use code to a listener on `127.0.0.1`, and the CLI redeems it with its PKCE
+verifier, so the code is useless to anyone else. The session then renews like a password
+session; `ut logout` ends it. If no browser opens, the CLI prints the address to open on
+the same computer. Press Ctrl+C or Decline on the page to cancel.
+
+### Method 4: Company SSO (SAML)
 
 ```bash
 uteamup login --saml --company iteggs --profile dev
@@ -464,6 +483,8 @@ arguments can be exposed by process listings and shell history.
 **Examples:**
 ```bash
 uteamup login                                              # Interactive email/password
+ut login --browser                                         # Web sign-in (any method)
+ut login --provider google                                 # Web sign-in starting Google
 ut login --api-key-auth                                   # Protected API credential prompt
 ut login --api-key-file key.txt --api-secret-file secret.txt
 ```

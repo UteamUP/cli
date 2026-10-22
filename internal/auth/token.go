@@ -19,12 +19,18 @@ type TokenData struct {
 	AccessToken  string    `json:"accessToken"`
 	RefreshToken string    `json:"refreshToken,omitempty"`
 	ExpiresAt    time.Time `json:"expiresAt"`
-	AuthMethod   string    `json:"authMethod"` // "login", "saml", or "apikey"
+	AuthMethod   string    `json:"authMethod"` // "login", "saml", "browser", or "apikey"
 	Email        string    `json:"email,omitempty"`
 	Profile      string    `json:"profile"`
 	TenantID     int       `json:"tenantId,omitempty"`
 	TenantGUID   string    `json:"tenantGuid,omitempty"`
 	TenantName   string    `json:"tenantName,omitempty"`
+}
+
+// IsUserSession reports whether the token is a person's session (password, company SSO or
+// browser sign-in), which can be renewed and revoked. An API-key token is neither.
+func (t *TokenData) IsUserSession() bool {
+	return t.AuthMethod == "login" || t.AuthMethod == "saml" || t.AuthMethod == "browser"
 }
 
 // IsValid returns true if the token exists and is not expired (with 5-minute margin).

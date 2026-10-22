@@ -12,7 +12,7 @@ import (
 // RevokeSession sends only the captured human credential to its issuing origin.
 // API keys have a separate lifecycle; clearing their local JWT does not revoke a key.
 func RevokeSession(ctx context.Context, token *TokenData, insecure bool) error {
-	if token == nil || (token.AuthMethod != "login" && token.AuthMethod != "saml") {
+	if token == nil || !token.IsUserSession() {
 		return nil
 	}
 	origin, err := security.Origin(token.APIOrigin)
