@@ -42,17 +42,16 @@ func TestWebOriginPairsKnownBackendsAndHonoursTheOverride(t *testing.T) {
 }
 
 func TestBrowserSignInURLOpensTheApprovalPageOrLoginWithItAsDeepLink(t *testing.T) {
-	const callback = "http://127.0.0.1:53682/auth/cli/callback"
-	direct, err := url.Parse(browserSignInURL("https://app.uteamup.com", callback, "state", "challenge", ""))
+	direct, err := url.Parse(browserSignInURL("https://app.uteamup.com", "53682", "state", "challenge", ""))
 	if err != nil || direct.Path != "/cli/authorize" {
 		t.Fatalf("unexpected approval URL %v", direct)
 	}
 	query := direct.Query()
-	if query.Get("redirect_uri") != callback || query.Get("state") != "state" || query.Get("code_challenge") != "challenge" || query.Get("code_challenge_method") != "S256" {
+	if query.Get("port") != "53682" || query.Has("redirect_uri") || query.Get("state") != "state" || query.Get("code_challenge") != "challenge" || query.Get("code_challenge_method") != "S256" {
 		t.Fatalf("approval URL lost the request: %s", direct.RawQuery)
 	}
 
-	hinted, err := url.Parse(browserSignInURL("https://app.uteamup.com", callback, "state", "challenge", "google"))
+	hinted, err := url.Parse(browserSignInURL("https://app.uteamup.com", "53682", "state", "challenge", "google"))
 	if err != nil || hinted.Path != "/login" || hinted.Query().Get("provider") != "google" {
 		t.Fatalf("unexpected hinted URL %v", hinted)
 	}
@@ -62,7 +61,8 @@ func TestBrowserSignInURLOpensTheApprovalPageOrLoginWithItAsDeepLink(t *testing.
 }
 
 // approveInBrowser stands in for the web page: it reads the CLI request out of the URL the CLI
-// opened and sends the browser to the loopback callback, as /cli/authorize does after Approve.
+// opened, builds the loopback callback from the port and sends the browser there, as
+// /cli/authorize does after Approve.
 func approveInBrowser(t *testing.T, outcome url.Values, opened *string) func(context.Context, string) error {
 	return func(_ context.Context, raw string) error {
 		*opened = raw
@@ -78,9 +78,9 @@ func approveInBrowser(t *testing.T, outcome url.Values, opened *string) func(con
 			}
 			request = deepLink.Query()
 		}
-		callback, err := url.Parse(request.Get("redirect_uri"))
-		if err != nil || callback.Hostname() != "127.0.0.1" || callback.Path != cliCallbackPath {
-			t.Errorf("unsafe callback %q", request.Get("redirect_uri"))
+		callback, err := url.Parse("http://127.0.0.1:" + request.Get("port") + cliCallbackPath)
+		if err != nil || callback.Port() == "" {
+			t.Errorf("no loopback port in %q", raw)
 			return err
 		}
 		outcome.Set("state", request.Get("state"))

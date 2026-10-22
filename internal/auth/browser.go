@@ -55,10 +55,11 @@ func WebOrigin(apiOrigin, override string) (string, error) {
 }
 
 // browserSignInURL is the page the CLI opens: /cli/authorize with the loopback request, or
-// /login carrying that page as its deep link when a provider should start at once.
-func browserSignInURL(webOrigin, redirectURI, state, challenge, provider string) string {
+// /login carrying that page as its deep link when a provider should start at once. Only the
+// port is sent; the page builds http://127.0.0.1:{port}/auth/cli/callback itself.
+func browserSignInURL(webOrigin, port, state, challenge, provider string) string {
 	authorize := "/cli/authorize?" + url.Values{
-		"redirect_uri":          {redirectURI},
+		"port":                  {port},
 		"state":                 {state},
 		"code_challenge":        {challenge},
 		"code_challenge_method": {"S256"},
@@ -97,7 +98,11 @@ func (a *Client) loginWithBrowser(ctx context.Context, webOrigin, provider strin
 	}
 	defer loopback.Close()
 
-	signInURL := browserSignInURL(webOrigin, loopback.RedirectURI, state, CodeChallenge(verifier), provider)
+	callback, err := url.Parse(loopback.RedirectURI)
+	if err != nil {
+		return nil, err
+	}
+	signInURL := browserSignInURL(webOrigin, callback.Port(), state, CodeChallenge(verifier), provider)
 	fmt.Fprintf(out, "Continue in your browser to sign in and approve the CLI. If no browser opens, open this address on this computer:\n  %s\n", signInURL)
 	if err := launch(ctx, signInURL); err != nil {
 		fmt.Fprintln(out, "The browser could not be opened; open the address above.")
