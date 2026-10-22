@@ -40,6 +40,7 @@ func TestModel3DActionsResolveToRealControllerRoutes(t *testing.T) {
 		{"get", "GET", "/api/model3d/" + guid, map[string]any{"externalGuid": guid}},
 		{"delete", "DELETE", "/api/model3d/" + guid, map[string]any{"externalGuid": guid}},
 		{"duplicate", "POST", "/api/model3d/" + guid + "/duplicate", map[string]any{"externalGuid": guid, "name": "Copy"}},
+		{"spec-lookup", "POST", "/api/model3d/spec-lookup", map[string]any{"query": "Sony PlayStation 5 Slim"}},
 		{"link", "PUT", "/api/model3d/link", map[string]any{}},
 		{"unlink", "PUT", "/api/model3d/link", map[string]any{}},
 		{"resolve", "GET", "/api/model3d/item/part/" + guid, map[string]any{"itemKind": "part", "itemGuid": guid}},
@@ -75,13 +76,14 @@ func TestModel3DActionsResolveToRealControllerRoutes(t *testing.T) {
 func TestModel3DToolNamesMatchTheBackendTools(t *testing.T) {
 	t.Parallel()
 	for action, tool := range map[string]string{
-		"list":      "uteamup_model3d_list",
-		"get":       "uteamup_model3d_get",
-		"delete":    "uteamup_model3d_delete",
-		"duplicate": "uteamup_model3d_duplicate",
-		"link":      "uteamup_model3d_link",
-		"unlink":    "uteamup_model3d_link",
-		"resolve":   "uteamup_model3d_resolve",
+		"list":        "uteamup_model3d_list",
+		"get":         "uteamup_model3d_get",
+		"delete":      "uteamup_model3d_delete",
+		"duplicate":   "uteamup_model3d_duplicate",
+		"spec-lookup": "uteamup_model3d_spec_lookup",
+		"link":        "uteamup_model3d_link",
+		"unlink":      "uteamup_model3d_link",
+		"resolve":     "uteamup_model3d_resolve",
 	} {
 		_, a := model3DAction(t, action)
 		if a.ToolName != tool {
@@ -149,6 +151,20 @@ func TestModel3DDuplicateRequiresANameSentInTheBody(t *testing.T) {
 	name := action.Flags[0]
 	if name.Name != "name" || !name.Required || name.Type != "string" || name.QueryName != "" {
 		t.Fatalf("duplicate --name = %+v, want a required string body field (Model3DDuplicateModel.Name)", name)
+	}
+}
+
+func TestModel3DSpecLookupSendsOptionalQueryAndItemInTheBody(t *testing.T) {
+	t.Parallel()
+	_, action := model3DAction(t, "spec-lookup")
+	want := map[string]string{"query": "string", "item-kind": "string", "item-guid": "uuid"}
+	if len(action.Flags) != len(want) {
+		t.Fatalf("spec-lookup flags = %+v, want --query, --item-kind and --item-guid", action.Flags)
+	}
+	for _, flag := range action.Flags {
+		if want[flag.Name] != flag.Type || flag.Required || flag.QueryName != "" {
+			t.Errorf("spec-lookup --%s = %+v, want an optional %s body field (Model3DSpecLookupRequestModel)", flag.Name, flag, want[flag.Name])
+		}
 	}
 }
 

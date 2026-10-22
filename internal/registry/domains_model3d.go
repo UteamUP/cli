@@ -42,6 +42,18 @@ func init() {
 				},
 			},
 			{
+				Name:        "spec-lookup",
+				Description: "Look up a product's real dimensions, main components and source pages on the web (charged AI credits, refunded when no size is found)",
+				ToolName:    "uteamup_model3d_spec_lookup",
+				HTTPMethod:  "POST",
+				RESTPath:    "spec-lookup",
+				Flags: []FlagDef{
+					{Name: "query", Description: "The product, e.g. \"Sony PlayStation 5 Slim\" (at most 200 characters); defaults to the item's name", Type: "string"},
+					{Name: "item-kind", Description: "asset, part, tool or chemical, with --item-guid", Type: "string", AllowedValues: model3DItemKinds},
+					{Name: "item-guid", Description: "GUID of the item whose name to look up", Type: "uuid"},
+				},
+			},
+			{
 				Name:        "delete",
 				Description: "Delete a 3D model; one still used by items is refused unless --force unlinks them first",
 				ToolName:    "uteamup_model3d_delete",

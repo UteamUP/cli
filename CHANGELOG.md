@@ -5,30 +5,6 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.1.0](https://github.com/UteamUP/cli/compare/5.0.1...5.1.0) (2026-10-22)
-
-
-### Features
-
-* **auth:** ut login --browser and --provider for web sign-in ([d652541](https://github.com/UteamUP/cli/commit/d652541cf00041f64621b9fe7958e929760994da))
-* **model3d:** add ut model3d duplicate ([0f57ce5](https://github.com/UteamUP/cli/commit/0f57ce5d9220495df3272b3ade236b49eafda5a6))
-* **registry:** product-web-files search and import commands ([1b71f1a](https://github.com/UteamUP/cli/commit/1b71f1afe38767ba2683d6a53157f9f33263d102))
-
-
-### Bug Fixes
-
-* **auth:** send only the loopback port to the web approval page ([584c289](https://github.com/UteamUP/cli/commit/584c289dbfda447e2b1c3ca46a329b90b1340189))
-
-
-### Documentation
-
-* **release:** document rebuilding a tagged release without assets ([5c8701c](https://github.com/UteamUP/cli/commit/5c8701c5100701e4842a9262de537b317a7b2a5c))
-
-
-### CI/CD
-
-* **release:** allow rebuilding an existing release tag with GoReleaser ([030a073](https://github.com/UteamUP/cli/commit/030a073806c144e2e7f0b8ed9ef4ff7be6561846))
-
 ## [5.0.1](https://github.com/UteamUP/cli/compare/5.0.0...5.0.1) (2026-10-21)
 
 
