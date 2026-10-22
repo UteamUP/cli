@@ -16,7 +16,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "item-kind", Description: "asset, part, tool or chemical", Required: true, Type: "string", AllowedValues: model3DItemKinds},
 					{Name: "item-guid", Description: "GUID of the asset, part, tool or chemical", Required: true, Type: "non-empty-uuid"},
-					{Name: "query", Description: "Search words (defaults to the item's name and model number)", Type: "string"},
+					{Name: "query", Description: "Search words (defaults to the item's manufacturer and model number)", Type: "string"},
 				},
 			},
 			{
