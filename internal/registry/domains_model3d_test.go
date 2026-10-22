@@ -41,6 +41,7 @@ func TestModel3DActionsResolveToRealControllerRoutes(t *testing.T) {
 		{"delete", "DELETE", "/api/model3d/" + guid, map[string]any{"externalGuid": guid}},
 		{"duplicate", "POST", "/api/model3d/" + guid + "/duplicate", map[string]any{"externalGuid": guid, "name": "Copy"}},
 		{"spec-lookup", "POST", "/api/model3d/spec-lookup", map[string]any{"query": "Sony PlayStation 5 Slim"}},
+		{"view-photos", "POST", "/api/model3d/view-photos", map[string]any{"query": "Sony PlayStation 5 Slim"}},
 		{"link", "PUT", "/api/model3d/link", map[string]any{}},
 		{"unlink", "PUT", "/api/model3d/link", map[string]any{}},
 		{"resolve", "GET", "/api/model3d/item/part/" + guid, map[string]any{"itemKind": "part", "itemGuid": guid}},
@@ -81,6 +82,7 @@ func TestModel3DToolNamesMatchTheBackendTools(t *testing.T) {
 		"delete":      "uteamup_model3d_delete",
 		"duplicate":   "uteamup_model3d_duplicate",
 		"spec-lookup": "uteamup_model3d_spec_lookup",
+		"view-photos": "uteamup_model3d_view_photos",
 		"link":        "uteamup_model3d_link",
 		"unlink":      "uteamup_model3d_link",
 		"resolve":     "uteamup_model3d_resolve",
@@ -154,16 +156,18 @@ func TestModel3DDuplicateRequiresANameSentInTheBody(t *testing.T) {
 	}
 }
 
-func TestModel3DSpecLookupSendsOptionalQueryAndItemInTheBody(t *testing.T) {
+func TestModel3DSpecLookupAndViewPhotosSendOptionalQueryAndItemInTheBody(t *testing.T) {
 	t.Parallel()
-	_, action := model3DAction(t, "spec-lookup")
-	want := map[string]string{"query": "string", "item-kind": "string", "item-guid": "non-empty-uuid"}
-	if len(action.Flags) != len(want) {
-		t.Fatalf("spec-lookup flags = %+v, want --query, --item-kind and --item-guid", action.Flags)
-	}
-	for _, flag := range action.Flags {
-		if want[flag.Name] != flag.Type || flag.Required || flag.QueryName != "" {
-			t.Errorf("spec-lookup --%s = %+v, want an optional %s body field (Model3DSpecLookupRequestModel)", flag.Name, flag, want[flag.Name])
+	for _, name := range []string{"spec-lookup", "view-photos"} {
+		_, action := model3DAction(t, name)
+		want := map[string]string{"query": "string", "item-kind": "string", "item-guid": "non-empty-uuid"}
+		if len(action.Flags) != len(want) {
+			t.Fatalf("%s flags = %+v, want --query, --item-kind and --item-guid", name, action.Flags)
+		}
+		for _, flag := range action.Flags {
+			if want[flag.Name] != flag.Type || flag.Required || flag.QueryName != "" {
+				t.Errorf("%s --%s = %+v, want an optional %s body field", name, flag.Name, flag, want[flag.Name])
+			}
 		}
 	}
 }

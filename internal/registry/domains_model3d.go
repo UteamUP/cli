@@ -54,6 +54,18 @@ func init() {
 				},
 			},
 			{
+				Name:        "view-photos",
+				Description: "Find web photos of a product sorted by the side each shows: the best front, back, left, right and top photo, and spares (charged the product-photo search price, refunded when none is found)",
+				ToolName:    "uteamup_model3d_view_photos",
+				HTTPMethod:  "POST",
+				RESTPath:    "view-photos",
+				Flags: []FlagDef{
+					{Name: "query", Description: "The product, e.g. \"Sony PlayStation 5 Slim\" (at most 200 characters); defaults to the item's name", Type: "string"},
+					{Name: "item-kind", Description: "asset, part, tool or chemical, with --item-guid", Type: "string", AllowedValues: model3DItemKinds},
+					{Name: "item-guid", Description: "GUID of the item whose name to search for", Type: "non-empty-uuid"},
+				},
+			},
+			{
 				Name:        "delete",
 				Description: "Delete a 3D model; one still used by items is refused unless --force unlinks them first",
 				ToolName:    "uteamup_model3d_delete",
