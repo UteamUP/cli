@@ -157,7 +157,7 @@ func TestModel3DDuplicateRequiresANameSentInTheBody(t *testing.T) {
 func TestModel3DSpecLookupSendsOptionalQueryAndItemInTheBody(t *testing.T) {
 	t.Parallel()
 	_, action := model3DAction(t, "spec-lookup")
-	want := map[string]string{"query": "string", "item-kind": "string", "item-guid": "uuid"}
+	want := map[string]string{"query": "string", "item-kind": "string", "item-guid": "non-empty-uuid"}
 	if len(action.Flags) != len(want) {
 		t.Fatalf("spec-lookup flags = %+v, want --query, --item-kind and --item-guid", action.Flags)
 	}

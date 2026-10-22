@@ -50,7 +50,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "query", Description: "The product, e.g. \"Sony PlayStation 5 Slim\" (at most 200 characters); defaults to the item's name", Type: "string"},
 					{Name: "item-kind", Description: "asset, part, tool or chemical, with --item-guid", Type: "string", AllowedValues: model3DItemKinds},
-					{Name: "item-guid", Description: "GUID of the item whose name to look up", Type: "uuid"},
+					{Name: "item-guid", Description: "GUID of the item whose name to look up", Type: "non-empty-uuid"},
 				},
 			},
 			{
