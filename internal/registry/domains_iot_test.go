@@ -14,6 +14,14 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 		"monitoring":                 "UteamupIoTMonitoringDashboard",
 		"telemetry":                  "UteamupIoTTelemetryPoints",
 		"rules":                      "UteamupIoTRulesList",
+		"device-types":               "UteamupIoTDeviceTypesList",
+		"devices":                    "UteamupIoTDevicesList",
+		"device":                     "UteamupIoTDeviceGet",
+		"device-create":              "UteamupIoTDeviceCreate",
+		"device-update":              "UteamupIoTDeviceUpdate",
+		"device-keys":                "UteamupIoTDeviceKeysList",
+		"device-key-issue":           "UteamupIoTDeviceKeyIssue",
+		"device-key-revoke":          "UteamupIoTDeviceKeyRevoke",
 		"command-definitions":        "UteamupIoTCommandDefinitionsList",
 		"command-definition-history": "UteamupIoTCommandDefinitionHistory",
 		"command-definition-create":  "UteamupIoTCommandDefinitionCreate",
@@ -144,10 +152,18 @@ func TestIoTCommandRoutesUseGuidOnlyPublicIdentities(t *testing.T) {
 func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 	domain := findDomain("iot")
 	expected := map[string]string{
-		"status":                     "/api/iot/environment",                 // TenantIoTSelfServiceController.GetStatus
-		"monitoring":                 "/api/iot/monitoring",                  // IoTMonitoringController dashboard
-		"telemetry":                  "/api/iot/monitoring/telemetry/points", // IoTMonitoringController.GetTelemetryPoints
-		"rules":                      "/api/iot/rules",                       // IoTRuleController.Get
+		"status":                     "/api/iot/environment",                  // TenantIoTSelfServiceController.GetStatus
+		"monitoring":                 "/api/iot/monitoring",                   // IoTMonitoringController dashboard
+		"telemetry":                  "/api/iot/monitoring/telemetry/points",  // IoTMonitoringController.GetTelemetryPoints
+		"rules":                      "/api/iot/rules",                        // IoTRuleController.Get
+		"device-types":               "/api/iot/device-types",                 // IOTController.GetDeviceTypes
+		"devices":                    "/api/iot/devices",                      // IOTController.GetDevices
+		"device":                     "/api/iot/devices/device-guid",          // IOTController.GetDeviceByGuid
+		"device-create":              "/api/iot/devices",                      // IOTController.CreateDevice
+		"device-update":              "/api/iot/devices/device-guid",          // IOTController.UpdateDeviceByGuid
+		"device-keys":                "/api/iot/devices/device-guid/api-keys", // IOTController.GetDeviceApiKeysByGuid
+		"device-key-issue":           "/api/iot/devices/device-guid/api-keys", // IOTController.CreateDeviceApiKeyByGuid
+		"device-key-revoke":          "/api/iot/api-keys/key-guid",            // IOTController.RevokeApiKeyByGuid
 		"command-definitions":        "/api/iot/commands/definitions",
 		"command-definition-history": "/api/iot/commands/definitions/history",
 		"command-definition-create":  "/api/iot/commands/definitions",
@@ -170,7 +186,8 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 			t.Errorf("iot action %q has no pinned route; add it to this table", action.Name)
 			continue
 		}
-		args := map[string]any{"definitionGuid": "definition-guid", "requestGuid": "request-guid"}
+		args := map[string]any{"definitionGuid": "definition-guid", "requestGuid": "request-guid",
+			"deviceGuid": "device-guid", "apiKeyGuid": "key-guid"}
 		if path, _ := buildRESTPath(domain, action, args); path != want {
 			t.Errorf("%s routes to %q, want %q", action.Name, path, want)
 		}
@@ -279,4 +296,40 @@ func findIoTAction(t *testing.T, name string) Action {
 	}
 	t.Fatalf("expected iot action %q", name)
 	return Action{}
+}
+
+// The REST device model always applies isActive, so an update without --is-active would
+// silently deactivate the device; the flag must be required, never defaulted.
+func TestIoTDeviceUpdateRequiresIsActiveAndName(t *testing.T) {
+	action := findIoTAction(t, "device-update")
+	required := map[string]bool{}
+	for _, flag := range action.Flags {
+		if flag.Required {
+			required[flag.Name] = true
+		}
+		if flag.Default != nil {
+			t.Errorf("device-update flag %q must not have a default", flag.Name)
+		}
+	}
+	for _, name := range []string{"name", "is-active"} {
+		if !required[name] {
+			t.Errorf("device-update flag %q must be required", name)
+		}
+	}
+	if action.HTTPMethod != "PUT" {
+		t.Errorf("device-update HTTPMethod = %q, want PUT", action.HTTPMethod)
+	}
+}
+
+func TestIoTDeviceKeyActionsUseGuidArgsAndTheRestMethods(t *testing.T) {
+	cases := map[string]string{"device-keys": "GET", "device-key-issue": "POST", "device-key-revoke": "DELETE"}
+	for name, method := range cases {
+		action := findIoTAction(t, name)
+		if action.HTTPMethod != method {
+			t.Errorf("%s HTTPMethod = %q, want %q", name, action.HTTPMethod, method)
+		}
+		if len(action.Args) != 1 || action.Args[0].Type != "uuid" || !action.Args[0].Required {
+			t.Errorf("%s must take exactly one required GUID argument", name)
+		}
+	}
 }

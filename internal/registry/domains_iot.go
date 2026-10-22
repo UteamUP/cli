@@ -2,6 +2,8 @@ package registry
 
 const iotCommandAPIPath = "/api/iot/commands"
 
+const iotDeviceAPIPath = "/api/iot"
+
 func init() {
 	Register(&Domain{
 		Name:        "iot",
@@ -46,6 +48,95 @@ func init() {
 				ToolName:     "UteamupIoTRulesList",
 				RESTBasePath: "/api/iot/rules",
 				HTTPMethod:   "GET",
+			},
+			{
+				Name:         "device-types",
+				Description:  "List IoT device types; a type GUID is needed to create a device",
+				ToolName:     "UteamupIoTDeviceTypesList",
+				RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod:   "GET",
+				RESTPath:     "device-types",
+			},
+			{
+				Name:         "devices",
+				Description:  "List IoT devices by name, with status, type, location, asset and tags",
+				ToolName:     "UteamupIoTDevicesList",
+				RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod:   "GET",
+				RESTPath:     "devices",
+				Flags: []FlagDef{
+					{Name: "search", Description: "Text in the device name, device id or serial number", Type: "string"},
+					{Name: "page", Description: "Page number, from 1", Type: "int", Default: 1},
+					{Name: "page-size", BodyName: "pageSize", Description: "Devices per page (1-100)", Type: "int", Default: 25},
+				},
+			},
+			{
+				Name:         "device",
+				Description:  "Get one IoT device by GUID",
+				ToolName:     "UteamupIoTDeviceGet",
+				RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod:   "GET",
+				RESTPath:     "devices/{deviceGuid}",
+				Args:         []ArgDef{{Name: "deviceGuid", Description: "Device GUID", Required: true, Type: "uuid"}},
+			},
+			{
+				Name:         "device-create",
+				Description:  "Create an IoT device; then issue it a key with device-key-issue",
+				ToolName:     "UteamupIoTDeviceCreate",
+				RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod:   "POST",
+				RESTPath:     "devices",
+				Flags: append([]FlagDef{
+					{Name: "name", Description: "Device name", Required: true, Type: "string"},
+					{Name: "device-id", BodyName: "deviceId", Description: "Identifier the device reports with, e.g. a Home Assistant entity id", Required: true, Type: "string"},
+					{Name: "device-type-guid", BodyName: "deviceTypeGuid", Description: "Device type GUID from 'ut iot device-types'", Required: true, Type: "uuid"},
+				}, iotDeviceDetailFlags()...),
+			},
+			{
+				Name:         "device-update",
+				Description:  "Update an IoT device; omitted optional fields keep their value",
+				ToolName:     "UteamupIoTDeviceUpdate",
+				RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod:   "PUT",
+				RESTPath:     "devices/{deviceGuid}",
+				Args:         []ArgDef{{Name: "deviceGuid", Description: "Device GUID", Required: true, Type: "uuid"}},
+				// The REST model always applies isActive, so the flag is required rather than defaulting to false.
+				Flags: append([]FlagDef{
+					{Name: "name", Description: "Device name", Required: true, Type: "string"},
+					{Name: "is-active", BodyName: "isActive", Description: "Active (true) or inactive (false)", Required: true, Type: "bool"},
+				}, iotDeviceDetailFlags()...),
+			},
+			{
+				Name:         "device-keys",
+				Description:  "List a device's keys (prefix, expiry, last use, active); secrets are never shown again",
+				ToolName:     "UteamupIoTDeviceKeysList",
+				RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod:   "GET",
+				RESTPath:     "devices/{deviceGuid}/api-keys",
+				Args:         []ArgDef{{Name: "deviceGuid", Description: "Device GUID", Required: true, Type: "uuid"}},
+			},
+			{
+				Name:         "device-key-issue",
+				Description:  "Issue a device key; the secret is shown once (MQTT username {tenantGuid}:{deviceGuid})",
+				ToolName:     "UteamupIoTDeviceKeyIssue",
+				RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod:   "POST",
+				RESTPath:     "devices/{deviceGuid}/api-keys",
+				Args:         []ArgDef{{Name: "deviceGuid", Description: "Device GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "name", Description: "Key name (1-100 characters)", Required: true, Type: "string"},
+					{Name: "description", Description: "Key description (up to 500 characters)", Type: "string"},
+					{Name: "expires-at", BodyName: "expiresAt", Description: "UTC expiry (ISO-8601), in the future; omit for none", Type: "string"},
+				},
+			},
+			{
+				Name:         "device-key-revoke",
+				Description:  "Revoke a device key; the device can no longer authenticate with it",
+				ToolName:     "UteamupIoTDeviceKeyRevoke",
+				RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod:   "DELETE",
+				RESTPath:     "api-keys/{apiKeyGuid}",
+				Args:         []ArgDef{{Name: "apiKeyGuid", Description: "Device key GUID from 'ut iot device-keys'", Required: true, Type: "uuid"}},
 			},
 			{
 				Name:         "command-definitions",
@@ -279,5 +370,18 @@ func iotCommandDecisionAction(
 			{Name: "requestGuid", Description: "IoT command request GUID", Required: true, Type: "uuid"},
 		},
 		Flags: flags,
+	}
+}
+
+func iotDeviceDetailFlags() []FlagDef {
+	return []FlagDef{
+		{Name: "serial-number", BodyName: "serialNumber", Description: "Serial number", Type: "string"},
+		{Name: "firmware-version", BodyName: "firmwareVersion", Description: "Firmware version", Type: "string"},
+		{Name: "description", Description: "Description", Type: "string"},
+		{Name: "location-guid", BodyName: "locationGuid", Description: "Location GUID", Type: "uuid"},
+		{Name: "asset-guid", BodyName: "assetGuid", Description: "GUID of the asset the device measures", Type: "uuid"},
+		{Name: "ip-address", BodyName: "ipAddress", Description: "IP address", Type: "string"},
+		{Name: "mac-address", BodyName: "macAddress", Description: "MAC address", Type: "string"},
+		{Name: "tag-guids", BodyName: "tagGuids", Description: "Tag GUIDs, repeatable or comma-separated (complete set)", Type: "stringSlice"},
 	}
 }
