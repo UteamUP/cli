@@ -59,7 +59,7 @@ func init() {
 			},
 			{
 				Name:         "devices",
-				Description:  "List IoT devices by name, with status, type, location, asset and tags",
+				Description:  "List IoT devices with status and connectionState (noActiveKey, neverConnected or connected)",
 				ToolName:     "UteamupIoTDevicesList",
 				RESTBasePath: iotDeviceAPIPath,
 				HTTPMethod:   "GET",
