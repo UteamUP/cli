@@ -149,6 +149,7 @@ func init() {
 					{Name: "needed-by-date", Description: "Optional needed-by timestamp", Type: "string"},
 					{Name: "expires-at", Description: "Optional draft expiry timestamp", Type: "string"},
 					{Name: "notes", Description: "Optional private owner notes", Type: "string"},
+					{Name: "show-in-public-catalog", Description: "Also list it, still anonymous, in the public Wanted catalog after publish", Default: false, Type: "bool"},
 				},
 			},
 			{
@@ -184,6 +185,7 @@ func init() {
 					{Name: "needed-by-date", Description: "Optional date goods are needed", Type: "string"},
 					{Name: "expires-at", Description: "Optional offer deadline, on or before the goods-needed day", Type: "string"},
 					{Name: "notes", Description: "Optional private owner notes", Type: "string"},
+					{Name: "show-in-public-catalog", Description: "Also list it, still anonymous, in the public Wanted catalog after publish", Default: false, Type: "bool"},
 				},
 			},
 			{

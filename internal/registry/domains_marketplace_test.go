@@ -407,3 +407,28 @@ func TestMarketplaceRequirementQuantitiesCarryUnitGuids(t *testing.T) {
 		t.Fatalf("expected create and update actions, found %d", found)
 	}
 }
+
+func TestMarketplaceRequirementDraftsOfferPublicCatalogOptIn(t *testing.T) {
+	d := findMarketplaceDomain()
+	if d == nil {
+		t.Fatal("expected marketplace domain")
+	}
+	found := 0
+	for _, action := range d.Actions {
+		if action.Name != "requirement-draft-create" && action.Name != "requirement-draft-update" {
+			continue
+		}
+		for _, flag := range action.Flags {
+			if flag.Name != "show-in-public-catalog" {
+				continue
+			}
+			if flag.Type != "bool" || flag.Required || flag.Default != false {
+				t.Errorf("%s: show-in-public-catalog must be an optional bool that defaults to false", action.Name)
+			}
+			found++
+		}
+	}
+	if found != 2 {
+		t.Fatalf("expected show-in-public-catalog on both draft actions, found %d", found)
+	}
+}
