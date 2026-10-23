@@ -175,9 +175,17 @@ func init() {
 			},
 			{
 				Name:        "delete",
-				Description: "Delete an asset by ID",
+				Description: "Deprecated: delete an asset by legacy integer ID. Use delete-by-guid.",
 				ToolName:    "UteamupAssetDelete",
 				Args:        []ArgDef{{Name: "id", Description: "Asset ID", Required: true, Type: "int"}},
+			},
+			{
+				Name:        "delete-by-guid",
+				Description: "Delete an asset by its public GUID (requires Asset.Delete)",
+				ToolName:    "UteamupAssetDelete",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "by-guid/{assetGuid}",
+				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset public GUID", Required: true, Type: "uuid"}},
 			},
 			{
 				Name:        "search",

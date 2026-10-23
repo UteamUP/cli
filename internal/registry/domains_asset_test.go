@@ -146,6 +146,20 @@ func TestAssetGuidReadsRouteToTheirOwnEndpoints(t *testing.T) {
 	}
 }
 
+func TestAssetDeleteByGuidRoutesToTheGuidEndpoint(t *testing.T) {
+	const guid = "9825f027-1b40-43fb-b224-1983849be941"
+	request := runAssetCommand(t, "delete-by-guid", guid)
+	if request.Method != http.MethodDelete {
+		t.Errorf("method = %s, want DELETE", request.Method)
+	}
+	if request.URL.Path != "/api/asset/by-guid/"+guid {
+		t.Errorf("path = %q, want /api/asset/by-guid/%s", request.URL.Path, guid)
+	}
+	if request.URL.RawQuery != "" {
+		t.Errorf("the GUID must be in the path, not the query: %q", request.URL.RawQuery)
+	}
+}
+
 func findAssetDomain(t *testing.T) *Domain {
 	t.Helper()
 	for _, dom := range DefaultRegistry.Domains() {
