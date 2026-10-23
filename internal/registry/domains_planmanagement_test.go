@@ -194,8 +194,8 @@ func TestPlanAnalyticsDomainRegistered(t *testing.T) {
 
 func TestSubscriptionLifecycleDomainRegistered(t *testing.T) {
 	d := assertDomainAPIPath(t, "subscription-lifecycle", "/api/internalbilling")
-	if len(d.Actions) != 6 {
-		t.Errorf("subscription-lifecycle expected 6 lifecycle actions, got %d", len(d.Actions))
+	if len(d.Actions) != 7 {
+		t.Errorf("subscription-lifecycle expected 7 lifecycle actions, got %d", len(d.Actions))
 	}
 
 	for actionName, restPath := range map[string]string{
@@ -204,6 +204,7 @@ func TestSubscriptionLifecycleDomainRegistered(t *testing.T) {
 		"schedule-cancel":          "admin/subscriptions/{guid}/schedule-cancel",
 		"activate-without-payment": "admin/subscriptions/{guid}/activate-without-payment",
 		"clear-scheduled-cancel":   "admin/subscriptions/{guid}/clear-scheduled-cancel",
+		"extend-period":            "admin/subscriptions/{guid}/extend-period",
 	} {
 		a := findDomainAction(t, "subscription-lifecycle", actionName)
 		// Every lifecycle verb needs an explicit POST — none of these names is
@@ -236,6 +237,18 @@ func TestSubscriptionLifecycleDomainRegistered(t *testing.T) {
 	assertSingleGUIDArg(t, grant, "tenantGuid")
 	if grantReason := findFlag(grant, "reason"); grantReason == nil || !grantReason.Required || grantReason.Type != "string" {
 		t.Errorf("subscription-lifecycle grant-without-payment --reason must be a required string flag, got %+v", grantReason)
+	}
+
+	// extend-period moves a period end; both the date and the audited reason are mandatory.
+	extend := findDomainAction(t, "subscription-lifecycle", "extend-period")
+	if extend.HTTPMethod != "POST" || extend.RESTPath != "admin/subscriptions/{guid}/extend-period" {
+		t.Errorf("subscription-lifecycle extend-period: want POST admin/subscriptions/{guid}/extend-period, got %q %s", extend.HTTPMethod, extend.RESTPath)
+	}
+	assertSingleGUIDArg(t, extend, "guid")
+	for _, name := range []string{"new-period-end", "reason"} {
+		if flag := findFlag(extend, name); flag == nil || !flag.Required || flag.Type != "string" {
+			t.Errorf("subscription-lifecycle extend-period --%s must be a required string flag, got %+v", name, flag)
+		}
 	}
 
 	sched := findDomainAction(t, "subscription-lifecycle", "schedule-cancel")

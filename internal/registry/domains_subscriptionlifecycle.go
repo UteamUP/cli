@@ -9,7 +9,7 @@ func init() {
 	Register(&Domain{
 		Name:        "subscription-lifecycle",
 		Aliases:     []string{"subscriptionlifecycle", "sub-lifecycle"},
-		Description: "Admin lifecycle actions on internal subscriptions (suspend, reactivate, scheduled cancel)",
+		Description: "Admin lifecycle actions on internal subscriptions (suspend, reactivate, scheduled cancel, extend period)",
 		APIPath:     "/api/internalbilling",
 		Actions: []Action{
 			{
@@ -68,6 +68,21 @@ func init() {
 				Args:        []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
 				Flags: []FlagDef{
 					{Name: "reason", Description: "Why payment is being waived (required; recorded permanently in the admin audit log)", Required: true, Type: "string"},
+				},
+			},
+			{
+				// Global Admin only. Moves an active subscription's current period end later
+				// (at most 10 years ahead). The reason is written only to the admin audit log,
+				// which only Global Admins can read.
+				Name:        "extend-period",
+				Description: "Move an active subscription's period end later (audited; requires a reason)",
+				ToolName:    "UteamupSubscriptionExtendPeriod",
+				HTTPMethod:  "POST",
+				RESTPath:    "admin/subscriptions/{guid}/extend-period",
+				Args:        []ArgDef{{Name: "guid", Description: "Subscription GUID (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "new-period-end", Description: "New period end (ISO 8601 UTC, later than the current end and at most 10 years ahead; required)", Required: true, Type: "string"},
+					{Name: "reason", Description: "Why the period is extended (required; recorded in the Global Admin audit log)", Required: true, Type: "string"},
 				},
 			},
 			{
