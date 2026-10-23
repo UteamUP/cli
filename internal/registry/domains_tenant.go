@@ -147,6 +147,29 @@ func init() {
 					{Name: "note", Description: "Audit note stored with the extension", Type: "string"},
 				},
 			},
+			{
+				Name:        "transfer-ownership",
+				Description: "Make another member the tenant owner (only the current owner); in a household the previous owner stays a member",
+				ToolName:    "UteamupTenantTransferOwnership",
+				HTTPMethod:  "POST",
+				RESTPath:    "{tenantGuid}/change-owner",
+				Args:        []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "non-empty-uuid"}},
+				Flags: []FlagDef{
+					{Name: "new-owner-user-guid", BodyName: "userGuid", Description: "User GUID of the member who becomes the owner", Required: true, Type: "string"},
+				},
+			},
+			{
+				Name:        "home-membership-set",
+				Description: "UteamUP Home: set when a member's access ends and a resident's apartment in the current tenant; an omitted flag clears that value",
+				ToolName:    "UteamupTenantHomeMembershipSet",
+				HTTPMethod:  "PUT",
+				RESTPath:    "users/{userGuid}/home-membership",
+				Args:        []ArgDef{{Name: "userGuid", Description: "User GUID of the member", Required: true, Type: "non-empty-uuid"}},
+				Flags: []FlagDef{
+					{Name: "access-ends-at", BodyName: "accessEndsAt", Description: "When the member's access ends (ISO 8601 UTC, in the future); for a Guest", Type: "string"},
+					{Name: "residence-location-guid", BodyName: "residenceLocationGuid", Description: "Housing association only: the location GUID of the member's apartment", Type: "string"},
+				},
+			},
 		}...),
 	})
 }
