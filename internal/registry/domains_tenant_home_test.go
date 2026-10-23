@@ -48,3 +48,38 @@ func TestTenantHomeCommandsMatchTheBackendRoutes(t *testing.T) {
 		t.Error("--new-owner-user-guid must be required")
 	}
 }
+
+// The household children commands mirror /api/tenant/home-children; a child is removed by GUID.
+func TestTenantHomeChildrenCommandsMatchTheBackendRoutes(t *testing.T) {
+	d := findDomain("tenant")
+	if d == nil {
+		t.Fatal("expected tenant domain to be registered")
+	}
+	routes := map[string][2]string{
+		"home-children-list":   {"GET", "home-children"},
+		"home-children-add":    {"POST", "home-children"},
+		"home-children-remove": {"DELETE", "home-children/{childGuid}"},
+	}
+	for name, route := range routes {
+		action := findAction(d, name)
+		if action == nil {
+			t.Errorf("expected %s action on tenant", name)
+			continue
+		}
+		if action.HTTPMethod != route[0] || action.RESTPath != route[1] {
+			t.Errorf("%s routes to %s %s, want %s %s", name, action.HTTPMethod, action.RESTPath, route[0], route[1])
+		}
+	}
+
+	add := flagsToMap(findAction(d, "home-children-add").Flags)
+	if !add["name"].Required || add["name"].BodyName != "name" {
+		t.Error("--name must be required and map to name")
+	}
+	if add["birth-year"].Type != "int" || add["birth-year"].Default != nil {
+		t.Error("--birth-year must be an optional int that is not sent unless given")
+	}
+	remove := findAction(d, "home-children-remove")
+	if len(remove.Args) != 1 || remove.Args[0].Name != "childGuid" || remove.Args[0].Type != "non-empty-uuid" {
+		t.Error("home-children-remove must take the child GUID as its only argument")
+	}
+}

@@ -170,6 +170,32 @@ func init() {
 					{Name: "residence-location-guid", BodyName: "residenceLocationGuid", Description: "Housing association only: the location GUID of the member's apartment", Type: "string"},
 				},
 			},
+			{
+				Name:        "home-children-list",
+				Description: "UteamUP Home: list the household's children under 13, who have no login",
+				ToolName:    "UteamupTenantHomeChildrenList",
+				HTTPMethod:  "GET",
+				RESTPath:    "home-children",
+			},
+			{
+				Name:        "home-children-add",
+				Description: "UteamUP Home: record a child under 13 in the household, without a login",
+				ToolName:    "UteamupTenantHomeChildrenAdd",
+				HTTPMethod:  "POST",
+				RESTPath:    "home-children",
+				Flags: []FlagDef{
+					{Name: "name", BodyName: "name", Description: "The child's name (at most 100 characters)", Required: true, Type: "string"},
+					{Name: "birth-year", BodyName: "birthYear", Description: "Birth year, for example 2019; not in the future", Type: "int"},
+				},
+			},
+			{
+				Name:        "home-children-remove",
+				Description: "UteamUP Home: remove a child from the household",
+				ToolName:    "UteamupTenantHomeChildrenRemove",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "home-children/{childGuid}",
+				Args:        []ArgDef{{Name: "childGuid", Description: "GUID of the child", Required: true, Type: "non-empty-uuid"}},
+			},
 		}...),
 	})
 }
