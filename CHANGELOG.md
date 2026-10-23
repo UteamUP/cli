@@ -5,6 +5,33 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0](https://github.com/UteamUP/cli/compare/5.1.0...5.2.0) (2026-10-23)
+
+
+### Features
+
+* **asset:** delete an asset by GUID ([d5adb6b](https://github.com/UteamUP/cli/commit/d5adb6b14046eaa5fcdd8ac89d2c87c2d7f44374))
+* **asset:** ut asset patch --asset-type-guids and --primary-asset-type-guid ([bb9b6b9](https://github.com/UteamUP/cli/commit/bb9b6b90ecf1d325bea02b457e5ea49446a61d68))
+* **identity:** ut identity status shows the signed-in user's electronic ID verification ([176414a](https://github.com/UteamUP/cli/commit/176414a5525829534e0f4d3d15aad741d29be6e7))
+* **iot:** ut iot device and device-key commands ([cc0a419](https://github.com/UteamUP/cli/commit/cc0a4191227a174383bb84e6ecd4de3953f98859))
+* **model3d:** add ut model3d spec-lookup ([3e30793](https://github.com/UteamUP/cli/commit/3e30793f6ec3c9ec6cabcec11cec1ce47fafd2e5))
+* **model3d:** view-photos action finds a product's photos by side ([e021158](https://github.com/UteamUP/cli/commit/e021158c500a8f652633715403d43dd9e0972582))
+* **subscription-lifecycle:** extend-period action ([ec1b6f1](https://github.com/UteamUP/cli/commit/ec1b6f1d32efdc4ebf949facb2a08cd772a0d3a4))
+* **tenant:** transfer-ownership and home-membership-set commands ([2566728](https://github.com/UteamUP/cli/commit/2566728478187af93ac7a0d3f4ec7f965a705ae3))
+
+
+### Bug Fixes
+
+* **model3d:** spec-lookup refuses the empty item GUID ([7ae7abb](https://github.com/UteamUP/cli/commit/7ae7abbe821915767ed991a3e5c240e05995b818))
+* **release:** restore published 5.1.0 metadata ([62c59f7](https://github.com/UteamUP/cli/commit/62c59f7b280d79fa266fd5017c4dfee1a655c11c))
+
+
+### Documentation
+
+* **iot:** state the telemetry range defaults and the 90-day limit on the flags ([38f4485](https://github.com/UteamUP/cli/commit/38f4485bf265dd635571f4fa3389b2790e7abfb3))
+* **iot:** ut iot devices explains connectionState ([c5a3072](https://github.com/UteamUP/cli/commit/c5a3072caeb69e930fe72c0c17a0077dc8a26cac))
+* **registry:** product-web-files search defaults to manufacturer and model ([9220787](https://github.com/UteamUP/cli/commit/9220787ff515f7ad53e24e2c390f7dc2aa4f93de))
+
 ## [5.1.0](https://github.com/UteamUP/cli/compare/5.0.1...5.1.0) (2026-10-22)
 
 
