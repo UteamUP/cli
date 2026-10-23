@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.0](https://github.com/UteamUP/cli/compare/5.4.0...5.5.0) (2026-10-23)
+
+
+### Features
+
+* **security:** implement media scan budget and directory traversal limits ([f9a5afe](https://github.com/UteamUP/cli/commit/f9a5afe879677cee97b94ed88e110ebd172335fb))
+
 ## [5.4.0](https://github.com/UteamUP/cli/compare/5.3.0...5.4.0) (2026-10-23)
 
 
