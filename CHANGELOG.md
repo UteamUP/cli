@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.0](https://github.com/UteamUP/cli/compare/5.2.0...5.3.0) (2026-10-23)
+
+
+### Features
+
+* **marketplace:** show-in-public-catalog flag on requirement drafts ([67f3127](https://github.com/UteamUP/cli/commit/67f3127e3945ba89db4cdc21e3b4ba8af663f8a6))
+
 ## [5.2.0](https://github.com/UteamUP/cli/compare/5.1.0...5.2.0) (2026-10-23)
 
 
