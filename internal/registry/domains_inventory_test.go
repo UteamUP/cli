@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -927,7 +928,7 @@ func TestReadJSONFileFlagParsesArray(t *testing.T) {
 	if !ok {
 		t.Fatalf("element type = %T, want map[string]any", arr[0])
 	}
-	if op["action"] != "Add" || op["quantity"] != float64(3) {
+	if op["action"] != "Add" || op["quantity"] != json.Number("3") {
 		t.Errorf("parsed element = %+v, want action=Add quantity=3", op)
 	}
 }
@@ -1418,6 +1419,9 @@ func TestDevicetokenRegisterActionWired(t *testing.T) {
 		if !f.Required || f.Type != "string" {
 			t.Errorf("register flag %q must be a Required string, got %+v", name, f)
 		}
+		if name == "token" && !f.Sensitive {
+			t.Error("register token flag must use protected sensitive input")
+		}
 	}
 }
 
@@ -1444,8 +1448,49 @@ func TestDevicetokenDeleteActionWired(t *testing.T) {
 	if action.RESTPath != "{token}" {
 		t.Errorf("delete RESTPath = %q, want %q (DELETE api/devicetokens/{token})", action.RESTPath, "{token}")
 	}
-	if len(action.Args) != 1 || action.Args[0].Name != "token" || !action.Args[0].Required || action.Args[0].Type != "string" {
-		t.Fatalf("delete expected single required string positional arg 'token', got %+v", action.Args)
+	if len(action.Args) != 0 {
+		t.Fatalf("delete must not accept a positional token, got %+v", action.Args)
+	}
+	if len(action.Flags) != 1 || action.Flags[0].Name != "token" ||
+		!action.Flags[0].Required || !action.Flags[0].Sensitive || action.Flags[0].Type != "string" {
+		t.Fatalf("delete expected a required sensitive token flag, got %+v", action.Flags)
+	}
+}
+
+func TestReadJSONFileFlagPreservesNumbersRejectsDuplicateKeysAndBoundsInput(t *testing.T) {
+	numberPath := filepath.Join(t.TempDir(), "number.json")
+	if err := os.WriteFile(numberPath, []byte(`{"n":9007199254740993}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	parsed, err := readJSONFileFlag(numberPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := json.Marshal(parsed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(encoded) != `{"n":9007199254740993}` {
+		t.Fatalf("JSON numeric precision changed: %s", encoded)
+	}
+
+	duplicatePath := filepath.Join(t.TempDir(), "duplicate.json")
+	if err := os.WriteFile(duplicatePath, []byte(`{"nested":{"mode":"safe","mode":"unsafe"}}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readJSONFileFlag(duplicatePath); err == nil || !strings.Contains(err.Error(), `duplicate JSON object field "mode"`) {
+		t.Fatalf("duplicate nested field error = %v", err)
+	}
+
+	oversizedPath := filepath.Join(t.TempDir(), "oversized.json")
+	if err := os.WriteFile(oversizedPath, make([]byte, maximumRegistryJSONFileBytes+1), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readJSONFileFlag(oversizedPath); err == nil {
+		t.Fatal("oversized generic JSON input was accepted")
+	}
+	if _, err := readRootJSONObjectFile(oversizedPath); err == nil {
+		t.Fatal("oversized root-object JSON input was accepted")
 	}
 }
 

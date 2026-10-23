@@ -117,10 +117,11 @@ func init() {
 				},
 			},
 			{
-				Name:        "profile-apply",
-				Description: "Apply an exact reviewed tenant designation profile using its fingerprint and review token",
-				ToolName:    "UteamupTenantcodingProfileApply",
-				MCPOnly:     true,
+				Name:                "profile-apply",
+				Description:         "Apply an exact reviewed tenant designation profile using its fingerprint and review token",
+				ToolName:            "UteamupTenantcodingProfileApply",
+				MCPOnly:             true,
+				SensitiveBodyFields: []string{"review"},
 				Flags: []FlagDef{
 					{
 						Name:        "review-file",

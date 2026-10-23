@@ -23,3 +23,13 @@ func TestTransportErrorRedactsEncodedQueryAndFragmentCapabilities(t *testing.T) 
 		t.Fatal(got)
 	}
 }
+
+func TestDeviceTokenRouteRedactsTheTokenFromRequestLogs(t *testing.T) {
+	got := SafeDiagnostic(`DELETE https://api.uteamup.com/api/devicetokens/fcm-token-canary tenant=tenant-a`)
+	if strings.Contains(got, "fcm-token-canary") {
+		t.Fatalf("device token survived route redaction: %s", got)
+	}
+	if !strings.Contains(got, "/api/devicetokens/[REDACTED]") || !strings.Contains(got, "tenant=tenant-a") {
+		t.Fatalf("ordinary request context was not preserved: %s", got)
+	}
+}

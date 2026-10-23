@@ -53,6 +53,40 @@ func TestActualBookingVerificationCredentialRejectsArgvBeforeClientCreation(t *t
 	}
 	t.Fatal("booking verification action missing")
 }
+
+func TestDeviceTokenMutationRejectsArgvBeforeClientCreation(t *testing.T) {
+	for _, actionName := range []string{"register", "delete"} {
+		called := false
+		factory := func() (*client.APIClient, error) { called = true; return nil, nil }
+		format := "json"
+		var domain *Domain
+		var action *Action
+		for i := range DefaultRegistry.domains {
+			if DefaultRegistry.domains[i].Name != "devicetoken" {
+				continue
+			}
+			domain = DefaultRegistry.domains[i]
+			for j := range domain.Actions {
+				if domain.Actions[j].Name == actionName {
+					action = &domain.Actions[j]
+				}
+			}
+		}
+		if action == nil {
+			t.Fatalf("device token %s action is missing", actionName)
+		}
+		command := buildActionCommand(domain, *action, factory, logging.New(logging.LevelError), &format, nil)
+		args := []string{"--token", "device-token-canary"}
+		if actionName == "register" {
+			args = append(args, "--platform", "ios")
+		}
+		command.SetArgs(args)
+		err := command.Execute()
+		if err == nil || !strings.Contains(err.Error(), "argv") || called {
+			t.Fatalf("%s sensitive token argv error=%v client=%v", actionName, err, called)
+		}
+	}
+}
 func TestCredentialActionsDisableExport(t *testing.T) {
 	for _, pair := range [][2]string{{"apikey", "create"}, {"admin-user", "reset-password"}} {
 		_ = pair

@@ -57,21 +57,9 @@ func (s *ImageScanner) ScanFolder() ([]models.ImageInfo, error) {
 	}
 
 	var images []models.ImageInfo
+	budget := security.NewMediaScanBudget()
 
-	err = filepath.WalkDir(s.imageFolder, func(path string, d os.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			log.Printf("warning: walk error at %s: %s", security.SafeText(path), security.SafeText(walkErr.Error()))
-			return nil
-		}
-
-		// If not recursive, skip subdirectories (but not the root itself).
-		if !s.recursive && d.IsDir() && path != s.imageFolder {
-			return filepath.SkipDir
-		}
-
-		if d.IsDir() {
-			return nil
-		}
+	err = security.WalkMediaTree(s.imageFolder, s.recursive, budget, func(path string, d os.DirEntry) error {
 		if d.Type()&os.ModeSymlink != 0 {
 			log.Printf("skipped symbolic link: %s", security.SafeText(filepath.Base(path)))
 			return nil
@@ -95,6 +83,9 @@ func (s *ImageScanner) ScanFolder() ([]models.ImageInfo, error) {
 		if fi.Size() <= 0 || fi.Size() > maxBytes {
 			log.Printf("skipped image %s: file size is outside the 1-%d MB limit", security.SafeText(filepath.Base(path)), s.maxFileSizeMB)
 			return nil
+		}
+		if err := budget.AddMediaFile(fi.Size()); err != nil {
+			return fmt.Errorf("media scan budget exceeded: %w", err)
 		}
 		security.BindSource(path, fi)
 		if !imageutil.IsValidImage(path) {

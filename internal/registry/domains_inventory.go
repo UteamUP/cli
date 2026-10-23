@@ -1349,7 +1349,7 @@ func init() {
 				HTTPMethod:  "POST",
 				RESTPath:    "register",
 				Flags: []FlagDef{
-					{Name: "token", Description: "FCM registration token (16-512 characters)", Required: true, Type: "string"},
+					{Name: "token", Description: "FCM registration token (16-512 characters)", Required: true, Sensitive: true, Type: "string"},
 					{Name: "platform", Description: "Device platform: ios, android, or web", Required: true, Type: "string"},
 				},
 			},
@@ -1358,7 +1358,9 @@ func init() {
 				Description: "Remove a push device token (logout wipe) — owner-only, push stops for that device immediately",
 				ToolName:    "UteamupDevicetokenDelete",
 				RESTPath:    "{token}",
-				Args:        []ArgDef{{Name: "token", Description: "FCM registration token to remove", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "token", Description: "FCM registration token to remove", Required: true, Sensitive: true, Type: "string"},
+				},
 			},
 		},
 	})

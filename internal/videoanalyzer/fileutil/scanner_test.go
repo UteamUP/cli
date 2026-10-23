@@ -1,9 +1,13 @@
 package fileutil
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/uteamup/cli/internal/security"
 )
 
 // createTempDir creates a temporary directory for testing.
@@ -253,5 +257,17 @@ func TestScanPath_NonrecursiveIncludesOnlyRootFiles(t *testing.T) {
 	fileResult, err := NewScanner(100, false).ScanPath(filepath.Join(dir, "nested", "video.mp4"))
 	if err != nil || len(fileResult.Videos) != 1 {
 		t.Fatalf("explicit file input rejected: %+v, %v", fileResult, err)
+	}
+}
+
+func TestScanPath_RejectsMoreThanTheMediaRequestBudget(t *testing.T) {
+	dir := createTempDir(t)
+	for i := 0; i <= security.MaximumMediaScanFiles; i++ {
+		writeTempFile(t, dir, fmt.Sprintf("video-%03d.mp4", i), makeMP4Bytes())
+	}
+
+	result, err := NewScanner(100, true).ScanPath(dir)
+	if err == nil || !strings.Contains(err.Error(), "100-file analysis limit") {
+		t.Fatalf("ScanPath() error = %v, want bounded media-scan error; result=%+v", err, result)
 	}
 }

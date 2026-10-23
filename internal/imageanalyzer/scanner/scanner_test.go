@@ -1,14 +1,17 @@
 package scanner
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/jpeg"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/uteamup/cli/internal/imageanalyzer/models"
+	"github.com/uteamup/cli/internal/security"
 )
 
 // createTestJPEG creates a minimal valid JPEG file at the given path.
@@ -63,6 +66,18 @@ func TestScanFolder(t *testing.T) {
 		if img.FileSizeBytes == 0 {
 			t.Errorf("expected non-zero file size for %s", img.Filename)
 		}
+	}
+}
+
+func TestScanFolder_RejectsMoreThanTheMediaRequestBudget(t *testing.T) {
+	dir := t.TempDir()
+	for i := 0; i <= security.MaximumMediaScanFiles; i++ {
+		createTestJPEG(t, filepath.Join(dir, fmt.Sprintf("photo-%03d.jpg", i)))
+	}
+
+	_, err := NewScanner(dir, true, []string{".jpg"}, 1024, 10).ScanFolder()
+	if err == nil || !strings.Contains(err.Error(), "100-file analysis limit") {
+		t.Fatalf("ScanFolder() error = %v, want bounded media-scan error", err)
 	}
 }
 

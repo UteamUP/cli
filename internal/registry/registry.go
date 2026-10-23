@@ -121,6 +121,7 @@ var uuidValuePattern = regexp.MustCompile(
 )
 
 const emptyUUIDValue = "00000000-0000-0000-0000-000000000000"
+const maximumRegistryJSONFileBytes int64 = 10 * 1024 * 1024
 
 // HTTPMethod maps action names to HTTP methods for REST calls.
 //
@@ -1152,12 +1153,20 @@ func redactSensitiveActionValues(action Action, args map[string]any, headers map
 // readJSONFileFlag loads a JSONFile-marked flag: the file at path is read and
 // parsed as JSON; the parsed value (array or object) becomes the body field.
 func readJSONFileFlag(path string) (any, error) {
-	data, err := os.ReadFile(path)
+	data, err := security.ReadFile(path, maximumRegistryJSONFileBytes)
 	if err != nil {
 		return nil, err
 	}
-	var parsed any
-	if err := json.Unmarshal(data, &parsed); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	parsed, err := decodeStrictJSONValue(decoder)
+	if err != nil {
+		return nil, fmt.Errorf("parsing %s as JSON: %w", filepath.Base(path), err)
+	}
+	if _, err := decoder.Token(); err != io.EOF {
+		if err == nil {
+			return nil, fmt.Errorf("parsing %s as JSON: multiple root values", filepath.Base(path))
+		}
 		return nil, fmt.Errorf("parsing %s as JSON: %w", filepath.Base(path), err)
 	}
 	return parsed, nil
@@ -1178,7 +1187,7 @@ var rejectedRootObjectWrappers = map[string]struct{}{
 // merging. It rejects wrapper-shaped payloads because the caller cannot know
 // or choose an API binder wrapper for this primitive.
 func readRootJSONObjectFile(path string) (map[string]any, error) {
-	data, err := os.ReadFile(path)
+	data, err := security.ReadFile(path, maximumRegistryJSONFileBytes)
 	if err != nil {
 		return nil, err
 	}

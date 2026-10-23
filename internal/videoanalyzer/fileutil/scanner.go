@@ -49,29 +49,25 @@ func (s *Scanner) ScanPath(path string) (*ScanResult, error) {
 	}
 
 	result := &ScanResult{}
+	budget := security.NewMediaScanBudget()
 
 	if !info.IsDir() {
-		s.processFile(path, info, result)
+		if err := budget.AddEntry(); err != nil {
+			return nil, err
+		}
+		if err := s.processFile(path, info, result, budget); err != nil {
+			return nil, err
+		}
 		return result, nil
 	}
 
-	err = filepath.WalkDir(path, func(p string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			if !s.recursive && p != path {
-				return filepath.SkipDir
-			}
-			return nil
-		}
+	err = security.WalkMediaTree(path, s.recursive, budget, func(p string, d fs.DirEntry) error {
 		fi, err := d.Info()
 		if err != nil {
 			log.Printf("skip %s: %s", security.SafeText(p), security.SafeText(err.Error()))
 			return nil
 		}
-		s.processFile(p, fi, result)
-		return nil
+		return s.processFile(p, fi, result, budget)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("walk directory: %w", err)
@@ -86,17 +82,22 @@ func (s *Scanner) ScanPath(path string) (*ScanResult, error) {
 
 // processFile classifies a single file and appends it to the appropriate
 // category in the scan result.
-func (s *Scanner) processFile(path string, info os.FileInfo, result *ScanResult) {
+func (s *Scanner) processFile(
+	path string,
+	info os.FileInfo,
+	result *ScanResult,
+	budget *security.MediaScanBudget,
+) error {
 	if !info.Mode().IsRegular() {
 		log.Printf("skip %s: upload source is not a regular file", security.SafeText(filepath.Base(path)))
 		result.Skipped = append(result.Skipped, path)
-		return
+		return nil
 	}
 	maxBytes := int64(s.maxFileSizeMB) * 1024 * 1024
 	if info.Size() <= 0 || info.Size() > maxBytes {
 		log.Printf("skip %s: file size is outside the 1-%d MB limit", security.SafeText(filepath.Base(path)), s.maxFileSizeMB)
 		result.Skipped = append(result.Skipped, path)
-		return
+		return nil
 	}
 
 	security.BindSource(path, info)
@@ -104,18 +105,21 @@ func (s *Scanner) processFile(path string, info os.FileInfo, result *ScanResult)
 	if err != nil {
 		log.Printf("skip %s: MIME detection failed: %s", security.SafeText(filepath.Base(path)), security.SafeText(err.Error()))
 		result.Skipped = append(result.Skipped, path)
-		return
+		return nil
 	}
 
 	if IsUnsupported(mt) {
 		log.Printf("skip %s: unsupported format", security.SafeText(filepath.Base(path)))
 		result.Skipped = append(result.Skipped, path)
-		return
+		return nil
+	}
+	if err := budget.AddMediaFile(info.Size()); err != nil {
+		return fmt.Errorf("media scan budget exceeded: %w", err)
 	}
 
 	if IsGIF(mt) {
 		result.GIFFiles = append(result.GIFFiles, path)
-		return
+		return nil
 	}
 
 	result.Videos = append(result.Videos, VideoFile{
@@ -124,4 +128,5 @@ func (s *Scanner) processFile(path string, info os.FileInfo, result *ScanResult)
 		MIMEType:  mt,
 		SizeBytes: info.Size(),
 	})
+	return nil
 }

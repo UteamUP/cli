@@ -99,6 +99,7 @@ func (l *Logger) Error(msg string, args ...any) { l.log(LevelError, msg, args...
 func (l *Logger) SetLevel(level Level) { l.level = level }
 
 var capabilityURL = regexp.MustCompile(`(?i)https?://[^\s"'<>]+`)
+var deviceTokenRoute = regexp.MustCompile(`(?i)(/api/devicetokens/)[^/\s?#"'<>]+`)
 var credentialValue = regexp.MustCompile(`(?i)(\bBearer\s+|\b(?:token|secret|password|apiKey|api_key)\s*(?:=|:)\s*|\b(?:token|secret|password|apiKey|api_key)\s+)(?:"[^"\r\n]*"|'[^'\r\n]*'|[^\s,&#]+)`)
 
 // redact removes every credential occurrence, including URLs in transport errors.
@@ -109,6 +110,7 @@ func redact(s string) string {
 		}
 		return raw
 	})
+	result = deviceTokenRoute.ReplaceAllString(result, "${1}[REDACTED]")
 	return credentialValue.ReplaceAllString(result, "${1}[REDACTED]")
 }
 

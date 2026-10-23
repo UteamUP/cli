@@ -111,6 +111,33 @@ func TestCodingSystemProfileActionsUseGovernedMCPArguments(t *testing.T) {
 	}
 }
 
+func TestCodingSystemProfileApplyRedactsTheCompleteReviewObject(t *testing.T) {
+	var action *Action
+	for _, domain := range DefaultRegistry.Domains() {
+		if domain.Name != "codingsystem" {
+			continue
+		}
+		for i := range domain.Actions {
+			if domain.Actions[i].Name == "profile-apply" {
+				action = &domain.Actions[i]
+			}
+		}
+	}
+	if action == nil {
+		t.Fatal("profile-apply action is missing")
+	}
+
+	review := map[string]any{"reviewToken": "review-token-canary"}
+	args := map[string]any{"review": review, "profileFingerprint": "public-fingerprint"}
+	logged := loggedArgsForAction(*action, args)
+	if logged["review"] != "[REDACTED]" {
+		t.Fatalf("review diagnostics = %#v", logged["review"])
+	}
+	if args["review"].(map[string]any)["reviewToken"] != "review-token-canary" {
+		t.Fatal("diagnostic redaction mutated the outgoing review object")
+	}
+}
+
 func TestCodingSystemSetDesignationFormatFlags(t *testing.T) {
 	var action *Action
 	for _, d := range DefaultRegistry.Domains() {
