@@ -48,6 +48,7 @@ func init() {
 				Name: "reason", Description: "Reason for abandoning the execution", Required: true, Type: "string",
 			})},
 			{Name: "analytics", Description: "Get tenant route analytics", ToolName: "UteamupInspectionAnalyticsOverview", MCPOnly: true},
+			{Name: "asset-health-summary", Description: "Get observed asset health and evidence coverage across the current tenant", ToolName: "UteamupInspectionAssetHealthSummary", HTTPMethod: "GET", RESTBasePath: "/api/v1/inspectionanalytics", RESTPath: "summary"},
 			{Name: "anomalies", Description: "List route anomalies", ToolName: "UteamupInspectionAnomalyList", MCPOnly: true, Flags: []FlagDef{
 				{Name: "route-guid", BodyName: "routeGuid", Description: "Filter by public route GUID", Type: "string"},
 				{Name: "status", Description: "Filter by anomaly status", Type: "string"},
