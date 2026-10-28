@@ -21,6 +21,15 @@ func init() {
 		APIPath: "/api/userpreferences",
 		Actions: []Action{
 			{
+				Name: "push-snooze", Description: "Read your push pause and expiry (interactive user login required)",
+				ToolName: "UteamupUserPushSnoozeGet", HTTPMethod: "GET", RESTPath: "push-snooze",
+			},
+			{
+				Name: "set-push-snooze", Description: "Pause your future push deliveries or resume with zero; inbox and email stay unchanged",
+				ToolName: "UteamupUserPushSnoozeSet", HTTPMethod: "PUT", RESTPath: "push-snooze",
+				Flags: []FlagDef{{Name: "minutes", BodyName: "durationMinutes", Description: "Explicit zero resumes; 1-1440 pauses (interactive user login required)", Type: "int", Required: true}},
+			},
+			{
 				Name:              "get-preferences",
 				Description:       "Get the signed-in user's UI preferences (Bug & Feature widget, Feature Preview widget, show restore banner)",
 				ToolName:          "UteamupUserPreferencesGet",
