@@ -69,6 +69,31 @@ func TestEncodeFormFieldsRejectsNestedObjectsInsteadOfDroppingThem(t *testing.T)
 	}
 }
 
+func TestContractPayerFormDistinguishesExplicitClearFromOmission(t *testing.T) {
+	for _, fields := range []map[string]any{
+		{"title": "Legacy agreement"},
+		{"payerType": "", "payerName": nil},
+		{"payerType": "External", "payerName": "Named payer"},
+	} {
+		body, contentType, err := EncodeFormFields(fields)
+		if err != nil {
+			t.Fatal(err)
+		}
+		form := parseForm(t, body, contentType)
+		for _, key := range []string{"payerType", "payerName"} {
+			want, present := fields[key]
+			got, sent := form[pascalCase(key)]
+			if !present || want == nil {
+				if sent {
+					t.Fatalf("omitted %s unexpectedly sent: %v", key, got)
+				}
+			} else if !reflect.DeepEqual(got, []string{want.(string)}) {
+				t.Fatalf("%s = %v, want %q", key, got, want)
+			}
+		}
+	}
+}
+
 func TestCallRESTFormSendsMultipartWithAuthTenantAndCSRFHeaders(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)

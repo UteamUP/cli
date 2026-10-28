@@ -20,10 +20,10 @@ func init() {
 				Args:        []ArgDef{{Name: "contractGuid", Description: "Public contract GUID", Required: true, Type: "string"}},
 			},
 			// ContractsController binds [FromForm] models, so create and update send form fields.
-			{Name: "create", Description: "Create a contract", ToolName: "UteamupContractCreate", FormBody: true, Flags: []FlagDef{jsonFlag()}},
+			{Name: "create", Description: "Create a contract; optional payerType Company/Private/External and payerName", ToolName: "UteamupContractCreate", FormBody: true, Flags: []FlagDef{jsonFlag()}},
 			{
 				Name:        "update",
-				Description: "Update a contract by public GUID (every field is replaced)",
+				Description: "Update a contract by public GUID; omitted payer fields preserve attribution, empty payerType clears it",
 				ToolName:    "UteamupContractUpdateByGuid",
 				HTTPMethod:  "PUT",
 				RESTPath:    "by-guid/{contractGuid}",
