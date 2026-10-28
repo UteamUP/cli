@@ -724,6 +724,21 @@ func init() {
 			},
 		},
 		{
+			Name:         "wrench-summary",
+			Description:  "Read company/team recorded productive time with whole-scope totals and paged workers",
+			ToolName:     "UteamupTimeEntryWrenchSummary",
+			HTTPMethod:   "GET",
+			RESTBasePath: "/api/timeentry",
+			RESTPath:     "wrench-time/summary",
+			Flags: []FlagDef{
+				{Name: "date-from", BodyName: "dateFrom", Description: "Inclusive company-local first date (YYYY-MM-DD)", Required: true, Type: "string"},
+				{Name: "date-to", BodyName: "dateTo", Description: "Inclusive company-local final date (maximum 366 days)", Required: true, Type: "string"},
+				{Name: "team", BodyName: "teamGuid", Description: "Optional team GUID; current roster and Team.View apply", Type: "string"},
+				{Name: "page", BodyName: "page", Description: "Worker page", Type: "int", Default: 1},
+				{Name: "page-size", BodyName: "pageSize", Description: "Workers per page (1-100); totals always cover all workers", Type: "int", Default: 50},
+			},
+		},
+		{
 			Name:         "weekly-mine",
 			Description:  "Read the authenticated user's weekly timesheet grid",
 			ToolName:     "UteamupTimesheetWeeklyMine",
