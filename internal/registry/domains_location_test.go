@@ -26,6 +26,8 @@ func TestLocationReadActionsUseGuidRestRoutes(t *testing.T) {
 			wantQuery: map[string]string{"nameFilter": ""}, body: `{"locations":[],"totalCount":0}`},
 		{name: "get uses the public GUID", args: []string{"get", locationGUID}, wantPath: "/api/location/" + locationGUID, body: `{"guid":"` + locationGUID + `"}`},
 		{name: "node tree reads the GUID-keyed nodes route", args: []string{"node-tree", locationGUID}, wantPath: "/api/location/" + locationGUID + "/nodes", body: `[]`},
+		{name: "node type catalog uses its own REST collection", args: []string{"node-types"}, wantPath: "/api/locationnodetype", body: `[]`},
+		{name: "node tree forwards public type GUID", args: []string{"node-tree", locationGUID, "--node-type-guid", locationGUID}, wantPath: "/api/location/" + locationGUID + "/nodes", wantQuery: map[string]string{"locationNodeTypeGuid": locationGUID}, body: `[]`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
