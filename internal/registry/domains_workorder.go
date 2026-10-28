@@ -12,7 +12,7 @@ func init() {
 				ToolName:    "UteamupWorkorderWithdrawRequest",
 				HTTPMethod:  "POST",
 				RESTPath:    "by-guid/{workorderGuid}/withdraw-request",
-				Args:        []ArgDef{{Name: "workorderGuid", Description: "Your request GUID", Required: true, Type: "uuid"}},
+				Args:        []ArgDef{{Name: "workorderGuid", Description: "Your request GUID", Required: true, Type: "non-empty-uuid"}},
 			},
 			{
 				Name:        "request-closure",
@@ -20,7 +20,7 @@ func init() {
 				ToolName:    "UteamupWorkorderRequestClosure",
 				HTTPMethod:  "POST",
 				RESTPath:    "by-guid/{workorderGuid}/request-closure",
-				Args:        []ArgDef{{Name: "workorderGuid", Description: "Your request GUID", Required: true, Type: "uuid"}},
+				Args:        []ArgDef{{Name: "workorderGuid", Description: "Your request GUID", Required: true, Type: "non-empty-uuid"}},
 			},
 			{
 				Name:        "list",
