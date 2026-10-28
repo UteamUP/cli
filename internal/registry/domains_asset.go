@@ -125,7 +125,7 @@ func init() {
 				Description: "Update an existing asset by public GUID",
 				ToolName:    "UteamupAssetUpdate",
 				HTTPMethod:  "PUT",
-				RESTPath:    "by-guid/{assetGuid}",
+				RESTPath:    "by-guid/{id}",
 				Args:        []ArgDef{{Name: "assetGuid", BodyName: "id", Description: "Asset public GUID", Required: true, Type: "uuid"}},
 				Flags: []FlagDef{
 					{Name: "name", Description: "New asset name", Type: "string"},

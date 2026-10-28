@@ -33,6 +33,14 @@ func TestAIProviderAdministrationIsNotExposedByCLI(t *testing.T) {
 			}
 
 			for _, flag := range action.Flags {
+				// This existing GET filter narrows historical usage rows; it cannot route an
+				// AI request or change provider configuration. Keep the exception bound to
+				// the exact read-only endpoint, so writes and other tools remain forbidden.
+				if flag.Name == "provider" && domain.Name == "ai-usage" && action.Name == "requests" &&
+					action.HTTPMethod == "GET" && action.RESTBasePath == "/api/aiusage" &&
+					action.RESTPath == "requests" && action.ToolName == "UteamupAIUsageRequests" {
+					continue
+				}
 				if _, forbidden := forbiddenFlags[strings.ToLower(flag.Name)]; forbidden {
 					t.Fatalf(
 						"CLI action %s %s exposes forbidden AI routing flag --%s",

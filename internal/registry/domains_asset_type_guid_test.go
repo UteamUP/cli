@@ -104,10 +104,10 @@ func TestAssetTypeReferencesOnAssetActionsAreGuidOnly(t *testing.T) {
 		t.Errorf("update primary-asset-type-guid is miswired: %+v", primary)
 	}
 
-	if update.RESTPath != "by-guid/{assetGuid}" || update.HTTPMethod != "PUT" {
+	if update.RESTPath != "by-guid/{id}" || update.HTTPMethod != "PUT" {
 		t.Errorf("asset update GUID route is miswired: %+v", update)
 	}
-	if len(update.Args) != 1 || update.Args[0].Name != "assetGuid" || update.Args[0].Type != "uuid" {
+	if len(update.Args) != 1 || update.Args[0].Name != "assetGuid" || update.Args[0].BodyName != "id" || update.Args[0].Type != "uuid" {
 		t.Errorf("asset update GUID argument is miswired: %+v", update.Args)
 	}
 
