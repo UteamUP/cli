@@ -8,6 +8,14 @@ func init() {
 		APIPath:     "/api/upmateassistant/operations",
 		Actions: []Action{
 			{
+				Name: "list-plans", Description: "List recent tenant plan metadata with paging",
+				ToolName: "UteamupOperationsListPlans", HTTPMethod: "GET", RESTPath: "plans",
+				Flags: []FlagDef{
+					{Name: "page", QueryName: "page", Type: "int", Default: 1, Description: "Page number, starting at 1"},
+					{Name: "page-size", QueryName: "pageSize", Type: "int", Default: 20, Description: "Items per page, 1-50"},
+				},
+			},
+			{
 				Name:        "risks",
 				Description: "Read bounded tenant operational risks with freshness and citation evidence",
 				ToolName:    "UteamupOperationsGetRisks",

@@ -28,6 +28,11 @@ func TestOperationsBrainRoutesAndArgumentsAreGuidOnly(t *testing.T) {
 		path       string
 	}{
 		{
+			"list-plans",
+			map[string]any{"page": 2, "pageSize": 10},
+			"/api/upmateassistant/operations/plans",
+		},
+		{
 			"get-plan",
 			map[string]any{"planGuid": "plan-guid"},
 			"/api/upmateassistant/operations/plans/plan-guid",
@@ -72,6 +77,7 @@ func TestOperationsBrainRoutesAndArgumentsAreGuidOnly(t *testing.T) {
 func TestOperationsBrainActionsMirrorBackendToolsAndGovernance(t *testing.T) {
 	t.Parallel()
 	expected := map[string]string{
+		"list-plans":      "UteamupOperationsListPlans",
 		"risks":           "UteamupOperationsGetRisks",
 		"create-plan":     "UteamupOperationsCreatePlan",
 		"get-plan":        "UteamupOperationsGetPlan",
