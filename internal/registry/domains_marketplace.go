@@ -253,7 +253,7 @@ func init() {
 			},
 			{
 				Name:        "transactions",
-				Description: "List your tenant's marketplace transactions",
+				Description: "List marketplace transactions, including anonymous source RFQ references when available",
 				ToolName:    "UteamupMarketplaceTransactionsList",
 				RESTPath:    "transactions",
 				Flags: []FlagDef{
