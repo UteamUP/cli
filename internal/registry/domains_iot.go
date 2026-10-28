@@ -25,6 +25,18 @@ func init() {
 				HTTPMethod:   "GET",
 			},
 			{
+				Name:         "overview",
+				Description:  "Summarize electrical measurements, coverage and energy over a complete window",
+				ToolName:     "UteamupIoTTelemetryOverview",
+				RESTBasePath: "/api/iot/monitoring",
+				HTTPMethod:   "GET",
+				RESTPath:     "telemetry/overview",
+				Flags: []FlagDef{
+					{Name: "from", Description: "UTC observation start (ISO-8601); default last 24h, at most 31 days", Type: "string"},
+					{Name: "to", Description: "UTC observation end (ISO-8601); default now", Type: "string"},
+				},
+			},
+			{
 				Name:         "telemetry",
 				Description:  "Query normalized telemetry with bounded cursor pagination",
 				ToolName:     "UteamupIoTTelemetryPoints",
