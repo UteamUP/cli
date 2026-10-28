@@ -7,6 +7,15 @@ func init() {
 		Description: "Manage stock/inventory",
 		Actions: append([]Action{
 			{
+				Name: "item-assigned-assets", Description: "List assets using a stock item's part, tool or chemical",
+				ToolName: "UteamupStockGetItemAssignedAssets", HTTPMethod: "GET", RESTPath: "items/{itemGuid}/assigned-assets",
+				Args: []ArgDef{{Name: "itemGuid", Description: "Stock item GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "page", QueryName: "page", Type: "int", Default: 1, Description: "Page number starting at 1"},
+					{Name: "page-size", QueryName: "pageSize", Type: "int", Default: 25, Description: "Items per page, 1-100"},
+				},
+			},
+			{
 				Name:        "list",
 				Description: "List stock locations",
 				ToolName:    "UteamupStockList",
