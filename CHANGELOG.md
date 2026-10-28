@@ -5,6 +5,29 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.0](https://github.com/UteamUP/cli/compare/5.6.0...5.7.0) (2026-10-28)
+
+
+### Features
+
+* add paged saved plan discovery to operations brain ([566ec30](https://github.com/UteamUP/cli/commit/566ec300783044662b242f032109ef96a7463604))
+* detach an asset document using public GUIDs ([e259659](https://github.com/UteamUP/cli/commit/e2596599076016ab3886eab1dcb1eaaeb8cf4473))
+* document contract payer updates and preserve explicit clears ([9e25be4](https://github.com/UteamUP/cli/commit/9e25be48805e649e63760aa7b504608710c699ed))
+* expose assigned assets for a stock item ([0545df9](https://github.com/UteamUP/cli/commit/0545df9ce54709a52ee1821ee7d65e78b71d93f4))
+* expose measurement display settings in CLI ([dc8e2ff](https://github.com/UteamUP/cli/commit/dc8e2ff847004b7282d99818d1e684de70ddc830))
+* expose planned stock arrival commands ([31df53d](https://github.com/UteamUP/cli/commit/31df53ddb3d79eee30d326fef0cccbb2a8a1246a))
+* let requesters withdraw or request closure of their work ([3e3bace](https://github.com/UteamUP/cli/commit/3e3bace7d6c60f56332ed41661159149215834e9))
+
+
+### Bug Fixes
+
+* **cli:** reject the empty GUID on requester workorder actions ([e8f63fe](https://github.com/UteamUP/cli/commit/e8f63fe52bbe79480442a352ca6a4a852669defe))
+
+
+### Miscellaneous
+
+* sync CLI 5.6.0 release metadata ([d46bf56](https://github.com/UteamUP/cli/commit/d46bf56c67d475c7a279e1aad6eff093234f1d22))
+
 ## [5.6.0](https://github.com/UteamUP/cli/compare/5.5.0...5.6.0) (2026-10-28)
 
 
