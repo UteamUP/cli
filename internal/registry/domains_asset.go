@@ -112,6 +112,17 @@ func init() {
 				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
 			},
 			{
+				Name:        "remove-document",
+				Description: "Detach one direct asset document link without deleting its file or other links (requires Asset.Update and Asset.Delete)",
+				ToolName:    "UteamupAssetRemoveDocument",
+				HTTPMethod:  "DELETE",
+				RESTPath:    "by-guid/{assetGuid}/documents/by-guid/{documentGuid}",
+				Args: []ArgDef{
+					{Name: "assetGuid", Description: "Asset public GUID", Required: true, Type: "non-empty-uuid"},
+					{Name: "documentGuid", Description: "Public GUID of the document to detach", Required: true, Type: "non-empty-uuid"},
+				},
+			},
+			{
 				Name:        "create",
 				Description: "Create an asset from a reviewed GUID-only JSON model",
 				ToolName:    "UteamupAssetCreate",
