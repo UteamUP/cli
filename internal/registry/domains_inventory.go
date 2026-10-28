@@ -5,7 +5,7 @@ func init() {
 		Name:        "stock",
 		Aliases:     []string{"stocks"},
 		Description: "Manage stock/inventory",
-		Actions: append([]Action{
+		Actions: append(append([]Action{
 			{
 				Name: "item-assigned-assets", Description: "List assets using a stock item's part, tool or chemical",
 				ToolName: "UteamupStockGetItemAssignedAssets", HTTPMethod: "GET", RESTPath: "items/{itemGuid}/assigned-assets",
@@ -1160,7 +1160,7 @@ func init() {
 					{Name: "confirm", Description: "Explicitly confirm creating the stock items", Type: "bool", Required: true, MustBeTrue: true, LocalOnly: true},
 				},
 			},
-		),
+		), stockPlannedIncomingActions()...),
 	})
 
 	// Warranty coverage lives off the asset route (~/api/asset/{guid}/warranty-coverage),
