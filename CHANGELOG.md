@@ -2087,6 +2087,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * add Release Please automated versioning ([06f7362](https://github.com/UteamUP/cli/commit/06f736281a7103163b6ecd8c6be04d88eefe30ac))
 
 ## [Unreleased]
+
+- fix(asset): read assets by public GUID and expose document/vendor sets on partial updates.
 - fix(stock): route tenant-alerts to /api/stock/alerts and support an explicit optional --acknowledged filter for active alerts or history.
 
 ### Added

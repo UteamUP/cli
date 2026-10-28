@@ -304,6 +304,8 @@ func TestAssetPatchAction(t *testing.T) {
 		"manufacturer-vendor-guid":  {"uuid", "manufacturerVendorGuid"},
 		"is-active":                 {"bool", "isActive"},
 		"tool-guids":                {"stringSlice", "toolGuids"},
+		"vendor-guids":              {"stringSlice", "vendorGuids"},
+		"document-guids":            {"stringSlice", "documentGuids"},
 		"chemical-guids":            {"stringSlice", "chemicalGuids"},
 		"asset-parts-file":          {"string", "assetParts"},
 		"asset-type-guids":          {"stringSlice", "assetTypeGuids"},

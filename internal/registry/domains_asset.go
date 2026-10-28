@@ -31,9 +31,11 @@ func init() {
 			},
 			{
 				Name:        "get",
-				Description: "Get asset details by ID",
+				Description: "Get asset details by public GUID",
 				ToolName:    "UteamupAssetGet",
-				Args:        []ArgDef{{Name: "id", Description: "Asset ID", Required: true, Type: "int"}},
+				HTTPMethod:  "GET",
+				RESTPath:    "by-guid/{id}",
+				Args:        []ArgDef{{Name: "id", Description: "Asset public GUID (externalGuid)", Required: true, Type: "non-empty-uuid"}},
 			},
 			{
 				Name:        "get-by-guid",
@@ -124,7 +126,7 @@ func init() {
 				ToolName:    "UteamupAssetUpdate",
 				HTTPMethod:  "PUT",
 				RESTPath:    "by-guid/{assetGuid}",
-				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset public GUID", Required: true, Type: "uuid"}},
+				Args:        []ArgDef{{Name: "assetGuid", BodyName: "id", Description: "Asset public GUID", Required: true, Type: "uuid"}},
 				Flags: []FlagDef{
 					{Name: "name", Description: "New asset name", Type: "string"},
 					{Name: "serial", Description: "New serial number", Type: "string"},
@@ -159,6 +161,8 @@ func init() {
 					// No Default: a bool flag with a default is always sent, which would flip the asset.
 					{Name: "is-active", Description: "Set active (true) or inactive (false)", Type: "bool"},
 					{Name: "tool-guids", Description: "Complete set of linked tool GUIDs, repeatable or comma-separated (--tool-guids= removes every tool)", Type: "stringSlice"},
+					{Name: "vendor-guids", Description: "Complete set of selling/service vendor GUIDs (--vendor-guids= clears the set)", Type: "stringSlice"},
+					{Name: "document-guids", Description: "Complete set of direct document GUIDs (--document-guids= unlinks without deleting files)", Type: "stringSlice"},
 					{Name: "chemical-guids", Description: "Complete set of linked chemical GUIDs, repeatable or comma-separated (--chemical-guids= removes every chemical)", Type: "stringSlice"},
 					{Name: "asset-parts-file", BodyName: "assetParts", Description: "JSON file with the complete set of part assignments: [{\"partGuid\": \"...\", \"assignedQuantity\": 2}] ([] removes every part)", Type: "string", JSONFile: true},
 					{Name: "asset-type-guids", Description: "Complete set of asset type GUIDs, repeatable or comma-separated; the first is primary unless --primary-asset-type-guid names another (--asset-type-guids= removes every type)", Type: "stringSlice"},
