@@ -5,6 +5,26 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.0](https://github.com/UteamUP/cli/compare/5.7.0...5.8.0) (2026-10-28)
+
+
+### Features
+
+* expose company and team recorded activity summaries ([d1a93c2](https://github.com/UteamUP/cli/commit/d1a93c2a74944dba751ecd2d8da84392454a4991))
+* expose complete tenant asset health summary ([edeca83](https://github.com/UteamUP/cli/commit/edeca837e5628792047b93e43940f89b9a920980))
+* expose explicit equipment safety review commands ([12c1c70](https://github.com/UteamUP/cli/commit/12c1c702c23ae56218f0841384a7dcc8e91bcaee))
+* expose personal push pause for interactive users ([71e9581](https://github.com/UteamUP/cli/commit/71e9581f3f04610f74f0187d730475d233f90b95))
+
+
+### Bug Fixes
+
+* **cli:** reject empty GUIDs on the asset-safety review actions ([bf64815](https://github.com/UteamUP/cli/commit/bf64815825ea8ff71e9f13753ec3523f6ff9eb65))
+
+
+### Documentation
+
+* describe RFQ origin references on marketplace transactions ([043c96e](https://github.com/UteamUP/cli/commit/043c96e423aa6fbebb998a244042fba9bbf65ed2))
+
 ## [5.7.0](https://github.com/UteamUP/cli/compare/5.6.0...5.7.0) (2026-10-28)
 
 
