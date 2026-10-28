@@ -7,6 +7,25 @@ func init() {
 		Description: "Manage work orders",
 		Actions: []Action{
 			{
+				Name: "asset-safety", Description: "Read equipment safety snapshots as the signed-in person; API keys cannot impersonate a reviewer",
+				ToolName: "UteamupWorkorderAssetSafetyGet", HTTPMethod: "GET", RESTPath: "by-guid/{workorderGuid}/asset-safety",
+				Args: []ArgDef{{Name: "workorderGuid", Description: "Workorder public GUID", Required: true, Type: "uuid"}},
+			},
+			{
+				Name: "asset-safety-capture", Description: "Explicitly capture missing safety snapshots for a new workorder; never acknowledges reading",
+				ToolName: "UteamupWorkorderAssetSafetyCapture", HTTPMethod: "POST", RESTPath: "by-guid/{workorderGuid}/asset-safety/capture",
+				Args: []ArgDef{{Name: "workorderGuid", Description: "Workorder public GUID", Required: true, Type: "uuid"}},
+			},
+			{
+				Name: "asset-safety-acknowledge", Description: "Confirm you read an exact safety snapshot as the signed-in person; not a safety certification",
+				ToolName: "UteamupWorkorderAssetSafetyAcknowledge", HTTPMethod: "POST", RESTPath: "by-guid/{workorderGuid}/asset-safety/acknowledge",
+				Args: []ArgDef{{Name: "workorderGuid", Description: "Workorder public GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset public GUID on the reviewed snapshot", Required: true, Type: "uuid"},
+					{Name: "snapshot-guid", BodyName: "snapshotGuid", Description: "Exact snapshot GUID you have read", Required: true, Type: "uuid"},
+				},
+			},
+			{
 				Name:        "withdraw-request",
 				Description: "Withdraw your own never-started request; sign in as its requester",
 				ToolName:    "UteamupWorkorderWithdrawRequest",
