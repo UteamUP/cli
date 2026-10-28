@@ -24,6 +24,10 @@ func init() {
 					{Name: "operation-key", Description: "Filter by operation key", Type: "string"},
 					{Name: "credential-source", Description: "LegacyManaged, GlobalManaged, TenantByok, ManagedRealtimeTranscription or DeviceLocal", Type: "string"},
 					{Name: "user-guid", Description: "Filter by a public user GUID in this tenant", Type: "string"},
+					{Name: "user-search", Description: "Filter by part of the user's display name in this tenant", Type: "string"},
+					{Name: "model-name", Description: "Filter by part of the provider model name", Type: "string"},
+					{Name: "provider", Description: "Filter by exact provider name", Type: "string"},
+					{Name: "status", Description: "Pending, Success, Failed, RateLimited, Timeout, Cancelled or QuotaExhausted", Type: "string"},
 				},
 			},
 			{

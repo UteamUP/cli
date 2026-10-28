@@ -25,7 +25,7 @@ func TestAIUsageRequestsMirrorsTenantScopedHistory(t *testing.T) {
 			t.Fatalf("history must use server-owned tenant and public actor GUIDs: %#v", flag)
 		}
 	}
-	for _, name := range []string{"from", "to", "page", "page-size", "operation-key", "credential-source", "user-guid"} {
+	for _, name := range []string{"from", "to", "page", "page-size", "operation-key", "credential-source", "user-guid", "user-search", "model-name", "provider", "status"} {
 		if _, found := flags[name]; !found {
 			t.Errorf("missing request-history filter %s", name)
 		}
