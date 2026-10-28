@@ -5,6 +5,21 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.0](https://github.com/UteamUP/cli/compare/5.5.0...5.6.0) (2026-10-28)
+
+
+### Features
+
+* add AI request user model and status filters ([0ec77ae](https://github.com/UteamUP/cli/commit/0ec77ae0a9705b5843c89b06e71720d658dbc7dd))
+
+
+### Bug Fixes
+
+* **asset:** use public GUIDs and expose document link patches ([8cb3b19](https://github.com/UteamUP/cli/commit/8cb3b1907e96e284d405ae183619403fffdd4290))
+* **auth:** retain the API key tenant for CLI requests ([945bcba](https://github.com/UteamUP/cli/commit/945bcbac84544ae53490c0ba5bf5249181ff5f3b))
+* **cli:** align asset route keys and usage-filter validation ([33ff4f4](https://github.com/UteamUP/cli/commit/33ff4f4d0fbae5fbf227a725d5e39d8b7386f477))
+* **parts:** expose GUID stock levels in the CLI ([a19d12a](https://github.com/UteamUP/cli/commit/a19d12a4e0d843b288f9419f17225cdfcfcd6c5c))
+
 ## [5.5.0](https://github.com/UteamUP/cli/compare/5.4.0...5.5.0) (2026-10-28)
 
 
