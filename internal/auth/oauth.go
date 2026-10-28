@@ -468,6 +468,10 @@ func (a *Client) LoginWithAPIKey(apiKey, secret string) (*TokenData, error) {
 	if err := json.Unmarshal(tokenBody, &oauthResp); err != nil {
 		return nil, clierrors.NewAuthError("parsing token response", err)
 	}
+	metadata, err := readAccessTokenMetadata(oauthResp.AccessToken)
+	if err != nil || !samlTenantGUID.MatchString(metadata.TenantGUID) || metadata.TenantGUID == "00000000-0000-0000-0000-000000000000" {
+		return nil, clierrors.NewAuthError("API-key token has no valid tenant binding; request a new token from the server", err)
+	}
 
 	expiresIn := oauthResp.ExpiresIn
 	if expiresIn == 0 {
@@ -479,6 +483,7 @@ func (a *Client) LoginWithAPIKey(apiKey, secret string) (*TokenData, error) {
 		RefreshToken: oauthResp.RefreshToken,
 		ExpiresAt:    time.Now().Add(time.Duration(expiresIn) * time.Second),
 		AuthMethod:   "apikey",
+		TenantGUID:   metadata.TenantGUID,
 	}
 
 	a.logger.Info("API key auth successful")

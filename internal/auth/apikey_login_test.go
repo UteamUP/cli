@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +17,8 @@ import (
 func TestLoginWithAPIKeyRequestsTheRestResource(t *testing.T) {
 	apiKey := strings.Repeat("k", 32)
 	secret := strings.Repeat("s", 64)
+	tenantGUID := "b966b8c7-04a4-45d4-aa51-519ecf2ef13a"
+	accessToken := "header." + base64.RawURLEncoding.EncodeToString([]byte(`{"TenantGuid":"`+tenantGUID+`"}`)) + ".signature"
 	var tokenForm map[string]string
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
@@ -32,7 +35,7 @@ func TestLoginWithAPIKeyRequestsTheRestResource(t *testing.T) {
 			for key := range r.PostForm {
 				tokenForm[key] = r.PostForm.Get(key)
 			}
-			fmt.Fprint(w, `{"access_token":"rest-token","token_type":"Bearer","expires_in":3600}`)
+			fmt.Fprintf(w, `{"access_token":%q,"token_type":"Bearer","expires_in":3600}`, accessToken)
 		default:
 			t.Errorf("unexpected request %s %s", r.Method, r.URL.Path)
 			w.WriteHeader(http.StatusNotFound)
@@ -51,7 +54,27 @@ func TestLoginWithAPIKeyRequestsTheRestResource(t *testing.T) {
 	if tokenForm["code"] != "auth-code" || tokenForm["client_id"] != apiKey || tokenForm["code_verifier"] == "" {
 		t.Errorf("token form = %v", tokenForm)
 	}
-	if token.AccessToken != "rest-token" || token.AuthMethod != "apikey" {
+	if token.AccessToken != accessToken || token.AuthMethod != "apikey" || token.TenantGUID != tenantGUID {
 		t.Errorf("token = %+v", token)
+	}
+}
+
+func TestLoginWithAPIKeyRejectsMissingOrMalformedTenantBinding(t *testing.T) {
+	for _, tenant := range []string{"", "not-a-guid", "00000000-0000-0000-0000-000000000000"} {
+		t.Run(tenant, func(t *testing.T) {
+			accessToken := "header." + base64.RawURLEncoding.EncodeToString([]byte(`{"TenantGuid":"`+tenant+`"}`)) + ".signature"
+			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path == "/oauth/authorize" {
+					http.Redirect(w, r, "urn:ietf:wg:oauth:2.0:oob?code=auth-code", http.StatusFound)
+					return
+				}
+				fmt.Fprintf(w, `{"access_token":%q,"expires_in":3600}`, accessToken)
+			}))
+			defer server.Close()
+			token, err := NewClient(server.URL, true, logging.New(logging.LevelError)).LoginWithAPIKey(strings.Repeat("k", 32), strings.Repeat("s", 64))
+			if err == nil || token != nil || !strings.Contains(err.Error(), "tenant binding") {
+				t.Fatalf("missing binding was accepted: token=%v error=%v", token != nil, err)
+			}
+		})
 	}
 }

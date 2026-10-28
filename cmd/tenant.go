@@ -61,6 +61,13 @@ Examples:
 		if err := token.ValidateBinding(profile.BaseURL, cfg.ActiveProfile); err != nil {
 			return err
 		}
+		if token.AuthMethod == "apikey" {
+			if token.TenantGUID == "" {
+				return fmt.Errorf("API-key session has no cached tenant; sign in again with the updated CLI")
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "API-key session is bound to tenant %s. Tenant membership lists require user sign-in.\n", token.TenantGUID)
+			return nil
+		}
 		// Fetch all tenants.
 		tenants, err := auth.FetchAllTenants(token.AccessToken, profile.BaseURL, insecure)
 		if err != nil {
@@ -149,6 +156,9 @@ Examples:
 
 		if err := token.ValidateBinding(profile.BaseURL, cfg.ActiveProfile); err != nil {
 			return err
+		}
+		if token.AuthMethod == "apikey" {
+			return fmt.Errorf("API-key sessions are bound to one tenant (%s); use user sign-in to select memberships or sign in with a different API key", token.TenantGUID)
 		}
 		// Fetch all tenants.
 		tenants, err := auth.FetchAllTenants(token.AccessToken, profile.BaseURL, insecure)

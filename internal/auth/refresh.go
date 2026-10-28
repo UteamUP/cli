@@ -69,22 +69,33 @@ func (a *Client) refreshSession(ctx context.Context, token *TokenData) error {
 	return nil
 }
 
-// accessTokenExpiry reads the exp claim of a JWT. The signature is not checked: the CLI
-// only needs to know when to renew, and the backend validates every request anyway.
-func accessTokenExpiry(jwt string) (time.Time, error) {
+type accessTokenMetadata struct {
+	Exp        int64  `json:"exp"`
+	TenantGUID string `json:"TenantGuid"`
+}
+
+// Token metadata supplies expiry and a routing hint, never authority. The backend validates
+// the token signature, tenant binding and permissions independently on every request.
+func readAccessTokenMetadata(jwt string) (accessTokenMetadata, error) {
+	var claims accessTokenMetadata
 	parts := strings.Split(jwt, ".")
 	if len(parts) != 3 {
-		return time.Time{}, fmt.Errorf("access token is not a JWT")
+		return claims, fmt.Errorf("access token is not a JWT")
 	}
 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		return time.Time{}, fmt.Errorf("decoding access token payload: %w", err)
-	}
-	var claims struct {
-		Exp int64 `json:"exp"`
+		return claims, fmt.Errorf("decoding access token payload: %w", err)
 	}
 	if err := json.Unmarshal(payload, &claims); err != nil {
-		return time.Time{}, fmt.Errorf("parsing access token payload: %w", err)
+		return claims, fmt.Errorf("parsing access token payload: %w", err)
+	}
+	return claims, nil
+}
+
+func accessTokenExpiry(jwt string) (time.Time, error) {
+	claims, err := readAccessTokenMetadata(jwt)
+	if err != nil {
+		return time.Time{}, err
 	}
 	if claims.Exp == 0 {
 		return time.Time{}, fmt.Errorf("access token has no expiry")
