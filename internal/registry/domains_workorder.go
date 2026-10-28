@@ -7,6 +7,22 @@ func init() {
 		Description: "Manage work orders",
 		Actions: []Action{
 			{
+				Name:        "withdraw-request",
+				Description: "Withdraw your own never-started request; sign in as its requester",
+				ToolName:    "UteamupWorkorderWithdrawRequest",
+				HTTPMethod:  "POST",
+				RESTPath:    "by-guid/{workorderGuid}/withdraw-request",
+				Args:        []ArgDef{{Name: "workorderGuid", Description: "Your request GUID", Required: true, Type: "uuid"}},
+			},
+			{
+				Name:        "request-closure",
+				Description: "Ask the team to close your own active request without cancelling it; sign in as its requester",
+				ToolName:    "UteamupWorkorderRequestClosure",
+				HTTPMethod:  "POST",
+				RESTPath:    "by-guid/{workorderGuid}/request-closure",
+				Args:        []ArgDef{{Name: "workorderGuid", Description: "Your request GUID", Required: true, Type: "uuid"}},
+			},
+			{
 				Name:        "list",
 				Description: "List work orders with pagination and filtering",
 				ToolName:    "UteamupWorkOrderList",
