@@ -24,6 +24,8 @@ func TestOperationalRouteActionsUseGuidIdentifiers(t *testing.T) {
 		"anomalies":     "UteamupInspectionAnomalyList",
 		"asset-health":  "UteamupInspectionAssetHealthscore",
 		"optimize":      "UteamupOperationalRouteOptimize",
+
+		"asset-health-summary": "UteamupInspectionAssetHealthSummary",
 	}
 
 	if len(domain.Actions) != len(expectedTools) {
