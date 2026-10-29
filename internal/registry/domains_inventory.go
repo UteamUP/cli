@@ -7,6 +7,24 @@ func init() {
 		Description: "Manage stock/inventory",
 		Actions: append(append([]Action{
 			{
+				Name: "item-install", Description: "Install nonserialized stock on an asset; check stock history before retrying an uncertain result",
+				ToolName: "UteamupStockInstallItemOnAsset", HTTPMethod: "POST", RESTPath: "items/{itemGuid}/install",
+				Args: []ArgDef{{Name: "itemGuid", Description: "Stock item public GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset public GUID", Required: true, Type: "uuid"},
+					{Name: "quantity", Description: "Exact positive quantity", Required: true, Type: "decimal"},
+				},
+			},
+			{
+				Name: "item-uninstall", Description: "Return nonserialized stock from its installed asset; check stock history before retrying an uncertain result",
+				ToolName: "UteamupStockUninstallItemFromAsset", HTTPMethod: "POST", RESTPath: "items/{itemGuid}/uninstall",
+				Args: []ArgDef{{Name: "itemGuid", Description: "Stock item public GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Asset public GUID", Required: true, Type: "uuid"},
+					{Name: "quantity", Description: "Exact positive quantity", Required: true, Type: "decimal"},
+				},
+			},
+			{
 				Name: "item-assigned-assets", Description: "List assets using a stock item's part, tool or chemical",
 				ToolName: "UteamupStockGetItemAssignedAssets", HTTPMethod: "GET", RESTPath: "items/{itemGuid}/assigned-assets",
 				Args: []ArgDef{{Name: "itemGuid", Description: "Stock item GUID", Required: true, Type: "uuid"}},

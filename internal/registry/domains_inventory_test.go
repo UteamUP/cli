@@ -2195,3 +2195,24 @@ func TestStockLocationWriteActionsAreWired(t *testing.T) {
 		}
 	}
 }
+
+func TestStockInstallationRoutesAndExactQuantity(t *testing.T) {
+	item := "11111111-1111-4111-8111-111111111111"
+	for _, direction := range []string{"install", "uninstall"} {
+		action := findStockAction(t, "item-"+direction)
+		path, consumed := buildRESTPath(findStockDomain(t), *action, map[string]any{"itemGuid": item})
+		if path != "/api/stock/items/"+item+"/"+direction || action.HTTPMethod != "POST" || len(consumed) != 1 {
+			t.Fatalf("wrong installation route: %s %s, consumed=%v", action.HTTPMethod, path, consumed)
+		}
+		if len(action.Args) != 1 || action.Args[0].Type != "uuid" || !action.Args[0].Required {
+			t.Fatal("installation requires a public item GUID")
+		}
+		flags := map[string]FlagDef{}
+		for _, flag := range action.Flags {
+			flags[flag.Name] = flag
+		}
+		if len(flags) != 2 || flags["asset-guid"].Type != "uuid" || !flags["asset-guid"].Required || flags["asset-guid"].BodyName != "assetGuid" || flags["quantity"].Type != "decimal" || !flags["quantity"].Required {
+			t.Fatalf("installation must expose only asset GUID and exact decimal quantity: %+v", flags)
+		}
+	}
+}
