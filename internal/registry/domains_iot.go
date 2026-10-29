@@ -11,6 +11,35 @@ func init() {
 		Description: "Inspect the selected tenant's dedicated IoT Preview environment",
 		Actions: []Action{
 			{
+				Name: "network-client-links", Description: "List persisted gateway client associations and explicit unlinks",
+				ToolName: "UteamupIoTNetworkClientLinks", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "GET", RESTPath: "devices/{gatewayGuid}/network-clients/links",
+				Args: []ArgDef{{Name: "gatewayGuid", Description: "Existing gateway device GUID", Required: true, Type: "uuid"}},
+			},
+			{
+				Name: "network-client-link", Description: "Link a MAC to an existing asset and add network meters without replacing its primary type",
+				ToolName: "UteamupIoTNetworkClientLink", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "POST", RESTPath: "devices/{gatewayGuid}/network-clients/links",
+				Args: []ArgDef{{Name: "gatewayGuid", Description: "Existing gateway device GUID", Required: true, Type: "uuid"}},
+				Flags: []FlagDef{
+					{Name: "mac-address", BodyName: "macAddress", Description: "Exact client MAC", Required: true, Type: "string"},
+					{Name: "target-device-guid", BodyName: "targetDeviceGuid", Description: "Existing IoT device already linked to an asset", Type: "uuid"},
+					{Name: "asset-guid", BodyName: "assetGuid", Description: "Existing tenant asset GUID", Type: "uuid"},
+					{Name: "auto-match", BodyName: "autoMatch", Description: "Require a unique exact MAC device match", Type: "bool"},
+					{Name: "expected-revision", BodyName: "expectedRevision", Description: "Current link revision, required to change or restore a link", Type: "uuid"},
+				},
+			},
+			{
+				Name: "network-client-unlink", Description: "Stop future client samples while keeping the asset, meter definitions and readings",
+				ToolName: "UteamupIoTNetworkClientUnlink", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "DELETE", RESTPath: "devices/{gatewayGuid}/network-clients/links/{linkGuid}",
+				Args: []ArgDef{
+					{Name: "gatewayGuid", Description: "Existing gateway device GUID", Required: true, Type: "uuid"},
+					{Name: "linkGuid", Description: "Persisted client link GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{{Name: "revision", QueryName: "revision", Description: "Current link revision", Required: true, Type: "uuid"}},
+			},
+			{
 				Name:         "status",
 				Description:  "Show environment, pricing, usage and lifecycle status",
 				ToolName:     "UteamupIoTEnvironmentStatus",

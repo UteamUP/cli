@@ -10,6 +10,9 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 		t.Fatal("expected iot domain to be registered")
 	}
 	expected := map[string]string{
+		"network-client-links":       "UteamupIoTNetworkClientLinks",
+		"network-client-link":        "UteamupIoTNetworkClientLink",
+		"network-client-unlink":      "UteamupIoTNetworkClientUnlink",
 		"overview":                   "UteamupIoTTelemetryOverview",
 		"status":                     "UteamupIoTEnvironmentStatus",
 		"monitoring":                 "UteamupIoTMonitoringDashboard",
@@ -48,6 +51,35 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 	}
 	for missing := range expected {
 		t.Errorf("missing iot action %q", missing)
+	}
+}
+
+func TestIoTNetworkClientRoutesAndRevision(t *testing.T) {
+	domain := findDomain("iot")
+	for _, name := range []string{"network-client-links", "network-client-link", "network-client-unlink"} {
+		var selected Action
+		for _, action := range domain.Actions {
+			if action.Name == name {
+				selected = action
+			}
+		}
+		args := map[string]interface{}{"gatewayGuid": "11111111-1111-4111-8111-111111111111", "linkGuid": "22222222-2222-4222-8222-222222222222"}
+		path, _ := buildRESTPath(domain, selected, args)
+		want := "/api/iot/devices/11111111-1111-4111-8111-111111111111/network-clients/links"
+		if name == "network-client-unlink" {
+			want += "/22222222-2222-4222-8222-222222222222"
+			if selected.HTTPMethod != "DELETE" || selected.Flags[0].QueryName != "revision" || !selected.Flags[0].Required {
+				t.Fatal("unlink must carry the current revision as a required query parameter")
+			}
+		}
+		if path != want {
+			t.Errorf("%s path = %s, want %s", name, path, want)
+		}
+		for _, arg := range selected.Args {
+			if arg.Type != "uuid" {
+				t.Fatalf("%s must use public GUID arguments", name)
+			}
+		}
 	}
 }
 
@@ -153,6 +185,9 @@ func TestIoTCommandRoutesUseGuidOnlyPublicIdentities(t *testing.T) {
 func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 	domain := findDomain("iot")
 	expected := map[string]string{
+		"network-client-links":       "/api/iot/devices/gateway-guid/network-clients/links",
+		"network-client-link":        "/api/iot/devices/gateway-guid/network-clients/links",
+		"network-client-unlink":      "/api/iot/devices/gateway-guid/network-clients/links/link-guid",
 		"overview":                   "/api/iot/monitoring/telemetry/overview",
 		"status":                     "/api/iot/environment",                  // TenantIoTSelfServiceController.GetStatus
 		"monitoring":                 "/api/iot/monitoring",                   // IoTMonitoringController dashboard
@@ -189,7 +224,7 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 			continue
 		}
 		args := map[string]any{"definitionGuid": "definition-guid", "requestGuid": "request-guid",
-			"deviceGuid": "device-guid", "apiKeyGuid": "key-guid"}
+			"deviceGuid": "device-guid", "apiKeyGuid": "key-guid", "gatewayGuid": "gateway-guid", "linkGuid": "link-guid"}
 		if path, _ := buildRESTPath(domain, action, args); path != want {
 			t.Errorf("%s routes to %q, want %q", action.Name, path, want)
 		}
