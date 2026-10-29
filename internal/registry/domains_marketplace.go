@@ -271,7 +271,7 @@ func init() {
 					{Name: "transactionGuid", Description: "Marketplace transaction GUID (your tenant must be the seller)", Required: true, Type: "uuid"},
 				},
 				Flags: []FlagDef{
-					{Name: "carrier", Description: "Carrier the goods were handed to", Required: true, Type: "string"},
+					{Name: "carrier", Description: "Optional carrier the goods were handed to (max 100 characters)", Type: "string"},
 					{Name: "tracking-number", Description: "Optional carrier tracking reference", Type: "string"},
 				},
 			},
@@ -331,6 +331,11 @@ func init() {
 					{Name: "source-kind", Description: "Source filter: TenantListing or WholesalerCatalog", Type: "string"},
 					{Name: "seller-tenant-guid", Description: "Only this tenant seller's listings (GUID)", Type: "string"},
 					{Name: "wholesaler-guid", Description: "Only this wholesaler's catalogue rows (GUID)", Type: "string"},
+					{Name: "listing-type", Description: "Sale, Rental or Exchange", Type: "string"},
+					{Name: "min-price", Description: "Minimum listed price", Type: "float"},
+					{Name: "max-price", Description: "Maximum listed price", Type: "float"},
+					{Name: "country", Description: "ISO country code", Type: "string"},
+					{Name: "same-region", Description: "Default to the active company's country", Type: "bool", Default: true},
 				},
 			},
 			{

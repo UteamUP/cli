@@ -437,8 +437,7 @@ func TestMarketplaceRequirementDraftsOfferPublicCatalogOptIn(t *testing.T) {
 	}
 }
 
-// Seller fulfilment: the order is a GUID argument, the carrier is mandatory and the
-// tracking reference optional — a ship call without a carrier is meaningless to the buyer.
+// Seller fulfilment uses one order GUID and optional carrier/tracking details.
 func TestMarketplaceTransactionShipFlags(t *testing.T) {
 	d := findMarketplaceDomain()
 	if d == nil {
@@ -461,8 +460,8 @@ func TestMarketplaceTransactionShipFlags(t *testing.T) {
 		flags[f.Name] = f
 	}
 	carrier, ok := flags["carrier"]
-	if !ok || !carrier.Required || carrier.Type != "string" {
-		t.Errorf("transaction-ship must require a string \"carrier\" flag, got %+v", carrier)
+	if !ok || carrier.Required || carrier.Type != "string" {
+		t.Errorf("transaction-ship must offer an optional string \"carrier\" flag, got %+v", carrier)
 	}
 	tracking, ok := flags["tracking-number"]
 	if !ok || tracking.Required || tracking.Type != "string" {
