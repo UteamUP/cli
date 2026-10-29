@@ -37,6 +37,8 @@ func init() {
 					{Name: "max", BodyName: "alertThresholdMax", Description: "Alert threshold maximum value", Type: "float"},
 					{Name: "decimal-places", BodyName: "decimalPlaces", Description: "Display precision 0–6 (omit for Auto)", Type: "int"},
 					{Name: "rounding-mode", BodyName: "roundingMode", Description: "Display rounding: round, floor or ceil", Type: "string"},
+					{Name: "chart-type", BodyName: "chartType", Description: "Monitoring chart: auto, line, bar, pie or value", Type: "string"},
+					{Name: "monitoring-visibility", BodyName: "monitoringVisibility", Description: "Monitoring visibility: auto or hidden", Type: "string"},
 					{Name: "interval", BodyName: "expectedReadingIntervalSeconds", Description: "Expected reading interval in seconds", Type: "int"},
 				},
 			},

@@ -7,6 +7,8 @@ func TestMeterDisplayFlagsPreserveOptionalPrecision(t *testing.T) {
 	for _, expected := range []struct{ name, body, kind string }{
 		{"decimal-places", "decimalPlaces", "int"},
 		{"rounding-mode", "roundingMode", "string"},
+		{"chart-type", "chartType", "string"},
+		{"monitoring-visibility", "monitoringVisibility", "string"},
 	} {
 		found := false
 		for _, flag := range add.Flags {
