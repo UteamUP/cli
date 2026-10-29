@@ -211,3 +211,17 @@ func TestAssetGroupPositionsSaveTakesARootJSONObject(t *testing.T) {
 		t.Errorf("positions-save definition is invalid: %v", err)
 	}
 }
+
+func TestAssetGroupDraftReviewOverridesUseRootJSON(t *testing.T) {
+	action := findAction(assetGroupDomain(t), "document-draft-apply")
+	if action == nil {
+		t.Fatal("document draft approval action missing")
+	}
+	flag := flagsToMap(action.Flags)["from-json"]
+	if !flag.RootJSONObjectFile {
+		t.Fatal("member and link overrides must retain the root JSON request contract")
+	}
+	if err := validateActionDefinition(*action); err != nil {
+		t.Fatal(err)
+	}
+}
