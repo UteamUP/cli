@@ -664,6 +664,26 @@ func TestProjectBomUpdateFlagDefaults(t *testing.T) {
 	}
 }
 
+// Optional planning context on a BOM line — a stage of the same project and the
+// date the material must be on site. Both are optional on create and update, carry
+// the exact backend body names, and the stage is a public GUID (never an int id).
+func TestProjectBomPlanningContextFlags(t *testing.T) {
+	for _, action := range []string{"create", "update"} {
+		a := findDomainAction(t, "project-bom", action)
+		stage := findFlag(a, "project-stage-guid")
+		if stage == nil || stage.Required || stage.Type != "uuid" || stage.BodyName != "projectStageGuid" {
+			t.Errorf("%s must have an optional uuid `project-stage-guid` flag bound to projectStageGuid, got %+v", action, stage)
+		}
+		needed := findFlag(a, "needed-date")
+		if needed == nil || needed.Required || needed.Type != "string" || needed.BodyName != "neededDate" {
+			t.Errorf("%s must have an optional string `needed-date` flag bound to neededDate, got %+v", action, needed)
+		}
+		if needed != nil && needed.Default != nil {
+			t.Errorf("%s needed-date must not invent a default date, got %v", action, needed.Default)
+		}
+	}
+}
+
 func TestCostBudgetThresholdCreateUpdateFlags(t *testing.T) {
 	for _, action := range []string{"create", "update"} {
 		a := findDomainAction(t, "cost-budget-threshold", action)

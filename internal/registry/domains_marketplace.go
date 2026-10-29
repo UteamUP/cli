@@ -262,6 +262,20 @@ func init() {
 				},
 			},
 			{
+				Name:        "transaction-ship",
+				Description: "Seller fulfilment: mark a paid order as shipped with carrier and tracking",
+				ToolName:    "UteamupMarketplaceTransactionShip",
+				RESTPath:    "transactions/{transactionGuid}/ship",
+				HTTPMethod:  "POST",
+				Args: []ArgDef{
+					{Name: "transactionGuid", Description: "Marketplace transaction GUID (your tenant must be the seller)", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "carrier", Description: "Carrier the goods were handed to", Required: true, Type: "string"},
+					{Name: "tracking-number", Description: "Optional carrier tracking reference", Type: "string"},
+				},
+			},
+			{
 				Name:        "settings",
 				Description: "Get your tenant's marketplace settings",
 				ToolName:    "UteamupMarketplaceSettingsGet",
@@ -307,11 +321,16 @@ func init() {
 			},
 			{
 				Name:        "facets",
-				Description: "Get item-type / condition / price-band facet counts for a search",
+				Description: "Get item-type / condition / price-band facet counts for the current browse filter",
 				ToolName:    "UteamupMarketplaceFacets",
 				RESTPath:    "facets",
 				Flags: []FlagDef{
 					{Name: "search", Description: "Optional free-text search to facet within", Type: "string"},
+					{Name: "item-type", Description: "Item type filter: Part, Tool, Chemical, Asset, Labor", Type: "string"},
+					{Name: "condition", Description: "Condition filter: New, LikeNew, Good, Fair, ForParts", Type: "string"},
+					{Name: "source-kind", Description: "Source filter: TenantListing or WholesalerCatalog", Type: "string"},
+					{Name: "seller-tenant-guid", Description: "Only this tenant seller's listings (GUID)", Type: "string"},
+					{Name: "wholesaler-guid", Description: "Only this wholesaler's catalogue rows (GUID)", Type: "string"},
 				},
 			},
 			{

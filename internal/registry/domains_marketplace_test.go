@@ -42,6 +42,7 @@ func TestMarketplaceActionsWired(t *testing.T) {
 		"requirement-draft-update": "UteamupMarketplaceRequirementUpdateDraft",
 		"my-offers":                "UteamupMarketplaceMyOffersList",
 		"transactions":             "UteamupMarketplaceTransactionsList",
+		"transaction-ship":         "UteamupMarketplaceTransactionShip",
 		"settings":                 "UteamupMarketplaceSettingsGet",
 		"saved-searches":           "UteamupMarketplaceSavedSearchesList",
 		"save-search":              "UteamupMarketplaceSaveSearch",
@@ -252,6 +253,7 @@ func TestMarketplaceActionsResolveToRealRoutes(t *testing.T) {
 		"offerGuid":       "OFFER",
 		"sellerGuid":      "SELLER",
 		"buyerGuid":       "BUYER",
+		"transactionGuid": "TXN",
 	}
 	want := map[string]string{
 		"browse":                   "/api/marketplace/listings",
@@ -269,6 +271,7 @@ func TestMarketplaceActionsResolveToRealRoutes(t *testing.T) {
 		"requirement-offer-accept": "/api/marketplace/requirements/REQ/offers/OFFER/accept",
 		"my-offers":                "/api/marketplace/requirements/my-offers",
 		"transactions":             "/api/marketplace/transactions",
+		"transaction-ship":         "/api/marketplace/transactions/TXN/ship",
 		"settings":                 "/api/marketplace/settings",
 		"saved-searches":           "/api/marketplace/saved-searches",
 		"save-search":              "/api/marketplace/saved-searches",
@@ -322,6 +325,7 @@ func TestMarketplaceNonGETActionsDeclareTheirMethod(t *testing.T) {
 		"requirement-draft-update": "PUT",
 		"requirement-publish":      "POST",
 		"requirement-offer-accept": "POST",
+		"transaction-ship":         "POST",
 		"save-search":              "POST",
 		"delete-saved-search":      "DELETE",
 	}
@@ -430,5 +434,72 @@ func TestMarketplaceRequirementDraftsOfferPublicCatalogOptIn(t *testing.T) {
 	}
 	if found != 2 {
 		t.Fatalf("expected show-in-public-catalog on both draft actions, found %d", found)
+	}
+}
+
+// Seller fulfilment: the order is a GUID argument, the carrier is mandatory and the
+// tracking reference optional — a ship call without a carrier is meaningless to the buyer.
+func TestMarketplaceTransactionShipFlags(t *testing.T) {
+	d := findMarketplaceDomain()
+	if d == nil {
+		t.Fatal("expected marketplace domain to be registered")
+	}
+	var ship *Action
+	for i := range d.Actions {
+		if d.Actions[i].Name == "transaction-ship" {
+			ship = &d.Actions[i]
+		}
+	}
+	if ship == nil {
+		t.Fatal("missing marketplace action \"transaction-ship\"")
+	}
+	if len(ship.Args) != 1 || ship.Args[0].Name != "transactionGuid" || !ship.Args[0].Required || ship.Args[0].Type != "uuid" {
+		t.Errorf("transaction-ship must take exactly one required uuid arg transactionGuid, got %+v", ship.Args)
+	}
+	flags := map[string]FlagDef{}
+	for _, f := range ship.Flags {
+		flags[f.Name] = f
+	}
+	carrier, ok := flags["carrier"]
+	if !ok || !carrier.Required || carrier.Type != "string" {
+		t.Errorf("transaction-ship must require a string \"carrier\" flag, got %+v", carrier)
+	}
+	tracking, ok := flags["tracking-number"]
+	if !ok || tracking.Required || tracking.Type != "string" {
+		t.Errorf("transaction-ship must offer an optional string \"tracking-number\" flag, got %+v", tracking)
+	}
+	for _, forbidden := range []string{"tenant-guid", "seller-tenant-guid", "user-id"} {
+		if _, exists := flags[forbidden]; exists {
+			t.Errorf("transaction-ship must not accept an identity flag %q — the seller side comes from the login", forbidden)
+		}
+	}
+}
+
+// Facet counts must be computable for the same refinements the browse action accepts,
+// otherwise the counts describe a different list than the one the user filtered.
+func TestMarketplaceFacetsMirrorBrowseFilterFlags(t *testing.T) {
+	d := findMarketplaceDomain()
+	if d == nil {
+		t.Fatal("expected marketplace domain to be registered")
+	}
+	byName := map[string]Action{}
+	for _, a := range d.Actions {
+		byName[a.Name] = a
+	}
+	facets, ok := byName["facets"]
+	if !ok {
+		t.Fatal("missing marketplace action \"facets\"")
+	}
+	have := map[string]bool{}
+	for _, f := range facets.Flags {
+		have[f.Name] = true
+	}
+	for _, want := range []string{"search", "item-type", "condition", "source-kind", "seller-tenant-guid", "wholesaler-guid"} {
+		if !have[want] {
+			t.Errorf("facets must accept the browse flag %q", want)
+		}
+	}
+	if facets.HTTPMethod != "" {
+		t.Errorf("facets is a read and must stay a GET, got %q", facets.HTTPMethod)
 	}
 }

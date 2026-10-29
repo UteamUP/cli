@@ -599,6 +599,8 @@ func init() {
 					{Name: "item-type", Description: "Item type: StockItem, Chemical, Part, Tool, or Asset", Required: true, Type: "string"},
 					{Name: "item-guid", Description: "External GUID of the referenced catalog item (of the matching item type)", Required: true, Type: "string"},
 					{Name: "quantity-required", Description: "Quantity of this item required for the project", Required: true, Type: "float"},
+					{Name: "project-stage-guid", BodyName: "projectStageGuid", Description: "Optional stage GUID of this same project the material is needed for", Type: "uuid"},
+					{Name: "needed-date", BodyName: "neededDate", Description: "Optional YYYY-MM-DD the material must be on site", Type: "string"},
 				},
 			},
 			{
@@ -621,6 +623,8 @@ func init() {
 					{Name: "quantity-required", Description: "Quantity of this item required for the project", Required: true, Type: "float"},
 					{Name: "quantity-actual", Description: "Current recorded stock usage (copy from get); manually editable only for Asset allocations", Default: 0.0, Type: "float"},
 					{Name: "is-consumed", Description: "Advisory only; completion is derived from actual and required quantities", Default: false, Type: "bool"},
+					{Name: "project-stage-guid", BodyName: "projectStageGuid", Description: "Optional stage GUID of this same project; omitted clears the stage", Type: "uuid"},
+					{Name: "needed-date", BodyName: "neededDate", Description: "Optional YYYY-MM-DD the material must be on site; omitted clears it", Type: "string"},
 				},
 			},
 			{
