@@ -391,7 +391,7 @@ func iotDeviceDetailFlags() []FlagDef {
 		{Name: "firmware-version", BodyName: "firmwareVersion", Description: "Firmware version", Type: "string"},
 		{Name: "description", Description: "Description", Type: "string"},
 		{Name: "location-guid", BodyName: "locationGuid", Description: "Location GUID", Type: "uuid"},
-		{Name: "location-floor-guid", BodyName: "locationFloorGuid", Description: "Room GUID (a location node from 'ut location node-tree'); implies its location and must lie inside --location-guid when both are given", Type: "uuid"},
+		{Name: "location-floor-guid", BodyName: "locationFloorGuid", Description: "Room GUID (from 'ut location node-tree'); must lie inside --location-guid. On update, 00000000-0000-0000-0000-000000000000 clears the room", Type: "uuid"},
 		{Name: "asset-guid", BodyName: "assetGuid", Description: "GUID of the asset the device measures", Type: "uuid"},
 		{Name: "ip-address", BodyName: "ipAddress", Description: "IP address", Type: "string"},
 		{Name: "mac-address", BodyName: "macAddress", Description: "MAC address", Type: "string"},
