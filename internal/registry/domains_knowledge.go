@@ -95,5 +95,5 @@ func init() {
 		),
 	})
 	// journal domain moved to domains_journal.go (includes CRUD + by-code/by-asset actions)
-	Register(&Domain{Name: "comment", Aliases: []string{"comments"}, Description: "Manage comments", Actions: crudActions("Comment")})
+	Register(&Domain{Name: "comment", Aliases: []string{"comments"}, Description: "Manage comments", Actions: append(crudActions("Comment"), commentAssetActions()...)})
 }
