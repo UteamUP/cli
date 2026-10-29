@@ -335,3 +335,21 @@ func TestIoTDeviceKeyActionsUseGuidArgsAndTheRestMethods(t *testing.T) {
 		}
 	}
 }
+
+func TestIoTDeviceActionsExposeTheRoomFlag(t *testing.T) {
+	for _, name := range []string{"device-create", "device-update"} {
+		action := findIoTAction(t, name)
+		var room FlagDef
+		for _, flag := range action.Flags {
+			if flag.Name == "location-floor-guid" {
+				room = flag
+			}
+		}
+		if room.Name == "" {
+			t.Fatalf("%s must expose --location-floor-guid", name)
+		}
+		if room.BodyName != "locationFloorGuid" || room.Type != "uuid" || room.Required {
+			t.Errorf("%s --location-floor-guid = %+v, want optional uuid bound to locationFloorGuid", name, room)
+		}
+	}
+}
