@@ -5,6 +5,25 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.0](https://github.com/UteamUP/cli/compare/5.8.0...5.9.0) (2026-10-29)
+
+
+### Features
+
+* add network client actions for IoT device management ([0794795](https://github.com/UteamUP/cli/commit/07947950970000f65ec464ae78ef4e19bef7975e))
+* add transaction-ship action and related flags for seller fulfillment ([bf402e0](https://github.com/UteamUP/cli/commit/bf402e0cb2cbba033a6a699b56611c45b4b703f6))
+* complete marketplace shipment and discovery workflows ([b255cfc](https://github.com/UteamUP/cli/commit/b255cfc77f13fe9bf96ba4e306088cbedcfccd40))
+* expose asset activity comments through GUID routes ([505a903](https://github.com/UteamUP/cli/commit/505a903b19f0798afa173b05712416a292d84235))
+* expose quantity stock installation in MCP and CLI ([986483b](https://github.com/UteamUP/cli/commit/986483be8dd43f9453f7ec4da22ac47f8f247a17))
+* include optional project-stage-guid and needed-date in project BOM actions ([bf402e0](https://github.com/UteamUP/cli/commit/bf402e0cb2cbba033a6a699b56611c45b4b703f6))
+* **iot:** add --location-floor-guid to device-create and device-update ([6c89a46](https://github.com/UteamUP/cli/commit/6c89a464ce55dc822651af73ff9437792b8f5ec3))
+* review asset group draft matches before approval ([98892c8](https://github.com/UteamUP/cli/commit/98892c875b235c8bca2534b3f58a75a5e8fe0eec))
+
+
+### Bug Fixes
+
+* preserve IoT room assignment and linked asset location ([7c15e8d](https://github.com/UteamUP/cli/commit/7c15e8d3faa12510268e32283c6e989863c3f140))
+
 ## [5.8.0](https://github.com/UteamUP/cli/compare/5.7.0...5.8.0) (2026-10-28)
 
 
