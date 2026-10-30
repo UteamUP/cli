@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.10.0](https://github.com/UteamUP/cli/compare/5.9.0...5.10.0) (2026-10-30)
+
+
+### Features
+
+* expose meter chart and visibility preferences ([7d148b0](https://github.com/UteamUP/cli/commit/7d148b072343258a6da67126b5833fae2ad1adf2))
+
+
+### Bug Fixes
+
+* expose floorplan reads through public GUIDs ([816c426](https://github.com/UteamUP/cli/commit/816c426bab5b6a84774c8da96bd27e99379b65b4))
+
 ## [5.9.0](https://github.com/UteamUP/cli/compare/5.8.0...5.9.0) (2026-10-29)
 
 
