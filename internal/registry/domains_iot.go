@@ -11,6 +11,18 @@ func init() {
 		Description: "Inspect the selected tenant's dedicated IoT Preview environment",
 		Actions: []Action{
 			{
+				Name: "alert-workorder", Description: "Read the workorder linked to an IoT alert",
+				ToolName: "UteamupIoTAlertWorkorderGet", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "GET", RESTPath: "alerts/{alertGuid}/workorder",
+				Args: []ArgDef{{Name: "alertGuid", Description: "Alert public GUID", Required: true, Type: "uuid"}},
+			},
+			{
+				Name: "alert-convert", Description: "Convert an alert to one workorder; retries reuse the existing workorder",
+				ToolName: "UteamupIoTAlertConvertToWorkorder", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "POST", RESTPath: "alerts/{alertGuid}/workorder",
+				Args: []ArgDef{{Name: "alertGuid", Description: "Alert public GUID", Required: true, Type: "uuid"}},
+			},
+			{
 				Name: "network-client-links", Description: "List persisted gateway client associations and explicit unlinks",
 				ToolName: "UteamupIoTNetworkClientLinks", RESTBasePath: iotDeviceAPIPath,
 				HTTPMethod: "GET", RESTPath: "devices/{gatewayGuid}/network-clients/links",

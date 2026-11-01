@@ -10,6 +10,8 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 		t.Fatal("expected iot domain to be registered")
 	}
 	expected := map[string]string{
+		"alert-workorder":            "UteamupIoTAlertWorkorderGet",
+		"alert-convert":              "UteamupIoTAlertConvertToWorkorder",
 		"network-client-links":       "UteamupIoTNetworkClientLinks",
 		"network-client-link":        "UteamupIoTNetworkClientLink",
 		"network-client-unlink":      "UteamupIoTNetworkClientUnlink",
@@ -51,6 +53,18 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 	}
 	for missing := range expected {
 		t.Errorf("missing iot action %q", missing)
+	}
+}
+
+func TestIoTAlertWorkorderUsesOnlyTheSourceGuidAndMatchingRestResource(t *testing.T) {
+	for name, method := range map[string]string{"alert-workorder": "GET", "alert-convert": "POST"} {
+		action := findIoTAction(t, name)
+		if action.HTTPMethod != method || action.RESTBasePath != "/api/iot" || action.RESTPath != "alerts/{alertGuid}/workorder" {
+			t.Errorf("%s must mirror the alert workorder REST resource: %+v", name, action)
+		}
+		if len(action.Args) != 1 || action.Args[0].Name != "alertGuid" || action.Args[0].Type != "uuid" || !action.Args[0].Required || len(action.Flags) != 0 {
+			t.Errorf("%s must take only a required source alert GUID", name)
+		}
 	}
 }
 
