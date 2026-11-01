@@ -199,6 +199,8 @@ func TestIoTCommandRoutesUseGuidOnlyPublicIdentities(t *testing.T) {
 func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 	domain := findDomain("iot")
 	expected := map[string]string{
+		"alert-workorder":            "/api/iot/alerts/alert-guid/workorder",
+		"alert-convert":              "/api/iot/alerts/alert-guid/workorder",
 		"network-client-links":       "/api/iot/devices/gateway-guid/network-clients/links",
 		"network-client-link":        "/api/iot/devices/gateway-guid/network-clients/links",
 		"network-client-unlink":      "/api/iot/devices/gateway-guid/network-clients/links/link-guid",
@@ -237,7 +239,7 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 			t.Errorf("iot action %q has no pinned route; add it to this table", action.Name)
 			continue
 		}
-		args := map[string]any{"definitionGuid": "definition-guid", "requestGuid": "request-guid",
+		args := map[string]any{"definitionGuid": "definition-guid", "requestGuid": "request-guid", "alertGuid": "alert-guid",
 			"deviceGuid": "device-guid", "apiKeyGuid": "key-guid", "gatewayGuid": "gateway-guid", "linkGuid": "link-guid"}
 		if path, _ := buildRESTPath(domain, action, args); path != want {
 			t.Errorf("%s routes to %q, want %q", action.Name, path, want)
