@@ -43,6 +43,21 @@ func init() {
 				},
 			},
 			{
+				Name:         "request-stage",
+				Description:  "Request a lifecycle move; controlled stages stay pending for another person's approval. Read get first for the version and allowed next stages",
+				ToolName:     "UteamupAssetStateRequestStage",
+				HTTPMethod:   "POST",
+				RESTBasePath: "/api/assetlifecyclestage",
+				RESTPath:     "asset/by-guid/{assetGuid}/request",
+				Args:         []ArgDef{assetGuid},
+				Flags: []FlagDef{
+					{Name: "to-stage", BodyName: "toStage", Description: "A destination from get.allowedNextStages; commissioning, decommissioning and disposal require approval", Required: true, Type: "string"},
+					{Name: "expected-lifecycle-version", BodyName: "expectedLifecycleVersion", Description: "Version observed by asset-state get; 0 means uninitialized", Required: true, Type: "int"},
+					{Name: "idempotency-key", BodyName: "idempotencyKey", Description: "Non-empty GUID for this decision; reuse the same key on retry", Required: true, Type: "non-empty-uuid"},
+					{Name: "notes", Description: "Reason for the requested lifecycle change", Type: "string"},
+				},
+			},
+			{
 				Name:        "set-operational",
 				Description: "Move the operational axis; the lifecycle stage constrains what is reachable",
 				ToolName:    "UteamupAssetStateSetOperational",
