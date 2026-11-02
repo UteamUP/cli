@@ -7,6 +7,7 @@ func init() {
 		Description: "Manage stock/inventory",
 		Actions: append(append([]Action{
 			stockCreateItemAction(),
+			stockTransactionAssetAction(),
 			{
 				Name: "item-install", Description: "Install nonserialized stock on an asset; check stock history before retrying an uncertain result",
 				ToolName: "UteamupStockInstallItemOnAsset", HTTPMethod: "POST", RESTPath: "items/{itemGuid}/install",
