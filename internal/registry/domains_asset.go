@@ -1,5 +1,15 @@
 package registry
 
+func assetIdentityFlags() []FlagDef {
+	return []FlagDef{
+		{Name: "manufacturer", Description: "Free-text equipment maker, independent of manufacturer vendor; omit preserves, empty clears", Type: "string"},
+		{Name: "ip-address", Description: "Single IPv4/IPv6 literal; omit preserves, empty clears", Type: "string"},
+		{Name: "mac-address", Description: "Complete MAC in compact, colon or hyphen form; omit preserves, empty clears", Type: "string"},
+		{Name: "host-name", Description: "Equipment DNS hostname; omit preserves, empty clears", Type: "string"},
+		{Name: "web-url", Description: "Credential-free absolute HTTP(S) equipment URL; omit preserves, empty clears", Type: "string"},
+	}
+}
+
 func init() {
 	Register(&Domain{
 		Name:        "asset",
@@ -24,7 +34,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
 					{Name: "page-size", Short: "s", Description: "Items per page", Default: 25, Type: "int"},
-					{Name: "filter", Short: "f", Description: "Filter by name or plant code (partial, case-insensitive)", Type: "string", QueryName: "nameFilter"},
+					{Name: "filter", Short: "f", Description: "Filter by name, plant code, manufacturer, IP, MAC, hostname or URL (partial, case-insensitive)", Type: "string", QueryName: "nameFilter"},
 					{Name: "sort-by", Description: "Sort field (Name, CreatedAt, etc.)", Default: "Name", Type: "string"},
 					{Name: "sort-order", Description: "Sort direction (asc or desc)", Default: "asc", Type: "string"},
 				},
@@ -138,12 +148,12 @@ func init() {
 				HTTPMethod:  "PUT",
 				RESTPath:    "by-guid/{id}",
 				Args:        []ArgDef{{Name: "assetGuid", BodyName: "id", Description: "Asset public GUID", Required: true, Type: "uuid"}},
-				Flags: []FlagDef{
+				Flags: append([]FlagDef{
 					{Name: "name", Description: "New asset name", Type: "string"},
 					{Name: "serial", Description: "New serial number", Type: "string"},
 					{Name: "asset-type-guids", Description: "Replacement asset type GUIDs (repeatable or comma-separated)", Type: "stringSlice"},
 					{Name: "primary-asset-type-guid", Description: "Primary asset type GUID (must be included in --asset-type-guids)", Type: "uuid"},
-				},
+				}, assetIdentityFlags()...),
 			},
 			{
 				// Unlike update (a full replace), patch sends only the flags you pass.
@@ -153,7 +163,7 @@ func init() {
 				HTTPMethod:  "PATCH",
 				RESTPath:    "by-guid/{assetGuid}",
 				Args:        []ArgDef{{Name: "assetGuid", Description: "Asset public GUID", Required: true, Type: "non-empty-uuid"}},
-				Flags: []FlagDef{
+				Flags: append([]FlagDef{
 					{Name: "name", Description: "New asset name (2 to 512 characters)", Type: "string"},
 					{Name: "serial-number", Description: "New serial number (empty clears it)", Type: "string"},
 					{Name: "reference-number", Description: "New reference number (empty clears it)", Type: "string"},
@@ -179,7 +189,7 @@ func init() {
 					{Name: "asset-type-guids", Description: "Complete set of asset type GUIDs, repeatable or comma-separated; the first is primary unless --primary-asset-type-guid names another (--asset-type-guids= removes every type)", Type: "stringSlice"},
 					{Name: "primary-asset-type-guid", Description: "Primary asset type GUID; alone it is added to the current types if missing", Type: "uuid"},
 					{Name: "expected-updated-at-utc", Description: "The asset's updatedAt as last read; a newer stored value fails with asset_changed", Type: "string"},
-				},
+				}, assetIdentityFlags()...),
 			},
 			{
 				Name:        "get-specs",
