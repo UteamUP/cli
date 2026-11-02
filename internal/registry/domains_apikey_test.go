@@ -114,6 +114,7 @@ func TestApiKeyCreateAction(t *testing.T) {
 		{"description", "string", false},
 		{"role-id", "string", false},
 		{"mcp-enabled", "bool", false},
+		{"allow-iot-commands", "bool", false},
 		{"expires-at", "string", false},
 		{"requests-per-minute", "int", false},
 		{"requests-per-hour", "int", false},
@@ -161,7 +162,7 @@ func TestApiKeyCreateSendsMcpEnabledContract(t *testing.T) {
 			command := buildActionCommand(findAPIKeyDomain(t), *findAPIKeyAction(t, "create"), factory, logger, &format, nil)
 			args := []string{"--name", "Private pilot", "--role-id", "dc2327fc-091c-4e45-ab37-a26768432afe"}
 			if enabled {
-				args = append(args, "--mcp-enabled")
+				args = append(args, "--mcp-enabled", "--allow-iot-commands")
 			}
 			command.SetArgs(args)
 			if err := command.Execute(); err != nil {
@@ -169,6 +170,9 @@ func TestApiKeyCreateSendsMcpEnabledContract(t *testing.T) {
 			}
 			if body["isMcpEnabled"] != enabled {
 				t.Errorf("isMcpEnabled = %v, want %v", body["isMcpEnabled"], enabled)
+			}
+			if body["allowIoTCommands"] != enabled {
+				t.Errorf("allowIoTCommands = %v, want %v (IoT commands must stay off unless asked for)", body["allowIoTCommands"], enabled)
 			}
 			if _, legacy := body["mcpEnabled"]; legacy {
 				t.Error("request sent the unsupported mcpEnabled field")

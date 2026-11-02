@@ -30,6 +30,7 @@ func init() {
 					{Name: "description", Description: "API key description", Type: "string"},
 					{Name: "role-id", Description: "Role assigned to the key (controls its permissions)", Type: "string"},
 					{Name: "mcp-enabled", BodyName: "isMcpEnabled", Description: "Enable this key for MCP server use (e.g. ChatGPT)", Default: false, Type: "bool"},
+					{Name: "allow-iot-commands", BodyName: "allowIoTCommands", Description: "Let this key preview, send and cancel IoT device commands (you need IOT.Control; high-risk commands still need a person's approval)", Default: false, Type: "bool"},
 					{Name: "expires-at", Description: "Expiry timestamp (ISO 8601, e.g. 2027-01-01T00:00:00Z)", Type: "string"},
 					{Name: "requests-per-minute", Description: "Rate limit: requests per minute", Type: "int"},
 					{Name: "requests-per-hour", Description: "Rate limit: requests per hour", Type: "int"},
