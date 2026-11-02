@@ -1966,8 +1966,8 @@ func TestStockStartCountActionWired(t *testing.T) {
 
 // Bug 59ad42c5: InventoryController (api/inventory) is an aggregated cross-type view. It
 // routes GET api/inventory and POST api/inventory/bulk-delete only, so the crudActions
-// template's get/create/update/delete always 404ed. The domain must expose only the two
-// actions the controller serves, each resolving to its real route.
+// template's get/create/update/delete always 404ed. Catalog GUID operations use MCP;
+// REST actions must each resolve to a route the controller serves.
 func TestInventoryDomainExposesOnlyRoutesTheControllerServes(t *testing.T) {
 	domain := findDomain("inventory")
 	if domain == nil {
@@ -1977,10 +1977,17 @@ func TestInventoryDomainExposesOnlyRoutesTheControllerServes(t *testing.T) {
 		"list":        {"GET", "/api/inventory"},
 		"bulk-delete": {"POST", "/api/inventory/bulk-delete"},
 	}
-	if len(domain.Actions) != len(want) {
-		t.Fatalf("inventory actions = %d, want only %d (no phantom get/create/update/delete)", len(domain.Actions), len(want))
+	wantMCP := map[string]string{"get-by-guid": "GetInventoryItem", "patch-by-guid": "UpdateInventoryItem"}
+	if len(domain.Actions) != len(want)+len(wantMCP) {
+		t.Fatalf("inventory actions = %d, want %d REST and %d MCP actions", len(domain.Actions), len(want), len(wantMCP))
 	}
 	for _, action := range domain.Actions {
+		if action.MCPOnly {
+			if tool, exists := wantMCP[action.Name]; !exists || action.ToolName != tool || action.RESTPath != "" {
+				t.Fatalf("inventory %s must use its exact catalog MCP operation: %+v", action.Name, action)
+			}
+			continue
+		}
 		route, ok := want[action.Name]
 		if !ok {
 			t.Fatalf("inventory %s has no route on InventoryController and would always 404", action.Name)
