@@ -92,3 +92,22 @@ func TestReporterCommentIsAnOwnReportMcpOperation(t *testing.T) {
 		t.Fatalf("reporter may submit only the message: %+v", action.Flags)
 	}
 }
+
+func TestPartCurrencyFlagMatchesEachTransportContract(t *testing.T) {
+	for _, name := range []string{"create", "update", "patch-by-guid"} {
+		_, action := catalogAction(t, "part", name)
+		wantBodyName := "valueCurrencyGuid"
+		if name == "patch-by-guid" {
+			wantBodyName = "currencyGuid"
+		}
+		found := false
+		for _, flag := range action.Flags {
+			if flag.Name == "currency-guid" {
+				found = flag.Type == "uuid" && flag.BodyName == wantBodyName && !flag.Required
+			}
+		}
+		if !found {
+			t.Fatalf("%s must expose optional --currency-guid as %s", name, wantBodyName)
+		}
+	}
+}

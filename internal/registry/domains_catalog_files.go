@@ -1,5 +1,15 @@
 package registry
 
+func partCrudActions() []Action {
+	actions := crudActions("Part")
+	for index := range actions {
+		if actions[index].Name == "create" || actions[index].Name == "update" {
+			actions[index].Flags = append(actions[index].Flags, FlagDef{Name: "currency-guid", BodyName: "valueCurrencyGuid", Description: "Catalog value currency public GUID; empty GUID clears explicit metadata", Type: "uuid"})
+		}
+	}
+	return actions
+}
+
 // Catalog file actions reuse the GUID REST routes; base64 image upload goes through
 // the matching bounded MCP operation instead of inventing a second multipart encoder.
 func catalogFileActions(kind, name string, documentByGuid bool) []Action {
