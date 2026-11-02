@@ -4,6 +4,22 @@ import "testing"
 
 import "strings"
 
+func TestIoTDeviceRenameUsesTheExistingGuidRouteAndOptionalMetadata(t *testing.T) {
+	action := findIoTAction(t, "device-update")
+	if action.HTTPMethod != "PUT" || action.RESTPath != "devices/{deviceGuid}" {
+		t.Fatal("rename must keep the existing GUID-based device route")
+	}
+	for _, flag := range action.Flags {
+		if flag.Name == "device-id" {
+			if flag.BodyName != "deviceId" || flag.Type != "string" || flag.Required {
+				t.Fatalf("device-id must be optional metadata: %+v", flag)
+			}
+			return
+		}
+	}
+	t.Fatal("device-update must expose device-id")
+}
+
 func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 	domain := findDomain("iot")
 	if domain == nil {

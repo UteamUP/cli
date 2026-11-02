@@ -183,10 +183,11 @@ func init() {
 				HTTPMethod:   "PUT",
 				RESTPath:     "devices/{deviceGuid}",
 				Args:         []ArgDef{{Name: "deviceGuid", Description: "Device GUID", Required: true, Type: "uuid"}},
-				// The REST model always applies isActive, so the flag is required rather than defaulting to false.
+				// Keep the requested active state explicit for terminal operators.
 				Flags: append([]FlagDef{
 					{Name: "name", Description: "Device name", Required: true, Type: "string"},
 					{Name: "is-active", BodyName: "isActive", Description: "Active (true) or inactive (false)", Required: true, Type: "bool"},
+					{Name: "device-id", BodyName: "deviceId", Description: "New human-readable identifier; device GUID, keys and sender routing stay unchanged", Type: "string"},
 				}, iotDeviceDetailFlags()...),
 			},
 			{
