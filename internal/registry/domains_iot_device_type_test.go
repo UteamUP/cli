@@ -59,7 +59,7 @@ func TestIoTDeviceTypeMutationsSendTheExactRESTBodyAndGuid(t *testing.T) {
 				args = append(args, guid)
 			}
 			if operation.method != "DELETE" {
-				args = append(args, "--name", "IKEA KAJPLATS", "--manufacturer", "IKEA of Sweden", "--configuration-schema", `{"type":"object"}`)
+				args = append(args, "--name", "IKEA KAJPLATS", "--manufacturer", "IKEA of Sweden", "--manufacturer-model", "E27", "--configuration-schema", `{"type":"object"}`)
 			}
 			command.SetArgs(args)
 			if err := command.Execute(); err != nil {
@@ -69,7 +69,7 @@ func TestIoTDeviceTypeMutationsSendTheExactRESTBodyAndGuid(t *testing.T) {
 				t.Fatalf("sent %d requests, want1", requests)
 			}
 			if operation.method != "DELETE" {
-				for key, value := range map[string]any{"name": "IKEA KAJPLATS", "manufacturer": "IKEA of Sweden", "description": "", "model": "", "configurationSchema": `{"type":"object"}`} {
+				for key, value := range map[string]any{"name": "IKEA KAJPLATS", "manufacturer": "IKEA of Sweden", "description": "", "model": "E27", "configurationSchema": `{"type":"object"}`} {
 					if body[key] != value {
 						t.Errorf("body[%s] = %v, want %v", key, body[key], value)
 					}

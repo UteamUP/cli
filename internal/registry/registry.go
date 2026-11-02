@@ -529,7 +529,7 @@ func validateActionDefinition(action Action) error {
 				argument.Name,
 			)
 		}
-		if err := validateAllowedRouteValues(action.Name, argument.Name, argument.AllowedValues); err != nil {
+		if err := validateAllowedValues(action.Name, argument.Name, argument.AllowedValues, true); err != nil {
 			return err
 		}
 	}
@@ -545,7 +545,14 @@ func validateActionDefinition(action Action) error {
 				flag.Name,
 			)
 		}
-		if err := validateAllowedRouteValues(action.Name, "--"+flag.Name, flag.AllowedValues); err != nil {
+		fieldName := flag.BodyName
+		if fieldName == "" {
+			fieldName = toCamelCase(flag.Name)
+		}
+		isRouteValue := fieldName == "id" || fieldName == "externalGuid" ||
+			strings.Contains(action.RESTPath, "{"+fieldName+"}") ||
+			strings.Contains(action.RESTPath, "{"+flag.Name+"}")
+		if err := validateAllowedValues(action.Name, "--"+flag.Name, flag.AllowedValues, isRouteValue); err != nil {
 			return err
 		}
 	}
@@ -553,12 +560,12 @@ func validateActionDefinition(action Action) error {
 	return nil
 }
 
-// validateAllowedRouteValues rejects an allowed-value set that could not be spliced into
-// a URL path safely. Path expansion does not escape, so the constraint IS the escaping.
-func validateAllowedRouteValues(actionName, label string, values []string) error {
+// Body enums may contain separators, such as image/png. Route enums must remain
+// safe path components; exact membership is still enforced for both kinds of input.
+func validateAllowedValues(actionName, label string, values []string, routeValue bool) error {
 	seen := make(map[string]struct{}, len(values))
 	for _, value := range values {
-		if value == "" || strings.TrimSpace(value) != value || strings.ContainsAny(value, "/\\?#") {
+		if value == "" || strings.TrimSpace(value) != value || routeValue && strings.ContainsAny(value, "/\\?#") {
 			return fmt.Errorf(
 				"invalid action %s: %s contains an unsafe allowed route value",
 				actionName,

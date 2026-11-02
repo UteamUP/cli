@@ -9,7 +9,7 @@ func iotDeviceTypeFields() []FlagDef {
 		{Name: "name", BodyName: "name", Description: "Device type name", Required: true, Type: "string"},
 		{Name: "description", BodyName: "description", Description: "Device type description", Type: "string", Default: ""},
 		{Name: "manufacturer", BodyName: "manufacturer", Description: "Manufacturer", Type: "string", Default: ""},
-		{Name: "model", BodyName: "model", Description: "Manufacturer model", Type: "string", Default: ""},
+		{Name: "manufacturer-model", BodyName: "model", Description: "Manufacturer model", Type: "string", Default: ""},
 		{Name: "configuration-schema", BodyName: "configurationSchema", Description: "Configuration schema JSON string", Type: "string", Default: "{}"},
 	}
 }
