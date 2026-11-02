@@ -1209,8 +1209,8 @@ func init() {
 			Action{Name: "get-by-guid", Description: "Get a part by public GUID", ToolName: "UteamupPartGet", HTTPMethod: "GET", RESTPath: "by-guid/{partGuid}", Args: []ArgDef{{Name: "partGuid", Description: "Part public GUID", Required: true, Type: "non-empty-uuid"}}},
 			Action{Name: "patch-by-guid", Description: "Change only supplied part fields; omitted values are preserved", ToolName: "UteamupPartUpdate", MCPOnly: true, Args: []ArgDef{{Name: "partGuid", Description: "Part public GUID", Required: true, Type: "non-empty-uuid"}}, Flags: []FlagDef{jsonFlag(), {Name: "currency-guid", BodyName: "currencyGuid", Description: "Catalog value currency public GUID; omit to preserve, empty GUID clears explicit metadata", Type: "uuid"}}},
 			Action{Name: "search", Description: "Search parts", ToolName: "UteamupPartSearch", Args: queryArg(), Flags: paginationFlags()},
-			Action{Name: "stock-levels", Description: "Read real stock levels for a part in readable locations", ToolName: "UteamupPartGetStockLevels", MCPOnly: true,
-				Args: []ArgDef{{Name: "partGuid", Description: "Part public GUID", Required: true, Type: "string"}}},
+			Action{Name: "stock-levels", Description: "Read real stock levels for a part in readable locations", ToolName: "UteamupPartGetStockLevels", HTTPMethod: "GET", RESTPath: "by-guid/{partGuid}/stock-levels",
+				Args: []ArgDef{{Name: "partGuid", Description: "Part public GUID", Required: true, Type: "non-empty-uuid"}}},
 
 			// --- Reseller catalog: cross-references (stock-reseller-catalog §2) ---
 			Action{
