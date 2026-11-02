@@ -26,6 +26,15 @@ func callToolClient(t *testing.T, authMethod string, calls *atomic.Int32) *APICl
 		if request.Method != http.MethodPost || request.URL.Path != "/mcp" {
 			t.Errorf("request = %s %s, want POST /mcp", request.Method, request.URL.Path)
 		}
+		accept := request.Header.Get("Accept")
+		if !strings.Contains(accept, "application/json") || !strings.Contains(accept, "text/event-stream") {
+			http.Error(response, "Client must accept both application/json and text/event-stream", http.StatusNotAcceptable)
+			return
+		}
+		if request.Header.Get("Authorization") != "Bearer call-tool-token" ||
+			request.Header.Get("X-Tenant-Guid") != "b966b8c7-04a4-45d4-aa51-519ecf2ef13a" {
+			t.Error("MCP protocol headers must retain the authenticated tenant and bearer token")
+		}
 		response.Header().Set("Content-Type", "application/json")
 		_, _ = response.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{"items":[]}}`))
 	}))

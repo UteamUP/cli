@@ -146,6 +146,7 @@ func (c *APIClient) CallTool(ctx context.Context, toolName string, args map[stri
 			return fmt.Errorf("creating request: %w", err)
 		}
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Accept", "application/json, text/event-stream")
 		req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 
 		// Send tenant context headers (required by backend)
