@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.13.0](https://github.com/UteamUP/cli/compare/5.12.0...5.13.0) (2026-11-02)
+
+
+### Features
+
+* **iot:** expose metadata identifier correction in CLI ([7568e03](https://github.com/UteamUP/cli/commit/7568e0317e900827f362daa0dc337ac8a4f67c67))
+
+
+### Bug Fixes
+
+* route part stock reads through authenticated REST ([753bb7e](https://github.com/UteamUP/cli/commit/753bb7e041d3745c82954596722c19b7f8306af6))
+
 ## [5.12.0](https://github.com/UteamUP/cli/compare/5.11.0...5.12.0) (2026-11-02)
 
 
