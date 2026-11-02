@@ -7,6 +7,12 @@ func init() {
 		Description: "Submit or triage user-reported bugs and feature requests (global-admin for list/get/update)",
 		Actions: []Action{
 			{
+				Name: "reporter-comment", Description: "Append a shared follow-up to your own manually submitted report; check conversation before retrying an uncertain result",
+				ToolName: "uteamup_bug_report_add_comment", MCPOnly: true, RejectExtraArgs: true,
+				Args:  []ArgDef{{Name: "reportGuid", Description: "Public GUID of your report", Required: true, Type: "non-empty-uuid"}},
+				Flags: []FlagDef{{Name: "message", BodyName: "message", Description: "Reporter reply, at most 8,000 characters after sanitization", Required: true, Type: "string"}},
+			},
+			{
 				Name:        "list",
 				Description: "List submissions with filters (global-admin only)",
 				ToolName:    "UteamupBugsAndFeaturesList",

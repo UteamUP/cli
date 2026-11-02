@@ -1203,7 +1203,9 @@ func init() {
 		Name:        "part",
 		Aliases:     []string{"parts"},
 		Description: "Manage parts",
-		Actions: append(crudActions("Part"),
+		Actions: append(append(crudActions("Part"), catalogFileActions("Part", "part", false)...),
+			Action{Name: "get-by-guid", Description: "Get a part by public GUID", ToolName: "UteamupPartGet", HTTPMethod: "GET", RESTPath: "by-guid/{partGuid}", Args: []ArgDef{{Name: "partGuid", Description: "Part public GUID", Required: true, Type: "non-empty-uuid"}}},
+			Action{Name: "patch-by-guid", Description: "Change only supplied part fields; omitted values are preserved", ToolName: "UteamupPartUpdate", MCPOnly: true, Args: []ArgDef{{Name: "partGuid", Description: "Part public GUID", Required: true, Type: "non-empty-uuid"}}, Flags: []FlagDef{jsonFlag()}},
 			Action{Name: "search", Description: "Search parts", ToolName: "UteamupPartSearch", Args: queryArg(), Flags: paginationFlags()},
 			Action{Name: "stock-levels", Description: "Read real stock levels for a part in readable locations", ToolName: "UteamupPartGetStockLevels", MCPOnly: true,
 				Args: []ArgDef{{Name: "partGuid", Description: "Part public GUID", Required: true, Type: "string"}}},
@@ -1408,13 +1410,13 @@ func init() {
 			{Name: "create", Description: "Create a chemical", ToolName: "UteamupChemicalCreate", Flags: []FlagDef{jsonFlag()}},
 			{Name: "update", Description: "Update a chemical by GUID", ToolName: "UteamupChemicalUpdate", Args: externalGUIDArg(), RESTPath: "by-guid/{externalGuid}", Flags: []FlagDef{jsonFlag()}},
 			{Name: "delete", Description: "Delete a chemical by GUID", ToolName: "UteamupChemicalDelete", Args: externalGUIDArg(), RESTPath: "by-guid/{externalGuid}"},
-		}, consumableActions("Chemical", "chemical")...),
+		}, append(consumableActions("Chemical", "chemical"), catalogFileActions("Chemical", "chemical", true)...)...),
 	})
 	Register(&Domain{
 		Name:        "tool",
 		Aliases:     []string{"tools"},
 		Description: "Manage tools/equipment",
-		Actions:     append(crudActions("Tool"), consumableActions("Tool", "tool")...),
+		Actions:     append(append(crudActions("Tool"), consumableActions("Tool", "tool")...), catalogFileActions("Tool", "tool", true)...),
 	})
 	Register(&Domain{
 		Name:        "inventory",
