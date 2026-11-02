@@ -21,6 +21,9 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 		"telemetry":                  "UteamupIoTTelemetryPoints",
 		"rules":                      "UteamupIoTRulesList",
 		"device-types":               "UteamupIoTDeviceTypesList",
+		"device-type-create":         "UteamupIoTDeviceTypeCreate",
+		"device-type-update":         "UteamupIoTDeviceTypeUpdate",
+		"device-type-delete":         "UteamupIoTDeviceTypeDelete",
 		"devices":                    "UteamupIoTDevicesList",
 		"device":                     "UteamupIoTDeviceGet",
 		"device-create":              "UteamupIoTDeviceCreate",
@@ -205,11 +208,14 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 		"network-client-link":        "/api/iot/devices/gateway-guid/network-clients/links",
 		"network-client-unlink":      "/api/iot/devices/gateway-guid/network-clients/links/link-guid",
 		"overview":                   "/api/iot/monitoring/telemetry/overview",
-		"status":                     "/api/iot/environment",                  // TenantIoTSelfServiceController.GetStatus
-		"monitoring":                 "/api/iot/monitoring",                   // IoTMonitoringController dashboard
-		"telemetry":                  "/api/iot/monitoring/telemetry/points",  // IoTMonitoringController.GetTelemetryPoints
-		"rules":                      "/api/iot/rules",                        // IoTRuleController.Get
-		"device-types":               "/api/iot/device-types",                 // IOTController.GetDeviceTypes
+		"status":                     "/api/iot/environment",                 // TenantIoTSelfServiceController.GetStatus
+		"monitoring":                 "/api/iot/monitoring",                  // IoTMonitoringController dashboard
+		"telemetry":                  "/api/iot/monitoring/telemetry/points", // IoTMonitoringController.GetTelemetryPoints
+		"rules":                      "/api/iot/rules",                       // IoTRuleController.Get
+		"device-types":               "/api/iot/device-types",                // IOTController.GetDeviceTypes
+		"device-type-create":         "/api/iot/device-types",
+		"device-type-update":         "/api/iot/device-types/type-guid",
+		"device-type-delete":         "/api/iot/device-types/type-guid",
 		"devices":                    "/api/iot/devices",                      // IOTController.GetDevices
 		"device":                     "/api/iot/devices/device-guid",          // IOTController.GetDeviceByGuid
 		"device-create":              "/api/iot/devices",                      // IOTController.CreateDevice
@@ -240,7 +246,7 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 			continue
 		}
 		args := map[string]any{"definitionGuid": "definition-guid", "requestGuid": "request-guid", "alertGuid": "alert-guid",
-			"deviceGuid": "device-guid", "apiKeyGuid": "key-guid", "gatewayGuid": "gateway-guid", "linkGuid": "link-guid"}
+			"deviceGuid": "device-guid", "deviceTypeGuid": "type-guid", "apiKeyGuid": "key-guid", "gatewayGuid": "gateway-guid", "linkGuid": "link-guid"}
 		if path, _ := buildRESTPath(domain, action, args); path != want {
 			t.Errorf("%s routes to %q, want %q", action.Name, path, want)
 		}

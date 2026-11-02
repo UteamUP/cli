@@ -4,6 +4,16 @@ const iotCommandAPIPath = "/api/iot/commands"
 
 const iotDeviceAPIPath = "/api/iot"
 
+func iotDeviceTypeFields() []FlagDef {
+	return []FlagDef{
+		{Name: "name", BodyName: "name", Description: "Device type name", Required: true, Type: "string"},
+		{Name: "description", BodyName: "description", Description: "Device type description", Type: "string", Default: ""},
+		{Name: "manufacturer", BodyName: "manufacturer", Description: "Manufacturer", Type: "string", Default: ""},
+		{Name: "model", BodyName: "model", Description: "Manufacturer model", Type: "string", Default: ""},
+		{Name: "configuration-schema", BodyName: "configurationSchema", Description: "Configuration schema JSON string", Type: "string", Default: "{}"},
+	}
+}
+
 func init() {
 	Register(&Domain{
 		Name:        "iot",
@@ -109,6 +119,25 @@ func init() {
 				RESTBasePath: iotDeviceAPIPath,
 				HTTPMethod:   "GET",
 				RESTPath:     "device-types",
+			},
+			{
+				Name: "device-type-create", Description: "Create an IoT device type with manufacturer, model and configuration schema",
+				ToolName: "UteamupIoTDeviceTypeCreate", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "POST", RESTPath: "device-types",
+				Flags: iotDeviceTypeFields(),
+			},
+			{
+				Name: "device-type-update", Description: "Replace a device type by GUID; send its complete fields because omitted fields reset to defaults",
+				ToolName: "UteamupIoTDeviceTypeUpdate", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "PUT", RESTPath: "device-types/{deviceTypeGuid}",
+				Args:  []ArgDef{{Name: "deviceTypeGuid", Description: "Device type public GUID", Required: true, Type: "non-empty-uuid"}},
+				Flags: iotDeviceTypeFields(),
+			},
+			{
+				Name: "device-type-delete", Description: "Delete an unused device type; refuses a type with devices",
+				ToolName: "UteamupIoTDeviceTypeDelete", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "DELETE", RESTPath: "device-types/{deviceTypeGuid}",
+				Args: []ArgDef{{Name: "deviceTypeGuid", Description: "Device type public GUID", Required: true, Type: "non-empty-uuid"}},
 			},
 			{
 				Name:         "devices",
