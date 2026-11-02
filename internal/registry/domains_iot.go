@@ -4,6 +4,19 @@ const iotCommandAPIPath = "/api/iot/commands"
 
 const iotDeviceAPIPath = "/api/iot"
 
+func iotNetworkClientLinkFields() []FlagDef {
+	return []FlagDef{
+		{Name: "mac-address", BodyName: "macAddress", Description: "Exact client MAC; supply this or --ip-address", Type: "string"},
+		{Name: "ip-address", BodyName: "ipAddress", Description: "Literal source-local IP; manual linking only", Type: "string"},
+		{Name: "target-device-guid", BodyName: "targetDeviceGuid", Description: "Existing IoT device already linked to an asset", Type: "uuid"},
+		{Name: "asset-guid", BodyName: "assetGuid", Description: "Existing tenant asset GUID; choose one owner", Type: "uuid"},
+		{Name: "part-guid", BodyName: "partGuid", Description: "Existing tenant part GUID; choose one owner", Type: "uuid"},
+		{Name: "tool-guid", BodyName: "toolGuid", Description: "Existing tenant tool GUID; choose one owner", Type: "uuid"},
+		{Name: "auto-match", BodyName: "autoMatch", Description: "Require a unique exact MAC device match", Type: "bool"},
+		{Name: "expected-revision", BodyName: "expectedRevision", Description: "Current link revision, required to change or restore a link", Type: "uuid"},
+	}
+}
+
 func iotDeviceTypeFields() []FlagDef {
 	return []FlagDef{
 		{Name: "name", BodyName: "name", Description: "Device type name", Required: true, Type: "string"},
@@ -39,21 +52,21 @@ func init() {
 				Args: []ArgDef{{Name: "gatewayGuid", Description: "Existing gateway device GUID", Required: true, Type: "uuid"}},
 			},
 			{
-				Name: "network-client-link", Description: "Link a source-local MAC or IP to an existing asset; automatic matches require an exact MAC",
+				Name: "network-client-link", Description: "Link a source-local MAC or IP to an existing asset, part or tool with separate network meters",
 				ToolName: "UteamupIoTNetworkClientLink", RESTBasePath: iotDeviceAPIPath,
 				HTTPMethod: "POST", RESTPath: "devices/{gatewayGuid}/network-clients/links",
-				Args: []ArgDef{{Name: "gatewayGuid", Description: "Existing gateway device GUID", Required: true, Type: "uuid"}},
-				Flags: []FlagDef{
-					{Name: "mac-address", BodyName: "macAddress", Description: "Exact client MAC; supply this or --ip-address", Type: "string"},
-					{Name: "ip-address", BodyName: "ipAddress", Description: "Literal source-local IP; manual linking only", Type: "string"},
-					{Name: "target-device-guid", BodyName: "targetDeviceGuid", Description: "Existing IoT device already linked to an asset", Type: "uuid"},
-					{Name: "asset-guid", BodyName: "assetGuid", Description: "Existing tenant asset GUID", Type: "uuid"},
-					{Name: "auto-match", BodyName: "autoMatch", Description: "Require a unique exact MAC device match", Type: "bool"},
-					{Name: "expected-revision", BodyName: "expectedRevision", Description: "Current link revision, required to change or restore a link", Type: "uuid"},
-				},
+				Args:  []ArgDef{{Name: "gatewayGuid", Description: "Existing gateway device GUID", Required: true, Type: "uuid"}},
+				Flags: iotNetworkClientLinkFields(),
 			},
 			{
-				Name: "network-client-unlink", Description: "Stop future client samples while keeping the asset, meter definitions and readings",
+				Name: "network-client-preview", Description: "Preview the target, required additional asset type and meters without saving an association",
+				ToolName: "UteamupIoTNetworkClientLinkPreview", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "POST", RESTPath: "devices/{gatewayGuid}/network-clients/links/preview",
+				Args:  []ArgDef{{Name: "gatewayGuid", Description: "Existing gateway device GUID", Required: true, Type: "uuid"}},
+				Flags: iotNetworkClientLinkFields(),
+			},
+			{
+				Name: "network-client-unlink", Description: "Stop future client samples while keeping the linked resource, meter definitions and readings",
 				ToolName: "UteamupIoTNetworkClientUnlink", RESTBasePath: iotDeviceAPIPath,
 				HTTPMethod: "DELETE", RESTPath: "devices/{gatewayGuid}/network-clients/links/{linkGuid}",
 				Args: []ArgDef{
@@ -61,6 +74,31 @@ func init() {
 					{Name: "linkGuid", Description: "Persisted client link GUID", Required: true, Type: "uuid"},
 				},
 				Flags: []FlagDef{{Name: "revision", QueryName: "revision", Description: "Current link revision", Required: true, Type: "uuid"}},
+			},
+			{
+				Name: "resource-meters", Description: "Read the current network meters for an existing asset, part or tool",
+				ToolName: "UteamupIoTResourceMeters", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "GET", RESTPath: "resources/{resourceType}/{resourceGuid}/meters",
+				Args: []ArgDef{
+					{Name: "resourceType", Description: "Resource type: asset, part or tool", Required: true, Type: "string"},
+					{Name: "resourceGuid", Description: "Existing tenant resource GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name: "resource-meter-history", Description: "Read one resource meter's paginated measurement history",
+				ToolName: "UteamupIoTResourceMeterHistory", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "GET", RESTPath: "resources/{resourceType}/{resourceGuid}/meters/{attributeDefinitionGuid}/history",
+				Args: []ArgDef{
+					{Name: "resourceType", Description: "Resource type: asset, part or tool", Required: true, Type: "string"},
+					{Name: "resourceGuid", Description: "Existing tenant resource GUID", Required: true, Type: "uuid"},
+					{Name: "attributeDefinitionGuid", Description: "Resource meter attribute GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "from", Description: "UTC observation start (ISO-8601)", Type: "string"},
+					{Name: "to", Description: "UTC observation end (ISO-8601)", Type: "string"},
+					{Name: "page", Description: "Page number", Type: "int", Default: 1},
+					{Name: "page-size", QueryName: "pageSize", Description: "Readings per page (maximum 100)", Type: "int", Default: 50},
+				},
 			},
 			{
 				Name:         "status",
@@ -100,6 +138,8 @@ func init() {
 					{Name: "to", Description: "UTC range end (ISO-8601); default now", Type: "string"},
 					{Name: "device-guid", Description: "Device GUID filter", Type: "string"},
 					{Name: "asset-guid", Description: "Asset GUID filter", Type: "string"},
+					{Name: "part-guid", Description: "Part GUID filter", Type: "string"},
+					{Name: "tool-guid", Description: "Tool GUID filter", Type: "string"},
 					{Name: "attribute-definition-guid", Description: "Attribute definition GUID filter", Type: "string"},
 					{Name: "limit", Description: "Page size (1-500)", Type: "int", Default: 100},
 					{Name: "before-received-at", Description: "UTC cursor timestamp", Type: "string"},

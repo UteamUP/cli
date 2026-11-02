@@ -30,7 +30,10 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 		"alert-convert":              "UteamupIoTAlertConvertToWorkorder",
 		"network-client-links":       "UteamupIoTNetworkClientLinks",
 		"network-client-link":        "UteamupIoTNetworkClientLink",
+		"network-client-preview":     "UteamupIoTNetworkClientLinkPreview",
 		"network-client-unlink":      "UteamupIoTNetworkClientUnlink",
+		"resource-meters":            "UteamupIoTResourceMeters",
+		"resource-meter-history":     "UteamupIoTResourceMeterHistory",
 		"overview":                   "UteamupIoTTelemetryOverview",
 		"status":                     "UteamupIoTEnvironmentStatus",
 		"monitoring":                 "UteamupIoTMonitoringDashboard",
@@ -72,6 +75,64 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 	}
 	for missing := range expected {
 		t.Errorf("missing iot action %q", missing)
+	}
+}
+
+func TestIoTResourceLinkPreviewAndSaveShareGuidOwnerFields(t *testing.T) {
+	for _, name := range []string{"network-client-link", "network-client-preview"} {
+		action := findIoTAction(t, name)
+		flags := map[string]FlagDef{}
+		for _, flag := range action.Flags {
+			flags[flag.Name] = flag
+		}
+		for _, kind := range []string{"asset", "part", "tool"} {
+			flag := flags[kind+"-guid"]
+			if flag.Type != "uuid" || flag.BodyName != kind+"Guid" || flag.Required {
+				t.Errorf("%s must expose optional public %s GUID ownership: %+v", name, kind, flag)
+			}
+		}
+		if action.HTTPMethod != "POST" || action.RESTBasePath != "/api/iot" {
+			t.Errorf("%s must use the existing IoT API: %+v", name, action)
+		}
+		want := "devices/{gatewayGuid}/network-clients/links"
+		if name == "network-client-preview" {
+			want += "/preview"
+		}
+		if action.RESTPath != want {
+			t.Errorf("%s route = %q, want %q", name, action.RESTPath, want)
+		}
+	}
+}
+
+func TestIoTResourceMeterRoutesKeepTypedOwnerAndPaginatedHistory(t *testing.T) {
+	const owner = "11111111-1111-4111-8111-111111111111"
+	const meter = "22222222-2222-4222-8222-222222222222"
+	for _, kind := range []string{"asset", "part", "tool"} {
+		for _, name := range []string{"resource-meters", "resource-meter-history"} {
+			action := findIoTAction(t, name)
+			path, _ := buildRESTPath(findDomain("iot"), action, map[string]interface{}{
+				"resourceType": kind, "resourceGuid": owner, "attributeDefinitionGuid": meter,
+			})
+			want := "/api/iot/resources/" + kind + "/" + owner + "/meters"
+			if name == "resource-meter-history" {
+				want += "/" + meter + "/history"
+				flags := map[string]FlagDef{}
+				for _, flag := range action.Flags {
+					flags[flag.Name] = flag
+				}
+				if flags["page"].Default != 1 || flags["page-size"].QueryName != "pageSize" || flags["page-size"].Default != 50 {
+					t.Fatal("resource history must preserve pagination query names and defaults")
+				}
+			}
+			if action.HTTPMethod != "GET" || path != want {
+				t.Errorf("%s %s = %s %s, want GET %s", kind, name, action.HTTPMethod, path, want)
+			}
+			for _, arg := range action.Args {
+				if arg.Name != "resourceType" && arg.Type != "uuid" {
+					t.Errorf("resource identifiers must be GUIDs: %+v", arg)
+				}
+			}
+		}
 	}
 }
 
@@ -128,7 +189,7 @@ func TestIoTTelemetryUsesGuidFiltersAndBoundedLimit(t *testing.T) {
 	for _, flag := range telemetry.Flags {
 		flags[flag.Name] = flag
 	}
-	for _, name := range []string{"device-guid", "asset-guid", "attribute-definition-guid", "before-point-guid"} {
+	for _, name := range []string{"device-guid", "asset-guid", "part-guid", "tool-guid", "attribute-definition-guid", "before-point-guid"} {
 		if flags[name].Type != "string" {
 			t.Errorf("%s must be a GUID string flag", name)
 		}
@@ -222,6 +283,9 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 		"alert-convert":              "/api/iot/alerts/alert-guid/workorder",
 		"network-client-links":       "/api/iot/devices/gateway-guid/network-clients/links",
 		"network-client-link":        "/api/iot/devices/gateway-guid/network-clients/links",
+		"network-client-preview":     "/api/iot/devices/gateway-guid/network-clients/links/preview",
+		"resource-meters":            "/api/iot/resources/part/resource-guid/meters",
+		"resource-meter-history":     "/api/iot/resources/part/resource-guid/meters/attribute-guid/history",
 		"network-client-unlink":      "/api/iot/devices/gateway-guid/network-clients/links/link-guid",
 		"overview":                   "/api/iot/monitoring/telemetry/overview",
 		"status":                     "/api/iot/environment",                 // TenantIoTSelfServiceController.GetStatus
@@ -262,7 +326,8 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 			continue
 		}
 		args := map[string]any{"definitionGuid": "definition-guid", "requestGuid": "request-guid", "alertGuid": "alert-guid",
-			"deviceGuid": "device-guid", "deviceTypeGuid": "type-guid", "apiKeyGuid": "key-guid", "gatewayGuid": "gateway-guid", "linkGuid": "link-guid"}
+			"deviceGuid": "device-guid", "deviceTypeGuid": "type-guid", "apiKeyGuid": "key-guid", "gatewayGuid": "gateway-guid", "linkGuid": "link-guid",
+			"resourceType": "part", "resourceGuid": "resource-guid", "attributeDefinitionGuid": "attribute-guid"}
 		if path, _ := buildRESTPath(domain, action, args); path != want {
 			t.Errorf("%s routes to %q, want %q", action.Name, path, want)
 		}
