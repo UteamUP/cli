@@ -1426,6 +1426,14 @@ func init() {
 		// generic crudActions template only minted commands that always 404. Single items are
 		// managed through their own domains (asset, part, tool, chemical).
 		Actions: []Action{
+			{Name: "get-by-guid", Description: "Read a catalog Part, Tool or Asset by public GUID and exact type", ToolName: "GetInventoryItem", MCPOnly: true, RejectExtraArgs: true,
+				Args: []ArgDef{{Name: "itemGuid", Description: "Catalog item public GUID", Required: true, Type: "non-empty-uuid"},
+					{Name: "itemType", Description: "Catalog item type", Required: true, Type: "string", AllowedValues: []string{"Part", "Tool", "Asset"}}}},
+			{Name: "patch-by-guid", Description: "Change only supplied catalog name/description; preserve all other state", ToolName: "UpdateInventoryItem", MCPOnly: true, RejectExtraArgs: true,
+				Args: []ArgDef{{Name: "itemGuid", Description: "Catalog item public GUID", Required: true, Type: "non-empty-uuid"},
+					{Name: "itemType", Description: "Catalog item type", Required: true, Type: "string", AllowedValues: []string{"Part", "Tool", "Asset"}}},
+				Flags: []FlagDef{{Name: "name", Description: "New name; omit to preserve", Type: "string"},
+					{Name: "description", Description: "New description; omit to preserve, empty clears", Type: "string"}}},
 			{Name: "list", Description: "List records", ToolName: "UteamupInventoryList", Flags: paginationFlags()},
 			{
 				Name: "bulk-delete",

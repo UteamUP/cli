@@ -111,3 +111,14 @@ func TestPartCurrencyFlagMatchesEachTransportContract(t *testing.T) {
 		}
 	}
 }
+
+func TestInventoryPartialOperationsRequireGuidAndExactType(t *testing.T) {
+	for _, name := range []string{"get-by-guid", "patch-by-guid"} {
+		_, action := catalogAction(t, "inventory", name)
+		if !action.MCPOnly || !action.RejectExtraArgs || len(action.Args) != 2 ||
+			action.Args[0].Name != "itemGuid" || action.Args[0].Type != "non-empty-uuid" ||
+			action.Args[1].Name != "itemType" || len(action.Args[1].AllowedValues) != 3 {
+			t.Fatalf("incorrect inventory identity contract: %+v", action)
+		}
+	}
+}
