@@ -1180,7 +1180,7 @@ func init() {
 					{Name: "confirm", Description: "Explicitly confirm creating the stock items", Type: "bool", Required: true, MustBeTrue: true, LocalOnly: true},
 				},
 			},
-		), stockPlannedIncomingActions()...),
+		), append(stockPlannedIncomingActions(), stockPurchaseActions()...)...),
 	})
 
 	// Warranty coverage lives off the asset route (~/api/asset/{guid}/warranty-coverage),
