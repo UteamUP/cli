@@ -410,3 +410,28 @@ func TestIoTDeviceActionsExposeTheRoomFlag(t *testing.T) {
 		}
 	}
 }
+
+func TestIoTClientIPAndSourceMarkerContracts(t *testing.T) {
+	domain := findDomain("iot")
+	for _, action := range domain.Actions {
+		if action.Name != "network-client-link" {
+			continue
+		}
+		fields := map[string]FlagDef{}
+		for _, flag := range action.Flags {
+			fields[flag.Name] = flag
+		}
+		if fields["mac-address"].Required || fields["ip-address"].BodyName != "ipAddress" {
+			t.Fatal("manual IP linking must not require or invent a MAC address")
+		}
+	}
+	found := false
+	for _, flag := range iotDeviceDetailFlags() {
+		if flag.Name == "data-source-kind" && flag.BodyName == "dataSourceKind" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("device create/update must expose the incoming-source marker")
+	}
+}

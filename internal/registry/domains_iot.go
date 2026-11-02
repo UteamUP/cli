@@ -39,12 +39,13 @@ func init() {
 				Args: []ArgDef{{Name: "gatewayGuid", Description: "Existing gateway device GUID", Required: true, Type: "uuid"}},
 			},
 			{
-				Name: "network-client-link", Description: "Link a MAC to an existing asset and add network meters without replacing its primary type",
+				Name: "network-client-link", Description: "Link a source-local MAC or IP to an existing asset; automatic matches require an exact MAC",
 				ToolName: "UteamupIoTNetworkClientLink", RESTBasePath: iotDeviceAPIPath,
 				HTTPMethod: "POST", RESTPath: "devices/{gatewayGuid}/network-clients/links",
 				Args: []ArgDef{{Name: "gatewayGuid", Description: "Existing gateway device GUID", Required: true, Type: "uuid"}},
 				Flags: []FlagDef{
-					{Name: "mac-address", BodyName: "macAddress", Description: "Exact client MAC", Required: true, Type: "string"},
+					{Name: "mac-address", BodyName: "macAddress", Description: "Exact client MAC; supply this or --ip-address", Type: "string"},
+					{Name: "ip-address", BodyName: "ipAddress", Description: "Literal source-local IP; manual linking only", Type: "string"},
 					{Name: "target-device-guid", BodyName: "targetDeviceGuid", Description: "Existing IoT device already linked to an asset", Type: "uuid"},
 					{Name: "asset-guid", BodyName: "assetGuid", Description: "Existing tenant asset GUID", Type: "uuid"},
 					{Name: "auto-match", BodyName: "autoMatch", Description: "Require a unique exact MAC device match", Type: "bool"},
@@ -465,6 +466,7 @@ func iotDeviceDetailFlags() []FlagDef {
 		{Name: "asset-guid", BodyName: "assetGuid", Description: "GUID of the asset the device measures", Type: "uuid"},
 		{Name: "ip-address", BodyName: "ipAddress", Description: "IP address", Type: "string"},
 		{Name: "mac-address", BodyName: "macAddress", Description: "MAC address", Type: "string"},
+		{Name: "data-source-kind", BodyName: "dataSourceKind", Description: "Incoming data source kind, such as router, adguard, suricata or a site-defined kind; empty clears it", Type: "string"},
 		{Name: "tag-guids", BodyName: "tagGuids", Description: "Tag GUIDs, repeatable or comma-separated (complete set)", Type: "stringSlice"},
 	}
 }
