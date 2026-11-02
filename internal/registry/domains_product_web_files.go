@@ -30,6 +30,7 @@ func init() {
 					{Name: "item-guid", Description: "GUID of the asset, part, tool or chemical", Required: true, Type: "non-empty-uuid"},
 					{Name: "url", Description: "HTTPS URL of the photo or document", Required: true, Type: "string"},
 					{Name: "page-url", Description: "The page the photo was found on", Type: "string"},
+					{Name: "set-as-profile-image", BodyName: "setAsProfileImage", Description: "Also replace the profile image; images only, up to 2 MB; omitted preserves it", Type: "bool"},
 				},
 			},
 		},

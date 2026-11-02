@@ -93,3 +93,16 @@ func TestProductWebFilesBodiesMatchTheBackendModels(t *testing.T) {
 		}
 	}
 }
+
+func TestProductWebFilesProfileAssignmentIsExplicitAndOptional(t *testing.T) {
+	_, action := productWebFilesAction(t, "import")
+	for _, flag := range action.Flags {
+		if flag.Name == "set-as-profile-image" {
+			if flag.Type != "bool" || flag.BodyName != "setAsProfileImage" || flag.Required || flag.Default != nil {
+				t.Fatalf("profile replacement must be an explicit optional choice: %+v", flag)
+			}
+			return
+		}
+	}
+	t.Fatal("missing profile image choice")
+}
