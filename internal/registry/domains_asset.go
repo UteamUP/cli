@@ -17,6 +17,21 @@ func init() {
 		Description: "Manage assets and equipment inventory",
 		Actions: []Action{
 			{
+				Name: "archive-preview", Description: "Review archive effects and optional migration to an existing asset",
+				ToolName: "UteamupAssetArchivePreview", HTTPMethod: "GET", RESTPath: "by-guid/{assetGuid}/archive-preview",
+				Args:  []ArgDef{{Name: "asset-guid", BodyName: "assetGuid", Description: "Source asset GUID", Required: true, Type: "non-empty-uuid"}},
+				Flags: []FlagDef{{Name: "target-asset-guid", BodyName: "targetAssetGuid", QueryName: "targetAssetGuid", Description: "Existing target asset GUID in the same company", Type: "non-empty-uuid"}},
+			},
+			{
+				Name: "archive", Description: "Commit an explicitly confirmed archive using its reviewed token and optional target",
+				ToolName: "UteamupAssetArchive", HTTPMethod: "POST", RESTPath: "by-guid/{assetGuid}/archive",
+				Args: []ArgDef{{Name: "asset-guid", BodyName: "assetGuid", Description: "Source asset GUID", Required: true, Type: "non-empty-uuid"}},
+				Flags: []FlagDef{
+					{Name: "review-token", BodyName: "reviewToken", Description: "Token from the reviewed archive preview", Required: true, Type: "string"},
+					{Name: "target-asset-guid", BodyName: "targetAssetGuid", Description: "The existing target asset GUID reviewed in the preview", Type: "non-empty-uuid"},
+				},
+			},
+			{
 				Name:        "ask",
 				Description: "Ask a source-grounded question about an asset (2 AI credits; requires Asset.View)",
 				ToolName:    "UteamupAssetAsk",
