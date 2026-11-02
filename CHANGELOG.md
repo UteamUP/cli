@@ -5,6 +5,20 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.12.0](https://github.com/UteamUP/cli/compare/5.11.0...5.12.0) (2026-11-02)
+
+
+### Features
+
+* **asset:** expose equipment identity update and patch flags ([cbba507](https://github.com/UteamUP/cli/commit/cbba50713605914ab69423f3c0f9dec40fdff6d1))
+* link stock removals to assets through CLI ([78c2238](https://github.com/UteamUP/cli/commit/78c223853f85f09e77cf451858b6f90840397095))
+* mirror purchase receipts and protected document readback ([9f22450](https://github.com/UteamUP/cli/commit/9f2245055ce399d03513e2717d34ae967eb38ce0))
+
+
+### Miscellaneous
+
+* merge CLI release metadata ([ed0525e](https://github.com/UteamUP/cli/commit/ed0525e19a24ac71834273cada3668c87206f5ea))
+
 ## [5.11.0](https://github.com/UteamUP/cli/compare/5.10.0...5.11.0) (2026-11-02)
 
 
