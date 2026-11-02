@@ -5,6 +5,32 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.11.0](https://github.com/UteamUP/cli/compare/5.10.0...5.11.0) (2026-11-02)
+
+
+### Features
+
+* **asset:** add lifecycle stage request command ([8f77322](https://github.com/UteamUP/cli/commit/8f773229114222f89997831cbf88143fe051c528))
+* **cli:** add GUID inventory reads and partial updates ([319f84b](https://github.com/UteamUP/cli/commit/319f84b8ab2236e4aa2fa52ffddf86f632284b09))
+* **cli:** expose catalog part value currency selection ([c253cf7](https://github.com/UteamUP/cli/commit/c253cf7cb11292216248dd39d95ef70d09929a2d))
+* **cli:** expose per-key IoT command opt-in ([e5ba802](https://github.com/UteamUP/cli/commit/e5ba802503a7140e809a168cd21564383b472c6a))
+* **cli:** expose single stock item creation with exact quantities ([b813878](https://github.com/UteamUP/cli/commit/b813878d0899db2ed8187ecc77a3198342a9ce88))
+* **cli:** mirror GUID catalog images and reporter replies ([082b372](https://github.com/UteamUP/cli/commit/082b3727652ba2c8c6c22011020c391c5d37ee7b))
+* **cli:** optionally set web imports as profile images ([47774b1](https://github.com/UteamUP/cli/commit/47774b184b5f6c7b17e8deb5bc250ed126fccc16))
+* **iot:** add device type management commands ([a2982b8](https://github.com/UteamUP/cli/commit/a2982b8e07c98f8b3c63dc388b3f69cfd4c857ed))
+* support IP client links and IoT source markers ([36f756c](https://github.com/UteamUP/cli/commit/36f756ca80816d2997a9cf7ea5c2e20833f10c1e))
+
+
+### Bug Fixes
+
+* **cli:** validate body MIME choices independently of route segments ([6b619e9](https://github.com/UteamUP/cli/commit/6b619e969df4a0b1d12cf097da7d57935aff1c56))
+* **mcp:** send required streamable HTTP accept header ([f7e41ae](https://github.com/UteamUP/cli/commit/f7e41aecda939d2d83a5127d08736ff2a39d6c32))
+
+
+### Tests
+
+* **cli:** distinguish inventory MCP operations from REST routes ([54506f1](https://github.com/UteamUP/cli/commit/54506f1d4f60a5a909dc3171e1cf4781c2140cf6))
+
 ## [5.10.0](https://github.com/UteamUP/cli/compare/5.9.0...5.10.0) (2026-11-01)
 
 
