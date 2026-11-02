@@ -122,3 +122,27 @@ func TestInventoryPartialOperationsRequireGuidAndExactType(t *testing.T) {
 		}
 	}
 }
+
+func TestStockSingleItemCreateUsesGuidReferencesAndExactQuantities(t *testing.T) {
+	action := findStockAction(t, "item-create")
+	if !action.MCPOnly || action.ToolName != "UteamupStockCreateItem" || !action.RejectExtraArgs {
+		t.Fatalf("incorrect single create action: %+v", action)
+	}
+	flags := map[string]FlagDef{}
+	for _, flag := range action.Flags {
+		flags[flag.Name] = flag
+	}
+	for _, name := range []string{"stock-guid", "part-guid", "tool-guid", "chemical-guid", "bin-guid"} {
+		if flags[name].Type != "non-empty-uuid" {
+			t.Fatalf("%s must carry a public GUID", name)
+		}
+	}
+	for _, name := range []string{"minimum-amount", "maximum-amount", "initial-stock", "reorder-point", "safety-stock"} {
+		if flags[name].Type != "decimal" {
+			t.Fatalf("%s must preserve exact decimals", name)
+		}
+	}
+	if _, exists := flags["tenant-guid"]; exists {
+		t.Fatal("tenant comes from authentication, never a tool flag")
+	}
+}
