@@ -32,7 +32,7 @@ func init() {
 		Name:        "iot",
 		Aliases:     []string{"internet-of-things"},
 		Description: "Inspect the selected tenant's dedicated IoT Preview environment",
-		Actions: []Action{
+		Actions: append([]Action{
 			{
 				Name: "alert-workorder", Description: "Read the workorder linked to an IoT alert",
 				ToolName: "UteamupIoTAlertWorkorderGet", RESTBasePath: iotDeviceAPIPath,
@@ -405,7 +405,7 @@ func init() {
 				HTTPMethod:   "GET",
 				RESTPath:     "monitoring",
 			},
-		},
+		}, iotComponentIdentityActions()...),
 	})
 }
 
