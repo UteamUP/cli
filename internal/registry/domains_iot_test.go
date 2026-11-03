@@ -317,6 +317,14 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 		"command-reject":             "/api/iot/commands/requests/request-guid/reject",
 		"command-cancel":             "/api/iot/commands/requests/request-guid/cancel",
 		"command-monitoring":         "/api/iot/commands/monitoring",
+		// Component identity and collector generation actions (IOTController.ComponentIdentities).
+		"source-generations":       "/api/iot/devices/source-guid/source-generations",
+		"source-enroll":            "/api/iot/devices/source-guid/source-generations",
+		"source-retire":            "/api/iot/devices/source-guid/source-generations/retire",
+		"source-key-issue":         "/api/iot/devices/source-guid/api-keys",
+		"physical-identities":      "/api/iot/devices/source-guid/identities",
+		"physical-identity-review": "/api/iot/devices/source-guid/identities/review",
+		"physical-identity-end":    "/api/iot/devices/source-guid/identities/identity-guid/end",
 	}
 
 	for _, action := range domain.Actions {
@@ -327,6 +335,7 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 		}
 		args := map[string]any{"definitionGuid": "definition-guid", "requestGuid": "request-guid", "alertGuid": "alert-guid",
 			"deviceGuid": "device-guid", "deviceTypeGuid": "type-guid", "apiKeyGuid": "key-guid", "gatewayGuid": "gateway-guid", "linkGuid": "link-guid",
+			"sourceGuid": "source-guid", "identityGuid": "identity-guid",
 			"resourceType": "part", "resourceGuid": "resource-guid", "attributeDefinitionGuid": "attribute-guid"}
 		if path, _ := buildRESTPath(domain, action, args); path != want {
 			t.Errorf("%s routes to %q, want %q", action.Name, path, want)
