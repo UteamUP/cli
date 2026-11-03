@@ -5,6 +5,15 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.0](https://github.com/UteamUP/cli/compare/5.13.0...5.14.0) (2026-11-03)
+
+
+### Features
+
+* add reviewed asset archive commands ([47c5ccf](https://github.com/UteamUP/cli/commit/47c5ccf03802a23935240993b7d190db21ba7503))
+* expose actual workorder completion and correction flags ([6c700b7](https://github.com/UteamUP/cli/commit/6c700b727601608062970e7023fea5c57d2c804b))
+* expose inventory network associations and meter history ([a860193](https://github.com/UteamUP/cli/commit/a8601934f207cbd16c9d466b0409575057c77c6b))
+
 ## [5.13.0](https://github.com/UteamUP/cli/compare/5.12.0...5.13.0) (2026-11-02)
 
 
