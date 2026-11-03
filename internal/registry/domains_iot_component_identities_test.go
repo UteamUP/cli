@@ -26,7 +26,7 @@ func TestIoTIdentityReviewTransportPreservesExactAliasChannelsAndOriginalRetry(t
 	identity := filepath.Join(t.TempDir(), "identity.json")
 	channels := filepath.Join(t.TempDir(), "channels.json")
 	for path, body := range map[string]string{
-		identity: `{"namespace":"homeassistant.device_id","stableHardwareId":"Thread-Device-CaseSensitive"}`,
+		identity: `{"namespace":"provider.hardware","stableHardwareId":"Thread-Device-CaseSensitive"}`,
 		channels: `[{"channelNamespace":"homeassistant.entity","stableChannelId":"sensor.bulb_power","attribute":"power","attributeDefinitionGuid":"66666666-6666-4666-8666-666666666666","unit":"W","valueKind":"gauge","quality":"measured","expectsTelemetry":true}]`,
 	} {
 		if err := os.WriteFile(path, []byte(body), 0600); err != nil {
@@ -77,7 +77,7 @@ func TestIoTIdentityReviewTransportPreservesExactAliasChannelsAndOriginalRetry(t
 		}
 	}
 	alias, ok := bodies[0]["identity"].(map[string]any)
-	if !ok || alias["stableHardwareId"] != "Thread-Device-CaseSensitive" || alias["namespace"] != "homeassistant.device_id" {
+	if !ok || alias["stableHardwareId"] != "Thread-Device-CaseSensitive" || alias["namespace"] != "provider.hardware" {
 		t.Fatalf("exact identity changed: %+v", bodies[0]["identity"])
 	}
 	rows, ok := bodies[0]["channels"].([]any)
