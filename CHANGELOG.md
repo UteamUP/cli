@@ -5,6 +5,25 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.15.0](https://github.com/UteamUP/cli/compare/5.14.0...5.15.0) (2026-11-03)
+
+
+### Features
+
+* expose reviewed component lifecycle commands ([d1c1cf6](https://github.com/UteamUP/cli/commit/d1c1cf613d426c0df6f3b46a75c4dc8207b49295))
+* expose reviewed IoT component identity commands ([82e44d3](https://github.com/UteamUP/cli/commit/82e44d3ca1c9e2f028ee80cde6400810fdb05e79))
+
+
+### Bug Fixes
+
+* align component commands with served MCP names ([33aa59f](https://github.com/UteamUP/cli/commit/33aa59f2b525244aa36d6725f2c6f6c01af95a46))
+
+
+### Tests
+
+* pin the new IoT component identity routes ([1152a03](https://github.com/UteamUP/cli/commit/1152a032ab41cf67d5989d65db7e63068c10e06f))
+* use a valid declared hardware identity namespace ([95ed8b4](https://github.com/UteamUP/cli/commit/95ed8b4e0d57b8cf786e84a34dba2ebfa925c0ed))
+
 ## [5.14.0](https://github.com/UteamUP/cli/compare/5.13.0...5.14.0) (2026-11-03)
 
 
