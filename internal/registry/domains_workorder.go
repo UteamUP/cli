@@ -85,7 +85,7 @@ func init() {
 			{
 				Name: "complete",
 				Description: "Complete a work order by GUID using the server-owned completion policy. " +
-					"--from-json takes a root object with report and failure (assetGuids, failureCodeGuid, failureDescription, " +
+					"--from-json takes a root object with optional completedAt, report and failure (assetGuids, failureCodeGuid, failureDescription, " +
 					"symptoms, rootCause, resolution, downtimeMinutes, failureStartedAt, severity, isRepeatFailure)",
 				ToolName:   "UteamupWorkorderComplete",
 				HTTPMethod: "POST",
@@ -93,6 +93,7 @@ func init() {
 				Args:       []ArgDef{{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "uuid"}},
 				Flags: []FlagDef{
 					{Name: "idempotency-key", HeaderName: "Idempotency-Key", Description: "Caller-generated GUID reused only for a retry of the same completion", Type: "non-empty-uuid"},
+					{Name: "completed-at", BodyName: "completedAt", Description: "Actual completion instant (ISO 8601 UTC), not in the future or before a captured start; reportDate stays independent", Type: "string"},
 					{Name: "report-json", BodyName: "report", JSONFile: true, Type: "string",
 						Description: "JSON file with the close-out report filed in the same step: description (required), closeOutNotes, reportDate, " +
 							"timeSpent, costIncurred, additionalWorkerGuids, externalWorkerEmails (at most 10), notifyExternalWorkers, meterReadingSkipReason"},
@@ -170,6 +171,8 @@ func init() {
 				Args:        []ArgDef{{Name: "workorderGuid", Description: "Work order GUID", Required: true, Type: "uuid"}},
 				Flags: []FlagDef{
 					{Name: "title", BodyName: "name", Description: "New title", Type: "string"},
+					{Name: "completed-at", BodyName: "completedAt", Description: "Correct the actual completion of an already completed workorder (ISO 8601 UTC)", Type: "string"},
+					{Name: "completion-correction-reason", BodyName: "completionCorrectionReason", Description: "Required when completed-at changes (1-1000 characters), recorded in the existing audit", Type: "string"},
 					{Name: "status", Description: "New status (0=Not started, 1=Pending, 2=In progress, 3=On hold, 4=Completed, 5=Cancelled); omitted fields keep their current value", Type: "string"},
 					{Name: "priority", Description: "New priority (1=Low, 2=Medium, 3=High, 4=Urgent, 5=Critical)", Type: "string"},
 					{Name: "asset-group-guid", BodyName: "assetGroupGuids", Description: "Asset group GUID, repeatable — every active member is linked to the workorder as an asset carrying the group as its origin", Type: "stringSlice"},

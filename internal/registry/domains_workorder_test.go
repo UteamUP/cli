@@ -173,8 +173,8 @@ func TestWorkorderCompleteUsesGuidOnlyStatusFreeContract(t *testing.T) {
 		if len(action.Args) != 1 || action.Args[0].Name != "workorderGuid" || action.Args[0].Type != "uuid" {
 			t.Fatalf("complete args = %+v, want one workorderGuid uuid", action.Args)
 		}
-		if len(action.Flags) != 3 {
-			t.Fatalf("complete flags = %+v, want exactly idempotency-key, report-json and from-json", action.Flags)
+		if len(action.Flags) != 4 {
+			t.Fatalf("complete flags = %+v, want exactly idempotency-key, completed-at, report-json and from-json", action.Flags)
 		}
 		for _, flag := range action.Flags {
 			if flag.Name == "status" || flag.BodyName == "status" || flag.QueryName != "" {
@@ -187,6 +187,10 @@ func TestWorkorderCompleteUsesGuidOnlyStatusFreeContract(t *testing.T) {
 			case "idempotency-key":
 				if flag.HeaderName != "Idempotency-Key" || flag.Type != "non-empty-uuid" || flag.MirrorHeaderInBody {
 					t.Fatalf("idempotency-key = %+v, want header-only non-empty GUID", flag)
+				}
+			case "completed-at":
+				if flag.BodyName != "completedAt" || flag.Type != "string" || flag.HeaderName != "" {
+					t.Fatalf("completed-at = %+v, want the independent actual completion body field", flag)
 				}
 			case "report-json":
 				if !flag.JSONFile || flag.Type != "string" || flag.BodyName != "report" || flag.HeaderName != "" {
@@ -455,6 +459,7 @@ func TestCompleteAcceptsFailureInRootJson(t *testing.T) {
 	}`)
 	requests, err := runRegisteredDomainCommand(t, "workorder",
 		"complete", workorderGUID, "--from-json", payload, "--idempotency-key", idempotencyKey,
+		"--completed-at", "2026-10-28T13:00:00Z",
 	)
 	if err != nil {
 		t.Fatalf("complete error = %v", err)
@@ -471,7 +476,8 @@ func TestCompleteAcceptsFailureInRootJson(t *testing.T) {
 		t.Errorf("Idempotency-Key = %q, want %q", got, idempotencyKey)
 	}
 	wantBody := map[string]any{
-		"report": map[string]any{"description": "Replaced the pump seal", "timeSpent": 2.5},
+		"completedAt": "2026-10-28T13:00:00Z",
+		"report":      map[string]any{"description": "Replaced the pump seal", "timeSpent": 2.5},
 		"failure": map[string]any{
 			"assetGuids":         []any{assetGUID},
 			"failureDescription": "Seal leaked under load",
@@ -490,5 +496,32 @@ func TestCompleteAcceptsFailureInRootJson(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "report") || len(requests) != 0 {
 		t.Errorf("report in both --report-json and --from-json: requests = %d, error = %v; want a local rejection",
 			len(requests), err)
+	}
+}
+
+func TestWorkorderDateCorrectionUsesTheExistingScopedUpdate(t *testing.T) {
+	action := findDomainAction(t, "workorder", "update")
+	flags := map[string]FlagDef{}
+	for _, flag := range action.Flags {
+		flags[flag.Name] = flag
+	}
+	if flags["completed-at"].BodyName != "completedAt" || flags["completion-correction-reason"].BodyName != "completionCorrectionReason" {
+		t.Fatal("date correction must carry both actual instant and reason through the existing update")
+	}
+}
+
+func TestWorkorderCorrectionFlagsReachTheExistingRESTBody(t *testing.T) {
+	const guid = "11111111-1111-4111-8111-111111111111"
+	requests, err := runRegisteredDomainCommand(t, "workorder", "update", guid,
+		"--completed-at", "2026-10-28T13:00:00Z", "--completion-correction-reason", "Work happened last week")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(requests) != 1 || requests[0].method != http.MethodPut || requests[0].path != "/api/workorder/by-guid/"+guid {
+		t.Fatalf("unexpected correction request: %+v", requests)
+	}
+	want := map[string]any{"completedAt": "2026-10-28T13:00:00Z", "completionCorrectionReason": "Work happened last week"}
+	if !reflect.DeepEqual(requests[0].body, want) {
+		t.Fatalf("correction body = %v, want %v", requests[0].body, want)
 	}
 }
