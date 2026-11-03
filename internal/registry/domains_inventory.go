@@ -10,12 +10,12 @@ func init() {
 			stockTransactionAssetAction(),
 			{
 				Name: "component-positions", Description: "List explicit fixture positions; absent legacy installation history remains unknown",
-				ToolName: "UteamupStockListComponentPositions", HTTPMethod: "GET", RESTPath: "assets/{assetGuid}/component-positions", RejectExtraArgs: true,
+				ToolName: "uteamup_stock_list_component_positions", HTTPMethod: "GET", RESTPath: "assets/{assetGuid}/component-positions", RejectExtraArgs: true,
 				Args: []ArgDef{{Name: "assetGuid", Description: "Fixture asset public GUID", Required: true, Type: "non-empty-uuid"}},
 			},
 			{
 				Name: "component-position-create", Description: "Create a reviewed fixture position; reuse the operation GUID and unchanged terms on retry",
-				ToolName: "UteamupStockCreateComponentPosition", HTTPMethod: "POST", RESTPath: "assets/{assetGuid}/component-positions", RejectExtraArgs: true,
+				ToolName: "uteamup_stock_create_component_position", HTTPMethod: "POST", RESTPath: "assets/{assetGuid}/component-positions", RejectExtraArgs: true,
 				Args: []ArgDef{{Name: "assetGuid", Description: "Fixture asset public GUID", Required: true, Type: "non-empty-uuid"}},
 				Flags: []FlagDef{
 					{Name: "operation-id", BodyName: "operationId", Description: "Stable reviewed operation GUID for exact retries", Required: true, Type: "non-empty-uuid"},
@@ -25,7 +25,7 @@ func init() {
 			},
 			{
 				Name: "component-apply", Description: "Atomically install, move, remove or replace a reviewed serialized component; retain operation ID and exact terms for retries",
-				ToolName: "UteamupStockApplyComponentOperation", HTTPMethod: "POST", RESTPath: "units/{unitGuid}/component-operation", RejectExtraArgs: true,
+				ToolName: "uteamup_stock_apply_component_operation", HTTPMethod: "POST", RESTPath: "units/{unitGuid}/component-operation", RejectExtraArgs: true,
 				Args: []ArgDef{{Name: "unitGuid", Description: "Physical unit public GUID", Required: true, Type: "non-empty-uuid"}},
 				Flags: []FlagDef{
 					{Name: "operation-id", BodyName: "operationId", Description: "Stable reviewed operation GUID", Required: true, Type: "non-empty-uuid"},
@@ -44,7 +44,7 @@ func init() {
 			},
 			{
 				Name: "unit-lifecycle-facts", Description: "Read immutable unit facts with separate effective and recording clocks",
-				ToolName: "UteamupStockGetUnitLifecycleFacts", HTTPMethod: "GET", RESTPath: "units/{unitGuid}/lifecycle-facts", RejectExtraArgs: true,
+				ToolName: "uteamup_stock_get_unit_lifecycle_facts", HTTPMethod: "GET", RESTPath: "units/{unitGuid}/lifecycle-facts", RejectExtraArgs: true,
 				Args: []ArgDef{{Name: "unitGuid", Description: "Physical unit public GUID", Required: true, Type: "non-empty-uuid"}},
 				Flags: []FlagDef{
 					{Name: "page", QueryName: "page", Description: "Page starting at1", Type: "int", Default: 1},
@@ -53,7 +53,7 @@ func init() {
 			},
 			{
 				Name: "unit-installation-at", Description: "Resolve Installed/KnownUninstalled/UnknownBeforeRecordedHistory/Ambiguous evidence at an observation instant",
-				ToolName: "UteamupStockGetUnitInstallationAt", HTTPMethod: "GET", RESTPath: "units/{unitGuid}/installation-at", RejectExtraArgs: true,
+				ToolName: "uteamup_stock_get_unit_installation_at", HTTPMethod: "GET", RESTPath: "units/{unitGuid}/installation-at", RejectExtraArgs: true,
 				Args:  []ArgDef{{Name: "unitGuid", Description: "Physical unit public GUID", Required: true, Type: "non-empty-uuid"}},
 				Flags: []FlagDef{{Name: "observed-at", QueryName: "observedAt", Description: "Observation instant as ISO8601 UTC ending in Z", Required: true, Type: "string"}},
 			},
