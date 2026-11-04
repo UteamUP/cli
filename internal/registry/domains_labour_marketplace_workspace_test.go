@@ -16,10 +16,10 @@ func TestLabourMarketplaceWorkspaceDomain(t *testing.T) {
 	if domain.APIPath != "/api/labour-marketplace" {
 		t.Fatalf("unexpected API path %q", domain.APIPath)
 	}
-	if len(domain.Actions) != 3 {
-		t.Fatalf("expected three actions, got %d", len(domain.Actions))
+	if len(domain.Actions) != 6 {
+		t.Fatalf("expected six actions, got %d", len(domain.Actions))
 	}
-	action := domain.Actions[0]
+	action := *findAction(domain, "me")
 	if action.Name != "me" || action.ToolName != "UteamupLabourMarketplaceWorkspaceMe" {
 		t.Fatalf("unexpected workspace action %#v", action)
 	}
@@ -29,7 +29,7 @@ func TestLabourMarketplaceWorkspaceDomain(t *testing.T) {
 	if len(action.Args) != 0 || len(action.Flags) != 0 {
 		t.Fatal("current-user workspace must not accept party or user selectors")
 	}
-	timesheets := domain.Actions[1]
+	timesheets := *findAction(domain, "timesheets")
 	if timesheets.Name != "timesheets" || timesheets.ToolName != "UteamupLabourAgreementTimesheets" {
 		t.Fatalf("unexpected timesheets action %#v", timesheets)
 	}
@@ -39,7 +39,7 @@ func TestLabourMarketplaceWorkspaceDomain(t *testing.T) {
 	if len(timesheets.Args) != 1 || timesheets.Args[0].Name != "agreementGuid" || !timesheets.Args[0].Required {
 		t.Fatal("timesheets must require exactly one agreement GUID argument")
 	}
-	replacement := domain.Actions[2]
+	replacement := *findAction(domain, "replace-worker")
 	if replacement.Name != "replace-worker" || replacement.ToolName != "UteamupLabourWorkerDispatchReplace" {
 		t.Fatalf("unexpected replacement action %#v", replacement)
 	}

@@ -8,6 +8,26 @@ func init() {
 		APIPath:     "/api/labour-marketplace",
 		Actions: []Action{
 			{
+				Name: "accept-dispatch", Description: "Explicitly accept or decline only the signed-in worker's own current dispatch",
+				ToolName: "UteamupLabourDispatchAccept", HTTPMethod: "POST", RESTPath: "dispatches/{dispatchGuid}/acceptance", RejectExtraArgs: true,
+				Args: []ArgDef{{Name: "dispatchGuid", Description: "Personal dispatch public GUID", Required: true, Type: "non-empty-uuid"}},
+				Flags: []FlagDef{
+					{Name: "accept", Description: "Explicit decision: --accept=true or --accept=false", Type: "bool", Required: true},
+					{Name: "reason", Description: "Optional reason for the personal decision", Type: "string"},
+				},
+			},
+			{
+				Name: "create-my-timesheet", Description: "Submit only the signed-in worker's accepted dispatch entries using the original stable request key",
+				ToolName: "UteamupLabourTimesheetCreateMine", HTTPMethod: "POST", RESTPath: "agreements/{agreementGuid}/my-timesheets", RejectExtraArgs: true,
+				Args:  []ArgDef{{Name: "agreementGuid", Description: "Personal agreement public GUID", Required: true, Type: "non-empty-uuid"}},
+				Flags: []FlagDef{{Name: "from-json", Description: "Canonical personal time JSON with nonempty idempotencyKey, periodStart, periodEnd and own entries; retain unchanged for retries", Type: "string", Required: true, RootJSONObjectFile: true}},
+			},
+			{
+				Name: "my-timesheets", Description: "Read only the signed-in worker's timesheets for one agreement",
+				ToolName: "UteamupLabourTimesheetsMine", HTTPMethod: "GET", RESTPath: "agreements/{agreementGuid}/my-timesheets", RejectExtraArgs: true,
+				Args: []ArgDef{{Name: "agreementGuid", Description: "Personal agreement public GUID", Required: true, Type: "non-empty-uuid"}},
+			},
+			{
 				Name:        "me",
 				Description: "Show the current user's combined labour marketplace workspace",
 				ToolName:    "UteamupLabourMarketplaceWorkspaceMe",
