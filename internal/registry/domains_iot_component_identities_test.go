@@ -94,19 +94,27 @@ func TestIoTIdentityReviewTransportPreservesExactAliasChannelsAndOriginalRetry(t
 func TestIoTSourceAndIdentityActionsUseExactRoutesAndCredentialPurpose(t *testing.T) {
 	const source = "11111111-1111-4111-8111-111111111111"
 	const generation = "22222222-2222-4222-8222-222222222222"
+	const initialRevision = "00000000-0000-0000-0000-000000000000"
 	review := []string{"--operation-id", source, "--expected-source-revision", generation, "--reason", "Reviewed source"}
+	initialReview := []string{"--operation-id", source, "--expected-source-revision", initialRevision, "--reason", "Reviewed legacy source"}
 	for _, test := range []struct {
 		name, method, suffix string
 		args                 []string
+		wantSourceRevision   string
 	}{
-		{"source-generations", "GET", "source-generations", nil},
-		{"source-enroll", "POST", "source-generations", append(append([]string{}, review...), "--source-kind", "homeassistant")},
-		{"source-retire", "POST", "source-generations/retire", append(append([]string{}, review...), "--source-generation-guid", generation)},
-		{"source-key-issue", "POST", "api-keys", []string{"--name", "Collector", "--credential-purpose", "componentSourceV2", "--source-generation-guid", generation}},
-		{"physical-identities", "GET", "identities", []string{"--generation-guid", generation, "--page", "2", "--page-size", "10"}},
-		{"physical-identity-end", "POST", "identities/" + generation + "/end", append(append([]string{generation}, review...), "--expected-identity-revision", generation, "--expected-unit-sequence", "0", "--effective-at", "2026-11-02T10:00:00Z", "--block-identity")},
+		{"source-generations", "GET", "source-generations", nil, ""},
+		{"source-enroll", "POST", "source-generations", append(append([]string{}, review...), "--source-kind", "homeassistant"), generation},
+		{"source-enroll", "POST", "source-generations", append(append([]string{}, initialReview...), "--source-kind", "homeassistant"), initialRevision},
+		{"source-retire", "POST", "source-generations/retire", append(append([]string{}, review...), "--source-generation-guid", generation), generation},
+		{"source-key-issue", "POST", "api-keys", []string{"--name", "Collector", "--credential-purpose", "componentSourceV2", "--source-generation-guid", generation}, ""},
+		{"physical-identities", "GET", "identities", []string{"--generation-guid", generation, "--page", "2", "--page-size", "10"}, ""},
+		{"physical-identity-end", "POST", "identities/" + generation + "/end", append(append([]string{generation}, review...), "--expected-identity-revision", generation, "--expected-unit-sequence", "0", "--effective-at", "2026-11-02T10:00:00Z", "--block-identity"), generation},
 	} {
-		t.Run(test.name, func(t *testing.T) {
+		name := test.name
+		if test.wantSourceRevision == initialRevision {
+			name += "/initial-zero-revision"
+		}
+		t.Run(name, func(t *testing.T) {
 			t.Setenv("HOME", t.TempDir())
 			requests := 0
 			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -124,6 +132,9 @@ func TestIoTSourceAndIdentityActionsUseExactRoutesAndCredentialPurpose(t *testin
 					}
 					if r.Header.Get("X-Requested-With") != "XMLHttpRequest" {
 						t.Error("missing mutation CSRF header")
+					}
+					if test.wantSourceRevision != "" && body["expectedSourceRevision"] != test.wantSourceRevision {
+						t.Errorf("reviewed source revision changed: got %v, want %s", body["expectedSourceRevision"], test.wantSourceRevision)
 					}
 					if test.name == "source-key-issue" && (body["credentialPurpose"] != "componentSourceV2" || body["sourceGenerationGuid"] != generation) {
 						t.Errorf("key enrollment purpose/generation changed: %+v", body)
@@ -163,13 +174,18 @@ func TestIoTSourceAndIdentityActionsUseExactRoutesAndCredentialPurpose(t *testin
 
 func TestIoTComponentCommandsRejectMissingReviewAndLegacyPurposeBeforeTransport(t *testing.T) {
 	const guid = "11111111-1111-4111-8111-111111111111"
+	const empty = "00000000-0000-0000-0000-000000000000"
 	for _, test := range []struct {
 		action string
 		args   []string
 	}{
 		{"source-generations", []string{"not-a-guid"}},
 		{"source-enroll", []string{guid, "--source-kind", "homeassistant"}},
+		{"source-enroll", []string{empty, "--operation-id", guid, "--expected-source-revision", empty, "--reason", "Reviewed source", "--source-kind", "homeassistant"}},
+		{"source-enroll", []string{guid, "--operation-id", empty, "--expected-source-revision", empty, "--reason", "Reviewed source", "--source-kind", "homeassistant"}},
+		{"source-enroll", []string{guid, "--operation-id", guid, "--expected-source-revision", "not-a-guid", "--reason", "Reviewed source", "--source-kind", "homeassistant"}},
 		{"source-retire", []string{guid}},
+		{"source-retire", []string{guid, "--operation-id", guid, "--expected-source-revision", empty, "--source-generation-guid", guid, "--reason", "Reviewed source"}},
 		{"physical-identities", []string{guid}},
 		{"physical-identity-review", []string{guid, "--unit-guid", guid}},
 		{"source-key-issue", []string{guid, "--name", "Collector", "--credential-purpose", "legacyDeviceTelemetryV1", "--source-generation-guid", guid}},

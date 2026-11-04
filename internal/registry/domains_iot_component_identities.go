@@ -1,9 +1,9 @@
 package registry
 
-func iotIdentityReviewFlags() []FlagDef {
+func iotIdentityReviewFlags(sourceRevisionType string) []FlagDef {
 	return []FlagDef{
 		{Name: "operation-id", BodyName: "operationId", Description: "Original operation GUID; preserve exact terms on uncertain retries", Required: true, Type: "non-empty-uuid"},
-		{Name: "expected-source-revision", BodyName: "expectedSourceRevision", Description: "Exact current source revision GUID", Required: true, Type: "non-empty-uuid"},
+		{Name: "expected-source-revision", BodyName: "expectedSourceRevision", Description: "Exact current source revision GUID", Required: true, Type: sourceRevisionType},
 		{Name: "reason", Description: "Reviewed reason, maximum1000 characters", Required: true, Type: "string"},
 	}
 }
@@ -20,13 +20,14 @@ func iotComponentIdentityActions() []Action {
 			Name: "source-enroll", Description: "Enroll or re-enroll a reviewed collector; re-enrollment retires prior component credentials",
 			ToolName: "uteamup_iot_source_enroll", RESTBasePath: iotDeviceAPIPath,
 			HTTPMethod: "POST", RESTPath: "devices/{sourceGuid}/source-generations", Args: source, RejectExtraArgs: true,
-			Flags: append(iotIdentityReviewFlags(), FlagDef{Name: "source-kind", BodyName: "sourceKind", Description: "Explicit collector/source kind, maximum64 characters", Required: true, Type: "string"}),
+			// An initial legacy source can explicitly return the all-zero revision.
+			Flags: append(iotIdentityReviewFlags("uuid"), FlagDef{Name: "source-kind", BodyName: "sourceKind", Description: "Explicit collector/source kind, maximum64 characters", Required: true, Type: "string"}),
 		},
 		{
 			Name: "source-retire", Description: "Retire an exact reviewed collector generation while retaining history",
 			ToolName: "uteamup_iot_source_retire", RESTBasePath: iotDeviceAPIPath,
 			HTTPMethod: "POST", RESTPath: "devices/{sourceGuid}/source-generations/retire", Args: source, RejectExtraArgs: true,
-			Flags: append(iotIdentityReviewFlags(), FlagDef{Name: "source-generation-guid", BodyName: "sourceGenerationGuid", Description: "Exact enrolled generation GUID", Required: true, Type: "non-empty-uuid"}),
+			Flags: append(iotIdentityReviewFlags("non-empty-uuid"), FlagDef{Name: "source-generation-guid", BodyName: "sourceGenerationGuid", Description: "Exact enrolled generation GUID", Required: true, Type: "non-empty-uuid"}),
 		},
 		{
 			Name: "source-key-issue", Description: "Issue a generation-bound component source key; protect the one-time returned secret",
@@ -54,7 +55,7 @@ func iotComponentIdentityActions() []Action {
 			Name: "physical-identity-review", Description: "Review one exact hardware alias, physical unit and channel semantics; does not install or move stock",
 			ToolName: "uteamup_iot_physical_identity_review", RESTBasePath: iotDeviceAPIPath,
 			HTTPMethod: "POST", RESTPath: "devices/{sourceGuid}/identities/review", Args: source, RejectExtraArgs: true,
-			Flags: append(iotIdentityReviewFlags(),
+			Flags: append(iotIdentityReviewFlags("non-empty-uuid"),
 				FlagDef{Name: "source-generation-guid", BodyName: "sourceGenerationGuid", Description: "Reviewed collector generation GUID", Required: true, Type: "non-empty-uuid"},
 				FlagDef{Name: "identity-file", BodyName: "identity", Description: "JSON object with exact namespace and stableHardwareId; no guessed MAC/name aliases", Required: true, Type: "string", JSONFile: true},
 				FlagDef{Name: "expected-identity-revision", BodyName: "expectedIdentityRevision", Description: "Current identity revision; omit only for a new reviewed alias", Type: "non-empty-uuid"},
@@ -69,7 +70,7 @@ func iotComponentIdentityActions() []Action {
 			ToolName: "uteamup_iot_physical_identity_end", RESTBasePath: iotDeviceAPIPath,
 			HTTPMethod: "POST", RESTPath: "devices/{sourceGuid}/identities/{identityGuid}/end", RejectExtraArgs: true,
 			Args: append(append([]ArgDef{}, source...), ArgDef{Name: "identityGuid", Description: "Reviewed physical identity public GUID", Required: true, Type: "non-empty-uuid"}),
-			Flags: append(iotIdentityReviewFlags(),
+			Flags: append(iotIdentityReviewFlags("non-empty-uuid"),
 				FlagDef{Name: "expected-identity-revision", BodyName: "expectedIdentityRevision", Description: "Exact current identity revision GUID", Required: true, Type: "non-empty-uuid"},
 				FlagDef{Name: "expected-unit-sequence", BodyName: "expectedUnitSequence", Description: "Exact current unit sequence, including explicit0", Required: true, Type: "int"},
 				FlagDef{Name: "effective-at", BodyName: "effectiveAt", Description: "Exclusive binding end as an explicit UTC instant (ISO8601)", Required: true, Type: "string"},
