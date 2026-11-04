@@ -1535,6 +1535,15 @@ func TestStockListOnMarketplaceActionWired(t *testing.T) {
 	if ug := stockFlagByName(action, "unit-guids"); ug == nil || ug.Type != "stringSlice" || ug.BodyName != "unitGuids" {
 		t.Errorf("unit-guids flag must be a stringSlice bound to body `unitGuids`, got %+v", ug)
 	}
+	for name, body := range map[string]string{
+		"publication-guid": "publicationGuid", "condition": "condition", "visibility": "visibility",
+		"allow-bidding": "allowBidding", "min-bid-price": "minBidPrice", "bid-end-date": "bidEndDate",
+		"requires-escrow": "requiresEscrow", "escrow-days": "escrowDays",
+	} {
+		if flag := stockFlagByName(action, name); flag == nil || flag.BodyName != body || flag.Required {
+			t.Errorf("%s must mirror the optional reviewed listing field %s", name, body)
+		}
+	}
 }
 
 func TestStockDelistActionWired(t *testing.T) {
