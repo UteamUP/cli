@@ -49,6 +49,8 @@ func iotComponentIdentityActions() []Action {
 				{Name: "generation-guid", QueryName: "generationGuid", Description: "Exact retained source generation GUID", Required: true, Type: "non-empty-uuid"},
 				{Name: "page", QueryName: "page", Description: "Page starting at1", Type: "int", Default: 1},
 				{Name: "page-size", QueryName: "pageSize", Description: "Bounded aliases per page", Type: "int", Default: 50},
+				{Name: "identity-namespace", QueryName: "identityNamespace", Description: "Optional exact namespace; supply together with stable-hardware-id", Type: "string"},
+				{Name: "stable-hardware-id", QueryName: "stableHardwareId", Description: "Optional exact hardware identity; supply together with identity-namespace", Type: "string"},
 			},
 		},
 		{

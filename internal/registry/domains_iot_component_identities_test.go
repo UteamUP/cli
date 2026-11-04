@@ -108,6 +108,7 @@ func TestIoTSourceAndIdentityActionsUseExactRoutesAndCredentialPurpose(t *testin
 		{"source-retire", "POST", "source-generations/retire", append(append([]string{}, review...), "--source-generation-guid", generation), generation},
 		{"source-key-issue", "POST", "api-keys", []string{"--name", "Collector", "--credential-purpose", "componentSourceV2", "--source-generation-guid", generation}, ""},
 		{"physical-identities", "GET", "identities", []string{"--generation-guid", generation, "--page", "2", "--page-size", "10"}, ""},
+		{"physical-identities", "GET", "identities", []string{"--generation-guid", generation, "--page", "2", "--page-size", "10", "--identity-namespace", "provider.hardware", "--stable-hardware-id", "Case Sensitive & /?"}, ""},
 		{"physical-identity-end", "POST", "identities/" + generation + "/end", append(append([]string{generation}, review...), "--expected-identity-revision", generation, "--expected-unit-sequence", "0", "--effective-at", "2026-11-02T10:00:00Z", "--block-identity"), generation},
 	} {
 		name := test.name
@@ -124,6 +125,9 @@ func TestIoTSourceAndIdentityActionsUseExactRoutesAndCredentialPurpose(t *testin
 				}
 				if test.name == "physical-identities" && (r.URL.Query().Get("generationGuid") != generation || r.URL.Query().Get("page") != "2" || r.URL.Query().Get("pageSize") != "10") {
 					t.Errorf("generation/pagination query changed: %s", r.URL.RawQuery)
+				}
+				if test.name == "physical-identities" && len(test.args) > 6 && (r.URL.Query().Get("identityNamespace") != "provider.hardware" || r.URL.Query().Get("stableHardwareId") != "Case Sensitive & /?") {
+					t.Errorf("exact identity filter changed during query encoding: %s", r.URL.RawQuery)
 				}
 				if test.method == "POST" {
 					var body map[string]any
