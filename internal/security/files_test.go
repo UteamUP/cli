@@ -51,8 +51,14 @@ func TestBoundMediaSourceRejectsReplacementAndSymlink(t *testing.T) {
 }
 func TestSecretAndTerminalBoundaries(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "secret")
-	os.WriteFile(path, []byte("credential"), 0644)
+	if err := os.WriteFile(path, []byte("credential"), 0644); err != nil {
+		t.Fatal(err)
+	}
 	if runtime.GOOS != "windows" {
+		// File creation permissions are masked by the caller's umask.
+		if err := os.Chmod(path, 0644); err != nil {
+			t.Fatal(err)
+		}
 		if _, err := SecretFile(path); err == nil {
 			t.Fatal("public secret file accepted")
 		}
@@ -79,6 +85,9 @@ func TestReadPrivateFileRejectsPublicPermissionsAndSymlinks(t *testing.T) {
 		t.Fatal(err)
 	}
 	if runtime.GOOS != "windows" {
+		if err := os.Chmod(path, 0644); err != nil {
+			t.Fatal(err)
+		}
 		if _, err := ReadPrivateFile(path, 1024); err == nil {
 			t.Fatal("public file accepted")
 		}
