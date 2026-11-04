@@ -5,6 +5,17 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.17.0](https://github.com/UteamUP/cli/compare/5.16.0...5.17.0) (2026-11-04)
+
+
+### Features
+
+* **analytics:** expose measured maintenance reads and emergency classification ([1b86c0b](https://github.com/UteamUP/cli/commit/1b86c0bb13e1a14b384792238f31e4657bd762cd))
+* **asset-bom:** mirror reviewed PDF workflow in the CLI ([add3754](https://github.com/UteamUP/cli/commit/add37545c40b34f643bad18f6f2a6c8aa7fe6241))
+* expose complete asset patch fields and durable request identity ([1aac5df](https://github.com/UteamUP/cli/commit/1aac5df3ad8a9d5a6715e4653e500069589b8304))
+* **marketplace:** expose personal worker acceptance and timesheets in CLI ([cbae6b4](https://github.com/UteamUP/cli/commit/cbae6b44e5b9b040c93169c9b53c7fecfe7cea03))
+* mirror reviewed stock publication terms in the CLI ([13d2960](https://github.com/UteamUP/cli/commit/13d296018c60c4cdf8487f2f935abc0cd3e624f9))
+
 ## [5.16.0](https://github.com/UteamUP/cli/compare/5.15.0...5.16.0) (2026-11-04)
 
 
