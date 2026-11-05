@@ -5,6 +5,19 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.18.0](https://github.com/UteamUP/cli/compare/5.17.0...5.18.0) (2026-11-05)
+
+
+### Features
+
+* add the tenant-lifecycle domain ([d510edc](https://github.com/UteamUP/cli/commit/d510edc5c7568f6bbb422a26aa24c16a9a6bd71a))
+* **comment:** implement tenant-scoped comment management actions and tests ([d1cec51](https://github.com/UteamUP/cli/commit/d1cec51b8c0ce84a3623615c41a10f346b377c43))
+
+
+### Tests
+
+* set public secret fixture modes independently of umask ([3a03b16](https://github.com/UteamUP/cli/commit/3a03b16be2672e7ff7fd148d1cdb2f6b758bd58e))
+
 ## [5.17.0](https://github.com/UteamUP/cli/compare/5.16.0...5.17.0) (2026-11-04)
 
 
