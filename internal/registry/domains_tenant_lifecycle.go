@@ -1,8 +1,9 @@
 package registry
 
 // The unpaid tenant billing lifecycle: the current tenant's stage and dates, the owner's one
-// restore from the archive, and the Global Admin unarchive / postpone-deletion / legal-hold
-// controls (configured Global Admin only; the backend refuses everyone else with 403).
+// restore from the archive, the Global Admin unarchive / postpone-deletion / legal-hold
+// controls and the platform settings (configured Global Admin only; the backend refuses
+// everyone else with 403).
 func init() {
 	Register(&Domain{
 		Name:        "tenant-lifecycle",
@@ -68,6 +69,33 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "hold", Description: "true to place the hold, false to release it", Required: true, Type: "bool"},
 					{Name: "reason", Description: "Why the hold is placed (required to place it)", Type: "string"},
+				},
+			},
+			{
+				Name:         "settings-get",
+				Description:  "Platform lifecycle settings: configured and effective mode, purchase availability and periods (Global Admin)",
+				ToolName:     "AdminGetTenantLifecycleSettings",
+				HTTPMethod:   "GET",
+				RESTBasePath: "/api/globaladmin/tenant-lifecycle",
+				RESTPath:     "settings",
+			},
+			{
+				Name:         "settings-update",
+				Description:  "Change lifecycle settings; omitted flags keep their value. Enforce archives and deletes unpaid workspaces (Global Admin)",
+				ToolName:     "AdminUpdateTenantLifecycleSettings",
+				HTTPMethod:   "PUT",
+				RESTBasePath: "/api/globaladmin/tenant-lifecycle",
+				RESTPath:     "settings",
+				Flags: []FlagDef{
+					{Name: "mode", Description: "Off, DryRun or Enforce", Type: "string"},
+					{Name: "card-grace-days", BodyName: "cardGraceDays", Description: "Days every member keeps access after a failed card payment (1-60)", Type: "int"},
+					{Name: "archive-after-days", BodyName: "archiveAfterDays", Description: "Unpaid days before a workspace is archived (30-365)", Type: "int"},
+					{Name: "delete-after-archive-days", BodyName: "deleteAfterArchiveDays", Description: "Days in the archive before deletion (30-365)", Type: "int"},
+					{Name: "restore-window-days", BodyName: "restoreWindowDays", Description: "Days an owner-restored workspace has to pay (1-180)", Type: "int"},
+					{Name: "final-export-retention-days", BodyName: "finalExportRetentionDays", Description: "Days the final export is kept after deletion (7-365)", Type: "int"},
+					{Name: "max-transitions-per-run", BodyName: "maxTransitionsPerRun", Description: "Most transitions of one kind per run before it halts (1-500)", Type: "int"},
+					{Name: "contact-email", BodyName: "contactEmail", Description: "Address named in notices for data requests", Type: "string"},
+					{Name: "deprovision-dedicated-resources", BodyName: "deprovisionDedicatedResources", Description: "Deprovision a deleted tenant's dedicated database after a verified export", Type: "bool"},
 				},
 			},
 		},

@@ -21,6 +21,8 @@ func TestTenantLifecycleActionsMirrorBackendRoutes(t *testing.T) {
 		"unarchive":         {"AdminUnarchiveTenant", "POST", "/api/globaladmin/tenants", "{tenantGuid}/lifecycle/unarchive"},
 		"postpone-deletion": {"AdminPostponeTenantDeletion", "POST", "/api/globaladmin/tenants", "{tenantGuid}/lifecycle/postpone-deletion"},
 		"legal-hold":        {"AdminSetTenantLegalHold", "PUT", "/api/globaladmin/tenants", "{tenantGuid}/lifecycle/legal-hold"},
+		"settings-get":      {"AdminGetTenantLifecycleSettings", "GET", "/api/globaladmin/tenant-lifecycle", "settings"},
+		"settings-update":   {"AdminUpdateTenantLifecycleSettings", "PUT", "/api/globaladmin/tenant-lifecycle", "settings"},
 	}
 	for actionName, want := range expected {
 		action := findAction(domain, actionName)
@@ -76,5 +78,39 @@ func TestTenantLifecycleFlagsSendTheBackendBodyNames(t *testing.T) {
 	hold := findAction(domain, "legal-hold")
 	if len(hold.Flags) != 2 || hold.Flags[0].Name != "hold" || hold.Flags[0].Type != "bool" || !hold.Flags[0].Required {
 		t.Fatalf("legal-hold needs a required bool --hold and an optional --reason: %+v", hold.Flags)
+	}
+}
+
+func TestTenantLifecycleSettingsUpdateSendsOnlyGivenFlags(t *testing.T) {
+	update := findAction(findDomain("tenant-lifecycle"), "settings-update")
+	if update == nil {
+		t.Fatal("settings-update is not registered")
+	}
+	expected := map[string]string{
+		"mode":                            "mode",
+		"card-grace-days":                 "cardGraceDays",
+		"archive-after-days":              "archiveAfterDays",
+		"delete-after-archive-days":       "deleteAfterArchiveDays",
+		"restore-window-days":             "restoreWindowDays",
+		"final-export-retention-days":     "finalExportRetentionDays",
+		"max-transitions-per-run":         "maxTransitionsPerRun",
+		"contact-email":                   "contactEmail",
+		"deprovision-dedicated-resources": "deprovisionDedicatedResources",
+	}
+	if len(update.Flags) != len(expected) {
+		t.Fatalf("settings-update has %d flags, want %d", len(update.Flags), len(expected))
+	}
+	for _, flag := range update.Flags {
+		body := flag.BodyName
+		if body == "" {
+			body = flag.Name
+		}
+		if want, ok := expected[flag.Name]; !ok || body != want {
+			t.Errorf("--%s sends %q, want %q", flag.Name, body, want)
+		}
+		// A default would be sent when the flag is omitted and overwrite the stored value.
+		if flag.Default != nil || flag.Required {
+			t.Errorf("--%s must be optional without a default (partial update)", flag.Name)
+		}
 	}
 }
