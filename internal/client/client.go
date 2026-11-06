@@ -3,7 +3,9 @@ package client
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -586,7 +588,12 @@ func EnsureDownloadOutputIsFree(outputPath string) error {
 	if strings.TrimSpace(outputPath) == "" {
 		return fmt.Errorf("download output path is required")
 	}
-	if _, err := os.Stat(outputPath); err == nil {
+	root, err := security.OpenDirectory(filepath.Dir(outputPath))
+	if err != nil {
+		return fmt.Errorf("checking download output: %w", err)
+	}
+	defer root.Close()
+	if _, err := root.Lstat(filepath.Base(outputPath)); err == nil {
 		return fmt.Errorf("download output already exists: %s", outputPath)
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("checking download output: %w", err)
@@ -595,20 +602,35 @@ func EnsureDownloadOutputIsFree(outputPath string) error {
 }
 
 func writeDownloadFileWithLimit(outputPath string, r io.Reader, limit int64) (int64, error) {
-	if err := EnsureDownloadOutputIsFree(outputPath); err != nil {
-		return 0, err
+	if strings.TrimSpace(outputPath) == "" {
+		return 0, fmt.Errorf("download output path is required")
+	}
+	root, err := security.OpenDirectory(filepath.Dir(outputPath))
+	if err != nil {
+		return 0, fmt.Errorf("checking download output: %w", err)
+	}
+	defer root.Close()
+	name := filepath.Base(outputPath)
+	if _, err := root.Lstat(name); err == nil {
+		return 0, fmt.Errorf("download output already exists: %s", outputPath)
+	} else if !os.IsNotExist(err) {
+		return 0, fmt.Errorf("checking download output: %w", err)
 	}
 
-	temporary, err := os.CreateTemp(filepath.Dir(outputPath), ".uteamup-download-*.part")
+	var nonce [16]byte
+	if _, err := rand.Read(nonce[:]); err != nil {
+		return 0, fmt.Errorf("creating temporary download: %w", err)
+	}
+	temporaryName := ".uteamup-download-" + hex.EncodeToString(nonce[:]) + ".part"
+	temporary, err := root.OpenFile(temporaryName, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
 		return 0, fmt.Errorf("creating temporary download: %w", err)
 	}
-	temporaryPath := temporary.Name()
 	keepTemporary := false
 	defer func() {
 		_ = temporary.Close()
 		if !keepTemporary {
-			_ = os.Remove(temporaryPath)
+			_ = root.Remove(temporaryName)
 		}
 	}()
 
@@ -622,7 +644,12 @@ func writeDownloadFileWithLimit(outputPath string, r io.Reader, limit int64) (in
 	if err := temporary.Close(); err != nil {
 		return 0, fmt.Errorf("closing download: %w", err)
 	}
-	if err := os.Rename(temporaryPath, outputPath); err != nil {
+	if _, err := root.Lstat(name); err == nil {
+		return 0, fmt.Errorf("download output already exists: %s", outputPath)
+	} else if !os.IsNotExist(err) {
+		return 0, fmt.Errorf("checking download output: %w", err)
+	}
+	if err := root.Rename(temporaryName, name); err != nil {
 		return 0, fmt.Errorf("finalizing download: %w", err)
 	}
 	keepTemporary = true

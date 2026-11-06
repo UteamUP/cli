@@ -22,8 +22,10 @@ const (
 
 // Config is the top-level config stored in ~/.uteamup/config.json.
 type Config struct {
-	ActiveProfile string             `json:"activeProfile"`
-	Profiles      map[string]Profile `json:"profiles"`
+	ActiveProfile  string             `json:"activeProfile"`
+	Profiles       map[string]Profile `json:"profiles"`
+	envSnapshot    map[string]Profile
+	diskSnapshot   map[string]Profile
 }
 
 // Profile holds connection settings for a single environment.
@@ -108,7 +110,7 @@ func Save(cfg *Config) error {
 		return fmt.Errorf("creating config dir: %w", err)
 	}
 
-	data, err := json.MarshalIndent(cfg, "", "  ")
+	data, err := json.MarshalIndent(sanitizeForDisk(cfg), "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshaling config: %w", err)
 	}
@@ -157,6 +159,13 @@ func applyEnvOverrides(cfg *Config) {
 	if !ok {
 		return
 	}
+	if cfg.diskSnapshot == nil {
+		cfg.diskSnapshot = make(map[string]Profile, len(cfg.Profiles))
+	}
+	if cfg.envSnapshot == nil {
+		cfg.envSnapshot = make(map[string]Profile, 1)
+	}
+	cfg.diskSnapshot[cfg.ActiveProfile] = p
 
 	if v := os.Getenv("UTEAMUP_API_KEY"); v != "" {
 		p.APIKey = v
@@ -174,6 +183,31 @@ func applyEnvOverrides(cfg *Config) {
 		p.TenantGUID = v
 	}
 	cfg.Profiles[cfg.ActiveProfile] = p
+	cfg.envSnapshot[cfg.ActiveProfile] = p
+}
+
+func sanitizeForDisk(cfg *Config) *Config {
+	if cfg == nil || len(cfg.envSnapshot) == 0 {
+		return cfg
+	}
+	cloned := &Config{
+		ActiveProfile: cfg.ActiveProfile,
+		Profiles:      make(map[string]Profile, len(cfg.Profiles)),
+	}
+	for name, current := range cfg.Profiles {
+		envApplied, hadEnv := cfg.envSnapshot[name]
+		diskOriginal, hadDisk := cfg.diskSnapshot[name]
+		if hadEnv && hadDisk {
+			if os.Getenv("UTEAMUP_API_KEY") != "" && current.APIKey == envApplied.APIKey {
+				current.APIKey = diskOriginal.APIKey
+			}
+			if os.Getenv("UTEAMUP_SECRET") != "" && current.Secret == envApplied.Secret {
+				current.Secret = diskOriginal.Secret
+			}
+		}
+		cloned.Profiles[name] = current
+	}
+	return cloned
 }
 
 // validate checks required fields.
