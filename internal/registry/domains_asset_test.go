@@ -328,6 +328,7 @@ func TestAssetPatchAction(t *testing.T) {
 		"asset-type-guids":            {"stringSlice", "assetTypeGuids"},
 		"primary-asset-type-guid":     {"uuid", "primaryAssetTypeGuid"},
 		"expected-updated-at-utc":     {"string", "expectedUpdatedAtUtc"},
+		"confirm-iot-meter-removal":   {"bool", "confirmIoTMeterRemoval"},
 	}
 	if len(action.Flags) != len(want) {
 		t.Errorf("patch has %d flags, want %d", len(action.Flags), len(want))

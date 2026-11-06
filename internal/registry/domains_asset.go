@@ -168,6 +168,7 @@ func init() {
 					{Name: "serial", Description: "New serial number", Type: "string"},
 					{Name: "asset-type-guids", Description: "Replacement asset type GUIDs (repeatable or comma-separated)", Type: "stringSlice"},
 					{Name: "primary-asset-type-guid", Description: "Primary asset type GUID (must be included in --asset-type-guids)", Type: "uuid"},
+					{Name: "confirm-iot-meter-removal", BodyName: "confirmIoTMeterRemoval", Description: "Confirm a type change that removes meters IoT devices still write (otherwise it fails with iot_meters_would_be_dropped and lists them)", Type: "bool"},
 				}, assetIdentityFlags()...),
 			},
 			{
@@ -216,6 +217,7 @@ func init() {
 					{Name: "asset-type-guids", Description: "Complete set of asset type GUIDs, repeatable or comma-separated; the first is primary unless --primary-asset-type-guid names another (--asset-type-guids= removes every type)", Type: "stringSlice"},
 					{Name: "primary-asset-type-guid", Description: "Primary asset type GUID; alone it is added to the current types if missing", Type: "uuid"},
 					{Name: "expected-updated-at-utc", Description: "The asset's updatedAt as last read; a newer stored value fails with asset_changed", Type: "string"},
+					{Name: "confirm-iot-meter-removal", BodyName: "confirmIoTMeterRemoval", Description: "Confirm a type change that removes meters IoT devices still write (otherwise it fails with iot_meters_would_be_dropped and lists them)", Type: "bool"},
 				}, assetIdentityFlags()...),
 			},
 			{
