@@ -1974,9 +1974,9 @@ func TestStockStartCountActionWired(t *testing.T) {
 }
 
 // Bug 59ad42c5: InventoryController (api/inventory) is an aggregated cross-type view. It
-// routes GET api/inventory and POST api/inventory/bulk-delete only, so the crudActions
-// template's get/create/update/delete always 404ed. Catalog GUID operations use MCP;
-// REST actions must each resolve to a route the controller serves.
+// routes GET api/inventory, POST api/inventory/bulk-delete and the per-type archive and
+// restore routes, so the crudActions template's get/create/update/delete always 404ed.
+// Catalog GUID operations use MCP; REST actions must each resolve to a route the controller serves.
 func TestInventoryDomainExposesOnlyRoutesTheControllerServes(t *testing.T) {
 	domain := findDomain("inventory")
 	if domain == nil {
@@ -1985,6 +1985,8 @@ func TestInventoryDomainExposesOnlyRoutesTheControllerServes(t *testing.T) {
 	want := map[string]struct{ method, path string }{
 		"list":        {"GET", "/api/inventory"},
 		"bulk-delete": {"POST", "/api/inventory/bulk-delete"},
+		"archive":     {"POST", "/api/inventory/part/by-guid/g/archive"},
+		"restore":     {"POST", "/api/inventory/part/by-guid/g/restore"},
 	}
 	wantMCP := map[string]string{"get-by-guid": "GetInventoryItem", "patch-by-guid": "UpdateInventoryItem"}
 	if len(domain.Actions) != len(want)+len(wantMCP) {
@@ -2005,7 +2007,7 @@ func TestInventoryDomainExposesOnlyRoutesTheControllerServes(t *testing.T) {
 		if method == "" {
 			method = HTTPMethod[action.Name]
 		}
-		path, _ := buildRESTPath(domain, action, map[string]any{"id": "1", "externalGuid": "g"})
+		path, _ := buildRESTPath(domain, action, map[string]any{"id": "1", "externalGuid": "g", "itemType": "part", "itemGuid": "g"})
 		if method != route.method || path != route.path {
 			t.Errorf("inventory %s = %s %s, want %s %s", action.Name, method, path, route.method, route.path)
 		}

@@ -298,10 +298,12 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 		"device-type-create":         "/api/iot/device-types",
 		"device-type-update":         "/api/iot/device-types/type-guid",
 		"device-type-delete":         "/api/iot/device-types/type-guid",
-		"devices":                    "/api/iot/devices",                      // IOTController.GetDevices
-		"device":                     "/api/iot/devices/device-guid",          // IOTController.GetDeviceByGuid
-		"device-create":              "/api/iot/devices",                      // IOTController.CreateDevice
-		"device-update":              "/api/iot/devices/device-guid",          // IOTController.UpdateDeviceByGuid
+		"devices":                    "/api/iot/devices",             // IOTController.GetDevices
+		"device":                     "/api/iot/devices/device-guid", // IOTController.GetDeviceByGuid
+		"device-create":              "/api/iot/devices",             // IOTController.CreateDevice
+		"device-update":              "/api/iot/devices/device-guid", // IOTController.UpdateDeviceByGuid
+		"device-archive":             "/api/iot/devices/by-guid/device-guid/archive",
+		"device-restore":             "/api/iot/devices/by-guid/device-guid/restore",
 		"device-keys":                "/api/iot/devices/device-guid/api-keys", // IOTController.GetDeviceApiKeysByGuid
 		"device-key-issue":           "/api/iot/devices/device-guid/api-keys", // IOTController.CreateDeviceApiKeyByGuid
 		"device-key-revoke":          "/api/iot/api-keys/key-guid",            // IOTController.RevokeApiKeyByGuid
