@@ -5,6 +5,32 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.19.0](https://github.com/UteamUP/cli/compare/5.18.0...5.19.0) (2026-11-06)
+
+
+### Features
+
+* add tenant-lifecycle settings-get and settings-update ([75adc4d](https://github.com/UteamUP/cli/commit/75adc4d5fc21ccfe08e22c08eeb9666f6d5168fa))
+* **asset:** add --confirm-iot-meter-removal to asset update and patch ([116cac7](https://github.com/UteamUP/cli/commit/116cac763995ea8ec062ae97c4849367c6235aeb))
+* **inventory:** archive and restore inventory items from the CLI ([15f431b](https://github.com/UteamUP/cli/commit/15f431b1bb7a7b8e87a90788fcd5751d188c3ae9))
+* **registry:** archive and restore commands for every archivable record ([9ba2e61](https://github.com/UteamUP/cli/commit/9ba2e61d15f7d0a6bdba57109e73c90fa9c63568))
+
+
+### Bug Fixes
+
+* **security:** never save UTEAMUP_* environment overrides to the config file ([bc66662](https://github.com/UteamUP/cli/commit/bc6666231fd69043179eea36e80151807b70c0a3))
+* **security:** use os.Root for download file creation and omit env secrets when saving config ([3ef1b4a](https://github.com/UteamUP/cli/commit/3ef1b4afdc23af411779c0009eb383fd8e1def23))
+
+
+### Documentation
+
+* **registry:** mention isOptionalForCompletion in the list template model help ([6958738](https://github.com/UteamUP/cli/commit/695873839008368b60acb79234c2bd27d1516e35))
+
+
+### Tests
+
+* **registry:** pin the inventory and IoT archive routes ([356efbb](https://github.com/UteamUP/cli/commit/356efbbc414ee3adf6e6fb4e0f24cb8b6323bb4b))
+
 ## [5.18.0](https://github.com/UteamUP/cli/compare/5.17.0...5.18.0) (2026-11-05)
 
 
