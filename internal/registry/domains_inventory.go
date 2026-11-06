@@ -1481,9 +1481,9 @@ func init() {
 		Name:        "inventory",
 		Description: "Manage inventory",
 		// InventoryController is an aggregated view across asset/part/tool/chemical: it serves
-		// GET api/inventory and POST bulk-delete but no create/get/update/delete by id, so the
-		// generic crudActions template only minted commands that always 404. Single items are
-		// managed through their own domains (asset, part, tool, chemical).
+		// GET api/inventory, POST bulk-delete and the per-type archive/restore routes but no
+		// create/get/update/delete by id, so the generic crudActions template only minted commands
+		// that always 404. Single items are managed through their own domains (asset, part, tool, chemical).
 		Actions: []Action{
 			{Name: "get-by-guid", Description: "Read a catalog Part, Tool or Asset by public GUID and exact type", ToolName: "GetInventoryItem", MCPOnly: true, RejectExtraArgs: true,
 				Args: []ArgDef{{Name: "itemGuid", Description: "Catalog item public GUID", Required: true, Type: "non-empty-uuid"},
@@ -1502,9 +1502,34 @@ func init() {
 				HTTPMethod: "POST",
 				RESTPath:   "bulk-delete",
 				Flags: []FlagDef{
-					{Name: "scope", BodyName: "scope", Description: "Types you intend to delete — repeatable or comma-separated (asset, part, tool, chemical). Each needs its own delete permission", Required: true, Type: "stringSlice"},
+					{Name: "scope", BodyName: "scope", Description: "Types you intend to delete — repeatable or comma-separated (part, tool, chemical). Each needs its own delete permission. Assets are never deleted; archive them", Required: true, Type: "stringSlice"},
 					{Name: "guids", BodyName: "guids", Description: "GUIDs of the items to delete — repeatable or comma-separated (max 500)", Required: true, Type: "stringSlice"},
 					{Name: "dry-run", BodyName: "dryRun", Description: "Report what would be deleted without deleting it", Type: "bool"},
+				},
+			},
+			{
+				Name: "archive",
+				Description: "Archive a part, tool or chemical: it leaves lists, searches and pickers and stays in history. " +
+					"Refused while it is still stocked. Archive assets with `asset archive`, which reviews their connections",
+				ToolName:        "ArchiveInventoryItem",
+				HTTPMethod:      "POST",
+				RESTPath:        "{itemType}/by-guid/{itemGuid}/archive",
+				RejectExtraArgs: true,
+				Args: []ArgDef{
+					{Name: "itemType", Description: "Item type", Required: true, Type: "string", AllowedValues: []string{"part", "tool", "chemical"}},
+					{Name: "itemGuid", Description: "GUID of the item to archive", Required: true, Type: "non-empty-uuid"},
+				},
+			},
+			{
+				Name:            "restore",
+				Description:     "Restore an archived part, tool, chemical or asset so it shows in lists, searches and pickers again",
+				ToolName:        "RestoreInventoryItem",
+				HTTPMethod:      "POST",
+				RESTPath:        "{itemType}/by-guid/{itemGuid}/restore",
+				RejectExtraArgs: true,
+				Args: []ArgDef{
+					{Name: "itemType", Description: "Item type", Required: true, Type: "string", AllowedValues: []string{"part", "tool", "chemical", "asset"}},
+					{Name: "itemGuid", Description: "GUID of the archived item", Required: true, Type: "non-empty-uuid"},
 				},
 			},
 		},
