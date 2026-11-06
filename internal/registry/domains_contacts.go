@@ -131,7 +131,7 @@ func customerActions() []Action {
 	fields.Required = true
 	fields.Description = "Reviewed customer JSON with public GUID references; optional idempotencyKey and mutationOutcomeVersion=1 (plus expectedUpdatedAt on update) negotiate a minimal outcome; retain unchanged on retry"
 	confirmation := FlagDef{Name: "confirm", Description: "Confirm this customer change; reconcile uncertain outcomes before retrying", Type: "bool", Required: true, MustBeTrue: true, LocalOnly: true}
-	return []Action{
+	return append([]Action{
 		{Name: "list", Description: "List visible customers", ToolName: "UteamupCustomerList", HTTPMethod: "GET", Flags: paginationFlags()},
 		{Name: "get", Description: "Get a customer by public GUID", ToolName: "UteamupCustomerGet", HTTPMethod: "GET", RESTPath: "{customerGuid}", Args: identity},
 		{Name: "create", Description: "Create a customer from reviewed JSON", ToolName: "UteamupCustomerCreate", HTTPMethod: "POST", Flags: []FlagDef{fields, confirmation}},
@@ -142,7 +142,9 @@ func customerActions() []Action {
 			{Name: "mutation-outcome-version", Description: "Minimal outcome version (1); requires original operation and reviewed revision", Type: "int", QueryName: "mutationOutcomeVersion"},
 		}},
 		{Name: "search", Description: "Search visible customer names", ToolName: "UteamupCustomerSearch", HTTPMethod: "GET", UseDomainBasePath: true, Args: []ArgDef{{Name: "query", QueryName: "nameFilter", Description: "Customer name filter", Required: true, Type: "string"}}, Flags: paginationFlags()},
-	}
+	}, unitArchiveActions("customerGuid", "UteamupCustomer",
+		"Archive a customer: it leaves lists, searches, pickers and mentions and stays in every agreement, invoice and work order that names it. Use this for a customer with history. Needs Customer.Delete",
+		"Restore an archived customer so it shows in lists, searches and pickers again. Needs Customer.Delete")...)
 }
 
 var customerRevisionPattern = regexp.MustCompile(`^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,7})?Z$`)

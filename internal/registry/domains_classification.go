@@ -20,3 +20,40 @@ func classificationActions(domain string) []Action {
 		}},
 	}
 }
+
+// categoryActions adds archive and restore: a category in use is archived instead of deleted. Archived
+// categories leave lists, searches, pickers and synced phones; list shows them only with --archived.
+func categoryActions() []Action {
+	actions := classificationActions("Category")
+	for index := range actions {
+		if actions[index].Name == "list" {
+			actions[index].Description += "; archived categories are hidden unless you pass --archived"
+			actions[index].Flags = append(actions[index].Flags, FlagDef{
+				Name: "archived", QueryName: "archived", Type: "bool",
+				Description: "true lists only archived categories; omit it for categories in use",
+			})
+		}
+	}
+	identity := []ArgDef{{Name: "guid", Description: "Category public GUID", Required: true, Type: "non-empty-uuid"}}
+	return append(actions,
+		Action{
+			Name: "archive",
+			Description: "Archive a category: it leaves lists, searches, pickers and synced phones and stays on every " +
+				"record that uses it. Use it for a category in use, which cannot be deleted. Needs Category.Delete",
+			ToolName:        "UteamupCategoryArchive",
+			HTTPMethod:      "POST",
+			RESTPath:        "by-guid/{guid}/archive",
+			RejectExtraArgs: true,
+			Args:            identity,
+		},
+		Action{
+			Name:            "restore",
+			Description:     "Restore an archived category so it shows in lists, searches and pickers again. Needs Category.Delete",
+			ToolName:        "UteamupCategoryRestore",
+			HTTPMethod:      "POST",
+			RESTPath:        "by-guid/{guid}/restore",
+			RejectExtraArgs: true,
+			Args:            identity,
+		},
+	)
+}

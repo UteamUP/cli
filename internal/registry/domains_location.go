@@ -21,5 +21,7 @@ func locationActions() []Action {
 			{Name: "expected-updated-at", Description: "Exact canonical reviewed UTC revision; retain unchanged on retry", Type: "string", QueryName: "expectedUpdatedAt"},
 			{Name: "mutation-outcome-version", Description: "Minimal outcome version (1)", Type: "int", QueryName: "mutationOutcomeVersion"},
 		}},
-	}, append(locationNodeActions(), locationNodeTypeActions()...)...)
+	}, append(append(locationNodeActions(), locationNodeTypeActions()...), unitArchiveActions("locationGuid", "UteamupLocation",
+		"Archive (retire) a location: it leaves lists, pickers and search and stays in every reading and stock row that names it. Refused while one of its stock locations is active or holds stock. Needs Location.Delete",
+		"Restore an archived location; its archived stock locations stay archived. Needs Location.Delete")...)...)
 }

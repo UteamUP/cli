@@ -12,7 +12,8 @@ func init() {
 				Description: "List asset types",
 				ToolName:    "UteamupAssetTypeList",
 				Flags: []FlagDef{
-					{Name: "include-inactive", QueryName: "includeInactive", Description: "Include inactive asset types", Type: "bool"},
+					{Name: "include-inactive", QueryName: "includeInactive", Description: "Include archived asset types next to the active ones", Type: "bool"},
+					{Name: "archived", QueryName: "archived", Description: "List only this organisation's archived custom asset types", Type: "bool"},
 				},
 			},
 			{
@@ -50,10 +51,33 @@ func init() {
 				Name:        "delete",
 				RESTPath:    "{assetTypeGuid}",
 				HTTPMethod:  "DELETE",
-				Description: "Delete an asset type by public GUID",
+				Description: "Delete an asset type nothing uses. Refused while assets, subtypes or recorded readings use it: archive it instead",
 				ToolName:    "UteamupAssetTypeDelete",
 				Args: []ArgDef{
 					{Name: "assetTypeGuid", Description: "Asset type public GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
+				Name: "archive",
+				Description: "Archive a custom asset type: it leaves type lists and pickers, assets that use it keep it. " +
+					"Needs AssetType.Delete",
+				ToolName:        "UteamupAssetTypeArchive",
+				HTTPMethod:      "POST",
+				RESTPath:        "by-guid/{assetTypeGuid}/archive",
+				RejectExtraArgs: true,
+				Args: []ArgDef{
+					{Name: "assetTypeGuid", Description: "GUID of the custom asset type to archive", Required: true, Type: "non-empty-uuid"},
+				},
+			},
+			{
+				Name:            "restore",
+				Description:     "Restore an archived custom asset type to type lists and pickers. Needs AssetType.Delete",
+				ToolName:        "UteamupAssetTypeRestore",
+				HTTPMethod:      "POST",
+				RESTPath:        "by-guid/{assetTypeGuid}/restore",
+				RejectExtraArgs: true,
+				Args: []ArgDef{
+					{Name: "assetTypeGuid", Description: "GUID of the archived asset type", Required: true, Type: "non-empty-uuid"},
 				},
 			},
 			{

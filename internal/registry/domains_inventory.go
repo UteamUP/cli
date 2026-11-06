@@ -204,6 +204,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "page", Description: "Page number", Default: 1, Type: "int"},
 					{Name: "page-size", Description: "Page size", Default: 100, Type: "int"},
+					{Name: "include-archived", Description: "Also list archived stock locations (hidden by default)", Type: "bool"},
 				},
 			},
 			Action{
@@ -470,6 +471,30 @@ func init() {
 				RESTPath:    "locations/{stockGuid}",
 				Flags: []FlagDef{
 					{Name: "stock-guid", Description: "Stock location GUID", Type: "string", Required: true},
+				},
+			},
+			Action{
+				Name: "location-archive",
+				Description: "Archive a stock location: it leaves lists, searches and pickers and keeps its history. " +
+					"Refused while it still holds active stock items. Needs Stock.Update",
+				ToolName:        "UteamupStockLocationArchive",
+				HTTPMethod:      "POST",
+				RESTPath:        "locations/{stockGuid}/archive",
+				RejectExtraArgs: true,
+				Args: []ArgDef{
+					{Name: "stockGuid", Description: "GUID of the stock location to archive", Required: true, Type: "non-empty-uuid"},
+				},
+			},
+			Action{
+				Name: "location-restore",
+				Description: "Restore an archived stock location so it shows in lists, searches and pickers again. " +
+					"Refused until it is linked to an active physical location. Needs Stock.Update",
+				ToolName:        "UteamupStockLocationRestore",
+				HTTPMethod:      "POST",
+				RESTPath:        "locations/{stockGuid}/restore",
+				RejectExtraArgs: true,
+				Args: []ArgDef{
+					{Name: "stockGuid", Description: "GUID of the archived stock location", Required: true, Type: "non-empty-uuid"},
 				},
 			},
 			Action{

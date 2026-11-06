@@ -47,6 +47,8 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 		"device":                     "UteamupIoTDeviceGet",
 		"device-create":              "UteamupIoTDeviceCreate",
 		"device-update":              "UteamupIoTDeviceUpdate",
+		"device-archive":             "UteamupIoTDeviceArchive",
+		"device-restore":             "UteamupIoTDeviceRestore",
 		"device-keys":                "UteamupIoTDeviceKeysList",
 		"device-key-issue":           "UteamupIoTDeviceKeyIssue",
 		"device-key-revoke":          "UteamupIoTDeviceKeyRevoke",

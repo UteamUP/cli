@@ -5,7 +5,7 @@ func init() {
 		Name:        "vendor",
 		Aliases:     []string{"vendors"},
 		Description: "Manage vendors",
-		Actions: append(crudActions("Vendor"),
+		Actions: append(append(crudActions("Vendor"),
 			Action{Name: "get-by-guid", Description: "Get a vendor by public GUID", ToolName: "UteamupVendorGet", HTTPMethod: "GET", RESTPath: "by-guid/{vendorGuid}", Args: []ArgDef{{Name: "vendorGuid", Description: "Vendor public GUID", Required: true, Type: "non-empty-uuid"}}},
 			Action{Name: "search", Description: "Search vendors", ToolName: "UteamupVendorSearch", Args: queryArg(), Flags: paginationFlags()},
 			// --- Reseller catalog: vendor's part catalog (stock-reseller-catalog §6) ---
@@ -16,7 +16,9 @@ func init() {
 				RESTPath:    "by-guid/{guid}/catalog",
 				Args:        []ArgDef{{Name: "guid", Description: "Vendor GUID", Required: true, Type: "string"}},
 			},
-		),
+		), unitArchiveActions("vendorGuid", "UteamupVendor",
+			"Mark a vendor inactive, its archive state: it leaves lists, searches, pickers and mentions and stays in every invoice, rating and contract that names it. Use this for a vendor with history. Needs Vendor.Delete",
+			"Reactivate an inactive vendor so it shows in lists, searches and pickers again. Needs Vendor.Delete")...),
 	})
 
 	Register(&Domain{

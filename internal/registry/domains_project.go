@@ -14,7 +14,27 @@ func init() {
 			{Name: "create", Description: "Create a project from its complete model", ToolName: "UteamupProjectCreate", MCPOnly: true, Flags: []FlagDef{projectMCPModelFile()}},
 			{Name: "update", Description: "Update a project by GUID with its complete model", ToolName: "UteamupProjectUpdate", MCPOnly: true,
 				Args: []ArgDef{{Name: "externalGuid", BodyName: "projectGuid", Description: "Project GUID", Required: true, Type: "uuid"}}, Flags: []FlagDef{projectMCPModelFile()}},
-			{Name: "delete", Description: "Delete a project by GUID", ToolName: "UteamupProjectDelete", Args: externalGUIDArg()},
+			{Name: "delete", Description: "Delete a project by GUID. A project with history is refused: archive it instead", ToolName: "UteamupProjectDelete", Args: externalGUIDArg()},
+			{
+				Name: "archive",
+				Description: "Archive a project: status Archived, out of lists and pickers, with its work orders, costs and logs kept. " +
+					"Needs Project.Delete",
+				ToolName:        "UteamupProjectArchive",
+				HTTPMethod:      "POST",
+				RESTPath:        "by-guid/{projectGuid}/archive",
+				RejectExtraArgs: true,
+				Args:            []ArgDef{{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "non-empty-uuid"}},
+			},
+			{
+				Name: "restore",
+				Description: "Restore an archived project. It comes back On hold because its earlier status is not stored; " +
+					"set the status next. Needs Project.Delete",
+				ToolName:        "UteamupProjectRestore",
+				HTTPMethod:      "POST",
+				RESTPath:        "by-guid/{projectGuid}/restore",
+				RejectExtraArgs: true,
+				Args:            []ArgDef{{Name: "projectGuid", Description: "Project GUID", Required: true, Type: "non-empty-uuid"}},
+			},
 			{Name: "search", Description: "Search projects", ToolName: "UteamupProjectSearch", Args: queryArg(), Flags: paginationFlags()},
 			// my-projects mirrors GET /api/project/my-projects — lists projects
 			// containing workorders assigned to the authenticated user.

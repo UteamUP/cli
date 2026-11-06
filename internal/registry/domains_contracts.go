@@ -33,11 +33,30 @@ func init() {
 			},
 			{
 				Name:        "delete",
-				Description: "Delete a contract by public GUID",
+				Description: "Delete a contract by public GUID. A contract with history is refused: archive it instead",
 				ToolName:    "UteamupContractDeleteByGuid",
 				HTTPMethod:  "DELETE",
 				RESTPath:    "by-guid/{contractGuid}",
 				Args:        []ArgDef{{Name: "contractGuid", Description: "Public contract GUID", Required: true, Type: "string"}},
+			},
+			{
+				Name: "archive",
+				Description: "Archive a contract: it leaves contract lists and pickers and keeps its service agreement, " +
+					"invoices and work order links. Needs Contract.Delete",
+				ToolName:        "UteamupContractArchive",
+				HTTPMethod:      "POST",
+				RESTPath:        "by-guid/{contractGuid}/archive",
+				RejectExtraArgs: true,
+				Args:            []ArgDef{{Name: "contractGuid", Description: "Public contract GUID", Required: true, Type: "non-empty-uuid"}},
+			},
+			{
+				Name:            "restore",
+				Description:     "Restore an archived contract to contract lists and pickers. Needs Contract.Delete",
+				ToolName:        "UteamupContractRestore",
+				HTTPMethod:      "POST",
+				RESTPath:        "by-guid/{contractGuid}/restore",
+				RejectExtraArgs: true,
+				Args:            []ArgDef{{Name: "contractGuid", Description: "Public contract GUID", Required: true, Type: "non-empty-uuid"}},
 			},
 			{
 				Name:        "list-for-entity",

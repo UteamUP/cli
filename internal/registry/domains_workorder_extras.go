@@ -11,6 +11,7 @@ func init() {
 				FlagDef{Name: "project-guid", BodyName: "projectGuid", Description: "Only templates owned by this project or project template (GUID); omit to list the general template library", Type: "uuid"})
 		}
 	}
+	workorderTemplateActions = withReferenceArchive(workorderTemplateActions, "work order template", "templates", "WorkorderTemplate.Delete")
 	Register(&Domain{Name: "workorder-template", Aliases: []string{"wot"}, Description: "Manage work order templates", Actions: append(workorderTemplateActions,
 		Action{
 			Name:              "active",

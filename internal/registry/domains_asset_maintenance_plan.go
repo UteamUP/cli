@@ -54,7 +54,7 @@ func init() {
 		Aliases:     []string{"amp"},
 		Description: "Manage asset maintenance plans and their items by external GUID",
 		APIPath:     "/api/v1/maintenanceplans",
-		Actions: []Action{
+		Actions: withReferenceArchive([]Action{
 			{
 				Name:        "list",
 				Description: "List maintenance plans, optionally filtered by asset external GUID",
@@ -211,6 +211,6 @@ func init() {
 					{Name: "as-of", BodyName: "asOf", Description: "Optional UTC evidence cutoff", Type: "string"},
 				},
 			},
-		},
+		}, "maintenance plan", "maintenance plans", "MaintenancePlan.Delete"),
 	})
 }

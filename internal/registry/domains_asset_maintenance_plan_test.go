@@ -69,8 +69,8 @@ func TestAssetMaintenancePlanFlagsMirrorBackendModels(t *testing.T) {
 	t.Parallel()
 
 	_, list := maintenancePlanAction(t, "list")
-	if len(list.Flags) != 1 || list.Flags[0].BodyName != "assetExternalGuid" {
-		t.Fatalf("list asset filter = %+v, want assetExternalGuid", list.Flags)
+	if len(list.Flags) != 2 || list.Flags[0].BodyName != "assetExternalGuid" || list.Flags[1].QueryName != "isActive" {
+		t.Fatalf("list flags = %+v, want assetExternalGuid and the isActive filter", list.Flags)
 	}
 
 	for _, actionName := range []string{"create", "update"} {

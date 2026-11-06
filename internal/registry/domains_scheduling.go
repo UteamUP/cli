@@ -109,7 +109,7 @@ func init() {
 		Name:        "shift",
 		Aliases:     []string{"shifts"},
 		Description: "Manage shifts",
-		Actions: []Action{
+		Actions: withReferenceArchive([]Action{
 			{Name: "list", Description: "List shifts", ToolName: "UteamupShiftList", Flags: paginationFlags()},
 			{Name: "get", Description: "Get a shift by GUID", ToolName: "UteamupShiftGetByGuid", Args: []ArgDef{{Name: "shiftGuid", Description: "Shift GUID", Required: true, Type: "uuid"}}, RESTPath: "by-guid/{shiftGuid}"},
 			{Name: "create", Description: "Create a shift", ToolName: "UteamupShiftCreate", Flags: []FlagDef{jsonFlag()}},
@@ -119,7 +119,7 @@ func init() {
 			{Name: "pattern-get", Description: "Get a shift pattern by GUID", ToolName: "UteamupShiftPatternGet", HTTPMethod: "GET", RESTPath: "patterns/by-guid/{patternGuid}", Args: []ArgDef{{Name: "patternGuid", Description: "Shift pattern GUID", Required: true, Type: "string"}}},
 			{Name: "pattern-update", Description: "Update a shift pattern by GUID", ToolName: "UteamupShiftPatternUpdate", HTTPMethod: "PUT", RESTPath: "patterns/by-guid/{patternGuid}", Args: []ArgDef{{Name: "patternGuid", Description: "Shift pattern GUID", Required: true, Type: "string"}}, Flags: []FlagDef{jsonFlag()}},
 			{Name: "pattern-delete", Description: "Delete a shift pattern by GUID", ToolName: "UteamupShiftPatternDelete", HTTPMethod: "DELETE", RESTPath: "patterns/by-guid/{patternGuid}", Args: []ArgDef{{Name: "patternGuid", Description: "Shift pattern GUID", Required: true, Type: "string"}}},
-		},
+		}, "shift", "shifts", "Shift.Delete"),
 	})
 	Register(&Domain{Name: "shift-instance", Description: "Manage shift instances", Actions: []Action{
 		{Name: "range", Description: "Get shift instances in a date range", ToolName: "UteamupShiftInstanceGetByRange", HTTPMethod: "GET", RESTPath: "range", Flags: []FlagDef{{Name: "date-from", Description: "Start date", Required: true, Type: "string"}, {Name: "date-to", Description: "End date", Required: true, Type: "string"}, {Name: "shift-guid", Description: "Optional shift GUID", Type: "string"}}},
