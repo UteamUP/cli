@@ -22,10 +22,23 @@ const (
 
 // Config is the top-level config stored in ~/.uteamup/config.json.
 type Config struct {
-	ActiveProfile  string             `json:"activeProfile"`
-	Profiles       map[string]Profile `json:"profiles"`
-	envSnapshot    map[string]Profile
-	diskSnapshot   map[string]Profile
+	ActiveProfile string             `json:"activeProfile"`
+	Profiles      map[string]Profile `json:"profiles"`
+	envSnapshot   map[string]Profile
+	diskSnapshot  map[string]Profile
+}
+
+// envOverrides lists each UTEAMUP_* variable and the profile field it overrides at load.
+// Save reads the same list, so a one-off override never becomes a saved setting.
+var envOverrides = []struct {
+	name  string
+	field func(*Profile) *string
+}{
+	{"UTEAMUP_API_KEY", func(p *Profile) *string { return &p.APIKey }},
+	{"UTEAMUP_SECRET", func(p *Profile) *string { return &p.Secret }},
+	{"UTEAMUP_API_BASE_URL", func(p *Profile) *string { return &p.BaseURL }},
+	{"UTEAMUP_LOG_LEVEL", func(p *Profile) *string { return &p.LogLevel }},
+	{"UTEAMUP_TENANT_GUID", func(p *Profile) *string { return &p.TenantGUID }},
 }
 
 // Profile holds connection settings for a single environment.
@@ -167,25 +180,18 @@ func applyEnvOverrides(cfg *Config) {
 	}
 	cfg.diskSnapshot[cfg.ActiveProfile] = p
 
-	if v := os.Getenv("UTEAMUP_API_KEY"); v != "" {
-		p.APIKey = v
-	}
-	if v := os.Getenv("UTEAMUP_SECRET"); v != "" {
-		p.Secret = v
-	}
-	if v := os.Getenv("UTEAMUP_API_BASE_URL"); v != "" {
-		p.BaseURL = v
-	}
-	if v := os.Getenv("UTEAMUP_LOG_LEVEL"); v != "" {
-		p.LogLevel = v
-	}
-	if v := os.Getenv("UTEAMUP_TENANT_GUID"); v != "" {
-		p.TenantGUID = v
+	for _, override := range envOverrides {
+		if v := os.Getenv(override.name); v != "" {
+			*override.field(&p) = v
+		}
 	}
 	cfg.Profiles[cfg.ActiveProfile] = p
 	cfg.envSnapshot[cfg.ActiveProfile] = p
 }
 
+// sanitizeForDisk returns the config to write. A field that still holds the value an
+// env override gave it at load reverts to its file value; a field a command changed
+// since load is written as set.
 func sanitizeForDisk(cfg *Config) *Config {
 	if cfg == nil || len(cfg.envSnapshot) == 0 {
 		return cfg
@@ -198,11 +204,11 @@ func sanitizeForDisk(cfg *Config) *Config {
 		envApplied, hadEnv := cfg.envSnapshot[name]
 		diskOriginal, hadDisk := cfg.diskSnapshot[name]
 		if hadEnv && hadDisk {
-			if os.Getenv("UTEAMUP_API_KEY") != "" && current.APIKey == envApplied.APIKey {
-				current.APIKey = diskOriginal.APIKey
-			}
-			if os.Getenv("UTEAMUP_SECRET") != "" && current.Secret == envApplied.Secret {
-				current.Secret = diskOriginal.Secret
+			for _, override := range envOverrides {
+				field := override.field(&current)
+				if *field == *override.field(&envApplied) {
+					*field = *override.field(&diskOriginal)
+				}
 			}
 		}
 		cloned.Profiles[name] = current

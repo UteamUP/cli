@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"testing"
@@ -284,6 +285,136 @@ func TestLoadRemovesDeprecatedDirectProviderSettings(t *testing.T) {
 		if contains(string(sanitized), forbidden) {
 			t.Fatalf("deprecated provider setting %q remained in config", forbidden)
 		}
+	}
+}
+
+func savedProductionProfile() Profile {
+	return Profile{
+		Name:           "Production",
+		APIKey:         "diskkey1234567890123456789012345",
+		Secret:         "disk-secret",
+		BaseURL:        "https://api.uteamup.com",
+		LogLevel:       "INFO",
+		RequestTimeout: 15000,
+		MaxRetries:     4,
+		ExportDir:      "/exports",
+		TenantGUID:     "11111111-1111-1111-1111-111111111111",
+	}
+}
+
+// useConfigHome points the config at a temp home, clears every UTEAMUP_* override the
+// developer's shell may export, and writes the given profiles as the saved config.
+func useConfigHome(t *testing.T, active string, profiles map[string]Profile) string {
+	t.Helper()
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	for _, override := range envOverrides {
+		t.Setenv(override.name, "")
+	}
+	if err := Save(&Config{ActiveProfile: active, Profiles: profiles}); err != nil {
+		t.Fatal(err)
+	}
+	return home
+}
+
+func readSavedConfig(t *testing.T, home string) Config {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(home, ".uteamup", "config.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var saved Config
+	if err := json.Unmarshal(data, &saved); err != nil {
+		t.Fatal(err)
+	}
+	return saved
+}
+
+func TestSaveKeepsEnvOverridesOutOfConfigFile(t *testing.T) {
+	home := useConfigHome(t, "production", map[string]Profile{"production": savedProductionProfile()})
+	t.Setenv("UTEAMUP_API_KEY", "envkey12345678901234567890123456")
+	t.Setenv("UTEAMUP_SECRET", "env-secret")
+	t.Setenv("UTEAMUP_API_BASE_URL", "https://devback.uteamup.com")
+	t.Setenv("UTEAMUP_LOG_LEVEL", "DEBUG")
+	t.Setenv("UTEAMUP_TENANT_GUID", "22222222-2222-2222-2222-222222222222")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	inMemory := cfg.Profiles["production"]
+	if inMemory.BaseURL != "https://devback.uteamup.com" || inMemory.LogLevel != "DEBUG" ||
+		inMemory.TenantGUID != "22222222-2222-2222-2222-222222222222" {
+		t.Fatalf("env overrides not applied in memory: %+v", inMemory)
+	}
+
+	if err := Save(cfg); err != nil {
+		t.Fatal(err)
+	}
+
+	want := savedProductionProfile()
+	if got := readSavedConfig(t, home).Profiles["production"]; !reflect.DeepEqual(got, want) {
+		t.Errorf("env overrides written to disk:\n got  %+v\n want %+v", got, want)
+	}
+}
+
+func TestSaveWritesValuesSetExplicitlyWhileEnvOverridesAreActive(t *testing.T) {
+	home := useConfigHome(t, "production", map[string]Profile{"production": savedProductionProfile()})
+	t.Setenv("UTEAMUP_API_BASE_URL", "https://devback.uteamup.com")
+	t.Setenv("UTEAMUP_LOG_LEVEL", "DEBUG")
+	t.Setenv("UTEAMUP_TENANT_GUID", "22222222-2222-2222-2222-222222222222")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := cfg.Profiles["production"]
+	p.BaseURL = "https://localhost:5002"
+	p.LogLevel = "WARN"
+	p.TenantGUID = "33333333-3333-3333-3333-333333333333"
+	cfg.Profiles["production"] = p
+	if err := Save(cfg); err != nil {
+		t.Fatal(err)
+	}
+
+	got := readSavedConfig(t, home).Profiles["production"]
+	if got.BaseURL != "https://localhost:5002" || got.LogLevel != "WARN" ||
+		got.TenantGUID != "33333333-3333-3333-3333-333333333333" {
+		t.Errorf("explicitly set values not saved: %+v", got)
+	}
+	if got.APIKey != savedProductionProfile().APIKey || got.MaxRetries != 4 {
+		t.Errorf("untouched file values changed: %+v", got)
+	}
+}
+
+func TestSaveAfterProfileSwitchPreservesEveryProfilesFileValues(t *testing.T) {
+	dev := Profile{Name: "Dev", BaseURL: "https://devback.uteamup.com", LogLevel: "DEBUG", RequestTimeout: 30000, MaxRetries: 3}
+	home := useConfigHome(t, "production", map[string]Profile{"production": savedProductionProfile(), "dev": dev})
+	t.Setenv("UTEAMUP_API_BASE_URL", "https://override.example.com")
+	t.Setenv("UTEAMUP_LOG_LEVEL", "TRACE")
+	t.Setenv("UTEAMUP_TENANT_GUID", "22222222-2222-2222-2222-222222222222")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cfg.SetActiveProfile("dev"); err != nil {
+		t.Fatal(err)
+	}
+	if err := Save(cfg); err != nil {
+		t.Fatal(err)
+	}
+
+	saved := readSavedConfig(t, home)
+	if saved.ActiveProfile != "dev" {
+		t.Errorf("active profile = %q, want dev", saved.ActiveProfile)
+	}
+	if got := saved.Profiles["production"]; !reflect.DeepEqual(got, savedProductionProfile()) {
+		t.Errorf("production profile changed:\n got  %+v\n want %+v", got, savedProductionProfile())
+	}
+	if got := saved.Profiles["dev"]; !reflect.DeepEqual(got, dev) {
+		t.Errorf("dev profile changed:\n got  %+v\n want %+v", got, dev)
 	}
 }
 
