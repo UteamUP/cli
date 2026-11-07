@@ -34,6 +34,17 @@ func init() {
 		Description: "Inspect the selected tenant's dedicated IoT Preview environment",
 		Actions: append([]Action{
 			{
+				Name: "sensors", Description: "Page tenant sensor metadata on active devices; search and exclusions apply before paging",
+				ToolName: "UteamupIoTSensorsList", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "GET", RESTPath: "sensors",
+				Flags: []FlagDef{
+					{Name: "search", Description: "Sensor name or type", Type: "string"},
+					{Name: "page", Description: "Page number, 1-100000", Type: "int", Default: 1},
+					{Name: "page-size", QueryName: "pageSize", Description: "Sensors per page, 1-100", Type: "int", Default: 25},
+					{Name: "excluded-guids", QueryName: "excludedGuids", Description: "Sensor GUIDs to exclude, at most 100 (repeatable)", Type: "stringSlice"},
+				},
+			},
+			{
 				Name: "alert-workorder", Description: "Read the workorder linked to an IoT alert",
 				ToolName: "UteamupIoTAlertWorkorderGet", RESTBasePath: iotDeviceAPIPath,
 				HTTPMethod: "GET", RESTPath: "alerts/{alertGuid}/workorder",

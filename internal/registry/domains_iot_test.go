@@ -44,6 +44,7 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 		"device-type-update":         "UteamupIoTDeviceTypeUpdate",
 		"device-type-delete":         "UteamupIoTDeviceTypeDelete",
 		"devices":                    "UteamupIoTDevicesList",
+		"sensors":                    "UteamupIoTSensorsList",
 		"device":                     "UteamupIoTDeviceGet",
 		"device-create":              "UteamupIoTDeviceCreate",
 		"device-update":              "UteamupIoTDeviceUpdate",
@@ -103,6 +104,29 @@ func TestIoTResourceLinkPreviewAndSaveShareGuidOwnerFields(t *testing.T) {
 		if action.RESTPath != want {
 			t.Errorf("%s route = %q, want %q", name, action.RESTPath, want)
 		}
+	}
+}
+
+func TestIoTSensorPageUsesBoundedGetAndRepeatedGuidExclusions(t *testing.T) {
+	action := findIoTAction(t, "sensors")
+	if action.HTTPMethod != "GET" || action.RESTBasePath != "/api/iot" || action.RESTPath != "sensors" {
+		t.Fatalf("sensor page must use the existing IoT API: %+v", action)
+	}
+	flags := map[string]FlagDef{}
+	for _, flag := range action.Flags {
+		flags[flag.Name] = flag
+	}
+	if flags["page-size"].QueryName != "pageSize" || flags["page-size"].Default != 25 {
+		t.Fatal("sensor pages must default to 25")
+	}
+	if flags["excluded-guids"].Type != "stringSlice" || flags["excluded-guids"].QueryName != "excludedGuids" {
+		t.Fatal("sensor exclusions must use repeated public GUID query values")
+	}
+	first := "11111111-1111-4111-8111-111111111111"
+	second := "22222222-2222-4222-8222-222222222222"
+	query := appendQueryParameters("/api/iot/sensors", map[string]any{"excludedGuids": []string{first, second}})
+	if strings.Count(query, "excludedGuids=") != 2 || !strings.Contains(query, first) || !strings.Contains(query, second) {
+		t.Fatalf("exclusions must remain separate query values: %s", query)
 	}
 }
 
