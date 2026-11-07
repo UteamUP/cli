@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.20.0](https://github.com/UteamUP/cli/compare/5.19.0...5.20.0) (2026-11-07)
+
+
+### Features
+
+* expose saved hosting cost overview to platform admins ([77abe6b](https://github.com/UteamUP/cli/commit/77abe6bc1821c94fbd5694ae6167b4d7299bb394))
+
 ## [5.19.0](https://github.com/UteamUP/cli/compare/5.18.0...5.19.0) (2026-11-06)
 
 
