@@ -26,6 +26,12 @@ func init() {
 				},
 			},
 			{
+				Name: "asset-safety-acknowledge-batch", Description: "Confirm you read every supplied exact snapshot as the signed-in person; one atomic batch, not a safety certification",
+				ToolName: "UteamupWorkorderAssetSafetyAcknowledgeBatch", HTTPMethod: "POST", RESTPath: "by-guid/{workorderGuid}/asset-safety/acknowledge-batch",
+				Args:  []ArgDef{{Name: "workorderGuid", Description: "Workorder public GUID", Required: true, Type: "non-empty-uuid"}},
+				Flags: []FlagDef{{Name: "items-json", BodyName: "items", Description: "JSON array of 1-100 distinct assetGuid/snapshotGuid pairs you reviewed; any stale pair rejects the batch", Required: true, Type: "string", JSONFile: true}},
+			},
+			{
 				Name:        "withdraw-request",
 				Description: "Withdraw your own never-started request; sign in as its requester",
 				ToolName:    "UteamupWorkorderWithdrawRequest",

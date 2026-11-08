@@ -1,6 +1,9 @@
 package registry
 
 import (
+	"os"
+	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -48,10 +51,39 @@ func TestWorkorderAssetSafetyRequiresAnExplicitSnapshotAndPublicGuids(t *testing
 		{"asset-safety", "42"},
 		{"asset-safety-capture", "00000000-0000-0000-0000-000000000000"},
 		{"asset-safety-acknowledge", "11111111-1111-4111-8111-111111111111", "--asset-guid", "22222222-2222-4222-8222-222222222222"},
+		{"asset-safety-acknowledge-batch", "11111111-1111-4111-8111-111111111111"},
 	} {
 		requests, err := runRegisteredDomainCommand(t, "workorder", args...)
 		if err == nil || len(requests) != 0 {
 			t.Fatalf("invalid review must not send: %v %v", args, requests)
 		}
+	}
+}
+
+func TestWorkorderAssetSafetyBatchPreservesReviewedPairsWithoutCallerSelectedIdentity(t *testing.T) {
+	const wo = "11111111-1111-4111-8111-111111111111"
+	const asset = "22222222-2222-4222-8222-222222222222"
+	const snapshot = "33333333-3333-4333-8333-333333333333"
+	path := filepath.Join(t.TempDir(), "reviewed-snapshots.json")
+	if err := os.WriteFile(path, []byte(`[{"assetGuid":"`+asset+`","snapshotGuid":"`+snapshot+`"}]`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	requests, err := runRegisteredDomainCommand(t, "workorder", "asset-safety-acknowledge-batch", wo, "--items-json", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(requests) != 1 {
+		t.Fatalf("requests = %d", len(requests))
+	}
+	r := requests[0]
+	if r.method != "POST" || r.path != "/api/workorder/by-guid/"+wo+"/asset-safety/acknowledge-batch" {
+		t.Fatalf("route = %s %s", r.method, r.path)
+	}
+	want := map[string]any{"items": []any{map[string]any{"assetGuid": asset, "snapshotGuid": snapshot}}}
+	if !reflect.DeepEqual(r.body, want) {
+		t.Fatalf("batch = %#v", r.body)
+	}
+	if r.header.Get("Authorization") != "Bearer registered-domain-token" {
+		t.Fatal("named session missing")
 	}
 }
