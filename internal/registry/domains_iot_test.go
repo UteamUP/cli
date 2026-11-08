@@ -322,6 +322,7 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 		"device-type-create":         "/api/iot/device-types",
 		"device-type-update":         "/api/iot/device-types/type-guid",
 		"device-type-delete":         "/api/iot/device-types/type-guid",
+		"sensors":                    "/api/iot/sensors",
 		"devices":                    "/api/iot/devices",             // IOTController.GetDevices
 		"device":                     "/api/iot/devices/device-guid", // IOTController.GetDeviceByGuid
 		"device-create":              "/api/iot/devices",             // IOTController.CreateDevice
