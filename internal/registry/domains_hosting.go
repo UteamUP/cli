@@ -31,6 +31,15 @@ func init() {
 				Name: "month", QueryName: "month", Type: "string",
 				Description: "Optional first day of a month in the last twelve months (yyyy-MM-dd)",
 			}},
+		}, {
+			Name: "budget-alert", Description: "Read platform email budget settings and the saved EUR estimate (configured Global Admin only)",
+			ToolName: "UteamupHostingBudgetAlertGet", HTTPMethod: "GET", RESTPath: "budget-alert",
+		}, {
+			Name: "budget-alert-update", Description: "Replace reviewed platform budget settings; enabling can submit an exceeded-limit alert (configured Global Admin only)",
+			ToolName: "UteamupHostingBudgetAlertUpdate", HTTPMethod: "PATCH", RESTPath: "budget-alert",
+			SensitiveBodyFields: []string{"recipientEmails"},
+			Flags: []FlagDef{{Name: "from-json", Description: "Complete settings: enabled, monthlyLimitEur, recipientEmails, language and monthLimits",
+				Type: "string", Required: true, RootJSONObjectFile: true}},
 		}},
 	})
 }
