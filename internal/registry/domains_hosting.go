@@ -14,6 +14,12 @@ func init() {
 				Name: "month", QueryName: "month", Type: "string",
 				Description: "First day of a month in the last 12 months (yyyy-MM-dd); defaults to this month",
 			}},
+		}, {
+			Name:        "retry-permissions",
+			Description: "Retry 401/403 collection after Azure access repair; enforces cooldown and active throttling (configured Global Admin only)",
+			ToolName:    "UteamupHostingRetryPermissions",
+			HTTPMethod:  "POST",
+			RESTPath:    "retry-permissions",
 		}},
 	})
 }
