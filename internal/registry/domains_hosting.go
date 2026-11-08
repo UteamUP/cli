@@ -21,6 +21,16 @@ func init() {
 			ToolName:    "UteamupHostingRetryPermissions",
 			HTTPMethod:  "POST",
 			RESTPath:    "retry-permissions",
+		}, {
+			Name:        "refresh",
+			Description: "Fetch and save new Azure evidence; respects fifteen-minute cooldown and provider backoff (configured Global Admin only)",
+			ToolName:    "UteamupHostingRefresh",
+			HTTPMethod:  "POST",
+			RESTPath:    "refresh",
+			Flags: []FlagDef{{
+				Name: "month", QueryName: "month", Type: "string",
+				Description: "Optional first day of a month in the last twelve months (yyyy-MM-dd)",
+			}},
 		}},
 	})
 }
