@@ -5,6 +5,24 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.20.0](https://github.com/UteamUP/cli/compare/5.19.0...5.20.0) (2026-11-09)
+
+
+### Features
+
+* add paged tenant sensor discovery to the CLI [skip ci] ([c4d224d](https://github.com/UteamUP/cli/commit/c4d224d0ce36e71c1618894fee5b237129ef9e8d))
+* expose guarded Azure hosting refresh ([c935a91](https://github.com/UteamUP/cli/commit/c935a91cfeaebcf98298583dcba13f6fff1ff4b9))
+* expose protected Hosting email budget settings ([47e8f5a](https://github.com/UteamUP/cli/commit/47e8f5a759b5dc3af9a15065b5d8e14e423c3b9a))
+* expose reviewed safety acknowledgement batches [skip ci] ([d369fb2](https://github.com/UteamUP/cli/commit/d369fb27efaf8a55af62d8e69b8685e63359779a))
+* expose saved hosting cost overview to platform admins ([77abe6b](https://github.com/UteamUP/cli/commit/77abe6bc1821c94fbd5694ae6167b4d7299bb394))
+* **tenant-lifecycle:** add always-free-demo command ([430817b](https://github.com/UteamUP/cli/commit/430817bcb42ac75362eec708388b6d52997c613d))
+
+
+### Bug Fixes
+
+* complete hosting and sensor route contracts ([5e84b62](https://github.com/UteamUP/cli/commit/5e84b626267052463f0e7e0438c871da5afb521b))
+* expose guarded Hosting permission recovery ([1ae3ee3](https://github.com/UteamUP/cli/commit/1ae3ee38a8f260a15f5a6a7a1fa5bbcf606e4cf7))
+
 ## [5.19.0](https://github.com/UteamUP/cli/compare/5.18.0...5.19.0) (2026-11-06)
 
 
