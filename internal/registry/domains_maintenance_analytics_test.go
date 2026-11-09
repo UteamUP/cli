@@ -10,6 +10,7 @@ func TestMaintenanceAnalyticsUsesOwningReadRoutesWithoutIdentitySelectors(t *tes
 		"emergency-percentage":        "emergency-work-percentage",
 		"mttf":                        "mean-time-to-first-failure",
 		"stockout-time-rate":          "stockout-time-rate",
+		"value-overview":              "value-overview",
 	} {
 		action := findAction(domain, name)
 		if action == nil || action.HTTPMethod != "GET" || action.MCPOnly || len(action.Args) != 0 {
@@ -38,6 +39,21 @@ func TestMaintenanceWindowFiltersStayOnReadRequests(t *testing.T) {
 			firstQueryValue(requests[0].query["endUtc"]) != "2026-11-04T00:00:00Z" || len(requests[0].body) != 0 {
 			t.Fatalf("window filters changed: %+v", requests[0])
 		}
+	}
+}
+
+func TestValueOverviewIsAPlainReadWithoutSelectors(t *testing.T) {
+	action := findAction(findDomain("maintenance-analytics"), "value-overview")
+	if action == nil || action.ToolName != "UteamupAnalyticsValueOverview" || len(action.Flags) != 0 {
+		t.Fatalf("value overview must take no flags; the caller's permissions decide what it sees: %+v", action)
+	}
+	requests, err := runRegisteredDomainCommand(t, "maintenance-analytics", "value-overview")
+	if err != nil || len(requests) != 1 {
+		t.Fatalf("unexpected read: %v, %+v", err, requests)
+	}
+	if requests[0].method != "GET" || requests[0].path != "/api/analytics/value-overview" ||
+		len(requests[0].query) != 0 || len(requests[0].body) != 0 {
+		t.Fatalf("value overview request changed: %+v", requests[0])
 	}
 }
 

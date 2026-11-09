@@ -35,6 +35,10 @@ func init() {
 					{Name: "end-utc", QueryName: "endUtc", Description: "Exclusive UTC window end (defaults to now); maximum window 366 days", Type: "string"},
 				},
 			},
+			{
+				Name: "value-overview", Description: "Current stock, asset and combined value (needs InventoryCost.View and/or AssetCost.View)",
+				ToolName: "UteamupAnalyticsValueOverview", RESTPath: "value-overview", HTTPMethod: "GET",
+			},
 		},
 	})
 }
