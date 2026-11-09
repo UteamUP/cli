@@ -1,8 +1,8 @@
 package registry
 
 // The unpaid tenant billing lifecycle: the current tenant's stage and dates, the owner's one
-// restore from the archive, the Global Admin unarchive / postpone-deletion / legal-hold
-// controls and the platform settings (configured Global Admin only; the backend refuses
+// restore from the archive, the Global Admin unarchive / postpone-deletion / legal-hold /
+// always-free-demo controls and the platform settings (configured Global Admin only; the backend refuses
 // everyone else with 403).
 func init() {
 	Register(&Domain{
@@ -69,6 +69,19 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "hold", Description: "true to place the hold, false to release it", Required: true, Type: "bool"},
 					{Name: "reason", Description: "Why the hold is placed (required to place it)", Type: "string"},
+				},
+			},
+			{
+				Name:         "always-free-demo",
+				Description:  "Make a tenant a permanently free demo workspace or restore normal billing; refused while a paid agreement, pending payment or unpaid invoice is open (Global Admin)",
+				ToolName:     "AdminSetTenantAlwaysFreeDemoWorkspace",
+				HTTPMethod:   "PUT",
+				RESTBasePath: "/api/globaladmin/tenants",
+				RESTPath:     "{tenantGuid}/lifecycle/always-free-demo-workspace",
+				Args:         []ArgDef{{Name: "tenantGuid", Description: "Tenant GUID", Required: true, Type: "non-empty-uuid"}},
+				Flags: []FlagDef{
+					{Name: "enabled", Description: "true to make the workspace permanently free, false to restore normal billing", Required: true, Type: "bool"},
+					{Name: "reason", Description: "Why the exemption changes (kept in the audit log, max 500 characters)", Required: true, Type: "string"},
 				},
 			},
 			{

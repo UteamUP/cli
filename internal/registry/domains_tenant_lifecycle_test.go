@@ -21,6 +21,7 @@ func TestTenantLifecycleActionsMirrorBackendRoutes(t *testing.T) {
 		"unarchive":         {"AdminUnarchiveTenant", "POST", "/api/globaladmin/tenants", "{tenantGuid}/lifecycle/unarchive"},
 		"postpone-deletion": {"AdminPostponeTenantDeletion", "POST", "/api/globaladmin/tenants", "{tenantGuid}/lifecycle/postpone-deletion"},
 		"legal-hold":        {"AdminSetTenantLegalHold", "PUT", "/api/globaladmin/tenants", "{tenantGuid}/lifecycle/legal-hold"},
+		"always-free-demo":  {"AdminSetTenantAlwaysFreeDemoWorkspace", "PUT", "/api/globaladmin/tenants", "{tenantGuid}/lifecycle/always-free-demo-workspace"},
 		"settings-get":      {"AdminGetTenantLifecycleSettings", "GET", "/api/globaladmin/tenant-lifecycle", "settings"},
 		"settings-update":   {"AdminUpdateTenantLifecycleSettings", "PUT", "/api/globaladmin/tenant-lifecycle", "settings"},
 	}
@@ -44,7 +45,7 @@ func TestTenantLifecycleActionsMirrorBackendRoutes(t *testing.T) {
 
 func TestTenantLifecycleAdminActionsRequireATenantGuid(t *testing.T) {
 	domain := findDomain("tenant-lifecycle")
-	for _, name := range []string{"admin-get", "unarchive", "postpone-deletion", "legal-hold"} {
+	for _, name := range []string{"admin-get", "unarchive", "postpone-deletion", "legal-hold", "always-free-demo"} {
 		action := findAction(domain, name)
 		if len(action.Args) != 1 || action.Args[0].Name != "tenantGuid" || action.Args[0].Type != "non-empty-uuid" || !action.Args[0].Required {
 			t.Errorf("%s must take one required non-empty tenant GUID: %+v", name, action.Args)
@@ -78,6 +79,12 @@ func TestTenantLifecycleFlagsSendTheBackendBodyNames(t *testing.T) {
 	hold := findAction(domain, "legal-hold")
 	if len(hold.Flags) != 2 || hold.Flags[0].Name != "hold" || hold.Flags[0].Type != "bool" || !hold.Flags[0].Required {
 		t.Fatalf("legal-hold needs a required bool --hold and an optional --reason: %+v", hold.Flags)
+	}
+	free := findAction(domain, "always-free-demo")
+	if len(free.Flags) != 2 ||
+		free.Flags[0].Name != "enabled" || free.Flags[0].Type != "bool" || !free.Flags[0].Required || free.Flags[0].Default != nil ||
+		free.Flags[1].Name != "reason" || free.Flags[1].Type != "string" || !free.Flags[1].Required {
+		t.Fatalf("always-free-demo needs a required bool --enabled without a default and a required --reason: %+v", free.Flags)
 	}
 }
 
