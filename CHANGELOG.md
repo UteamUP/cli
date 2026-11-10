@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.22.0](https://github.com/UteamUP/cli/compare/5.21.0...5.22.0) (2026-11-10)
+
+
+### Features
+
+* **workforce:** expose preview payroll preparation actions ([9279004](https://github.com/UteamUP/cli/commit/92790044a969d988919b7c9f8d26a5c0866caca7))
+
 ## [5.21.0](https://github.com/UteamUP/cli/compare/5.20.0...5.21.0) (2026-11-10)
 
 
