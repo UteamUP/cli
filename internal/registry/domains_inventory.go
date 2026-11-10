@@ -1510,6 +1510,44 @@ func init() {
 		// create/get/update/delete by id, so the generic crudActions template only minted commands
 		// that always 404. Single items are managed through their own domains (asset, part, tool, chemical).
 		Actions: []Action{
+			{Name: "context", Description: "Read one bounded, permission-scoped relationship page", ToolName: "UteamupInventoryContextSearch", HTTPMethod: "POST", RESTPath: "context/search", RejectExtraArgs: true,
+				Args: []ArgDef{
+					{Name: "type", Required: true, Type: "string", AllowedValues: []string{"asset", "assetgroup", "part", "tool", "chemical"}},
+					{Name: "guid", Description: "Source public GUID", Required: true, Type: "non-empty-uuid"},
+					{Name: "kind", Required: true, Type: "string", AllowedValues: []string{"locations", "vendors", "documents", "workorders", "schedules", "alerts", "parts", "tools", "chemicals", "assets", "members"}},
+				},
+				Flags: []FlagDef{
+					{Name: "query", Description: "Filter names and stored descriptions", Type: "string"},
+					{Name: "page-number", BodyName: "pageNumber", Type: "int", Default: 1},
+					{Name: "page-size", BodyName: "pageSize", Type: "int", Default: 25},
+					{Name: "severity", Description: "Native measurement severity; alert context only", Type: "string", AllowedValues: []string{"info", "warning", "error", "critical"}},
+				}},
+			{Name: "handling-get", Description: "Read explicit handling reminders; unconfigured means unknown", ToolName: "UteamupInventoryHandlingGet", HTTPMethod: "GET", RESTPath: "{type}/{guid}/handling", RejectExtraArgs: true,
+				Args: inventoryHandlingOwnerArgs()},
+			{Name: "context-summary", Description: "Read the same authorized summary and bounded previews as an Inventory list row", ToolName: "UteamupInventoryContextGet", HTTPMethod: "GET", RESTPath: "{type}/{guid}/context", RejectExtraArgs: true,
+				Args: []ArgDef{{Name: "type", Required: true, Type: "string", AllowedValues: []string{"asset", "assetgroup", "part", "tool", "chemical"}},
+					{Name: "guid", Required: true, Type: "non-empty-uuid"}}},
+			{Name: "search", Description: "Search all authorized Inventory families with optional bounded page context", ToolName: "ListInventory", MCPOnly: true, RejectExtraArgs: true,
+				Flags: []FlagDef{
+					{Name: "page", Type: "int", Default: 1},
+					{Name: "page-size", BodyName: "pageSize", Type: "int", Default: 20},
+					{Name: "name-filter", BodyName: "nameFilter", Type: "string"},
+					{Name: "type-filter", BodyName: "typeFilter", Type: "string", Description: "Comma-separated asset, assetgroup, part, tool, chemical; omitted means all authorized types"},
+					{Name: "include-context", BodyName: "includeContext", Type: "bool", Default: false},
+					{Name: "sort-by", BodyName: "sortBy", Type: "string", Default: "Name", AllowedValues: []string{"Name", "Type", "Guid"}},
+					{Name: "sort-order", BodyName: "sortOrder", Type: "string", Default: "asc", AllowedValues: []string{"asc", "desc"}},
+				}},
+			{Name: "handling-update", Description: "Replace all five reminders using the current version; independent of workorder safety snapshots", ToolName: "UteamupInventoryHandlingUpdate", HTTPMethod: "PUT", RESTPath: "{type}/{guid}/handling", RejectExtraArgs: true,
+				Args: inventoryHandlingOwnerArgs(), Flags: []FlagDef{
+					{Name: "respiratory-protection", BodyName: "requiresRespiratoryProtection", Required: true, Type: "bool"},
+					{Name: "hand-protection", BodyName: "requiresHandProtection", Required: true, Type: "bool"},
+					{Name: "eye-protection", BodyName: "requiresEyeProtection", Required: true, Type: "bool"},
+					{Name: "hearing-protection", BodyName: "requiresHearingProtection", Required: true, Type: "bool"},
+					{Name: "special-handling", BodyName: "requiresSpecialHandling", Required: true, Type: "bool"},
+					{Name: "instructions", Type: "string"},
+					{Name: "source-document-guid", BodyName: "sourceDocumentGuid", Type: "non-empty-uuid"},
+					{Name: "expected-version-guid", BodyName: "expectedVersionGuid", Type: "non-empty-uuid"},
+				}},
 			{Name: "get-by-guid", Description: "Read a catalog Part, Tool or Asset by public GUID and exact type", ToolName: "GetInventoryItem", MCPOnly: true, RejectExtraArgs: true,
 				Args: []ArgDef{{Name: "itemGuid", Description: "Catalog item public GUID", Required: true, Type: "non-empty-uuid"},
 					{Name: "itemType", Description: "Catalog item type", Required: true, Type: "string", AllowedValues: []string{"Part", "Tool", "Asset"}}}},
@@ -1559,6 +1597,13 @@ func init() {
 			},
 		},
 	})
+}
+
+func inventoryHandlingOwnerArgs() []ArgDef {
+	return []ArgDef{
+		{Name: "type", Required: true, Type: "string", AllowedValues: []string{"asset", "part", "tool", "chemical"}},
+		{Name: "guid", Description: "Source public GUID", Required: true, Type: "non-empty-uuid"},
+	}
 }
 
 // consumableActions exposes the parts/chemicals a tool or chemical uses up
