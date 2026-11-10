@@ -19,6 +19,7 @@ func TestWorkforcePreviewPresenceAndAbsenceMatchRESTOwners(t *testing.T) {
 		{"worker-presence", "declare", "me/presence"}, {"worker-presence", "list", "presence"},
 		{"worker-presence", "manager-position", "assignments/{assignmentGuid}/manager-position"},
 		{"workforce-absence", "approve", "by-guid/{overrideGuid}/approve"}, {"workforce-absence", "report", "report"},
+		{"payroll-preparation", "create", "by-guid"}, {"payroll-preparation", "timesheet-choices", "timesheet-choices"},
 	} {
 		a := findDomainAction(t, item.domain, item.action)
 		if a.RESTPath != item.path {

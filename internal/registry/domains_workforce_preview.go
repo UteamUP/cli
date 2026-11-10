@@ -42,4 +42,9 @@ func init() {
 		{Name: "declare", ToolName: "UteamupWorkerPresenceDeclare", HTTPMethod: "PUT", RESTPath: "me/presence", Flags: []FlagDef{jsonFlag()}},
 		{Name: "manager-position", Description: "Current consented assignment point only; recipient access is audited", ToolName: "UteamupWorkforceManagerPosition", HTTPMethod: "GET", RESTBasePath: "/api/assignmenttracking", RESTPath: "assignments/{assignmentGuid}/manager-position", Args: []ArgDef{{Name: "assignmentGuid", Required: true, Type: "uuid"}}},
 	}})
+	Register(&Domain{Name: "payroll-preparation", Description: "Preview: approved timesheets prepared for manager review", APIPath: "/api/payrollexports", Actions: []Action{
+		{Name: "list", ToolName: "UteamupPayrollPreparationList", HTTPMethod: "GET", RESTPath: "by-guid", Flags: []FlagDef{{Name: "page", Default: 1, Type: "int"}, {Name: "page-size", BodyName: "pageSize", Default: 25, Type: "int"}}},
+		{Name: "timesheet-choices", ToolName: "UteamupPayrollTimesheetChoices", HTTPMethod: "GET", RESTPath: "timesheet-choices", Flags: []FlagDef{{Name: "page", Default: 1, Type: "int"}, {Name: "page-size", BodyName: "pageSize", Default: 25, Type: "int"}, {Name: "search", Type: "string"}}},
+		{Name: "create", Description: "Create PendingReview preparation from approved public timesheet GUIDs; no payment or submission", ToolName: "UteamupPayrollPreparationCreate", HTTPMethod: "POST", RESTPath: "by-guid", Flags: []FlagDef{jsonFlag()}, SensitiveBodyFields: []string{"fieldMappingJson"}},
+	}})
 }
