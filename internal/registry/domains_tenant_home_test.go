@@ -14,6 +14,8 @@ func TestTenantHomeCommandsMatchTheBackendRoutes(t *testing.T) {
 		action, method, path, arg string
 		flags                     map[string]string
 	}{
+		{"member-access-set", "PUT", "users/{userGuid}/access", "userGuid",
+			map[string]string{"access-allowed": "accessAllowed"}},
 		{"transfer-ownership", "POST", "{tenantGuid}/change-owner", "tenantGuid",
 			map[string]string{"new-owner-user-guid": "userGuid"}},
 		{"home-membership-set", "PUT", "users/{userGuid}/home-membership", "userGuid",

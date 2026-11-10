@@ -159,6 +159,17 @@ func init() {
 				},
 			},
 			{
+				Name:        "member-access-set",
+				Description: "End or reopen a current-tenant member's access, preserving roles and seats; refuses the owner and caller",
+				ToolName:    "UteamupTenantMemberAccessSet",
+				HTTPMethod:  "PUT",
+				RESTPath:    "users/{userGuid}/access",
+				Args:        []ArgDef{{Name: "userGuid", Description: "Public member user GUID", Required: true, Type: "non-empty-uuid"}},
+				Flags: []FlagDef{
+					{Name: "access-allowed", BodyName: "accessAllowed", Description: "Explicit true to reopen expired access, false to end access now", Required: true, Type: "bool"},
+				},
+			},
+			{
 				Name:        "home-membership-set",
 				Description: "UteamUP Home: set when a member's access ends and a resident's apartment in the current tenant; an omitted flag clears that value",
 				ToolName:    "UteamupTenantHomeMembershipSet",
