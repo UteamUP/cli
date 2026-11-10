@@ -778,6 +778,7 @@ func init() {
 			},
 		},
 	}
+	timeEntryActions = append(timeEntryActions, workforcePreviewTimeActions()...)
 	Register(&Domain{Name: "time-entry", Aliases: []string{"time", "timesheet"}, Description: "Manage time entries and timesheets", Actions: timeEntryActions})
 }
 
