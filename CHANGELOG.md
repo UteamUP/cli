@@ -5,6 +5,21 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.21.0](https://github.com/UteamUP/cli/compare/5.20.0...5.21.0) (2026-11-10)
+
+
+### Features
+
+* **analytics:** add value-overview read to maintenance-analytics ([7c90bcc](https://github.com/UteamUP/cli/commit/7c90bcc2f512a1777e0e224470ed289ad25ac242))
+* expose tenant member access controls ([b6df9d3](https://github.com/UteamUP/cli/commit/b6df9d3f8436a48607c904f3ab831ef144c0a556))
+* **inventory:** expose context search and handling reminders ([5762b0a](https://github.com/UteamUP/cli/commit/5762b0ac1eef57e3da227f3bc23981ed80ee6b40))
+* **workforce:** expose preview time review, absence and presence actions ([a703fcd](https://github.com/UteamUP/cli/commit/a703fcd66d8ca4aa1178230442088b1bc2f11d2b))
+
+
+### Tests
+
+* **inventory:** cover context and handling route contracts ([1699ee2](https://github.com/UteamUP/cli/commit/1699ee297f68b7514b41958de12ea141f1d92b16))
+
 ## [5.20.0](https://github.com/UteamUP/cli/compare/5.19.0...5.20.0) (2026-11-09)
 
 
