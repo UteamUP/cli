@@ -1983,12 +1983,16 @@ func TestInventoryDomainExposesOnlyRoutesTheControllerServes(t *testing.T) {
 		t.Fatal("inventory domain not registered")
 	}
 	want := map[string]struct{ method, path string }{
-		"list":        {"GET", "/api/inventory"},
-		"bulk-delete": {"POST", "/api/inventory/bulk-delete"},
-		"archive":     {"POST", "/api/inventory/part/by-guid/g/archive"},
-		"restore":     {"POST", "/api/inventory/part/by-guid/g/restore"},
+		"list":            {"GET", "/api/inventory"},
+		"bulk-delete":     {"POST", "/api/inventory/bulk-delete"},
+		"archive":         {"POST", "/api/inventory/part/by-guid/g/archive"},
+		"restore":         {"POST", "/api/inventory/part/by-guid/g/restore"},
+		"context":         {"POST", "/api/inventory/context/search"},
+		"context-summary": {"GET", "/api/inventory/part/g/context"},
+		"handling-get":    {"GET", "/api/inventory/part/g/handling"},
+		"handling-update": {"PUT", "/api/inventory/part/g/handling"},
 	}
-	wantMCP := map[string]string{"get-by-guid": "GetInventoryItem", "patch-by-guid": "UpdateInventoryItem"}
+	wantMCP := map[string]string{"get-by-guid": "GetInventoryItem", "patch-by-guid": "UpdateInventoryItem", "search": "ListInventory"}
 	if len(domain.Actions) != len(want)+len(wantMCP) {
 		t.Fatalf("inventory actions = %d, want %d REST and %d MCP actions", len(domain.Actions), len(want), len(wantMCP))
 	}
@@ -2007,7 +2011,7 @@ func TestInventoryDomainExposesOnlyRoutesTheControllerServes(t *testing.T) {
 		if method == "" {
 			method = HTTPMethod[action.Name]
 		}
-		path, _ := buildRESTPath(domain, action, map[string]any{"id": "1", "externalGuid": "g", "itemType": "part", "itemGuid": "g"})
+		path, _ := buildRESTPath(domain, action, map[string]any{"id": "1", "externalGuid": "g", "itemType": "part", "itemGuid": "g", "type": "part", "guid": "g"})
 		if method != route.method || path != route.path {
 			t.Errorf("inventory %s = %s %s, want %s %s", action.Name, method, path, route.method, route.path)
 		}
