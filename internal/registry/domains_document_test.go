@@ -1,6 +1,39 @@
 package registry
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
+
+func TestDocumentLibraryHistoryRoutesPreserveExplicitScopeAndContinuation(t *testing.T) {
+	for _, tc := range []struct{ action, path, tool string }{
+		{"get-library-history", "/api/document/library-history", "UteamupDocumentGetLibraryHistory"},
+		{"get-archived-library-history", "/api/document/library-history/archived", "UteamupDocumentGetArchivedLibraryHistory"},
+	} {
+		t.Run(tc.action, func(t *testing.T) {
+			action := findDocumentAction(t, tc.action)
+			args := map[string]any{"at": "2026-11-01T23:59:59+00:00", "cursor": "opaque_+/=", "pageSize": 25}
+			path, consumed := buildRESTPath(findDocumentDomain(t), *action, args)
+			if path != tc.path || action.HTTPMethod != "GET" || action.ToolName != tc.tool {
+				t.Fatalf("history route = %s %s (%s), want GET %s (%s)", action.HTTPMethod, path, action.ToolName, tc.path, tc.tool)
+			}
+			if args["cursor"] != "opaque_+/=" || args["at"] != "2026-11-01T23:59:59+00:00" {
+				t.Fatal("route construction consumed or changed the historical continuation")
+			}
+			if len(consumed) != 0 {
+				t.Fatal("historical filters must remain query parameters")
+			}
+			if len(action.Args) != 0 {
+				t.Fatal("history must derive tenant and actor from authentication")
+			}
+			for _, flag := range action.Flags {
+				if strings.Contains(strings.ToLower(flag.Name), "tenant") || strings.Contains(strings.ToLower(flag.Name), "userid") {
+					t.Fatalf("history exposes identity override %q", flag.Name)
+				}
+			}
+		})
+	}
+}
 
 // findDocumentDomain returns the registered `document` domain or fails the test.
 func findDocumentDomain(t *testing.T) *Domain {

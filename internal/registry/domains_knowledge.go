@@ -92,6 +92,16 @@ func init() {
 				{Name: "q", Description: "Case-insensitive text match over FileName + Title", Default: ""},
 				{Name: "limit", Description: "Max rows (1-10000)", Default: 5000, Type: "int"},
 			}},
+			Action{Name: "get-library-history", Description: "Read library membership and exact versions at an instant, with explicit unknown history", ToolName: "UteamupDocumentGetLibraryHistory", HTTPMethod: "GET", RESTPath: "library-history", Flags: []FlagDef{
+				{Name: "at", Description: "Historical ISO 8601 instant; omitted on the first page to use server time"},
+				{Name: "cursor", Description: "Opaque continuation from the previous page; preserves instant and scope"},
+				{Name: "page-size", QueryName: "pageSize", Description: "Current readable candidates per page (1-200)", Default: 100, Type: "int"},
+			}},
+			Action{Name: "get-archived-library-history", Description: "Read library history including currently archived documents; requires Document.View and Document.Archive.Read", ToolName: "UteamupDocumentGetArchivedLibraryHistory", HTTPMethod: "GET", RESTPath: "library-history/archived", Flags: []FlagDef{
+				{Name: "at", Description: "Historical ISO 8601 instant; omitted on the first page to use server time"},
+				{Name: "cursor", Description: "Opaque continuation from the previous page; preserves instant and archive scope"},
+				{Name: "page-size", QueryName: "pageSize", Description: "Current readable candidates per page (1-200)", Default: 100, Type: "int"},
+			}},
 		),
 	})
 	// journal domain moved to domains_journal.go (includes CRUD + by-code/by-asset actions)
