@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.24.0](https://github.com/UteamUP/cli/compare/5.23.0...5.24.0) (2026-11-12)
+
+
+### Features
+
+* expose document library history reads in CLI ([a914482](https://github.com/UteamUP/cli/commit/a91448230635e62dc375fb803a9e79a48fec6909))
+* expose work permit project link options ([1bde2f6](https://github.com/UteamUP/cli/commit/1bde2f6413afd47d53b8c1a7aaaab3d3aa53affa))
+
 ## [5.23.0](https://github.com/UteamUP/cli/compare/5.22.0...5.23.0) (2026-11-12)
 
 
