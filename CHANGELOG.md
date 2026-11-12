@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.23.0](https://github.com/UteamUP/cli/compare/5.22.0...5.23.0) (2026-11-12)
+
+
+### Features
+
+* **search:** expose global search across readable records ([4134c91](https://github.com/UteamUP/cli/commit/4134c914a632bed9f771a69ae2ac01f127149980))
+
 ## [5.22.0](https://github.com/UteamUP/cli/compare/5.21.0...5.22.0) (2026-11-10)
 
 
