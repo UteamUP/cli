@@ -189,11 +189,11 @@ func TestWorkPermitLinkAndPrerequisiteActionsAreRegistered(t *testing.T) {
 	}
 
 	if got := findFlag(findDomainAction(t, "workpermit", "link-add"), "type").AllowedValues; !reflect.DeepEqual(got,
-		[]string{"WorkOrder", "Asset", "Chemical", "KnowledgeArticle", "Tool", "Certificate"}) {
+		[]string{"WorkOrder", "Asset", "Chemical", "KnowledgeArticle", "Tool", "Certificate", "Project"}) {
 		t.Errorf("link-add --type allowed values = %v", got)
 	}
 	if got := findFlag(findDomainAction(t, "workpermit", "linked-to"), "type").AllowedValues; !reflect.DeepEqual(got,
-		[]string{"workorder", "asset", "chemical", "knowledgearticle", "tool", "certificate"}) {
+		[]string{"workorder", "asset", "chemical", "knowledgearticle", "tool", "certificate", "project"}) {
 		t.Errorf("linked-to --type allowed values = %v", got)
 	}
 }
@@ -217,6 +217,17 @@ func TestWorkPermitLinkAndPrerequisiteActionsSendTheBackendRoutes(t *testing.T) 
 			args:   []string{"link-add", "--permit", workPermitLinkPermitGUID, "--type", "KnowledgeArticle", "--target", workPermitLinkTargetGUID},
 			method: http.MethodPost, path: permitBase + "/links",
 			body: map[string]any{"linkType": "KnowledgeArticle", "targetGuid": workPermitLinkTargetGUID},
+		},
+		{
+			name:   "project-link-add",
+			args:   []string{"link-add", "--permit", workPermitLinkPermitGUID, "--type", "Project", "--target", workPermitLinkTargetGUID},
+			method: http.MethodPost, path: permitBase + "/links",
+			body: map[string]any{"linkType": "Project", "targetGuid": workPermitLinkTargetGUID},
+		},
+		{
+			name:   "project-linked-to",
+			args:   []string{"linked-to", "--type", "project", "--target", workPermitLinkTargetGUID},
+			method: http.MethodGet, path: "/api/workpermit/linked/project/" + workPermitLinkTargetGUID,
 		},
 		{
 			name:   "link-remove",

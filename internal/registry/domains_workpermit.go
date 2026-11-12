@@ -44,7 +44,7 @@ func init() {
 				HTTPMethod:  "POST",
 				Flags: []FlagDef{
 					workPermitFlag(),
-					{Name: "type", Description: "WorkOrder | Asset | Chemical | KnowledgeArticle | Tool | Certificate", Required: true, Type: "string", BodyName: "linkType", AllowedValues: workPermitLinkTypes},
+					{Name: "type", Description: "WorkOrder | Asset | Chemical | KnowledgeArticle | Tool | Certificate | Project", Required: true, Type: "string", BodyName: "linkType", AllowedValues: workPermitLinkTypes},
 					{Name: "target", Description: "GUID of the record to link", Required: true, Type: "non-empty-uuid", BodyName: "targetGuid"},
 				},
 			},
@@ -65,7 +65,7 @@ func init() {
 				RESTPath:    "linked/{linkType}/{targetGuid}",
 				HTTPMethod:  "GET",
 				Flags: []FlagDef{
-					{Name: "type", Description: "workorder | asset | chemical | knowledgearticle | tool | certificate", Required: true, Type: "string", BodyName: "linkType", AllowedValues: workPermitLinkedToTypes},
+					{Name: "type", Description: "workorder | asset | chemical | knowledgearticle | tool | certificate | project", Required: true, Type: "string", BodyName: "linkType", AllowedValues: workPermitLinkedToTypes},
 					{Name: "target", Description: "GUID of the linked record", Required: true, Type: "non-empty-uuid", BodyName: "targetGuid"},
 				},
 			},
@@ -151,8 +151,8 @@ func init() {
 // workPermitLinkTypes is the backend link-type enum sent in the link-add body;
 // workPermitLinkedToTypes is the same set as the lowercase linked/{linkType} route segment.
 var (
-	workPermitLinkTypes     = []string{"WorkOrder", "Asset", "Chemical", "KnowledgeArticle", "Tool", "Certificate"}
-	workPermitLinkedToTypes = []string{"workorder", "asset", "chemical", "knowledgearticle", "tool", "certificate"}
+	workPermitLinkTypes     = []string{"WorkOrder", "Asset", "Chemical", "KnowledgeArticle", "Tool", "Certificate", "Project"}
+	workPermitLinkedToTypes = []string{"workorder", "asset", "chemical", "knowledgearticle", "tool", "certificate", "project"}
 )
 
 // workPermitApproverSteps is the step enum sent in the approver-assign body;
