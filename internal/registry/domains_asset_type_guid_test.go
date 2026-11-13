@@ -15,7 +15,7 @@ func TestAssetTypeActionsMirrorGuidRESTContractsForBothAuthenticationMethods(t *
 		}
 	}
 
-	for _, name := range []string{"get", "update", "delete", "compatible-parts"} {
+	for _, name := range []string{"get", "update", "compatible-parts"} {
 		action := findDomainAction(t, "asset-type", name)
 		if len(action.Args) != 1 {
 			t.Fatalf("%s args = %d, want 1", name, len(action.Args))
@@ -31,6 +31,13 @@ func TestAssetTypeActionsMirrorGuidRESTContractsForBothAuthenticationMethods(t *
 		request := actionFlagByName(t, action, "request-file")
 		if !request.Required || !request.RootJSONObjectFile {
 			t.Errorf("%s request-file is miswired: %+v", name, request)
+		}
+	}
+
+	// Asset types are archived, never deleted: the CLI offers archive and restore and no delete.
+	for _, action := range domain.Actions {
+		if action.Name == "delete" || action.HTTPMethod == "DELETE" {
+			t.Errorf("asset-type must not offer a delete action: %+v", action.Name)
 		}
 	}
 

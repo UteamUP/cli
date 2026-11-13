@@ -38,12 +38,13 @@ func init() {
 			},
 			{
 				Name:        "catalog",
-				Description: "Get a wholesaler's catalog",
+				Description: "Get a wholesaler's catalog (archived items are hidden from buyers and listed only with --archived)",
 				ToolName:    "UteamupWholesalerCatalogGet",
 				HTTPMethod:  "GET",
 				RESTPath:    "{guid}/catalog",
 				Flags: []FlagDef{
 					{Name: "guid", Short: "g", Description: "Wholesaler GUID", Required: true, Type: "string"},
+					{Name: "archived", QueryName: "archived", Description: "List only the wholesaler's archived catalog items", Type: "bool"},
 				},
 			},
 			{

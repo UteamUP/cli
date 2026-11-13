@@ -1,6 +1,9 @@
 package registry
 
-import "testing"
+import (
+	"net/url"
+	"testing"
+)
 
 func findWholesalerDomain() *Domain {
 	for _, d := range DefaultRegistry.Domains() {
@@ -60,5 +63,17 @@ func TestWholesalerActionsWired(t *testing.T) {
 		if !hasGUID {
 			t.Errorf("action %q must take a required string --guid flag", name)
 		}
+	}
+}
+
+func TestWholesalerCatalogListsArchivedItemsOnlyWhenAsked(t *testing.T) {
+	const guid = "22222222-2222-4222-8222-222222222222"
+	requests, err := runRegisteredDomainCommand(t, "wholesaler", "catalog", "--guid", guid, "--archived")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(requests) != 1 || requests[0].path != "/api/wholesaler/"+guid+"/catalog" ||
+		url.Values(requests[0].query).Get("archived") != "true" {
+		t.Fatalf("catalog --archived must ask for archived items: %+v", requests)
 	}
 }

@@ -56,8 +56,8 @@ func init() {
 				Flags: permissionFlags,
 			},
 			{
-				Name:        "delete",
-				Description: "Delete a customer portal user by external GUID",
+				Name:        "withdraw-invitation",
+				Description: "Withdraw a portal invitation that was never accepted. An activated user is refused: deactivate it with update --is-active=false",
 				ToolName:    "UteamupCustomerPortalUserDelete",
 				HTTPMethod:  "DELETE",
 				RESTPath:    "by-guid/{userExternalGuid}",

@@ -28,7 +28,7 @@ func TestRBACCommandsUseTenantRESTForBothAuthenticationMethods(t *testing.T) {
 			{"asset-type", "GET", "/api/asset-type/" + guid, []string{"get", guid}},
 			{"asset-type", "POST", "/api/asset-type", []string{"create"}},
 			{"asset-type", "PUT", "/api/asset-type/" + guid, []string{"update", guid}},
-			{"asset-type", "DELETE", "/api/asset-type/" + guid, []string{"delete", guid}},
+			{"asset-type", "POST", "/api/asset-type/by-guid/" + guid + "/archive", []string{"archive", guid}},
 			{"asset-type", "POST", "/api/asset-type/attributes/" + guid + "/fill-existing", []string{"fill-existing-assets", guid, "--value", "12.5"}},
 			{"asset-type", "GET", "/api/asset-type/by-guid/" + guid + "/compatible-parts", []string{"compatible-parts", guid}},
 		} {

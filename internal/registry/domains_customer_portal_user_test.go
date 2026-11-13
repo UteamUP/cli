@@ -25,7 +25,7 @@ func customerPortalUserAction(t *testing.T, name string) (*Domain, Action) {
 func TestCustomerPortalUserRoutesAreGuidOnly(t *testing.T) {
 	t.Parallel()
 
-	for _, actionName := range []string{"get", "update", "delete"} {
+	for _, actionName := range []string{"get", "update", "withdraw-invitation"} {
 		domain, action := customerPortalUserAction(t, actionName)
 		path, consumed := buildRESTPath(domain, action, map[string]any{
 			"userExternalGuid": "user-guid",
@@ -76,6 +76,20 @@ func TestCustomerPortalUserDomainDoesNotExposeLogin(t *testing.T) {
 	for _, action := range domain.Actions {
 		if action.Name == "login" {
 			t.Fatal("disabled portal login must not be exposed by the CLI")
+		}
+	}
+}
+
+func TestCustomerPortalUserOffersWithdrawInvitationAndNoDelete(t *testing.T) {
+	t.Parallel()
+
+	domain, action := customerPortalUserAction(t, "withdraw-invitation")
+	if action.HTTPMethod != "DELETE" || action.ToolName != "UteamupCustomerPortalUserDelete" {
+		t.Fatalf("withdraw-invitation = %s %s", action.HTTPMethod, action.ToolName)
+	}
+	for _, candidate := range domain.Actions {
+		if candidate.Name == "delete" {
+			t.Fatal("activated portal users are deactivated, never deleted: no delete action")
 		}
 	}
 }

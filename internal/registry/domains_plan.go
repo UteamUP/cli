@@ -13,6 +13,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int"},
 					{Name: "page-size", Short: "s", Description: "Items per page", Default: 25, Type: "int"},
+					{Name: "include-archived", QueryName: "includeArchived", Description: "Also list archived plans (hidden from pickers and purchases)", Type: "bool"},
 				},
 			},
 			{

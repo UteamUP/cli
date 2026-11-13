@@ -48,16 +48,6 @@ func init() {
 				},
 			},
 			{
-				Name:        "delete",
-				RESTPath:    "{assetTypeGuid}",
-				HTTPMethod:  "DELETE",
-				Description: "Delete an asset type nothing uses. Refused while assets, subtypes or recorded readings use it: archive it instead",
-				ToolName:    "UteamupAssetTypeDelete",
-				Args: []ArgDef{
-					{Name: "assetTypeGuid", Description: "Asset type public GUID", Required: true, Type: "uuid"},
-				},
-			},
-			{
 				Name: "archive",
 				Description: "Archive a custom asset type: it leaves type lists and pickers, assets that use it keep it. " +
 					"Needs AssetType.Delete",
