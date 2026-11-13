@@ -26,6 +26,8 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 		t.Fatal("expected iot domain to be registered")
 	}
 	expected := map[string]string{
+		"alerts":                     "UteamupIoTAlertsList",
+		"alert-get":                  "UteamupIoTAlertGet",
 		"alert-workorder":            "UteamupIoTAlertWorkorderGet",
 		"alert-convert":              "UteamupIoTAlertConvertToWorkorder",
 		"network-client-links":       "UteamupIoTNetworkClientLinks",
@@ -305,6 +307,8 @@ func TestIoTCommandRoutesUseGuidOnlyPublicIdentities(t *testing.T) {
 func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 	domain := findDomain("iot")
 	expected := map[string]string{
+		"alerts":                     "/api/iot/alerts/summaries",
+		"alert-get":                  "/api/iot/alerts/summaries/alert-guid",
 		"alert-workorder":            "/api/iot/alerts/alert-guid/workorder",
 		"alert-convert":              "/api/iot/alerts/alert-guid/workorder",
 		"network-client-links":       "/api/iot/devices/gateway-guid/network-clients/links",

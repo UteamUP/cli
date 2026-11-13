@@ -45,6 +45,28 @@ func init() {
 				},
 			},
 			{
+				Name: "alerts", Description: "List IoT alerts (UPSense, Sentinel and other devices), newest first",
+				ToolName: "UteamupIoTAlertsList", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "GET", RESTPath: "alerts/summaries",
+				Flags: []FlagDef{
+					{Name: "from", Description: "Earliest triggered time, UTC ISO-8601", Type: "string"},
+					{Name: "to", Description: "Latest triggered time, UTC ISO-8601", Type: "string"},
+					{Name: "severity", Description: "Info, Warning, Error or Critical", Type: "string"},
+					{Name: "device-guid", QueryName: "deviceGuid", Description: "Device public GUID", Type: "uuid"},
+					{Name: "sensor-guid", QueryName: "sensorGuid", Description: "Sensor public GUID", Type: "uuid"},
+					{Name: "text", Description: "Text in the title or description, such as an IP address or event id", Type: "string"},
+					{Name: "status", Description: "open, acknowledged, resolved or all", Type: "string"},
+					{Name: "page", Description: "Page number", Type: "int", Default: 1},
+					{Name: "page-size", QueryName: "pageSize", Description: "Alerts per page, 1-100", Type: "int", Default: 25},
+				},
+			},
+			{
+				Name: "alert-get", Description: "Read one IoT alert with its full description",
+				ToolName: "UteamupIoTAlertGet", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "GET", RESTPath: "alerts/summaries/{alertGuid}",
+				Args: []ArgDef{{Name: "alertGuid", Description: "Alert public GUID", Required: true, Type: "uuid"}},
+			},
+			{
 				Name: "alert-workorder", Description: "Read the workorder linked to an IoT alert",
 				ToolName: "UteamupIoTAlertWorkorderGet", RESTBasePath: iotDeviceAPIPath,
 				HTTPMethod: "GET", RESTPath: "alerts/{alertGuid}/workorder",
