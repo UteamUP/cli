@@ -27,6 +27,8 @@ func TestKnowledgeDomainWired(t *testing.T) {
 	// Every action maps to the exact backend MCP tool method name.
 	expected := map[string]string{
 		"move-relative": "UteamupKnowledgeArticleMoveRelative",
+		"publish":       "UteamupKnowledgeArticlePublish",
+		"submit-review": "UteamupKnowledgeArticleSubmitReview",
 		"list":          "UteamupKnowledgeArticleList",
 		"get":           "UteamupKnowledgeArticleGet",
 		"create":        "UteamupKnowledgeArticleCreate",
@@ -224,4 +226,38 @@ func TestKnowledgeRelativeMoveRequiresExplicitPlacementConfirmation(t *testing.T
 		return
 	}
 	t.Fatal("relative move command is missing")
+}
+
+func TestKnowledgeStatusActionsPostToGuidRoutes(t *testing.T) {
+	d := findDomainByName(t, "knowledge")
+	want := map[string]string{
+		"publish":       "/api/knowledgearticle/by-guid/11111111-2222-3333-4444-555555555555/publish",
+		"submit-review": "/api/knowledgearticle/by-guid/11111111-2222-3333-4444-555555555555/submit-review",
+	}
+	for _, a := range d.Actions {
+		wantPath, ok := want[a.Name]
+		if !ok {
+			continue
+		}
+		delete(want, a.Name)
+		if a.HTTPMethod != "POST" || !a.RejectExtraArgs {
+			t.Errorf("%s must be a POST that rejects extra args, got method %q reject=%v", a.Name, a.HTTPMethod, a.RejectExtraArgs)
+		}
+		if len(a.Args) != 1 || a.Args[0].Name != "articleGuid" || !a.Args[0].Required || a.Args[0].Type != "non-empty-uuid" {
+			t.Errorf("%s must take exactly one required non-empty articleGuid, got %+v", a.Name, a.Args)
+		}
+		if len(a.Flags) != 0 {
+			t.Errorf("%s must not accept flags (no actor or status override), got %+v", a.Name, a.Flags)
+		}
+		path, consumed := buildRESTPath(d, a, map[string]any{"articleGuid": "11111111-2222-3333-4444-555555555555"})
+		if path != wantPath {
+			t.Errorf("%s REST path = %q, want %q", a.Name, path, wantPath)
+		}
+		if len(consumed) != 1 || consumed[0] != "articleGuid" {
+			t.Errorf("%s path expansion consumed %v, want [articleGuid]", a.Name, consumed)
+		}
+	}
+	if len(want) != 0 {
+		t.Errorf("missing knowledge status actions: %v", want)
+	}
 }
