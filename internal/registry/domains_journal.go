@@ -5,16 +5,17 @@ func init() {
 		Name:        "journal",
 		Aliases:     []string{"journals"},
 		Description: "Manage journal entries, import documents, and query by code / asset / workorder",
-		Actions: []Action{
+		Actions: append([]Action{
 			{
 				Name:        "list",
-				Description: "List journal entries with pagination",
+				Description: "List journal entries with pagination; archived entries are hidden unless you pass --archived",
 				ToolName:    "UteamupJournalList",
 				HTTPMethod:  "POST",
 				RESTPath:    "search",
 				Flags: []FlagDef{
 					{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int", BodyName: "pageNumber"},
 					{Name: "page-size", Short: "s", Description: "Items per page", Default: 20, Type: "int", BodyName: "pageSize"},
+					{Name: "archived", Description: "true lists only archived journal entries; omit it for the ones in use", Type: "bool", BodyName: "isArchived"},
 				},
 			},
 			{
@@ -46,7 +47,7 @@ func init() {
 			},
 			{
 				Name:        "delete",
-				Description: "Delete a journal entry by GUID",
+				Description: "Archive a journal entry by GUID (a journal entry is never deleted; same as archive). Needs Journal.Delete",
 				ToolName:    "UteamupJournalDelete",
 				HTTPMethod:  "DELETE",
 				RESTPath:    "by-guid/{journalGuid}",
@@ -212,6 +213,6 @@ func init() {
 					{Name: "limit", Short: "l", Description: "Max results (server caps at 20)", Default: 8, Type: "int", QueryName: "limit"},
 				},
 			},
-		},
+		}, recordArchiveActions("journal entry", "Journal.Delete")...),
 	})
 }

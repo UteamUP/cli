@@ -9,24 +9,33 @@ import (
 // recordArchiveDomains are the domains whose records are archived, never deleted, with the REST base path each
 // archive and restore route hangs off.
 var recordArchiveDomains = map[string]string{
-	"contact":      "/api/contact",
-	"checklist":    "/api/checklist",
-	"tasklist":     "/api/tasklist",
-	"tag":          "/api/tag",
-	"floorplan":    "/api/floorplan",
-	"failure-code": "/api/failurecode",
-	"warranty":     "/api/warranties",
+	"contact":         "/api/contact",
+	"checklist":       "/api/checklist",
+	"tasklist":        "/api/tasklist",
+	"tag":             "/api/tag",
+	"floorplan":       "/api/floorplan",
+	"failure-code":    "/api/failurecode",
+	"warranty":        "/api/warranties",
+	"upmate-agent":    "/api/upmateagent",
+	"automation":      "/api/automation",
+	"report":          "/api/report",
+	"report-template": "/api/reports/templates",
+	"knowledgespace":  "/api/knowledgespace",
+	"journal":         "/api/journal",
 }
 
-// recordListPaths is where each domain's list action is sent, which carries --archived.
+// recordListPaths is where each domain's GET list action is sent, which carries --archived.
 var recordListPaths = map[string]string{
-	"contact":      "/api/contact/paginated",
-	"checklist":    "/api/checklist",
-	"tasklist":     "/api/tasklist",
-	"tag":          "/api/tag",
-	"floorplan":    "/api/floorplan",
-	"failure-code": "/api/failurecode",
-	"warranty":     "/api/warranties",
+	"contact":         "/api/contact/paginated",
+	"checklist":       "/api/checklist",
+	"tasklist":        "/api/tasklist",
+	"tag":             "/api/tag",
+	"floorplan":       "/api/floorplan",
+	"failure-code":    "/api/failurecode",
+	"warranty":        "/api/warranties",
+	"upmate-agent":    "/api/upmateagent",
+	"report-template": "/api/reports/templates",
+	"knowledgespace":  "/api/knowledgespace",
 }
 
 func TestRecordArchiveAndRestorePostToTheGuidRoutes(t *testing.T) {
@@ -107,8 +116,33 @@ func TestRecordListsHideArchivedUnlessAsked(t *testing.T) {
 	}
 }
 
+func TestPostListsSendArchivedInTheBody(t *testing.T) {
+	bodyNames := map[string]string{"automation": "archived", "journal": "isArchived"}
+	for domainName, bodyName := range bodyNames {
+		flag := findFlag(findDomainAction(t, domainName, "list"), "archived")
+		if flag == nil || flag.BodyName != bodyName || flag.QueryName != "" || flag.Type != "bool" || flag.Default != nil {
+			t.Fatalf("%s list --archived = %+v, want an optional bool sent in the body as %s", domainName, flag, bodyName)
+		}
+	}
+}
+
+func TestDriverRestorePostsToTheGuidRoute(t *testing.T) {
+	const guid = "11111111-1111-4111-8111-111111111111"
+	request, err := runReferenceCommand(t, "driver", "restore", guid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if request.Method != http.MethodPost || request.URL.Path != "/api/driver/by-guid/"+guid+"/restore" {
+		t.Fatalf("driver restore = %s %s", request.Method, request.URL.Path)
+	}
+	if request, err := runReferenceCommand(t, "driver", "restore", "00000000-0000-0000-0000-000000000000"); err == nil || request != nil {
+		t.Fatalf("driver restore of the empty GUID must be refused before sending; err=%v", err)
+	}
+}
+
 func TestRecordDeleteIsDescribedAsArchive(t *testing.T) {
-	for _, domainName := range []string{"contact", "checklist", "tasklist", "tag", "failure-code", "warranty"} {
+	for _, domainName := range []string{"contact", "checklist", "tasklist", "tag", "failure-code", "warranty",
+		"report", "report-template", "knowledgespace", "journal", "driver"} {
 		action := findDomainAction(t, domainName, "delete")
 		if !strings.Contains(action.Description, "never deleted") || !strings.Contains(action.Description, "archive") {
 			t.Fatalf("%s delete must say it archives: %q", domainName, action.Description)

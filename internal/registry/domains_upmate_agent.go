@@ -7,7 +7,7 @@ func init() {
 	agentGuid := ArgDef{Name: "agentGuid", Description: "Agent GUID", Required: true, Type: "non-empty-uuid"}
 	runGuid := ArgDef{Name: "runGuid", Description: "Agent run GUID", Required: true, Type: "non-empty-uuid"}
 
-	Register(&Domain{Name: "upmate-agent", Aliases: []string{"upmate-agents", "agent", "agents"}, Description: "Manage UPMate agents and follow their runs", APIPath: "/api/upmateagent", Actions: []Action{
+	Register(&Domain{Name: "upmate-agent", Aliases: []string{"upmate-agents", "agent", "agents"}, Description: "Manage UPMate agents and follow their runs", APIPath: "/api/upmateagent", Actions: withRecordArchive([]Action{
 		{Name: "list", HTTPMethod: "GET", Description: "List UPMate agents with their budgets and today's spend", ToolName: "UteamupUpmateAgentsList", RESTPath: ""},
 		{Name: "get", HTTPMethod: "GET", Description: "Get one UPMate agent", ToolName: "UteamupUpmateAgentGet", RESTPath: "by-guid/{agentGuid}", Args: []ArgDef{agentGuid}},
 		{Name: "capabilities", HTTPMethod: "GET", Description: "Capabilities an agent may be granted", ToolName: "UteamupUpmateAgentCapabilities", RESTPath: "capabilities"},
@@ -24,5 +24,5 @@ func init() {
 		}},
 		{Name: "run-get", HTTPMethod: "GET", Description: "One agent run with its evidence and proposal", ToolName: "UteamupUpmateAgentRunGet", RESTPath: "runs/{runGuid}", Args: []ArgDef{runGuid}},
 		{Name: "run-cancel", HTTPMethod: "POST", Description: "Stop an agent run that is still working", ToolName: "UteamupUpmateAgentRunCancel", RESTPath: "runs/{runGuid}/cancel", Args: []ArgDef{runGuid}},
-	}})
+	}, "UPMate agent", "UPMate agents", "Automation.Update")})
 }

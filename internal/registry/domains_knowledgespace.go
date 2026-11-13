@@ -9,7 +9,7 @@ func init() {
 		Name:        "knowledgespace",
 		Aliases:     []string{"kbspace", "knowledge-space", "space"},
 		Description: "Manage knowledge spaces (containers for knowledge pages)",
-		Actions: []Action{
+		Actions: withRecordArchive([]Action{
 			{Name: "list", Description: "List the spaces visible to you (global system + your tenant)", ToolName: "UteamupKnowledgeSpaceList"},
 			{Name: "get", Description: "Get a space by GUID", ToolName: "UteamupKnowledgeSpaceGet",
 				Args: []ArgDef{{Name: "spaceGuid", Description: "Knowledge space GUID", Required: true, Type: "string"}}},
@@ -45,6 +45,6 @@ func init() {
 					{Name: "user-guid", BodyName: "userGuid", Description: "User GUID to add", Required: true, Type: "string"},
 					{Name: "role", BodyName: "role", Description: "Space role: 0=Viewer, 1=Editor, 2=Admin", Default: 0, Type: "int"},
 				}},
-		},
+		}, "knowledge space", "knowledge spaces", "KnowledgeSpace.Delete"),
 	})
 }

@@ -13,7 +13,7 @@ func init() {
 		Aliases:     []string{"rt", "report-templates"},
 		Description: "List, preview, export and delete saved report templates by GUID (needs Report.Export)",
 		APIPath:     "/api/reports/templates",
-		Actions: []Action{
+		Actions: withRecordArchive([]Action{
 			{
 				Name:              "list",
 				Description:       "List the saved report templates you can see",
@@ -69,6 +69,6 @@ func init() {
 				RESTPath:    "by-guid/{templateGuid}",
 				Args:        templateGuidArg,
 			},
-		},
+		}, "report template", "report templates", "Report.Export (and the template's owner or Report.All)"),
 	})
 }

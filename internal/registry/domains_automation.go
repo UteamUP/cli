@@ -8,12 +8,15 @@ func init() {
 	runGuid := ArgDef{Name: "runGuid", Description: "Run GUID", Required: true, Type: "non-empty-uuid"}
 	approvalGuid := ArgDef{Name: "requestGuid", Description: "Approval request GUID", Required: true, Type: "non-empty-uuid"}
 
-	Register(&Domain{Name: "automation", Aliases: []string{"automations", "workflow", "workflows"}, Description: "Manage automations, publish workflows and follow their runs", APIPath: "/api/automation", Actions: []Action{
-		{Name: "list", HTTPMethod: "POST", Description: "List automations (paged)", ToolName: "UteamupAutomationSearch", RESTPath: "search", Args: []ArgDef{
+	Register(&Domain{Name: "automation", Aliases: []string{"automations", "workflow", "workflows"}, Description: "Manage automations, publish workflows and follow their runs", APIPath: "/api/automation", Actions: append([]Action{
+		{Name: "list", HTTPMethod: "POST", Description: "List automations (paged); archived automations are hidden unless you pass --archived", ToolName: "UteamupAutomationSearch", RESTPath: "search", Args: []ArgDef{
 			{Name: "nameFilter", Description: "Partial, case-insensitive name filter", Type: "string"},
 			{Name: "pageNumber", Description: "Page number (default 1)", Type: "int"},
 			{Name: "pageSize", Description: "Page size (default 10, max 100)", Type: "int"},
-		}, Flags: []FlagDef{{Name: "project-guid", Description: "Only workflows owned by this project", Type: "non-empty-uuid"}}},
+		}, Flags: []FlagDef{
+			{Name: "project-guid", Description: "Only workflows owned by this project", Type: "non-empty-uuid"},
+			{Name: "archived", BodyName: "archived", Description: "true lists only archived automations; omit it for the ones in use", Type: "bool"},
+		}},
 		{Name: "get", HTTPMethod: "GET", Description: "Get one automation", ToolName: "UteamupAutomationGet", RESTPath: "by-guid/{externalGuid}", Args: []ArgDef{automationGuid}},
 		{Name: "workflow-get", HTTPMethod: "GET", Description: "Get the draft workflow graph", ToolName: "UteamupAutomationWorkflowGet", RESTPath: "by-guid/{externalGuid}/workflow", Args: []ArgDef{automationGuid}},
 		{Name: "workflow-save", HTTPMethod: "PUT", Description: "Save the draft workflow graph", ToolName: "UteamupAutomationWorkflowSave", RESTPath: "by-guid/{externalGuid}/workflow", Args: []ArgDef{
@@ -63,5 +66,5 @@ func init() {
 			{Name: "approve", Description: "true to approve, false to reject", Required: true, Type: "bool"},
 			{Name: "comment", Description: "Comment recorded with the decision", Type: "string"},
 		}},
-	}})
+	}, recordArchiveActions("automation", "Automation.Delete")...)})
 }

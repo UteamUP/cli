@@ -6,7 +6,7 @@ func init() {
 		Aliases:     []string{"reports"},
 		Description: "Manage completion reports by stable public GUID",
 		APIPath:     "/api/report",
-		Actions: []Action{
+		Actions: append([]Action{
 			{
 				Name:        "list",
 				Description: "List the completion reports you can see (GUID-only items)",
@@ -84,7 +84,7 @@ func init() {
 			},
 			{
 				Name:        "delete",
-				Description: "Delete a completion report by stable public GUID",
+				Description: "Archive a completion report by stable public GUID (a report is never deleted; same as archive). Needs Report.Delete",
 				ToolName:    "UteamupWorkReportDelete",
 				HTTPMethod:  "DELETE",
 				RESTPath:    "by-guid/{reportGuid}",
@@ -92,7 +92,7 @@ func init() {
 					{Name: "reportGuid", Description: "Stable public report GUID", Required: true, Type: "uuid"},
 				},
 				Flags: []FlagDef{
-					{Name: "override-reason", QueryName: "overrideReason", Description: "Why a finalized report is deleted (10-500 characters; needs Report.All)", Type: "string"},
+					{Name: "override-reason", QueryName: "overrideReason", Description: "Ignored; kept for old scripts (archiving needs no override)", Type: "string"},
 				},
 			},
 			{
@@ -175,7 +175,7 @@ func init() {
 					{Name: "reportGuid", Description: "Stable public report GUID", Required: true, Type: "uuid"},
 				},
 			},
-		},
+		}, recordArchiveActions("completion report", "Report.Delete")...),
 	})
 	Register(&Domain{
 		Name:        "report-analytics",

@@ -43,6 +43,8 @@ func TestReportTemplateRegistryIsGuidOnlyAndWired(t *testing.T) {
 		{"preview", "POST", "by-guid/{templateGuid}/preview", "UteamupReportTemplatePreview", false},
 		{"export", "GET", "by-guid/{templateGuid}/export", "UteamupReportTemplateExport", false},
 		{"delete", "DELETE", "by-guid/{templateGuid}", "UteamupReportTemplateDelete", false},
+		{"archive", "POST", "by-guid/{recordGuid}/archive", "ArchiveRecord", false},
+		{"restore", "POST", "by-guid/{recordGuid}/restore", "RestoreRecord", false},
 	}
 	if len(domain.Actions) != len(want) {
 		t.Fatalf("actions = %d, want %d (no create or update: authoring is web-only)", len(domain.Actions), len(want))
@@ -67,10 +69,14 @@ func TestReportTemplateRegistryIsGuidOnlyAndWired(t *testing.T) {
 			}
 		} else {
 			if len(action.Args) != 1 {
-				t.Fatalf("%s args = %+v, want exactly templateGuid", action.Name, action.Args)
+				t.Fatalf("%s args = %+v, want exactly one template GUID", action.Name, action.Args)
 			}
 			arg := action.Args[0]
-			if arg.Name != "templateGuid" || arg.Type != "non-empty-uuid" || !arg.Required {
+			wantArg := "templateGuid"
+			if expected.name == "archive" || expected.name == "restore" {
+				wantArg = "recordGuid"
+			}
+			if arg.Name != wantArg || arg.Type != "non-empty-uuid" || !arg.Required {
 				t.Errorf("%s arg = %+v, want required non-empty-uuid templateGuid", action.Name, arg)
 			}
 		}
@@ -90,7 +96,7 @@ func TestReportTemplateRegistryIsGuidOnlyAndWired(t *testing.T) {
 	for _, flag := range list.Flags {
 		listQueries[flag.Name] = flag.QueryName
 	}
-	wantQueries := map[string]string{"scope": "scope", "search": "search", "page": "page", "page-size": "pageSize"}
+	wantQueries := map[string]string{"scope": "scope", "search": "search", "page": "page", "page-size": "pageSize", "archived": "archived"}
 	if !reflect.DeepEqual(listQueries, wantQueries) {
 		t.Errorf("list flags = %v, want %v", listQueries, wantQueries)
 	}
