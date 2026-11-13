@@ -21,13 +21,13 @@ func personalSkillActions() []Action {
 
 func personalCertificateActions() []Action {
 	return []Action{
-		{Name: "update-mine", Description: "Edit your certificate details; catalog and skill stay unchanged, approved edits become Pending",
+		{Name: "update-mine", Description: "Edit your qualification (certificate) details; catalog and skill stay unchanged, approved edits become Pending",
 			ToolName: "UteamupMyCertificateUpdate", RESTBasePath: "/api/certificate", RESTPath: "user-certificate/by-guid/{userCertificateGuid}/details", HTTPMethod: "PUT",
-			Args:  []ArgDef{{Name: "userCertificateGuid", Description: "Held certificate public GUID", Required: true, Type: "non-empty-uuid"}},
+			Args:  []ArgDef{{Name: "userCertificateGuid", Description: "Held qualification (certificate) public GUID", Required: true, Type: "non-empty-uuid"}},
 			Flags: []FlagDef{qualificationRequestFile()}},
-		{Name: "renew-with-proof", Description: "Renew an Approved held certificate with a public proof GUID; another holder requires Certificate.ViewUserCertificates; do not replay an unknown result",
+		{Name: "renew-with-proof", Description: "Renew an Approved held qualification (certificate) with a public proof GUID; another holder requires Certificate.ViewUserCertificates; do not replay an unknown result",
 			ToolName: "UteamupMyCertificateRenew", RESTBasePath: "/api/certificate", RESTPath: "user-certificate/by-guid/{userCertificateGuid}/renew-with-proof", HTTPMethod: "POST",
-			Args:  []ArgDef{{Name: "userCertificateGuid", Description: "Held certificate public GUID", Required: true, Type: "non-empty-uuid"}},
+			Args:  []ArgDef{{Name: "userCertificateGuid", Description: "Held qualification (certificate) public GUID", Required: true, Type: "non-empty-uuid"}},
 			Flags: []FlagDef{qualificationRequestFile()}},
 	}
 }

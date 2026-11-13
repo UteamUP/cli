@@ -95,7 +95,7 @@ func init() {
 			},
 			{
 				Name:         "available-technicians",
-				Description:  "Get available technicians for a date, optionally filtered by skill, certificate, or team",
+				Description:  "Get available technicians for a date, optionally filtered by skill, qualification, or team",
 				ToolName:     "UteamupWorkforceGetAvailableTechnicians",
 				HTTPMethod:   "GET",
 				RESTBasePath: "/api/schedule",
@@ -103,7 +103,7 @@ func init() {
 				Flags: []FlagDef{
 					{Name: "date", Description: "Date to check availability for (YYYY-MM-DD or ISO8601)", Required: true, Type: "string"},
 					{Name: "required-skill-guid", BodyName: "requiredSkillGuids", Description: "Optional skill GUID to filter technicians by capability (single value)", Type: "string"},
-					{Name: "required-certificate-guid", BodyName: "requiredCertificateGuids", Description: "Optional certificate GUID to filter technicians by capability (single value)", Type: "string"},
+					{Name: "required-certificate-guid", BodyName: "requiredCertificateGuids", Description: "Optional qualification (certificate) GUID to filter technicians by capability (single value)", Type: "string"},
 					{Name: "team-guid", Description: "Optional team GUID to restrict availability checks", Type: "string"},
 				},
 			},
