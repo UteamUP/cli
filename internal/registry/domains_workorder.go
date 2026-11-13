@@ -32,6 +32,12 @@ func init() {
 				Flags: []FlagDef{{Name: "items-json", BodyName: "items", Description: "JSON array of 1-100 distinct assetGuid/snapshotGuid pairs you reviewed; any stale pair rejects the batch", Required: true, Type: "string", JSONFile: true}},
 			},
 			{
+				Name: "similar", Description: "Completed work orders like this one and what fixed them, from your own history; uses no AI credits",
+				ToolName: "UteamupWorkorderSimilarJobs", HTTPMethod: "GET", RESTPath: "by-guid/{workorderGuid}/similar",
+				Args:  []ArgDef{{Name: "workorderGuid", Description: "Workorder public GUID", Required: true, Type: "non-empty-uuid"}},
+				Flags: []FlagDef{{Name: "take", Description: "How many similar work orders to return (1-10)", Default: 5, Type: "int"}},
+			},
+			{
 				Name:        "withdraw-request",
 				Description: "Withdraw your own never-started request; sign in as its requester",
 				ToolName:    "UteamupWorkorderWithdrawRequest",
