@@ -249,7 +249,7 @@ func init() {
 		Aliases:     []string{"warranties"},
 		APIPath:     "/api/warranties",
 		Description: "Manage warranties",
-		Actions: append(crudActions("Warranty"), Action{
+		Actions: append(withRecordArchive(crudActions("Warranty"), "warranty", "warranties", "Warranty.Delete"), Action{
 			Name:        "list-for-entity",
 			Description: "List warranties linked to an inventory entity public GUID",
 			ToolName:    "UteamupWarrantyListForEntity",

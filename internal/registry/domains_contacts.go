@@ -13,7 +13,7 @@ func init() {
 		Name:        "contact",
 		Aliases:     []string{"contacts"},
 		Description: "Manage contacts",
-		Actions: append(contactActions(),
+		Actions: append(withRecordArchive(contactActions(), "contact", "contacts", "Contact.Delete"),
 			Action{Name: "search", Description: "Search contacts", ToolName: "UteamupContactSearch", Args: queryArg(), Flags: paginationFlags()},
 			Action{
 				Name:         "ice-assignments",

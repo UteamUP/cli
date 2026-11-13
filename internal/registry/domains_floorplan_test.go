@@ -12,7 +12,7 @@ func TestFloorplanReadsUsePublicGuidArguments(t *testing.T) {
 	}
 	for _, action := range domain.Actions {
 		for _, arg := range action.Args {
-			if arg.Type != "uuid" || !arg.Required {
+			if (arg.Type != "uuid" && arg.Type != "non-empty-uuid") || !arg.Required {
 				t.Fatalf("%s argument %s is not a required GUID", action.Name, arg.Name)
 			}
 		}
