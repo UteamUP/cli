@@ -135,7 +135,10 @@ func TestAssetCalibrationCreateUsesGuidBodyContractWithoutIntegerSelectors(t *te
 	if len(action.Args) != 0 {
 		t.Fatalf("create unexpectedly accepts a positional identifier: %+v", action.Args)
 	}
-	if len(action.Flags) != 1 || action.Flags[0].Name != "from-json" {
-		t.Fatalf("create must accept only the backend request JSON: %+v", action.Flags)
-	}
+	assertSubjectGuidFlags(t, action)
+}
+
+func TestAssetCalibrationListForToolUsesToolGuidRoute(t *testing.T) {
+	domain, action := findAssetCalibrationAction(t, "list-for-tool")
+	assertListForToolAction(t, domain, action, "/api/assetcalibration", "UteamupAssetcalibrationGetByToolGuid")
 }

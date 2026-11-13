@@ -34,6 +34,16 @@ func init() {
 				},
 			},
 			{
+				Name:        "list-for-tool",
+				Description: "List certifications for a tool by public GUID",
+				ToolName:    "UteamupAssetcertificationGetByToolGuid",
+				HTTPMethod:  "GET",
+				RESTPath:    "tool/by-guid/{toolGuid}",
+				Args: []ArgDef{
+					{Name: "toolGuid", Description: "Public tool GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
 				Name:        "get",
 				Description: "Get a certification by public GUID",
 				ToolName:    "UteamupAssetcertificationGetByGuid",
@@ -45,10 +55,14 @@ func init() {
 			},
 			{
 				Name:        "create",
-				Description: "Create a certification",
+				Description: "Create a certification for an asset (--asset-guid) or a tool (--tool-guid); set exactly one",
 				ToolName:    "UteamupAssetcertificationCreate",
 				HTTPMethod:  "POST",
-				Flags:       []FlagDef{jsonFlag()},
+				Flags: []FlagDef{
+					jsonFlag(),
+					{Name: "asset-guid", Description: "Public asset GUID (exactly one of --asset-guid and --tool-guid)", Type: "uuid", BodyName: "assetGuid"},
+					{Name: "tool-guid", Description: "Public tool GUID (exactly one of --asset-guid and --tool-guid)", Type: "uuid", BodyName: "toolGuid"},
+				},
 			},
 			{
 				Name:        "update",
