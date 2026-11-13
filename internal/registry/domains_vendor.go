@@ -5,7 +5,8 @@ func init() {
 		Name:        "vendor",
 		Aliases:     []string{"vendors"},
 		Description: "Manage vendors",
-		Actions: append(append(crudActions("Vendor"),
+		// Vendors are archive-only (2026-11-13): no delete action; archive marks the vendor inactive.
+		Actions: append(append(crudActions("Vendor")[:4],
 			Action{Name: "get-by-guid", Description: "Get a vendor by public GUID", ToolName: "UteamupVendorGet", HTTPMethod: "GET", RESTPath: "by-guid/{vendorGuid}", Args: []ArgDef{{Name: "vendorGuid", Description: "Vendor public GUID", Required: true, Type: "non-empty-uuid"}}},
 			Action{Name: "search", Description: "Search vendors", ToolName: "UteamupVendorSearch", Args: queryArg(), Flags: paginationFlags()},
 			// --- Reseller catalog: vendor's part catalog (stock-reseller-catalog §6) ---

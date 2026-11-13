@@ -3,9 +3,7 @@ package registry
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"regexp"
 	"strings"
-	"time"
 )
 
 func init() {
@@ -125,6 +123,7 @@ func validateContactLogicalParents(cmd *cobra.Command, action Action) error {
 
 // Customer mutations preserve legacy responses unless original receipt metadata
 // is supplied. Never generate replacement operation keys or revisions on retry.
+// Customers are archive-only (2026-11-13): there is no delete command, use archive.
 func customerActions() []Action {
 	identity := []ArgDef{{Name: "customerGuid", Description: "Customer public GUID", Required: true, Type: "non-empty-uuid"}}
 	fields := jsonFlag()
@@ -136,46 +135,8 @@ func customerActions() []Action {
 		{Name: "get", Description: "Get a customer by public GUID", ToolName: "UteamupCustomerGet", HTTPMethod: "GET", RESTPath: "{customerGuid}", Args: identity},
 		{Name: "create", Description: "Create a customer from reviewed JSON", ToolName: "UteamupCustomerCreate", HTTPMethod: "POST", Flags: []FlagDef{fields, confirmation}},
 		{Name: "update", Description: "Update a customer by public GUID", ToolName: "UteamupCustomerUpdate", HTTPMethod: "PUT", RESTPath: "{customerGuid}", Args: identity, Flags: []FlagDef{fields, confirmation}},
-		{Name: "delete", Description: "Delete a customer after explicit confirmation", ToolName: "UteamupCustomerDelete", HTTPMethod: "DELETE", RESTPath: "{customerGuid}", Args: identity, Flags: []FlagDef{confirmation,
-			{Name: "idempotency-key", Description: "Original nonempty operation GUID; supply all three mutation metadata flags together", Type: "non-empty-uuid", QueryName: "idempotencyKey"},
-			{Name: "expected-updated-at", Description: "Exact canonical reviewed UTC revision (seconds or up to seven fractional digits, without trailing zeros); retain unchanged on retry", Type: "string", QueryName: "expectedUpdatedAt"},
-			{Name: "mutation-outcome-version", Description: "Minimal outcome version (1); requires original operation and reviewed revision", Type: "int", QueryName: "mutationOutcomeVersion"},
-		}},
 		{Name: "search", Description: "Search visible customer names", ToolName: "UteamupCustomerSearch", HTTPMethod: "GET", UseDomainBasePath: true, Args: []ArgDef{{Name: "query", QueryName: "nameFilter", Description: "Customer name filter", Required: true, Type: "string"}}, Flags: paginationFlags()},
 	}, unitArchiveActions("customerGuid", "UteamupCustomer",
 		"Archive a customer: it leaves lists, searches, pickers and mentions and stays in every agreement, invoice and work order that names it. Use this for a customer with history. Needs Customer.Delete",
 		"Restore an archived customer so it shows in lists, searches and pickers again. Needs Customer.Delete")...)
-}
-
-var customerRevisionPattern = regexp.MustCompile(`^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,7})?Z$`)
-
-func validateCustomerDeleteMetadata(cmd *cobra.Command, action Action) error {
-	if action.ToolName != "UteamupCustomerDelete" {
-		return nil
-	}
-	flags := []string{"idempotency-key", "expected-updated-at", "mutation-outcome-version"}
-	supplied := 0
-	for _, name := range flags {
-		if cmd.Flags().Changed(name) {
-			supplied++
-		}
-	}
-	if supplied == 0 {
-		return nil
-	}
-	if supplied != len(flags) {
-		return fmt.Errorf("Customer delete requires all three original mutation metadata flags together")
-	}
-	key, _ := cmd.Flags().GetString("idempotency-key")
-	version, _ := cmd.Flags().GetInt("mutation-outcome-version")
-	if !uuidValuePattern.MatchString(key) || strings.EqualFold(key, emptyUUIDValue) || version != 1 {
-		return fmt.Errorf("Customer delete requires a nonempty operation GUID and mutation outcome version 1")
-	}
-	revision, _ := cmd.Flags().GetString("expected-updated-at")
-	const layout = "2006-01-02T15:04:05.9999999Z"
-	parsed, err := time.Parse(layout, revision)
-	if !customerRevisionPattern.MatchString(revision) || err != nil || parsed.Year() < 1 || parsed.Format(layout) != revision || parsed.IsZero() {
-		return fmt.Errorf("Customer delete requires the exact canonical original UTC revision, with at most seven fractional digits and no trailing zeros")
-	}
-	return nil
 }
