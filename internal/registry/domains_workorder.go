@@ -38,6 +38,15 @@ func init() {
 				Flags: []FlagDef{{Name: "take", Description: "How many similar work orders to return (1-10)", Default: 5, Type: "int"}},
 			},
 			{
+				Name: "children", Description: "One page of a work order's child work orders, open and in-progress first, with total and done counts",
+				ToolName: "UteamupWorkorderChildren", HTTPMethod: "GET", RESTPath: "by-guid/{workorderGuid}/children",
+				Args: []ArgDef{{Name: "workorderGuid", Description: "Parent work order GUID", Required: true, Type: "non-empty-uuid"}},
+				Flags: []FlagDef{
+					{Name: "skip", Description: "Children to skip (paging)", Default: 0, Type: "int"},
+					{Name: "take", Description: "Children per page (0-50; 0 returns only the counts)", Default: 20, Type: "int"},
+				},
+			},
+			{
 				Name:        "withdraw-request",
 				Description: "Withdraw your own never-started request; sign in as its requester",
 				ToolName:    "UteamupWorkorderWithdrawRequest",
@@ -147,6 +156,9 @@ func init() {
 					{Name: "project-stage-guid", BodyName: "projectStageGuid", Description: "Lifecycle stage GUID in the selected project", Type: "uuid"},
 					{Name: "project-output-item-guid", BodyName: "projectOutputItemGuid", Description: "Responsible deliverable GUID in the selected project", Type: "uuid"},
 					{Name: "asset-group-guid", BodyName: "assetGroupGuids", Description: "Optional asset group GUID, repeatable — every active member is linked to the workorder as an asset carrying the group as its origin", Type: "stringSlice"},
+					{Name: "parent-workorder-guid", BodyName: "parentWorkorderGuid", Description: "Optional parent work order GUID in the same tenant", Type: "uuid"},
+					{Name: "site-latitude", BodyName: "siteLatitude", Description: "Job-site latitude (-90 to 90) when pinned on a map; send with --site-longitude", Type: "float"},
+					{Name: "site-longitude", BodyName: "siteLongitude", Description: "Job-site longitude (-180 to 180); send with --site-latitude", Type: "float"},
 				},
 			},
 			{
@@ -194,6 +206,9 @@ func init() {
 					{Name: "project-guid", BodyName: "projectGuid", Description: "Owning project GUID; an empty GUID clears the link", Type: "uuid"},
 					{Name: "project-stage-guid", BodyName: "projectStageGuid", Description: "Lifecycle stage GUID; an empty GUID clears the link", Type: "uuid"},
 					{Name: "project-output-item-guid", BodyName: "projectOutputItemGuid", Description: "Responsible deliverable GUID; an empty GUID explicitly clears it", Type: "uuid"},
+					{Name: "parent-workorder-guid", BodyName: "parentWorkorderGuid", Description: "Parent work order GUID; an empty GUID clears it (self-parents and loops are refused)", Type: "uuid"},
+					{Name: "site-latitude", BodyName: "siteLatitude", Description: "Job-site latitude (-90 to 90); send with --site-longitude, or null both through --from-json to remove the pin", Type: "float"},
+					{Name: "site-longitude", BodyName: "siteLongitude", Description: "Job-site longitude (-180 to 180); send with --site-latitude", Type: "float"},
 				},
 			},
 			{
