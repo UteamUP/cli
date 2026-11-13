@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.25.0](https://github.com/UteamUP/cli/compare/5.24.0...5.25.0) (2026-11-13)
+
+
+### Features
+
+* **registry:** add archive and restore actions for record-based domains ([f917dd3](https://github.com/UteamUP/cli/commit/f917dd3912586d23b38473474fd48db26e37a07b))
+
+
+### Tests
+
+* **registry:** assert tag archive and restore registration ([93f8bd2](https://github.com/UteamUP/cli/commit/93f8bd2824fd4c4d9716ccb7849116621120f969))
+
 ## [5.24.0](https://github.com/UteamUP/cli/compare/5.23.0...5.24.0) (2026-11-12)
 
 
