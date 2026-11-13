@@ -36,6 +36,8 @@ func TestKnowledgeSpaceDomainWired(t *testing.T) {
 		"usage":        "UteamupKnowledgeSpaceUsage",
 		"list-members": "UteamupKnowledgeSpaceListMembers",
 		"add-member":   "UteamupKnowledgeSpaceAddMember",
+		"archive":      "ArchiveRecord",
+		"restore":      "RestoreRecord",
 	}
 	got := map[string]string{}
 	for _, a := range d.Actions {

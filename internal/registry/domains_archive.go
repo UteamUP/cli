@@ -41,7 +41,7 @@ func init() {
 				RESTPath:        "{kind}/{recordGuid}",
 				RejectExtraArgs: true,
 				Args: []ArgDef{
-					{Name: "kind", Description: "The record kind: " + strings.Join(archiveKinds, ", "), Required: true, AllowedValues: archiveKinds},
+					{Name: "kind", Description: "The record kind: " + strings.Join(archiveKinds, ", "), Required: true, Type: "string", AllowedValues: archiveKinds},
 					{Name: "recordGuid", Description: "GUID of the archived record", Required: true, Type: "non-empty-uuid"},
 				},
 			},
