@@ -82,6 +82,10 @@ func init() {
 			{Name: "get", Description: "Current weather for one location by GUID", ToolName: "UteamupWeatherGetForLocation", HTTPMethod: "GET", RESTPath: "locations/{locationGuid}", Args: []ArgDef{
 				{Name: "locationGuid", Description: "Public location GUID", Required: true, Type: "non-empty-uuid"},
 			}},
+			{Name: "coordinates", Description: "Current weather at a coordinate that is not a location (rounded to about 1 km)", ToolName: "UteamupWeatherGetForCoordinates", HTTPMethod: "GET", RESTPath: "coordinates", Flags: []FlagDef{
+				{Name: "latitude", Description: "Latitude in decimal degrees, -90 to 90", Type: "float", Required: true, QueryName: "latitude"},
+				{Name: "longitude", Description: "Longitude in decimal degrees, -180 to 180", Type: "float", Required: true, QueryName: "longitude"},
+			}},
 			{Name: "alerts", Description: "Active, unacknowledged severe weather alerts", ToolName: "UteamupWeatherGetAlerts", HTTPMethod: "GET", RESTPath: "alerts"},
 			{Name: "windows", Description: "Next 72 hours of work windows for sites with weather limits (MET Norway, CC BY 4.0)", ToolName: "UteamupWeatherSiteWindows", HTTPMethod: "GET", RESTPath: "windows", Flags: []FlagDef{
 				{Name: "location-guid", Description: "Evaluate one location by public GUID", Type: "non-empty-uuid", QueryName: "locationGuid"},

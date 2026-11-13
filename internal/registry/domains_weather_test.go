@@ -15,6 +15,7 @@ func TestWeatherDomainResolvesToRealControllerRoutes(t *testing.T) {
 	}{
 		{"list", "UteamupWeatherGetAll", nil, "/api/weather/locations"},
 		{"get", "UteamupWeatherGetForLocation", map[string]any{"locationGuid": locationGUID}, "/api/weather/locations/" + locationGUID},
+		{"coordinates", "UteamupWeatherGetForCoordinates", nil, "/api/weather/coordinates"},
 		{"alerts", "UteamupWeatherGetAlerts", nil, "/api/weather/alerts"},
 		{"windows", "UteamupWeatherSiteWindows", nil, "/api/weather/windows"},
 	}
@@ -89,5 +90,29 @@ func TestWeatherWindowsSendsTheLocationGuidAsAQueryParameter(t *testing.T) {
 	}
 	if got := appendQueryParameters(path, nil); got != "/api/weather/windows" {
 		t.Fatalf("windows URL without a location = %q, want /api/weather/windows", got)
+	}
+}
+
+func TestWeatherCoordinatesSendsRequiredFloatQueryParameters(t *testing.T) {
+	t.Parallel()
+	domain := findDomain("weather")
+	action := findAction(domain, "coordinates")
+	if action == nil || len(action.Flags) != 2 || len(action.Args) != 0 {
+		t.Fatal("weather coordinates must declare exactly two flags and no positional arguments")
+	}
+	for i, want := range []string{"latitude", "longitude"} {
+		flag := action.Flags[i]
+		if flag.Name != want || flag.QueryName != want || flag.Type != "float" || !flag.Required {
+			t.Fatalf("weather coordinates flag %d = %+v, want required float --%s as ?%s", i, flag, want, want)
+		}
+		if flag.Default != nil {
+			t.Fatalf("--%s must have no default: a 0 would silently ask for weather in the Gulf of Guinea", want)
+		}
+	}
+
+	path, _ := buildRESTPath(domain, *action, map[string]any{})
+	got := appendQueryParameters(path, map[string]any{"latitude": 64.15, "longitude": -21.94})
+	if want := "/api/weather/coordinates?latitude=64.15&longitude=-21.94"; got != want {
+		t.Fatalf("coordinates URL = %q, want %q", got, want)
 	}
 }
