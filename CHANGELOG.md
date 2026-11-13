@@ -5,6 +5,19 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.26.0](https://github.com/UteamUP/cli/compare/5.25.0...5.26.0) (2026-11-13)
+
+
+### Features
+
+* **archive:** list and read archived records from Tenant Management ([33d3db8](https://github.com/UteamUP/cli/commit/33d3db80b00d3dc5304124114995b11a1dc1275d))
+* **registry:** add archive and restore to agents, reports, automations and spaces ([25fae05](https://github.com/UteamUP/cli/commit/25fae055408b31ff0689527b790bcef41f3ac8d9))
+
+
+### Bug Fixes
+
+* **registry:** type the archive kind argument and extend the knowledge space guard ([7defcba](https://github.com/UteamUP/cli/commit/7defcbae75e94510248f65845b843d2fdef5a454))
+
 ## [5.25.0](https://github.com/UteamUP/cli/compare/5.24.0...5.25.0) (2026-11-13)
 
 
