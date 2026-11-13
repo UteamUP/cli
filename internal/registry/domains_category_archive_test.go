@@ -93,10 +93,20 @@ func TestCategoryListShowsArchivedOnlyWhenAsked(t *testing.T) {
 	}
 }
 
-func TestOnlyCategoriesGainArchive(t *testing.T) {
+func TestTagArchiveAndRestoreAreRegistered(t *testing.T) {
+	// Tags moved from delete-only to record-archive (backend TagController by-guid archive/restore),
+	// so the old "only categories gain archive" guard now asserts the registration instead of banning it.
+	actions := map[string]Action{}
 	for _, action := range findDomainByName(t, "tag").Actions {
-		if action.Name == "archive" || action.Name == "restore" {
-			t.Fatalf("tag has no archive, but registers %q", action.Name)
+		actions[action.Name] = action
+	}
+	for _, name := range []string{"archive", "restore"} {
+		action, ok := actions[name]
+		if !ok {
+			t.Fatalf("tag must register %s", name)
+		}
+		if action.ToolName != "ArchiveRecord" && action.ToolName != "RestoreRecord" {
+			t.Fatalf("tag %s must use the shared record-archive tool, got %q", name, action.ToolName)
 		}
 	}
 }
