@@ -22,6 +22,7 @@ var recordArchiveDomains = map[string]string{
 	"report-template": "/api/reports/templates",
 	"knowledgespace":  "/api/knowledgespace",
 	"journal":         "/api/journal",
+	"root-cause":      "/api/rootcauseanalysis",
 }
 
 // recordListPaths is where each domain's GET list action is sent, which carries --archived.
@@ -36,6 +37,7 @@ var recordListPaths = map[string]string{
 	"upmate-agent":    "/api/upmateagent",
 	"report-template": "/api/reports/templates",
 	"knowledgespace":  "/api/knowledgespace",
+	"root-cause":      "/api/rootcauseanalysis",
 }
 
 func TestRecordArchiveAndRestorePostToTheGuidRoutes(t *testing.T) {

@@ -6,7 +6,7 @@ func init() {
 		Aliases:     []string{"rca"},
 		Description: "Manage GUID-first root cause analyses",
 		APIPath:     "/api/rootcauseanalysis",
-		Actions: []Action{
+		Actions: withRecordArchive([]Action{
 			{Name: "list", Description: "List root cause analyses", ToolName: "UteamupRcaList"},
 			{
 				Name: "get", Description: "Get a root cause analysis by public GUID",
@@ -45,7 +45,7 @@ func init() {
 				Args: []ArgDef{rcaGUIDArg()}, Flags: []FlagDef{jsonFlag()},
 			},
 			{
-				Name: "delete", Description: "Delete a root cause analysis by public GUID",
+				Name: "delete", Description: "Archive a root cause analysis by public GUID (never deleted; same as archive)",
 				ToolName: "UteamupRcaDelete", RESTPath: "{rcaGuid}", Args: []ArgDef{rcaGUIDArg()},
 			},
 			{
@@ -94,7 +94,7 @@ func init() {
 			rcaLinkMutation("workorder-unlink", "DELETE", "workorders", "workOrderGuid", false),
 			rcaLinkMutation("knowledge-link", "POST", "knowledgearticles", "", true),
 			rcaLinkMutation("knowledge-unlink", "DELETE", "knowledgearticles", "articleGuid", false),
-		},
+		}, "root cause analysis", "root cause analyses", "RootCauseAnalysis.Delete"),
 	})
 }
 

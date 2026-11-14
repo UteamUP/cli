@@ -6,7 +6,7 @@ import "strings"
 var archiveKinds = []string{
 	"contact", "checklist", "tasklist", "tag", "floorplan", "failurecode", "warranty", "workforcegroup", "holiday",
 	"asset", "part", "tool", "chemical", "customer", "team", "location", "vendor", "contract", "project", "document",
-	"category", "assettype",
+	"category", "assettype", "rootcauseanalysis",
 }
 
 // The company archive, read only: every archived record the caller may read, who archived it and when, and what
