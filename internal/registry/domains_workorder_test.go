@@ -525,3 +525,20 @@ func TestWorkorderCorrectionFlagsReachTheExistingRESTBody(t *testing.T) {
 		t.Fatalf("correction body = %v, want %v", requests[0].body, want)
 	}
 }
+
+// GET /api/workorder reads the search from nameFilter (or search). The flag was sent as
+// searchTerm, which no controller parameter binds, so every `ut workorder list
+// --search-term X` silently returned the unfiltered first page.
+func TestWorkorderListSearchTermBindsToNameFilter(t *testing.T) {
+	action := findDomainAction(t, "workorder", "list")
+	flag := findFlag(action, "search-term")
+	if flag == nil {
+		t.Fatal("list must expose the --search-term filter")
+	}
+	if flag.BodyName != "nameFilter" || flag.Type != "string" || flag.Required || flag.Default != nil {
+		t.Errorf("--search-term = %+v, want optional string sent as nameFilter with no default", *flag)
+	}
+	if action.HTTPMethod != "" || action.RESTPath != "" {
+		t.Errorf("list route = method %q path %q, want the plain GET collection route", action.HTTPMethod, action.RESTPath)
+	}
+}
