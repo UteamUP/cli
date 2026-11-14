@@ -5,6 +5,35 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0](https://github.com/UteamUP/cli/compare/5.26.0...6.0.0) (2026-11-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* **registry:** ut customer delete and ut vendor delete are removed.
+
+### Features
+
+* **archive:** plan, catalog and portal invitation commands follow archive-only ([deb6f39](https://github.com/UteamUP/cli/commit/deb6f39a7170547ef6e2eac1ec0299c16be1206d))
+* **compliance:** certify and calibrate tools from the CLI ([88608bd](https://github.com/UteamUP/cli/commit/88608bd7368a0676929a1a2122adc45b9e3de04b))
+* **iot:** add alerts and alert-get commands ([44d2212](https://github.com/UteamUP/cli/commit/44d2212a109ba4ada62ca301b9511e02ee5ea715))
+* **knowledge:** add knowledge publish and submit-review commands ([314b459](https://github.com/UteamUP/cli/commit/314b4597afe77fe367838a79ccae9a8a8da4b9dd))
+* **registry:** vendors and customers are archive-only ([6fe4c59](https://github.com/UteamUP/cli/commit/6fe4c59170d34cf5e81b4acef5a9f2cbdad5f1f6))
+* **search:** change-date, page and scope for ut search ([793ffec](https://github.com/UteamUP/cli/commit/793ffecf2c3da7c3d6fe1a92e0cefeca6b16e8d5))
+* **weather:** add coordinates command for current weather at a point ([dc015ed](https://github.com/UteamUP/cli/commit/dc015ed4c2e1bc5af5bd45e90839453d1493c96e))
+* **workorder:** parent work order, site pin flags and a children command ([66f752b](https://github.com/UteamUP/cli/commit/66f752b92ffa6cf31d2f577a2ab10c7a11314a50))
+* **workorder:** similar command lists past jobs and what fixed them ([f63a01b](https://github.com/UteamUP/cli/commit/f63a01b1749c346ba644cd88f6347ab50db77b0f))
+
+
+### Bug Fixes
+
+* **cli:** call employee certificates qualifications in help text ([78a230d](https://github.com/UteamUP/cli/commit/78a230dc3c826a132d78ec5e81d1b9ec56cf6456))
+
+
+### Tests
+
+* **customer:** drop delete expectations after archive-only change ([88f8cb3](https://github.com/UteamUP/cli/commit/88f8cb3bf32b8280eb32ca84b1da5d208d4270ed))
+
 ## [5.26.0](https://github.com/UteamUP/cli/compare/5.25.0...5.26.0) (2026-11-13)
 
 
