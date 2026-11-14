@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.2.0](https://github.com/UteamUP/cli/compare/6.1.0...6.2.0) (2026-11-14)
+
+
+### Features
+
+* **registry:** the CLI archives and restores root cause analyses ([72c2e47](https://github.com/UteamUP/cli/commit/72c2e47cf644606ada0b635a8454cae01dc4b16d))
+
 ## [6.1.0](https://github.com/UteamUP/cli/compare/6.0.0...6.1.0) (2026-11-14)
 
 
