@@ -5,6 +5,30 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.1.0](https://github.com/UteamUP/cli/compare/6.0.0...6.1.0) (2026-11-14)
+
+
+### Features
+
+* **assetgroup:** the CLI archives and restores an asset group ([f3e19f9](https://github.com/UteamUP/cli/commit/f3e19f9ba33114b26f849e4c86537d38e2093fde))
+* **quality:** add view filter to quality list commands ([5fc047d](https://github.com/UteamUP/cli/commit/5fc047d9c04ccf37398a82a3a8a2384306d88367))
+* **registry:** add filter-preset commands for personal saved hub filters ([fa2e5b5](https://github.com/UteamUP/cli/commit/fa2e5b5b5e70b7d4c30e48ace9790931690be959))
+* **route:** the CLI archives and restores an operational route ([0789844](https://github.com/UteamUP/cli/commit/07898448779297aa9384e0a0c8dec870efea446e))
+
+
+### Bug Fixes
+
+* **assetgroup:** put the archive route cases in the route expansion test ([6dfe9ac](https://github.com/UteamUP/cli/commit/6dfe9ac60810deb80c0c3ef99b98424a91bd61f9))
+* **cli:** convert PascalCase MCP tool names to snake_case ([ee15d97](https://github.com/UteamUP/cli/commit/ee15d970392e9adcdc8d7d84032a3713c7646ad7))
+* **knowledge:** list and search articles through POST search ([dabb5e0](https://github.com/UteamUP/cli/commit/dabb5e0be338fdf5f863e21cfe4ce8de57a1f6ff))
+* **route:** the CLI route archive actions name the real MCP tools ([51bd85a](https://github.com/UteamUP/cli/commit/51bd85a96830bad615752f2215fa196591a15785))
+* **workorder:** list --search-term actually filters ([91604e3](https://github.com/UteamUP/cli/commit/91604e30b26285057587223afc99f1ca25318fb7))
+
+
+### Tests
+
+* **registry:** align route action table and project MCP tool names with shipped registry ([8bb7429](https://github.com/UteamUP/cli/commit/8bb742945e2bf10def573e0661a7d1a958690361))
+
 ## [6.0.0](https://github.com/UteamUP/cli/compare/5.26.0...6.0.0) (2026-11-14)
 
 
