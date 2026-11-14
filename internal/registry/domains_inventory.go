@@ -1145,7 +1145,7 @@ func init() {
 			},
 			Action{
 				Name:        "lifecycle-rule-delete",
-				Description: "Delete a stock lifecycle automation rule",
+				Description: "Archive a stock lifecycle automation rule while preserving its execution history",
 				ToolName:    "UteamupStockDeleteLifecycleRule",
 				HTTPMethod:  "DELETE",
 				RESTPath:    "lifecycle-rules/{guid}",
