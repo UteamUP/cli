@@ -46,8 +46,6 @@ func TestAssetGroupActionsMatchBackendContract(t *testing.T) {
 		{"archive", "UteamupAssetGroupDelete", "POST", "by-guid/{groupGuid}/archive"},
 		{"restore", "UteamupAssetGroupRestore", "POST", "by-guid/{groupGuid}/restore"},
 		{"members-add", "UteamupAssetGroupMembersAdd", "POST", "by-guid/{groupGuid}/members"},
-		{"archive", map[string]any{"groupGuid": "g-1"}, "/api/assetgroup/by-guid/g-1/archive"},
-		{"restore", map[string]any{"groupGuid": "g-1"}, "/api/assetgroup/by-guid/g-1/restore"},
 		{"members-remove", "UteamupAssetGroupMembersRemove", "DELETE", "by-guid/{groupGuid}/members/{assetGuid}"},
 		{"diagram", "UteamupAssetGroupDiagramGet", "", "by-guid/{groupGuid}/diagram"},
 		{"positions-save", "UteamupAssetGroupPositionsSave", "PUT", "by-guid/{groupGuid}/diagram/positions"},
@@ -106,6 +104,8 @@ func TestAssetGroupRoutesExpandFromTheirArgs(t *testing.T) {
 		want   string
 	}{
 		{"get", map[string]any{"groupGuid": "g-1"}, "/api/assetgroup/by-guid/g-1"},
+		{"archive", map[string]any{"groupGuid": "g-1"}, "/api/assetgroup/by-guid/g-1/archive"},
+		{"restore", map[string]any{"groupGuid": "g-1"}, "/api/assetgroup/by-guid/g-1/restore"},
 		{"members-remove", map[string]any{"groupGuid": "g-1", "assetGuid": "a-1"}, "/api/assetgroup/by-guid/g-1/members/a-1"},
 		{"auto-layout", map[string]any{"groupGuid": "g-1"}, "/api/assetgroup/by-guid/g-1/diagram/auto-layout"},
 		{"dependency-delete", map[string]any{"dependencyGuid": "d-1"}, "/api/assetgroup/dependencies/d-1"},
