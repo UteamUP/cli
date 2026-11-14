@@ -5,6 +5,18 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.3.0](https://github.com/UteamUP/cli/compare/6.2.0...6.3.0) (2026-11-14)
+
+
+### Features
+
+* **registry:** the CLI archives and restores IoT sensors and device types ([6413681](https://github.com/UteamUP/cli/commit/64136812b4db2f5c94f1fac9a6d6b5ef0d9a55b7))
+
+
+### Tests
+
+* **iot:** pin the sensor and device type archive routes in the guard tables ([bb52445](https://github.com/UteamUP/cli/commit/bb52445472c69275301fe26a47ccc6c6e4f81504))
+
 ## [6.2.0](https://github.com/UteamUP/cli/compare/6.1.0...6.2.0) (2026-11-14)
 
 
