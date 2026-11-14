@@ -4,6 +4,13 @@ package registry
 // entity-link endpoints (KnowledgeArticleController /linked routes).
 const knowledgeEntityTypes = "asset, part, tool, chemical, location, workorder, workordertemplate, industrycode"
 
+func knowledgeSearchPageFlags() []FlagDef {
+	return []FlagDef{
+		{Name: "page", Short: "p", Description: "Page number", Default: 1, Type: "int", BodyName: "pageNumber"},
+		{Name: "page-size", Short: "s", Description: "Items per page", Default: 20, Type: "int", BodyName: "pageSize"},
+	}
+}
+
 func documentGUIDArg() []ArgDef {
 	return []ArgDef{{Name: "documentGuid", Description: "Document public GUID", Required: true, Type: "string"}}
 }
@@ -22,7 +29,9 @@ func init() {
 		// survive reseeds. list/create carry no identifier so they stay on the
 		// base path.
 		Actions: append([]Action{
-			{Name: "list", Description: "List records", ToolName: "UteamupKnowledgeArticleList", Flags: paginationFlags()},
+			// The backend lists and searches articles only through POST search (GET answers 405).
+			{Name: "list", Description: "List records", ToolName: "UteamupKnowledgeArticleList", HTTPMethod: "POST", RESTPath: "search",
+				Flags: knowledgeSearchPageFlags()},
 			{Name: "get", Description: "Get an article by GUID", ToolName: "UteamupKnowledgeArticleGet", RESTPath: "by-guid/{articleGuid}",
 				Args: []ArgDef{{Name: "articleGuid", Description: "Knowledge article GUID", Required: true, Type: "string"}}},
 			{Name: "create", Description: "Create a record", ToolName: "UteamupKnowledgeArticleCreate", Flags: []FlagDef{jsonFlag()}},
@@ -44,7 +53,8 @@ func init() {
 			{Name: "submit-review", Description: "Submit a draft article for review; it stays hidden from space viewers until published",
 				ToolName: "UteamupKnowledgeArticleSubmitReview", HTTPMethod: "POST", RejectExtraArgs: true, RESTPath: "by-guid/{articleGuid}/submit-review",
 				Args: []ArgDef{{Name: "articleGuid", Description: "Article public GUID", Required: true, Type: "non-empty-uuid"}}},
-			{Name: "search", Description: "Search articles", ToolName: "UteamupKnowledgeArticleSearch", Args: queryArg(), Flags: paginationFlags()},
+			{Name: "search", Description: "Search articles", ToolName: "UteamupKnowledgeArticleSearch", HTTPMethod: "POST", RESTPath: "search",
+				Args: queryArg(), Flags: knowledgeSearchPageFlags()},
 			{Name: "linked", Description: "List articles linked to an entity (valid entityTypes: " + knowledgeEntityTypes + ")",
 				ToolName: "UteamupKnowledgeArticleGetLinked", HTTPMethod: "GET", RESTPath: "linked/{entityType}/{entityGuid}",
 				Args: []ArgDef{

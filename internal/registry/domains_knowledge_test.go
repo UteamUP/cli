@@ -261,3 +261,31 @@ func TestKnowledgeStatusActionsPostToGuidRoutes(t *testing.T) {
 		t.Errorf("missing knowledge status actions: %v", want)
 	}
 }
+
+// The backend answers GET /api/knowledgearticle and GET .../search with 405; listing and
+// searching go through POST /api/knowledgearticle/search with pageNumber/pageSize in the body.
+func TestKnowledgeListAndSearchPostToSearch(t *testing.T) {
+	d := findDomainByName(t, "knowledge")
+	for _, name := range []string{"list", "search"} {
+		var action Action
+		for _, a := range d.Actions {
+			if a.Name == name {
+				action = a
+			}
+		}
+		if action.HTTPMethod != "POST" {
+			t.Errorf("%s HTTPMethod = %q, want POST", name, action.HTTPMethod)
+		}
+		path, _ := buildRESTPath(d, action, map[string]any{"query": "pump"})
+		if path != "/api/knowledgearticle/search" {
+			t.Errorf("%s REST path = %q, want /api/knowledgearticle/search", name, path)
+		}
+		bodies := map[string]bool{}
+		for _, f := range action.Flags {
+			bodies[f.BodyName] = true
+		}
+		if !bodies["pageNumber"] || !bodies["pageSize"] {
+			t.Errorf("%s flags must send pageNumber and pageSize, got %v", name, bodies)
+		}
+	}
+}
