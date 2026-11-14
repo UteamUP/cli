@@ -45,6 +45,10 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 		"device-type-create":         "UteamupIoTDeviceTypeCreate",
 		"device-type-update":         "UteamupIoTDeviceTypeUpdate",
 		"device-type-delete":         "UteamupIoTDeviceTypeDelete",
+		"device-type-archive":        "UteamupIoTDeviceTypeArchive",
+		"device-type-restore":        "UteamupIoTDeviceTypeRestore",
+		"sensor-archive":             "UteamupIoTSensorArchive",
+		"sensor-restore":             "UteamupIoTSensorRestore",
 		"devices":                    "UteamupIoTDevicesList",
 		"sensors":                    "UteamupIoTSensorsList",
 		"device":                     "UteamupIoTDeviceGet",
@@ -326,6 +330,10 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 		"device-type-create":         "/api/iot/device-types",
 		"device-type-update":         "/api/iot/device-types/type-guid",
 		"device-type-delete":         "/api/iot/device-types/type-guid",
+		"device-type-archive":        "/api/iot/device-types/type-guid/archive",
+		"device-type-restore":        "/api/iot/device-types/type-guid/restore",
+		"sensor-archive":             "/api/iot/sensors/sensor-guid/archive",
+		"sensor-restore":             "/api/iot/sensors/sensor-guid/restore",
 		"sensors":                    "/api/iot/sensors",
 		"devices":                    "/api/iot/devices",             // IOTController.GetDevices
 		"device":                     "/api/iot/devices/device-guid", // IOTController.GetDeviceByGuid
@@ -368,7 +376,7 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 		}
 		args := map[string]any{"definitionGuid": "definition-guid", "requestGuid": "request-guid", "alertGuid": "alert-guid",
 			"deviceGuid": "device-guid", "deviceTypeGuid": "type-guid", "apiKeyGuid": "key-guid", "gatewayGuid": "gateway-guid", "linkGuid": "link-guid",
-			"sourceGuid": "source-guid", "identityGuid": "identity-guid",
+			"sourceGuid": "source-guid", "identityGuid": "identity-guid", "sensorGuid": "sensor-guid",
 			"resourceType": "part", "resourceGuid": "resource-guid", "attributeDefinitionGuid": "attribute-guid"}
 		if path, _ := buildRESTPath(domain, action, args); path != want {
 			t.Errorf("%s routes to %q, want %q", action.Name, path, want)
