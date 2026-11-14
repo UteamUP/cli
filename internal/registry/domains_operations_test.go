@@ -26,6 +26,8 @@ func TestOperationalRouteActionsUseGuidIdentifiers(t *testing.T) {
 		"optimize":      "UteamupOperationalRouteOptimize",
 
 		"asset-health-summary": "UteamupInspectionAssetHealthSummary",
+		"archive":              "ArchiveReferenceRecord",
+		"restore":              "RestoreReferenceRecord",
 	}
 
 	if len(domain.Actions) != len(expectedTools) {

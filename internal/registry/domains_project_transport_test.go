@@ -112,7 +112,7 @@ func TestProjectReviewedCommandsSendRootJSONForBothTokenModes(t *testing.T) {
 func TestProjectModelCommandsUseNamedMCPArgumentsForAPIKeySessions(t *testing.T) {
 	for _, mode := range []string{"apikey"} {
 		for _, scenario := range []struct{ action, tool string }{
-			{"create", "UteamupProjectCreate"}, {"update", "UteamupProjectUpdate"},
+			{"create", "uteamup_project_create"}, {"update", "uteamup_project_update"},
 		} {
 			t.Run(mode+"/"+scenario.action, func(t *testing.T) {
 				model := `{"name":"Equipment delivery","customerGuid":null,"locationGuids":[],"notes":"Retain reviewed scope"}`
