@@ -87,3 +87,32 @@ func TestIoTDevicesListHidesInactiveUnlessAsked(t *testing.T) {
 		t.Fatalf("inactive list sent %s", request.URL)
 	}
 }
+
+func TestIoTSensorAndDeviceTypeArchiveAndRestorePostToTheirGuidRoutes(t *testing.T) {
+	const guid = "11111111-1111-4111-8111-111111111111"
+	routes := map[string]string{
+		"sensor-archive":      "/api/iot/sensors/" + guid + "/archive",
+		"sensor-restore":      "/api/iot/sensors/" + guid + "/restore",
+		"device-type-archive": "/api/iot/device-types/" + guid + "/archive",
+		"device-type-restore": "/api/iot/device-types/" + guid + "/restore",
+	}
+	for action, path := range routes {
+		request, err := runIoTAction(t, action, guid)
+		if err != nil {
+			t.Fatalf("%s: %v", action, err)
+		}
+		if request.Method != http.MethodPost || request.URL.Path != path {
+			t.Fatalf("%s sent %s %s", action, request.Method, request.URL)
+		}
+		if request.URL.RawQuery != "" {
+			t.Fatalf("%s leaked arguments into the query: %s", action, request.URL)
+		}
+	}
+}
+
+func TestIoTSensorArchiveRefusesAMalformedGuidBeforeSending(t *testing.T) {
+	request, err := runIoTAction(t, "sensor-archive", "not-a-guid")
+	if err == nil || request != nil {
+		t.Fatalf("expected a refusal before any request, got %v %v", request, err)
+	}
+}

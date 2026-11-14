@@ -214,6 +214,30 @@ func init() {
 				Args: []ArgDef{{Name: "deviceTypeGuid", Description: "Device type public GUID", Required: true, Type: "non-empty-uuid"}},
 			},
 			{
+				Name: "device-type-archive", Description: "Archive an IoT device type: it leaves lists and pickers and stays on its devices. Needs IOT.Delete",
+				ToolName: "UteamupIoTDeviceTypeArchive", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "POST", RESTPath: "device-types/{deviceTypeGuid}/archive", RejectExtraArgs: true,
+				Args: []ArgDef{{Name: "deviceTypeGuid", Description: "Device type public GUID", Required: true, Type: "non-empty-uuid"}},
+			},
+			{
+				Name: "device-type-restore", Description: "Restore an archived IoT device type to lists and pickers. Needs IOT.Delete",
+				ToolName: "UteamupIoTDeviceTypeRestore", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "POST", RESTPath: "device-types/{deviceTypeGuid}/restore", RejectExtraArgs: true,
+				Args: []ArgDef{{Name: "deviceTypeGuid", Description: "Device type public GUID", Required: true, Type: "non-empty-uuid"}},
+			},
+			{
+				Name: "sensor-archive", Description: "Archive an IoT sensor: it leaves lists and pickers; its readings and alerts stay. Needs IOT.Delete",
+				ToolName: "UteamupIoTSensorArchive", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "POST", RESTPath: "sensors/{sensorGuid}/archive", RejectExtraArgs: true,
+				Args: []ArgDef{{Name: "sensorGuid", Description: "Sensor public GUID", Required: true, Type: "non-empty-uuid"}},
+			},
+			{
+				Name: "sensor-restore", Description: "Restore an archived IoT sensor to lists and pickers. Needs IOT.Delete",
+				ToolName: "UteamupIoTSensorRestore", RESTBasePath: iotDeviceAPIPath,
+				HTTPMethod: "POST", RESTPath: "sensors/{sensorGuid}/restore", RejectExtraArgs: true,
+				Args: []ArgDef{{Name: "sensorGuid", Description: "Sensor public GUID", Required: true, Type: "non-empty-uuid"}},
+			},
+			{
 				Name:         "devices",
 				Description:  "List IoT devices with status and connectionState (noActiveKey, neverConnected or connected)",
 				ToolName:     "UteamupIoTDevicesList",
