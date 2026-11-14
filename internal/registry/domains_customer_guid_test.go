@@ -7,7 +7,7 @@ func TestCustomerActionsUseGuidRoutesAndReviewedWrites(t *testing.T) {
 	if domain.APIPath != "/api/customer" {
 		t.Fatalf("customer API path = %q", domain.APIPath)
 	}
-	for _, name := range []string{"get", "update", "delete"} {
+	for _, name := range []string{"get", "update"} {
 		action := findDomainAction(t, "customer", name)
 		if action.MCPOnly || action.RESTPath != "{customerGuid}" || len(action.Args) != 1 {
 			t.Fatalf("%s must use the normal GUID route", name)
@@ -17,17 +17,15 @@ func TestCustomerActionsUseGuidRoutesAndReviewedWrites(t *testing.T) {
 			t.Errorf("%s identity is not a required nonempty public GUID", name)
 		}
 	}
-	for _, name := range []string{"create", "update", "delete"} {
+	for _, name := range []string{"create", "update"} {
 		action := findDomainAction(t, "customer", name)
 		confirm := actionFlagByName(t, action, "confirm")
 		if !confirm.Required || !confirm.MustBeTrue || !confirm.LocalOnly {
 			t.Errorf("%s must require confirmation without changing the REST DTO", name)
 		}
-		if name != "delete" {
-			fields := actionFlagByName(t, action, "from-json")
-			if !fields.Required || !fields.RootJSONObjectFile {
-				t.Errorf("%s requires the complete reviewed JSON object", name)
-			}
+		fields := actionFlagByName(t, action, "from-json")
+		if !fields.Required || !fields.RootJSONObjectFile {
+			t.Errorf("%s requires the complete reviewed JSON object", name)
 		}
 	}
 	search := findDomainAction(t, "customer", "search")

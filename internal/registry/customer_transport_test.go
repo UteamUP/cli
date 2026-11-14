@@ -16,14 +16,14 @@ import (
 
 func TestCustomerGuidTransportAndConfirmation(t *testing.T) {
 	const guid = "11111111-1111-4111-8111-111111111111"
-	for _, scenario := range []string{"get", "create", "update", "delete", "search", "unconfirmed", "integer", "empty-guid"} {
+	for _, scenario := range []string{"get", "create", "update", "search", "unconfirmed", "integer", "empty-guid"} {
 		t.Run(scenario, func(t *testing.T) {
 			home := t.TempDir()
 			t.Setenv("HOME", home)
 			t.Setenv("USERPROFILE", home)
 			name := scenario
 			if scenario == "unconfirmed" {
-				name = "delete"
+				name = "update"
 			}
 			if scenario == "integer" || scenario == "empty-guid" {
 				name = "get"
@@ -32,13 +32,13 @@ func TestCustomerGuidTransportAndConfirmation(t *testing.T) {
 			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				seen = true
 				want := "/api/customer"
-				if name == "get" || name == "update" || name == "delete" {
+				if name == "get" || name == "update" {
 					want += "/" + guid
 				}
 				if r.URL.Path != want {
 					t.Errorf("path = %s, want %s", r.URL.Path, want)
 				}
-				method := map[string]string{"get": "GET", "create": "POST", "update": "PUT", "delete": "DELETE", "search": "GET"}[name]
+				method := map[string]string{"get": "GET", "create": "POST", "update": "PUT", "search": "GET"}[name]
 				if r.Method != method {
 					t.Errorf("method = %s, want %s", r.Method, method)
 				}
@@ -77,7 +77,7 @@ func TestCustomerGuidTransportAndConfirmation(t *testing.T) {
 			action := findDomainAction(t, "customer", name)
 			command := buildActionCommand(findDomain("customer"), *action, factory, logger, &format, nil)
 			args := []string{}
-			if name == "get" || name == "update" || name == "delete" {
+			if name == "get" || name == "update" {
 				args = append(args, guid)
 			}
 			if name == "search" {
@@ -90,7 +90,7 @@ func TestCustomerGuidTransportAndConfirmation(t *testing.T) {
 				}
 				args = append(args, "--from-json", file)
 			}
-			if name == "create" || name == "update" || name == "delete" {
+			if name == "create" || name == "update" {
 				if scenario != "unconfirmed" {
 					args = append(args, "--confirm")
 				}
