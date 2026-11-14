@@ -44,7 +44,6 @@ func TestIoTDomainMirrorsMCPTools(t *testing.T) {
 		"device-types":               "UteamupIoTDeviceTypesList",
 		"device-type-create":         "UteamupIoTDeviceTypeCreate",
 		"device-type-update":         "UteamupIoTDeviceTypeUpdate",
-		"device-type-delete":         "UteamupIoTDeviceTypeDelete",
 		"device-type-archive":        "UteamupIoTDeviceTypeArchive",
 		"device-type-restore":        "UteamupIoTDeviceTypeRestore",
 		"sensor-archive":             "UteamupIoTSensorArchive",
@@ -329,7 +328,6 @@ func TestIoTActionsRouteToTheirBackendControllers(t *testing.T) {
 		"device-types":               "/api/iot/device-types",                // IOTController.GetDeviceTypes
 		"device-type-create":         "/api/iot/device-types",
 		"device-type-update":         "/api/iot/device-types/type-guid",
-		"device-type-delete":         "/api/iot/device-types/type-guid",
 		"device-type-archive":        "/api/iot/device-types/type-guid/archive",
 		"device-type-restore":        "/api/iot/device-types/type-guid/restore",
 		"sensor-archive":             "/api/iot/sensors/sensor-guid/archive",

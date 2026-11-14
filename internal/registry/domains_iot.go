@@ -208,12 +208,6 @@ func init() {
 				Flags: iotDeviceTypeFields(),
 			},
 			{
-				Name: "device-type-delete", Description: "Delete an unused device type; refuses a type with devices",
-				ToolName: "UteamupIoTDeviceTypeDelete", RESTBasePath: iotDeviceAPIPath,
-				HTTPMethod: "DELETE", RESTPath: "device-types/{deviceTypeGuid}",
-				Args: []ArgDef{{Name: "deviceTypeGuid", Description: "Device type public GUID", Required: true, Type: "non-empty-uuid"}},
-			},
-			{
 				Name: "device-type-archive", Description: "Archive an IoT device type: it leaves lists and pickers and stays on its devices. Needs IOT.Delete",
 				ToolName: "UteamupIoTDeviceTypeArchive", RESTBasePath: iotDeviceAPIPath,
 				HTTPMethod: "POST", RESTPath: "device-types/{deviceTypeGuid}/archive", RejectExtraArgs: true,

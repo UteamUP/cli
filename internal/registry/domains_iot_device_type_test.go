@@ -15,7 +15,7 @@ import (
 func TestIoTDeviceTypeMutationsSendTheExactRESTBodyAndGuid(t *testing.T) {
 	const guid = "55555555-5555-4555-8555-555555555555"
 	for _, operation := range []struct{ name, method string }{
-		{"device-type-create", "POST"}, {"device-type-update", "PUT"}, {"device-type-delete", "DELETE"},
+		{"device-type-create", "POST"}, {"device-type-update", "PUT"},
 	} {
 		t.Run(operation.name, func(t *testing.T) {
 			t.Setenv("HOME", t.TempDir())
@@ -83,7 +83,7 @@ func TestIoTDeviceTypeMutationsSendTheExactRESTBodyAndGuid(t *testing.T) {
 }
 
 func TestIoTDeviceTypeMutationsRequireNonEmptyGuidAndName(t *testing.T) {
-	for _, name := range []string{"device-type-update", "device-type-delete"} {
+	for _, name := range []string{"device-type-update", "device-type-archive", "device-type-restore"} {
 		action := findIoTAction(t, name)
 		if len(action.Args) != 1 || action.Args[0].Name != "deviceTypeGuid" || action.Args[0].Type != "non-empty-uuid" || !action.Args[0].Required {
 			t.Fatalf("%s must require a non-empty public GUID", name)
