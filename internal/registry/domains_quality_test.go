@@ -96,6 +96,7 @@ func TestQualityListFiltersTravelOnlyAsQueryParameters(t *testing.T) {
 		"retention-status": "retentionDispositionStatus",
 		"integrity-status": "historyIntegrityStatus",
 		"search":           "search",
+		"view":             "view",
 		"page":             "page",
 		"page-size":        "pageSize",
 	}

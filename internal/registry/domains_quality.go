@@ -19,6 +19,7 @@ func init() {
 					{Name: "retention-status", QueryName: "retentionDispositionStatus", Description: "Optional Active, ReviewDue, or Archived state", Type: "string"},
 					{Name: "integrity-status", QueryName: "historyIntegrityStatus", Description: "Optional NotVerified, Verified, or Failed state", Type: "string"},
 					{Name: "search", QueryName: "search", Description: "Display-number prefix or exact record GUID", Type: "string"},
+					{Name: "view", QueryName: "view", Description: "Optional All, Open, Overdue (open and past due), or Mine (owned by you)", Type: "string"},
 					{Name: "page", QueryName: "page", Description: "One-based page number", Default: 1, Type: "int"},
 					{Name: "page-size", QueryName: "pageSize", Description: "Results per page, maximum 100", Default: 25, Type: "int"},
 				},
