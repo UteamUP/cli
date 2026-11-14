@@ -831,8 +831,9 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		if len(headers) > 0 || len(queryParams) > 0 || uploadPath != "" {
 			return fmt.Errorf("MCP-only action %s cannot use REST headers, query flags, or uploads", action.Name)
 		}
-		logger.Debug("calling MCP tool %s with args %v", action.ToolName, loggedArgsForAction(action, toolArgs))
-		result, err = apiClient.CallTool(ctx, action.ToolName, toolArgs)
+		toolName := mcpToolName(action.ToolName)
+		logger.Debug("calling MCP tool %s with args %v", toolName, loggedArgsForAction(action, toolArgs))
+		result, err = apiClient.CallTool(ctx, toolName, toolArgs)
 		if err != nil {
 			return err
 		}
@@ -957,6 +958,24 @@ const (
 // reaches a terminal value, and returns that last read. A response that carries no
 // identifier, or that is already terminal, is returned untouched — the caller is not
 // made to wait for work that is already done.
+func mcpToolName(name string) string {
+	if name == "" || strings.Contains(name, "_") {
+		return name
+	}
+	var b strings.Builder
+	for i, r := range name {
+		if r >= 'A' && r <= 'Z' {
+			if i > 0 {
+				b.WriteByte('_')
+			}
+			b.WriteByte(byte(r + ('a' - 'A')))
+		} else {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
 func pollUntilTerminal(
 	apiClient *client.APIClient,
 	domain *Domain,
