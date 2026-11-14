@@ -32,6 +32,8 @@ func init() {
 		Actions: []Action{
 			{Name: "list", Description: "List operational routes", ToolName: "UteamupOperationalRouteList", HTTPMethod: "GET", Flags: append(paginationFlags(), FlagDef{Name: "is-active", BodyName: "isActive", Description: "Filter active status", Type: "bool"})},
 			{Name: "get", Description: "Get an operational route by GUID", ToolName: "UteamupOperationalRouteGet", HTTPMethod: "GET", RESTPath: "by-guid/{routeGuid}", Args: routeGUIDArg},
+			{Name: "archive", Description: "Archive an operational route (a route is never deleted)", ToolName: "UteamupOperationalRouteArchive", HTTPMethod: "POST", RESTPath: "by-guid/{routeGuid}/archive", Args: routeGUIDArg},
+			{Name: "restore", Description: "Restore an archived operational route", ToolName: "UteamupOperationalRouteRestore", HTTPMethod: "POST", RESTPath: "by-guid/{routeGuid}/restore", Args: routeGUIDArg},
 			{Name: "schedules", Description: "List schedules for a route GUID", ToolName: "UteamupInspectionScheduleList", MCPOnly: true, Args: routeGUIDArg},
 			{Name: "overdue", Description: "List overdue route schedules", ToolName: "UteamupInspectionScheduleGetOverdue", HTTPMethod: "GET", RESTBasePath: "/api/operationalrouteschedules", RESTPath: "overdue"},
 			{Name: "executions", Description: "List route executions", ToolName: "UteamupInspectionExecutionList", HTTPMethod: "GET", RESTBasePath: "/api/operationalrouteexecutions", Flags: append(paginationFlags(), FlagDef{Name: "route-guid", BodyName: "routeGuid", Description: "Filter by public route GUID", Type: "string"})},
