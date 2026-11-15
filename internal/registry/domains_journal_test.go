@@ -1,10 +1,16 @@
 package registry
 
 import (
-	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
-	"path/filepath"
+	"reflect"
 	"testing"
+	"time"
+
+	"github.com/uteamup/cli/internal/auth"
+	"github.com/uteamup/cli/internal/client"
+	"github.com/uteamup/cli/internal/logging"
 )
 
 // --- Journal domain ---
@@ -135,92 +141,82 @@ func TestJournalCrudActionsUseCanonicalGuidRoutes(t *testing.T) {
 	}
 }
 
-func TestJournalCreateAndUpdateUseMCPModelTransport(t *testing.T) {
-	d := findDomain("journal")
-	if d == nil {
-		t.Fatal("expected journal domain to be registered")
-	}
-
-	for _, tc := range []struct {
-		name     string
-		toolName string
-		withGUID bool
-	}{
-		{name: "create", toolName: "UteamupJournalCreate"},
-		{name: "update", toolName: "UteamupJournalUpdate", withGUID: true},
-	} {
-		action := findAction(d, tc.name)
-		if action == nil {
-			t.Fatalf("expected %s action on journal domain", tc.name)
+func TestJournalCreateAndUpdateUseNativeMultipart(t *testing.T) {
+	const journal = "11111111-2222-4333-8444-555555555555"
+	for _, name := range []string{"create", "update"} {
+		action := findAction(findDomain("journal"), name)
+		if action == nil || action.MCPOnly || !action.FormBody || !reflect.DeepEqual(action.FormObjectFields, []string{"mutation"}) {
+			t.Fatalf("%s must use the reviewed multipart REST adapter: %+v", name, action)
 		}
-		if action.ToolName != tc.toolName || !action.MCPOnly {
-			t.Fatalf("%s transport = tool %q MCPOnly=%v, want MCP tool %q", tc.name, action.ToolName, action.MCPOnly, tc.toolName)
+		fromJSON := flagsToMap(action.Flags)["from-json"]
+		if !fromJSON.Required || !fromJSON.RootJSONObjectFile || fromJSON.JSONFile || fromJSON.BodyName != "" {
+			t.Fatalf("%s must preserve the unwrapped reviewed model: %+v", name, fromJSON)
 		}
-		if action.RESTBasePath != "" || action.RESTPath != "" || action.HTTPMethod != "" {
-			t.Fatalf("%s must not declare a JSON REST adapter for the multipart controller: %+v", tc.name, action)
+		want := "/api/journal"
+		if name == "update" {
+			want += "/by-guid/" + journal
+			assertJournalGuidArg(t, name, action.Args, "journalGuid")
 		}
-		if tc.withGUID {
-			assertJournalGuidArg(t, tc.name, action.Args, "journalGuid")
-		} else if len(action.Args) != 0 {
-			t.Fatalf("journal create should not expose positional IDs: %+v", action.Args)
-		}
-
-		fromJSON, ok := flagsToMap(action.Flags)["from-json"]
-		if !ok || !fromJSON.Required || !fromJSON.JSONFile || fromJSON.BodyName != "model" {
-			t.Fatalf("%s must load a required JSON file as the MCP model object, got %+v", tc.name, action.Flags)
+		if path, _ := buildRESTPath(findDomain("journal"), *action, map[string]any{"journalGuid": journal}); path != want {
+			t.Fatalf("%s path = %q, want %q", name, path, want)
 		}
 	}
 }
 
-func TestJournalCreateMCPPayloadNestsParsedModel(t *testing.T) {
-	d := findDomain("journal")
-	if d == nil {
-		t.Fatal("expected journal domain to be registered")
-	}
-	action := findAction(d, "create")
-	if action == nil {
-		t.Fatal("expected create action on journal domain")
-	}
-	fromJSON := flagsToMap(action.Flags)["from-json"]
-
-	modelPath := filepath.Join(t.TempDir(), "journal.json")
-	if err := os.WriteFile(modelPath, []byte(`{"title":"Pump inspection","workorderGuid":"11111111-2222-4333-8444-555555555555"}`), 0o600); err != nil {
-		t.Fatalf("write model fixture: %v", err)
-	}
-	model, err := readJSONFileFlag(modelPath)
-	if err != nil {
-		t.Fatalf("read model fixture: %v", err)
-	}
-
-	payload, err := json.Marshal(struct {
-		Name      string         `json:"name"`
-		Arguments map[string]any `json:"arguments"`
-	}{
-		Name:      action.ToolName,
-		Arguments: map[string]any{fromJSON.BodyName: model},
-	})
-	if err != nil {
-		t.Fatalf("marshal tool payload: %v", err)
-	}
-	var actual struct {
-		Name      string                     `json:"name"`
-		Arguments map[string]json.RawMessage `json:"arguments"`
-	}
-	if err := json.Unmarshal(payload, &actual); err != nil {
-		t.Fatalf("unmarshal tool payload: %v", err)
-	}
-	if actual.Name != "UteamupJournalCreate" || len(actual.Arguments) != 1 {
-		t.Fatalf("journal create tool payload = %s", payload)
-	}
-	if _, leaked := actual.Arguments["fromJson"]; leaked {
-		t.Fatalf("journal create tool payload leaked the local filename flag: %s", payload)
-	}
-	var actualModel map[string]any
-	if err := json.Unmarshal(actual.Arguments["model"], &actualModel); err != nil {
-		t.Fatalf("unmarshal nested journal model: %v", err)
-	}
-	if actualModel["title"] != "Pump inspection" {
-		t.Fatalf("journal create model payload = %s", actual.Arguments["model"])
+func TestJournalMultipartCommandsPreserveReviewedIdentityForBothSignIns(t *testing.T) {
+	const journal = "11111111-2222-4333-8444-555555555555"
+	const operation = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+	const tenant = "55555555-5555-4555-8555-555555555555"
+	for _, method := range []string{"browser", "apikey"} {
+		for _, action := range []string{"create", "update"} {
+			t.Run(method+"/"+action, func(t *testing.T) {
+				t.Setenv("HOME", t.TempDir())
+				t.Setenv("USERPROFILE", os.Getenv("HOME"))
+				calls := 0
+				server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					calls++
+					wantMethod, wantPath := http.MethodPost, "/api/journal"
+					if action == "update" {
+						wantMethod, wantPath = http.MethodPut, wantPath+"/by-guid/"+journal
+					}
+					if r.Method != wantMethod || r.URL.Path != wantPath {
+						t.Errorf("route = %s %s", r.Method, r.URL.Path)
+					}
+					if r.Header.Get("X-Tenant-Guid") != tenant || r.Header.Get("Authorization") != "Bearer journal-fixture" || r.Header.Get("X-Requested-With") != "XMLHttpRequest" {
+						t.Error("normal authenticated tenant and CSRF headers must be preserved")
+					}
+					if err := r.ParseMultipartForm(1 << 20); err != nil {
+						t.Error(err)
+						return
+					}
+					want := map[string][]string{"Title": {"Þróunarteymið"}, "Content": {"<p>Unnið og yfirfarið.</p>"}, "Mutation.operationGuid": {operation}, "Mutation.expectedUpdatedAt": {"2026-11-15T20:00:00.1234567Z"}}
+					if !reflect.DeepEqual(r.MultipartForm.Value, want) {
+						t.Errorf("reviewed form changed: %#v", r.MultipartForm.Value)
+					}
+					w.Header().Set("Content-Type", "application/json")
+					_, _ = w.Write([]byte(`{"operationGuid":"` + operation + `","journalGuid":"` + journal + `","tenantGuid":"` + tenant + `"}`))
+				}))
+				defer server.Close()
+				if err := auth.SaveToken(&auth.TokenData{APIOrigin: server.URL, AccessToken: "journal-fixture", AuthMethod: method, ExpiresAt: time.Now().Add(time.Hour), TenantGUID: tenant}); err != nil {
+					t.Fatal(err)
+				}
+				api := client.NewAPIClient(server.URL, time.Second, true, client.RetryOptions{MaxRetries: 0}, logging.New(logging.LevelError))
+				path := writeRegistryJSONFixture(t, `{"title":"Þróunarteymið","content":"<p>Unnið og yfirfarið.</p>","mutation":{"operationGuid":"`+operation+`","expectedUpdatedAt":"2026-11-15T20:00:00.1234567Z"}}`)
+				format := "json"
+				command := buildDomainCommand(findDomain("journal"), func() (*client.APIClient, error) { return api, nil }, logging.New(logging.LevelError), &format, &ExportConfig{})
+				args := []string{action}
+				if action == "update" {
+					args = append(args, journal)
+				}
+				command.SetArgs(append(args, "--from-json", path))
+				if err := command.Execute(); err != nil {
+					t.Fatal(err)
+				}
+				if calls != 1 {
+					t.Fatalf("requests=%d, want one native REST mutation", calls)
+				}
+			})
+		}
 	}
 }
 

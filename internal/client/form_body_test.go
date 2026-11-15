@@ -69,6 +69,44 @@ func TestEncodeFormFieldsRejectsNestedObjectsInsteadOfDroppingThem(t *testing.T)
 	}
 }
 
+func TestReviewedMutationFormPreservesOperationAndConcurrency(t *testing.T) {
+	body, contentType, err := EncodeFormFields(map[string]any{
+		"title": "Þróunarteymið", "mutation": map[string]any{
+			"operationGuid":     "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+			"expectedUpdatedAt": "2026-11-15T20:00:00.1234567Z",
+		},
+	}, "mutation")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string][]string{
+		"Title":                      {"Þróunarteymið"},
+		"Mutation.operationGuid":     {"aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"},
+		"Mutation.expectedUpdatedAt": {"2026-11-15T20:00:00.1234567Z"},
+	}
+	if got := parseForm(t, body, contentType); !reflect.DeepEqual(got, want) {
+		t.Fatalf("reviewed mutation changed: got %#v, want %#v", got, want)
+	}
+}
+
+func TestReviewedMutationFormRejectsAmbiguityAndUnregisteredObjects(t *testing.T) {
+	for name, params := range map[string]map[string]any{
+		"parent case collision": {"mutation": map[string]any{"operationGuid": "one"}, "Mutation": nil},
+		"child case collision":  {"mutation": map[string]any{"operationGuid": "one", "OperationGuid": "two"}},
+		"dotted shadow":         {"mutation": map[string]any{"operationGuid": "one"}, "Mutation.OperationGuid": "two"},
+		"nested child path":     {"mutation": map[string]any{"operationGuid.value": "one"}},
+		"nested object":         {"mutation": map[string]any{"operationGuid": map[string]any{"value": "one"}}},
+		"array identity":        {"mutation": map[string]any{"operationGuid": []any{"one", "two"}}},
+		"unregistered object":   {"vendor": map[string]any{"name": "ignored"}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, _, err := EncodeFormFields(params, "mutation"); err == nil {
+				t.Fatal("ambiguous or unsupported form must fail before transmission")
+			}
+		})
+	}
+}
+
 func TestContractPayerFormDistinguishesExplicitClearFromOmission(t *testing.T) {
 	for _, fields := range []map[string]any{
 		{"title": "Legacy agreement"},

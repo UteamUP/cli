@@ -344,7 +344,7 @@ func jsonBody(params map[string]any) ([]byte, error) {
 // [FromForm] model (for example contract create and update). Keys are PascalCased and
 // lists become repeated keys, matching the web app's FormData. Auth, tenant, CSRF and
 // retry behaviour are the same as CallREST.
-func (c *APIClient) CallRESTForm(ctx context.Context, method, path string, params map[string]any, extraHeaders map[string]string) (json.RawMessage, error) {
+func (c *APIClient) CallRESTForm(ctx context.Context, method, path string, params map[string]any, extraHeaders map[string]string, objectFields ...string) (json.RawMessage, error) {
 	token, err := auth.LoadTokenForOrigin(c.baseURL, c.profile)
 	if err != nil {
 		return nil, clierrors.NewAuthError("loading token", err)
@@ -353,7 +353,7 @@ func (c *APIClient) CallRESTForm(ctx context.Context, method, path string, param
 		return nil, &clierrors.NotAuthenticatedError{}
 	}
 
-	bodyBytes, contentType, err := EncodeFormFields(params)
+	bodyBytes, contentType, err := EncodeFormFields(params, objectFields...)
 	if err != nil {
 		return nil, err
 	}
@@ -361,9 +361,16 @@ func (c *APIClient) CallRESTForm(ctx context.Context, method, path string, param
 }
 
 // EncodeFormFields builds a multipart/form-data body from request params. Nested objects
-// are rejected rather than dropped, because a [FromForm] binder cannot read them and
-// silently losing a field would save the wrong record.
-func EncodeFormFields(params map[string]any) ([]byte, string, error) {
+// are rejected unless explicitly allowed as one-level dotted binder fields.
+// Silently losing a field would save the wrong record.
+func EncodeFormFields(params map[string]any, objectFields ...string) ([]byte, string, error) {
+	if len(objectFields) > 0 {
+		var err error
+		params, err = expandFormObjects(params, objectFields)
+		if err != nil {
+			return nil, "", err
+		}
+	}
 	keys := make([]string, 0, len(params))
 	for key := range params {
 		if key != "id" {

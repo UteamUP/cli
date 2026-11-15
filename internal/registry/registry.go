@@ -176,6 +176,9 @@ type Action struct {
 	// FormBody sends the request body as multipart/form-data fields instead of JSON, for
 	// endpoints that bind a [FromForm] model; a JSON body there binds to nothing.
 	FormBody bool
+	// FormObjectFields opts named one-level objects into dotted [FromForm] binding.
+	// Other nested objects remain errors rather than silently discarded fields.
+	FormObjectFields []string
 	// JSONBody sends the params as a JSON body even for DELETE, for endpoints that bind a
 	// [FromBody] model on DELETE; by default DELETE params travel as a query string.
 	JSONBody bool
@@ -878,7 +881,7 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 		if uploadPath != "" {
 			result, err = apiClient.CallRESTUpload(ctx, httpMethod, restPath, uploadField, uploadPath, toolArgs, headers, action.Name)
 		} else if action.FormBody {
-			result, err = apiClient.CallRESTForm(ctx, httpMethod, restPath, toolArgs, headers)
+			result, err = apiClient.CallRESTForm(ctx, httpMethod, restPath, toolArgs, headers, action.FormObjectFields...)
 		} else if action.JSONBody {
 			result, err = apiClient.CallRESTJSON(ctx, httpMethod, restPath, toolArgs, headers)
 		} else {

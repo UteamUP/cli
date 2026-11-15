@@ -3,6 +3,13 @@ name: CLI CI
 permissions: {}
 
 on:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: Run CLI tests in the dev CI runner
+        required: true
+        default: true
+        type: boolean
   push:
     branches: [main, dev]
   pull_request:
@@ -25,6 +32,7 @@ jobs:
         run: go vet ./...
 
       - name: Test
+        if: github.event_name != 'workflow_dispatch' || inputs.run_tests
         run: go test ./... -race -v
 
       - name: Build
