@@ -189,7 +189,7 @@ func TestJournalMultipartCommandsPreserveReviewedIdentityForBothSignIns(t *testi
 						t.Error(err)
 						return
 					}
-					want := map[string][]string{"Title": {"Þróunarteymið"}, "Content": {"<p>Unnið og yfirfarið.</p>"}, "Mutation.operationGuid": {operation}, "Mutation.expectedUpdatedAt": {"2026-11-15T20:00:00.1234567Z"}}
+					want := map[string][]string{"Title": {"Þróunarteymið"}, "Content": {"**Unnið** og yfirfarið."}, "IsMarkdown": {"true"}, "Mutation.operationGuid": {operation}, "Mutation.expectedUpdatedAt": {"2026-11-15T20:00:00.1234567Z"}}
 					if !reflect.DeepEqual(r.MultipartForm.Value, want) {
 						t.Errorf("reviewed form changed: %#v", r.MultipartForm.Value)
 					}
@@ -201,7 +201,7 @@ func TestJournalMultipartCommandsPreserveReviewedIdentityForBothSignIns(t *testi
 					t.Fatal(err)
 				}
 				api := client.NewAPIClient(server.URL, time.Second, true, client.RetryOptions{MaxRetries: 0}, logging.New(logging.LevelError))
-				path := writeRegistryJSONFixture(t, `{"title":"Þróunarteymið","content":"<p>Unnið og yfirfarið.</p>","mutation":{"operationGuid":"`+operation+`","expectedUpdatedAt":"2026-11-15T20:00:00.1234567Z"}}`)
+				path := writeRegistryJSONFixture(t, `{"title":"Þróunarteymið","content":"**Unnið** og yfirfarið.","isMarkdown":true,"mutation":{"operationGuid":"`+operation+`","expectedUpdatedAt":"2026-11-15T20:00:00.1234567Z"}}`)
 				format := "json"
 				command := buildDomainCommand(findDomain("journal"), func() (*client.APIClient, error) { return api, nil }, logging.New(logging.LevelError), &format, &ExportConfig{})
 				args := []string{action}
