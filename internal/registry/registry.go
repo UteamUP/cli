@@ -187,6 +187,11 @@ type Action struct {
 	// RejectExtraArgs opts an action into rejecting undeclared positional input
 	// before creating a client. Existing actions retain their current behavior.
 	RejectExtraArgs bool
+	// OffsetPagingMaxPageSize, when positive, sends the action's --page and
+	// --page-size flags as the skip/take query pair that offset-paged
+	// controllers bind, and rejects a page below 1 or a page size outside
+	// 1..OffsetPagingMaxPageSize before any client is created.
+	OffsetPagingMaxPageSize int
 	// DownloadURLField turns the REST response into a streamed local download.
 	// DownloadOutputFlag names the local-only output flag, while
 	// DownloadDefaultArg supplies the default filename stem.
@@ -411,6 +416,9 @@ func validateActionInput(cmd *cobra.Command, args []string, action Action) error
 		}
 	}
 
+	if _, _, err := offsetPagingValues(cmd, action); err != nil {
+		return err
+	}
 	if err := validateTeamDeleteMetadata(cmd, action); err != nil {
 		return err
 	}
@@ -517,6 +525,13 @@ func validateActionDefinition(action Action) error {
 	if rootObjectFiles > 1 {
 		return fmt.Errorf("invalid action %s: only one root-object JSON file is allowed", action.Name)
 	}
+	if action.OffsetPagingMaxPageSize > 0 {
+		for _, name := range []string{"page", "page-size"} {
+			if !declaresPlainIntFlag(action.Flags, name) {
+				return fmt.Errorf("invalid action %s: offset paging needs a plain int --%s flag", action.Name, name)
+			}
+		}
+	}
 
 	for _, argument := range action.Args {
 		if len(argument.AllowedValues) == 0 {
@@ -582,6 +597,44 @@ func validateAllowedValues(actionName, label string, values []string, routeValue
 		seen[value] = struct{}{}
 	}
 	return nil
+}
+
+// declaresPlainIntFlag reports whether name is an int flag that travels in the
+// default body/query position, so offset paging can replace it.
+func declaresPlainIntFlag(flags []FlagDef, name string) bool {
+	for _, flag := range flags {
+		if flag.Name == name {
+			return flag.Type == "int" && flag.BodyName == "" && flag.QueryName == "" &&
+				flag.HeaderName == "" && !flag.LocalOnly
+		}
+	}
+	return false
+}
+
+// offsetPagingValues converts --page/--page-size into the skip/take pair.
+func offsetPagingValues(cmd *cobra.Command, action Action) (int, int, error) {
+	if action.OffsetPagingMaxPageSize <= 0 {
+		return 0, 0, nil
+	}
+	page, err := cmd.Flags().GetInt("page")
+	if err != nil {
+		return 0, 0, fmt.Errorf("reading --page: %w", err)
+	}
+	pageSize, err := cmd.Flags().GetInt("page-size")
+	if err != nil {
+		return 0, 0, fmt.Errorf("reading --page-size: %w", err)
+	}
+	if page < 1 {
+		return 0, 0, fmt.Errorf("invalid --page: must be 1 or greater")
+	}
+	if pageSize < 1 || pageSize > action.OffsetPagingMaxPageSize {
+		return 0, 0, fmt.Errorf("invalid --page-size: must be between 1 and %d", action.OffsetPagingMaxPageSize)
+	}
+	maxInt32 := 1<<31 - 1
+	if page-1 > (maxInt32-pageSize)/pageSize {
+		return 0, 0, fmt.Errorf("invalid --page: page %d is out of range", page)
+	}
+	return (page - 1) * pageSize, pageSize, nil
 }
 
 func declaresStringFlag(flags []FlagDef, name string) bool {
@@ -798,6 +851,17 @@ func executeAction(cmd *cobra.Command, args []string, domain *Domain, action Act
 			v, _ := cmd.Flags().GetString(flag.Name)
 			toolArgs[fieldName] = v
 		}
+	}
+
+	if action.OffsetPagingMaxPageSize > 0 {
+		skip, take, err := offsetPagingValues(cmd, action)
+		if err != nil {
+			return err
+		}
+		delete(toolArgs, "page")
+		delete(toolArgs, "pageSize")
+		queryParams["skip"] = skip
+		queryParams["take"] = take
 	}
 
 	if err := validateLocationAccessReviewedOriginal(action, toolArgs); err != nil {
