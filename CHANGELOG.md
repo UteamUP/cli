@@ -5,7 +5,12 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [6.4.2](https://github.com/UteamUP/cli/compare/6.4.1...6.4.2) (2026-11-16)
+## [6.5.0](https://github.com/UteamUP/cli/compare/6.4.1...6.5.0) (2026-11-17)
+
+
+### Features
+
+* **registry:** add part-request list/get/create/update commands ([#207](https://github.com/UteamUP/cli/issues/207)) ([522933f](https://github.com/UteamUP/cli/commit/522933f09d2cc56094b539f7542e79ee566cddef))
 
 
 ### Tests
