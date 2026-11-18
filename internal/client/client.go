@@ -669,6 +669,21 @@ func writeDownloadFileWithLimit(outputPath string, r io.Reader, limit int64) (in
 // that bind IFormFile — e.g. the stock CSV import. Auth, tenant, and CSRF
 // headers mirror CallREST.
 func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField, filePath string, params map[string]any, extraHeaders map[string]string, actionName string) (json.RawMessage, error) {
+	return c.CallRESTUploadFiles(ctx, method, path, fileField, []string{filePath}, params, extraHeaders, actionName)
+}
+
+// maxMultipartUploadBytes caps the combined size of all files in one
+// multipart upload. It matches the backend's 100 MB request size limit.
+const maxMultipartUploadBytes = 100 * 1024 * 1024
+
+// CallRESTUploadFiles sends one multipart/form-data request with every local
+// file as a repeated body part named fileField, for endpoints that bind
+// List<IFormFile> (e.g. journal image attach). The combined file size may not
+// exceed 100 MB. Params travel on the query string; headers mirror CallREST.
+func (c *APIClient) CallRESTUploadFiles(ctx context.Context, method, path, fileField string, filePaths []string, params map[string]any, extraHeaders map[string]string, actionName string) (json.RawMessage, error) {
+	if len(filePaths) == 0 {
+		return nil, fmt.Errorf("at least one file is required")
+	}
 	token, err := auth.LoadTokenForOrigin(c.baseURL, c.profile)
 	if err != nil {
 		return nil, clierrors.NewAuthError("loading token", err)
@@ -677,22 +692,30 @@ func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField,
 		return nil, &clierrors.NotAuthenticatedError{}
 	}
 
-	fileData, err := security.ReadFile(filePath, 100*1024*1024)
-	if err != nil {
-		return nil, fmt.Errorf("reading %s: %w", filePath, err)
-	}
-
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
-	header := make(textproto.MIMEHeader)
-	header.Set("Content-Disposition", fmt.Sprintf(`form-data; name=%q; filename=%q`, fileField, filepath.Base(filePath)))
-	header.Set("Content-Type", uploadContentType(filePath))
-	part, err := writer.CreatePart(header)
-	if err != nil {
-		return nil, fmt.Errorf("building multipart body: %w", err)
-	}
-	if _, err := part.Write(fileData); err != nil {
-		return nil, fmt.Errorf("building multipart body: %w", err)
+	var totalBytes int64
+	fileNames := make([]string, 0, len(filePaths))
+	for _, filePath := range filePaths {
+		fileData, err := security.ReadFile(filePath, maxMultipartUploadBytes)
+		if err != nil {
+			return nil, fmt.Errorf("reading %s: %w", filePath, err)
+		}
+		totalBytes += int64(len(fileData))
+		if totalBytes > maxMultipartUploadBytes {
+			return nil, fmt.Errorf("upload exceeds the %d byte request limit", maxMultipartUploadBytes)
+		}
+		header := make(textproto.MIMEHeader)
+		header.Set("Content-Disposition", fmt.Sprintf(`form-data; name=%q; filename=%q`, fileField, filepath.Base(filePath)))
+		header.Set("Content-Type", uploadContentType(filePath))
+		part, err := writer.CreatePart(header)
+		if err != nil {
+			return nil, fmt.Errorf("building multipart body: %w", err)
+		}
+		if _, err := part.Write(fileData); err != nil {
+			return nil, fmt.Errorf("building multipart body: %w", err)
+		}
+		fileNames = append(fileNames, filepath.Base(filePath))
 	}
 	if err := writer.Close(); err != nil {
 		return nil, fmt.Errorf("building multipart body: %w", err)
@@ -723,7 +746,7 @@ func (c *APIClient) CallRESTUpload(ctx context.Context, method, path, fileField,
 			req.Header.Set(k, v)
 		}
 
-		c.logger.Debug("%s %s multipart file=%s tenant=%s", method, c.baseURL+path, filepath.Base(filePath), c.tenantGUID(token))
+		c.logger.Debug("%s %s multipart files=%s tenant=%s", method, c.baseURL+path, strings.Join(fileNames, ","), c.tenantGUID(token))
 
 		resp, err := c.httpClient().Do(req)
 		if err != nil {

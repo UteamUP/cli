@@ -111,9 +111,13 @@ func registerDomainCommands() {
 	logger := logging.New(logging.LevelInfo)
 	exportCfg := &registry.ExportConfig{}
 
-	for _, cmd := range registry.DefaultRegistry.BuildCommands(func() (*client.APIClient, error) {
+	clientFactory := func() (*client.APIClient, error) {
 		return newDomainAPIClient(logger, exportCfg)
-	}, logger, &outputFormat, exportCfg) {
+	}
+	for _, cmd := range registry.DefaultRegistry.BuildCommands(clientFactory, logger, &outputFormat, exportCfg) {
+		if cmd.Name() == "journal" {
+			cmd.AddCommand(newJournalAddImagesCmd(clientFactory))
+		}
 		if cmd.Name() == "tenant" {
 			for _, action := range cmd.Commands() {
 				// Keep the existing membership list and interactive setup test.
