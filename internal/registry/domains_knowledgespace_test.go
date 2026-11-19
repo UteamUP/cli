@@ -28,16 +28,17 @@ func TestKnowledgeSpaceDomainWired(t *testing.T) {
 
 	// Every action maps to the exact MCP tool method name in MCP/Tools/KnowledgeSpaceTools.cs.
 	expected := map[string]string{
-		"list":         "UteamupKnowledgeSpaceList",
-		"get":          "UteamupKnowledgeSpaceGet",
-		"create":       "UteamupKnowledgeSpaceCreate",
-		"update":       "UteamupKnowledgeSpaceUpdate",
-		"delete":       "UteamupKnowledgeSpaceDelete",
-		"usage":        "UteamupKnowledgeSpaceUsage",
-		"list-members": "UteamupKnowledgeSpaceListMembers",
-		"add-member":   "UteamupKnowledgeSpaceAddMember",
-		"archive":      "ArchiveRecord",
-		"restore":      "RestoreRecord",
+		"list":           "UteamupKnowledgeSpaceList",
+		"access-catalog": "UteamupKnowledgeSpaceAccessCatalog",
+		"get":            "UteamupKnowledgeSpaceGet",
+		"create":         "UteamupKnowledgeSpaceCreate",
+		"update":         "UteamupKnowledgeSpaceUpdate",
+		"delete":         "UteamupKnowledgeSpaceDelete",
+		"usage":          "UteamupKnowledgeSpaceUsage",
+		"list-members":   "UteamupKnowledgeSpaceListMembers",
+		"add-member":     "UteamupKnowledgeSpaceAddMember",
+		"archive":        "ArchiveRecord",
+		"restore":        "RestoreRecord",
 	}
 	got := map[string]string{}
 	for _, a := range d.Actions {
