@@ -1,9 +1,14 @@
 package registry
 
 import (
+	"errors"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
+
+	"github.com/uteamup/cli/internal/client"
+	"github.com/uteamup/cli/internal/logging"
 )
 
 // TestBuildRESTPathUpdateSubRoutes locks in the update-<sub> sub-route convention:
@@ -20,6 +25,7 @@ func TestBuildRESTPathUpdateSubRoutes(t *testing.T) {
 	}{
 		{"update-status", "externalGuid", "abc-123", "/api/bugsandfeatures/abc-123/status"},
 		{"update-notes", "externalGuid", "abc-123", "/api/bugsandfeatures/abc-123/notes"},
+		{"update-severity", "externalGuid", "abc-123", "/api/bugsandfeatures/abc-123/severity"},
 		{"update-status", "id", 42, "/api/bugsandfeatures/42/status"},
 		{"update-priority", "externalGuid", "g1", "/api/bugsandfeatures/g1/priority"},
 		{"get", "externalGuid", "g1", "/api/bugsandfeatures/g1"},
@@ -341,6 +347,137 @@ func TestBugsAndFeaturesMine(t *testing.T) {
 	}
 	if len(mineAction.Args) != 0 {
 		t.Errorf("mine should take no positional args, got %d", len(mineAction.Args))
+	}
+}
+
+// TestBugsAndFeaturesUpdateSeverityDeclaration locks in the registry declaration
+// for `update-severity`: a REST PATCH to the {externalGuid}/severity sub-route
+// (generic update-<sub> rule), tool uteamup_bugsandfeatures_update_severity, a
+// required --severity flag constrained to the four backend enum values, and an
+// optional --note. Without the AllowedValues constraint a free-form severity
+// would reach the backend and 400; without the update- prefix the verb would
+// fall through to the basePath and 404/405.
+func TestBugsAndFeaturesUpdateSeverityDeclaration(t *testing.T) {
+	var domain *Domain
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name == "bugsandfeatures" {
+			domain = d
+			break
+		}
+	}
+	if domain == nil {
+		t.Fatal("bugsandfeatures domain not registered")
+	}
+	var action *Action
+	for i := range domain.Actions {
+		if domain.Actions[i].Name == "update-severity" {
+			action = &domain.Actions[i]
+			break
+		}
+	}
+	if action == nil {
+		t.Fatal("update-severity action not registered")
+	}
+	if action.MCPOnly {
+		t.Error("update-severity must use the REST severity endpoint, not MCPOnly")
+	}
+	if action.ToolName != "uteamup_bugsandfeatures_update_severity" {
+		t.Errorf("ToolName = %q, want uteamup_bugsandfeatures_update_severity", action.ToolName)
+	}
+	if len(action.Args) != 1 || action.Args[0].Name != "externalGuid" || !action.Args[0].Required {
+		t.Fatalf("update-severity must take a single required externalGuid arg, got %+v", action.Args)
+	}
+
+	var severity, note *FlagDef
+	for i := range action.Flags {
+		switch action.Flags[i].Name {
+		case "severity":
+			severity = &action.Flags[i]
+		case "note":
+			note = &action.Flags[i]
+		}
+	}
+	if severity == nil {
+		t.Fatal("severity flag not declared on update-severity")
+	}
+	if !severity.Required || severity.Type != "string" {
+		t.Errorf("severity flag must be a required string, got required=%v type=%q", severity.Required, severity.Type)
+	}
+	want := []string{"Low", "Medium", "High", "Critical"}
+	if !reflect.DeepEqual(severity.AllowedValues, want) {
+		t.Errorf("severity AllowedValues = %v, want %v", severity.AllowedValues, want)
+	}
+	if severity.BodyName != "" {
+		t.Errorf("severity BodyName = %q, want empty (default camelCase severity)", severity.BodyName)
+	}
+	if note == nil {
+		t.Fatal("note flag not declared on update-severity")
+	}
+	if note.Required {
+		t.Error("note flag must be optional")
+	}
+
+	if err := validateActionDefinition(*action); err != nil {
+		t.Fatalf("validateActionDefinition: %v", err)
+	}
+	path, consumed := buildRESTPath(domain, *action, map[string]any{"externalGuid": "g1", "severity": "Critical"})
+	if path != "/api/bugsandfeatures/g1/severity" {
+		t.Errorf("path = %q, want /api/bugsandfeatures/g1/severity", path)
+	}
+	if !reflect.DeepEqual(consumed, []string{"externalGuid"}) {
+		t.Errorf("consumed = %v, want [externalGuid] (guid must not double-leak into the body)", consumed)
+	}
+}
+
+// TestBugsAndFeaturesUpdateSeverityValidation proves the --severity enum gate
+// runs before any transport: an undeclared value is rejected locally, while a
+// declared value reaches the API client factory. Mirrors the MIME-enum guard.
+func TestBugsAndFeaturesUpdateSeverityValidation(t *testing.T) {
+	var domain *Domain
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name == "bugsandfeatures" {
+			domain = d
+			break
+		}
+	}
+	if domain == nil {
+		t.Fatal("bugsandfeatures domain not registered")
+	}
+	var action Action
+	found := false
+	for _, a := range domain.Actions {
+		if a.Name == "update-severity" {
+			action = a
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatal("update-severity action not registered")
+	}
+
+	for _, value := range []string{"Low", "Medium", "High", "Critical", "Urgent", "critical"} {
+		t.Run(value, func(t *testing.T) {
+			reached := errors.New("transport reached")
+			called := false
+			format := "json"
+			command := buildActionCommand(domain, action, func() (*client.APIClient, error) {
+				called = true
+				return nil, reached
+			}, logging.New(logging.LevelError), &format, nil)
+			command.SetArgs([]string{"11111111-1111-4111-8111-111111111111", "--severity", value})
+			err := command.Execute()
+			valid := value == "Low" || value == "Medium" || value == "High" || value == "Critical"
+			if valid {
+				if !called || !errors.Is(err, reached) {
+					t.Fatalf("declared severity %q was blocked: called=%v err=%v", value, called, err)
+				}
+			} else {
+				if called || err == nil || !strings.Contains(err.Error(), "must be one of") {
+					t.Fatalf("undeclared severity %q reached transport: called=%v err=%v", value, called, err)
+				}
+			}
+		})
 	}
 }
 

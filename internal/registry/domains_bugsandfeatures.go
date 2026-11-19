@@ -90,6 +90,18 @@ func init() {
 				},
 			},
 			{
+				Name:        "update-severity",
+				Description: "Change a submission's severity (global-admin only). Records the change in the audit history; 409 when the report already has this severity.",
+				ToolName:    "uteamup_bugsandfeatures_update_severity",
+				Args: []ArgDef{
+					{Name: "externalGuid", Description: "ExternalGuid", Required: true, Type: "string"},
+				},
+				Flags: []FlagDef{
+					{Name: "severity", Description: "Target severity (Low, Medium, High, Critical)", Required: true, Type: "string", AllowedValues: []string{"Low", "Medium", "High", "Critical"}},
+					{Name: "note", Description: "Optional reason recorded on the audit-trail entry. Max 1 KB.", Type: "string"},
+				},
+			},
+			{
 				Name:        "increment-hit",
 				Description: "Manually record a hit (occurrence) for an existing submission (global-admin only). Atomically increments OccurrenceCount and updates LastSeenAtUtc; appends a [manual-hit] audit row carrying the optional route/environment/evidence/note metadata. Returns before/after counters so uteamup-validate reports can prove the hit was recorded without spoofing frontend auto-capture.",
 				ToolName:    "uteamup_bugsandfeatures_increment_hit",
