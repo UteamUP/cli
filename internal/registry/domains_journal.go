@@ -112,6 +112,14 @@ func init() {
 				},
 			},
 			{
+				Name:        "link-suggestions",
+				Description: "Suggest assets, parts, tools, chemicals and industry codes named in journal text (read-only, no AI credits)",
+				ToolName:    "UteamupJournalLinkSuggestions",
+				HTTPMethod:  "POST",
+				RESTPath:    "link-suggestions",
+				Args:        []ArgDef{{Name: "text", Description: "Journal text to check (max 8,000 characters)", Required: true, Type: "string", BodyName: "text"}},
+			},
+			{
 				Name:         "search-assets",
 				Description:  "Search assets for the $ mention trigger (tenant-scoped, active only)",
 				ToolName:     "UteamupAssetMentionSearch",

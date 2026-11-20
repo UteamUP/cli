@@ -47,6 +47,7 @@ func TestJournalDomainActions(t *testing.T) {
 		"by-asset":          "UteamupJournalGetByAsset",
 		"import":            "UteamupJournalImport",
 		"create-from-image": "UteamupJournalCreateFromImage",
+		"link-suggestions":  "UteamupJournalLinkSuggestions",
 		"search-assets":     "UteamupAssetMentionSearch",
 		"search-workorders": "UteamupWorkorderMentionSearch",
 		"search-tools":      "UteamupToolMentionSearch",
@@ -102,6 +103,32 @@ func TestJournalListUsesSearchAdapter(t *testing.T) {
 	}
 	if flags["page"].Default != 1 || flags["page-size"].Default != 20 {
 		t.Errorf("list pagination defaults = page %v, size %v; want 1 and 20", flags["page"].Default, flags["page-size"].Default)
+	}
+}
+
+func TestJournalLinkSuggestionsPostsTextToRestRoute(t *testing.T) {
+	d := findDomain("journal")
+	action := findAction(d, "link-suggestions")
+	if action == nil {
+		t.Fatal("expected link-suggestions action on journal domain")
+	}
+	if action.HTTPMethod != "POST" || action.MCPOnly {
+		t.Fatalf("link-suggestions must be a REST POST, got %s (MCPOnly=%v)", action.HTTPMethod, action.MCPOnly)
+	}
+	path, consumed := buildRESTPath(d, *action, map[string]any{"text": "Skipti um þéttingu á Dælu 3"})
+	if path != "/api/journal/link-suggestions" {
+		t.Fatalf("link-suggestions path = %q, want /api/journal/link-suggestions", path)
+	}
+	if len(consumed) != 0 {
+		t.Fatalf("text must go in the body, not the path: consumed %v", consumed)
+	}
+	if len(action.Args) != 1 || action.Args[0].BodyName != "text" || !action.Args[0].Required {
+		t.Fatalf("link-suggestions must take one required text body argument: %+v", action.Args)
+	}
+	for _, flag := range action.Flags {
+		if flag.BodyName == "aiAssist" {
+			t.Fatal("the CLI must not expose the charged AI check")
+		}
 	}
 }
 
