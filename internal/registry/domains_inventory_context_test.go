@@ -71,6 +71,11 @@ func TestInventoryHandlingRequiresEveryReplacementFlag(t *testing.T) {
 			if count != 5 {
 				t.Fatalf("replacement requires all five flags, got %d", count)
 			}
+			for _, flag := range action.Flags {
+				if flag.Name == "source-document-guid" && (flag.BodyName != "sourceDocumentGuids" || flag.Type != "stringSlice") {
+					t.Fatalf("source documents must be a repeatable sourceDocumentGuids list, got %s/%s", flag.BodyName, flag.Type)
+				}
+			}
 			return
 		}
 	}

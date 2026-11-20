@@ -1545,7 +1545,7 @@ func init() {
 					{Name: "hearing-protection", BodyName: "requiresHearingProtection", Required: true, Type: "bool"},
 					{Name: "special-handling", BodyName: "requiresSpecialHandling", Required: true, Type: "bool"},
 					{Name: "instructions", Type: "string"},
-					{Name: "source-document-guid", BodyName: "sourceDocumentGuid", Type: "non-empty-uuid"},
+					{Name: "source-document-guid", BodyName: "sourceDocumentGuids", Description: "Source document GUID, repeatable; replaces every cited document (max 20)", Type: "stringSlice"},
 					{Name: "expected-version-guid", BodyName: "expectedVersionGuid", Type: "non-empty-uuid"},
 				}},
 			{Name: "get-by-guid", Description: "Read a catalog Part, Tool or Asset by public GUID and exact type", ToolName: "GetInventoryItem", MCPOnly: true, RejectExtraArgs: true,
