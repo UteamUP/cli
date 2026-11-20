@@ -5,6 +5,14 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.8.0](https://github.com/UteamUP/cli/compare/6.7.0...6.8.0) (2026-11-20)
+
+
+### Features
+
+* **inventory:** link several source documents ([30fdafb](https://github.com/UteamUP/cli/commit/30fdafb8eafc418b4fc46b955d72c9e5e65e8ea2))
+* **journal:** uteamup journal link-suggestions ([00a579b](https://github.com/UteamUP/cli/commit/00a579b9e089b8da2c2526878476e443a290eb16))
+
 ## [6.5.0](https://github.com/UteamUP/cli/compare/6.4.1...6.5.0) (2026-11-17)
 
 
