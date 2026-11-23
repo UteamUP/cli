@@ -13,6 +13,7 @@ package registry
 //	GET    /api/inventory-type/{kind}
 //	GET    /api/inventory-type/{kind}/{typeGuid}
 //	POST   /api/inventory-type/{kind}
+//	POST   /api/inventory-type/{kind}/catalogue
 //	PUT    /api/inventory-type/{kind}/{typeGuid}
 //	POST   /api/inventory-type/{kind}/{typeGuid}/fields
 //	PUT    /api/inventory-type/{kind}/{typeGuid}/fields/{fieldGuid}
