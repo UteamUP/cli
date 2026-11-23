@@ -9,14 +9,15 @@ package registry
 // .Update for writes, so a part command never answers for a tool or a chemical.
 //
 // The routes are the ones the API actually serves:
-//   GET    /api/inventory-type/{kind}
-//   GET    /api/inventory-type/{kind}/{typeGuid}
-//   POST   /api/inventory-type/{kind}
-//   PUT    /api/inventory-type/{kind}/{typeGuid}
-//   POST   /api/inventory-type/{kind}/{typeGuid}/fields
-//   PUT    /api/inventory-type/{kind}/{typeGuid}/fields/{fieldGuid}
-//   GET    /api/inventory-type/{kind}/items/{itemGuid}
-//   PATCH  /api/inventory-type/{kind}/items/{itemGuid}
+//
+//	GET    /api/inventory-type/{kind}
+//	GET    /api/inventory-type/{kind}/{typeGuid}
+//	POST   /api/inventory-type/{kind}
+//	PUT    /api/inventory-type/{kind}/{typeGuid}
+//	POST   /api/inventory-type/{kind}/{typeGuid}/fields
+//	PUT    /api/inventory-type/{kind}/{typeGuid}/fields/{fieldGuid}
+//	GET    /api/inventory-type/{kind}/items/{itemGuid}
+//	PATCH  /api/inventory-type/{kind}/items/{itemGuid}
 func init() {
 	Register(&Domain{
 		Name:        "inventory-type",
@@ -25,12 +26,13 @@ func init() {
 		APIPath:     "/api/inventory-type",
 		Actions: []Action{
 			{
-				Name:        "list",
-				Description: "List the type definitions of one inventory kind (part, tool or chemical)",
-				ToolName:    "UteamupInventoryTypeList",
-				HTTPMethod:  "GET",
-				RESTPath:    "{kind}",
-				Args:        []ArgDef{inventoryTypeKindArg()},
+				Name:            "list",
+				Description:     "List the type definitions of one inventory kind (part, tool or chemical)",
+				ToolName:        "UteamupInventoryTypeList",
+				HTTPMethod:      "GET",
+				RESTPath:        "{kind}",
+				RejectExtraArgs: true,
+				Args:            []ArgDef{inventoryTypeKindArg()},
 				Flags: []FlagDef{
 					{Name: "include-inactive", Description: "Include archived types (default: false)", Default: false, Type: "bool"},
 					{Name: "page", Description: "Page number, 1-based (default: 1)", Default: 1, Type: "int"},
@@ -38,23 +40,25 @@ func init() {
 				},
 			},
 			{
-				Name:        "get",
-				Description: "Get one type definition with its field definitions",
-				ToolName:    "UteamupInventoryTypeGet",
-				HTTPMethod:  "GET",
-				RESTPath:    "{kind}/{typeGuid}",
+				Name:            "get",
+				Description:     "Get one type definition with its field definitions",
+				ToolName:        "UteamupInventoryTypeGet",
+				HTTPMethod:      "GET",
+				RESTPath:        "{kind}/{typeGuid}",
+				RejectExtraArgs: true,
 				Args: []ArgDef{
 					inventoryTypeKindArg(),
 					{Name: "typeGuid", Description: "Type GUID", Required: true, Type: "non-empty-uuid"},
 				},
 			},
 			{
-				Name:        "create",
-				Description: "Create a type definition for one inventory kind",
-				ToolName:    "UteamupInventoryTypeCreate",
-				HTTPMethod:  "POST",
-				RESTPath:    "{kind}",
-				Args:        []ArgDef{inventoryTypeKindArg()},
+				Name:            "create",
+				Description:     "Create a type definition for one inventory kind",
+				ToolName:        "UteamupInventoryTypeCreate",
+				HTTPMethod:      "POST",
+				RESTPath:        "{kind}",
+				RejectExtraArgs: true,
+				Args:            []ArgDef{inventoryTypeKindArg()},
 				Flags: []FlagDef{
 					{Name: "name", Description: "Type name (max 200 characters)", Required: true, Type: "string"},
 					{Name: "description", Description: "Type description (max 2000 characters, optional)", Type: "string"},
@@ -64,11 +68,12 @@ func init() {
 				},
 			},
 			{
-				Name:        "update",
-				Description: "Update a type definition, or archive it with --is-active=false",
-				ToolName:    "UteamupInventoryTypeUpdate",
-				HTTPMethod:  "PUT",
-				RESTPath:    "{kind}/{typeGuid}",
+				Name:            "update",
+				Description:     "Update a type definition, or archive it with --is-active=false",
+				ToolName:        "UteamupInventoryTypeUpdate",
+				HTTPMethod:      "PUT",
+				RESTPath:        "{kind}/{typeGuid}",
+				RejectExtraArgs: true,
 				Args: []ArgDef{
 					inventoryTypeKindArg(),
 					{Name: "typeGuid", Description: "Type GUID", Required: true, Type: "non-empty-uuid"},
@@ -82,11 +87,12 @@ func init() {
 				},
 			},
 			{
-				Name:        "field-create",
-				Description: "Add a field definition to a type (the field key and data type are the field's immutable identity)",
-				ToolName:    "UteamupInventoryTypeFieldCreate",
-				HTTPMethod:  "POST",
-				RESTPath:    "{kind}/{typeGuid}/fields",
+				Name:            "field-create",
+				Description:     "Add a field definition to a type (the field key and data type are the field's immutable identity)",
+				ToolName:        "UteamupInventoryTypeFieldCreate",
+				HTTPMethod:      "POST",
+				RESTPath:        "{kind}/{typeGuid}/fields",
+				RejectExtraArgs: true,
 				Args: []ArgDef{
 					inventoryTypeKindArg(),
 					{Name: "typeGuid", Description: "Type GUID", Required: true, Type: "non-empty-uuid"},
@@ -105,11 +111,12 @@ func init() {
 				},
 			},
 			{
-				Name:        "field-update",
-				Description: "Update a field definition, or archive it with --is-active=false; the field key and data type never change",
-				ToolName:    "UteamupInventoryTypeFieldUpdate",
-				HTTPMethod:  "PUT",
-				RESTPath:    "{kind}/{typeGuid}/fields/{fieldGuid}",
+				Name:            "field-update",
+				Description:     "Update a field definition, or archive it with --is-active=false; the field key and data type never change",
+				ToolName:        "UteamupInventoryTypeFieldUpdate",
+				HTTPMethod:      "PUT",
+				RESTPath:        "{kind}/{typeGuid}/fields/{fieldGuid}",
+				RejectExtraArgs: true,
 				Args: []ArgDef{
 					inventoryTypeKindArg(),
 					{Name: "typeGuid", Description: "Type GUID", Required: true, Type: "non-empty-uuid"},
@@ -129,22 +136,24 @@ func init() {
 				},
 			},
 			{
-				Name:        "item-get",
-				Description: "Get the type selection and the per-item values of one part, tool or chemical",
-				ToolName:    "UteamupInventoryTypeItemGet",
-				HTTPMethod:  "GET",
-				RESTPath:    "{kind}/items/{itemGuid}",
+				Name:            "item-get",
+				Description:     "Get the type selection and the per-item values of one part, tool or chemical",
+				ToolName:        "UteamupInventoryTypeItemGet",
+				HTTPMethod:      "GET",
+				RESTPath:        "{kind}/items/{itemGuid}",
+				RejectExtraArgs: true,
 				Args: []ArgDef{
 					inventoryTypeKindArg(),
 					{Name: "itemGuid", Description: "Inventory item GUID", Required: true, Type: "non-empty-uuid"},
 				},
 			},
 			{
-				Name:        "item-save",
-				Description: "Set the type selection and the per-item values of one part, tool or chemical (sparse patch: omitted fields keep their value, an explicit null removes it)",
-				ToolName:    "UteamupInventoryTypeItemSave",
-				HTTPMethod:  "PATCH",
-				RESTPath:    "{kind}/items/{itemGuid}",
+				Name:            "item-save",
+				Description:     "Set the type selection and the per-item values of one part, tool or chemical (sparse patch: omitted fields keep their value, an explicit null removes it)",
+				ToolName:        "UteamupInventoryTypeItemSave",
+				HTTPMethod:      "PATCH",
+				RESTPath:        "{kind}/items/{itemGuid}",
+				RejectExtraArgs: true,
 				Args: []ArgDef{
 					inventoryTypeKindArg(),
 					{Name: "itemGuid", Description: "Inventory item GUID", Required: true, Type: "non-empty-uuid"},

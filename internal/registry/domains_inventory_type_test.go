@@ -16,14 +16,15 @@ import (
 )
 
 // The inventory type domain mirrors the routes the UTE-1075 API actually serves:
-//   GET   /api/inventory-type/{kind}
-//   GET   /api/inventory-type/{kind}/{typeGuid}
-//   POST  /api/inventory-type/{kind}
-//   PUT   /api/inventory-type/{kind}/{typeGuid}
-//   POST  /api/inventory-type/{kind}/{typeGuid}/fields
-//   PUT   /api/inventory-type/{kind}/{typeGuid}/fields/{fieldGuid}
-//   GET   /api/inventory-type/{kind}/items/{itemGuid}
-//   PATCH /api/inventory-type/{kind}/items/{itemGuid}
+//
+//	GET   /api/inventory-type/{kind}
+//	GET   /api/inventory-type/{kind}/{typeGuid}
+//	POST  /api/inventory-type/{kind}
+//	PUT   /api/inventory-type/{kind}/{typeGuid}
+//	POST  /api/inventory-type/{kind}/{typeGuid}/fields
+//	PUT   /api/inventory-type/{kind}/{typeGuid}/fields/{fieldGuid}
+//	GET   /api/inventory-type/{kind}/items/{itemGuid}
+//	PATCH /api/inventory-type/{kind}/items/{itemGuid}
 func TestInventoryTypeActionsMirrorTheExactApiRoutes(t *testing.T) {
 	domain := findDomainByName(t, "inventory-type")
 	if domain.APIPath != "/api/inventory-type" {
@@ -54,6 +55,44 @@ func TestInventoryTypeActionsMirrorTheExactApiRoutes(t *testing.T) {
 		}
 		if action.MCPOnly {
 			t.Fatalf("%s must use the REST route the API serves", name)
+		}
+	}
+}
+
+// The registry must not invent a route the backend does not serve. An extra action
+// would post to a route that answers 404, and a fabricated tool name would point at
+// a tool that does not exist. The generic fall-through test only checks that a route
+// is declared, not that it exists upstream, so the domain checks this itself.
+func TestInventoryTypeDeclaresNoRouteTheBackendDoesNotServe(t *testing.T) {
+	domain := findDomainByName(t, "inventory-type")
+
+	served := map[string]bool{
+		"GET {kind}":                               true,
+		"GET {kind}/{typeGuid}":                    true,
+		"POST {kind}":                              true,
+		"PUT {kind}/{typeGuid}":                    true,
+		"POST {kind}/{typeGuid}/fields":            true,
+		"PUT {kind}/{typeGuid}/fields/{fieldGuid}": true,
+		"GET {kind}/items/{itemGuid}":              true,
+		"PATCH {kind}/items/{itemGuid}":            true,
+	}
+
+	for _, action := range domain.Actions {
+		route := action.HTTPMethod + " " + action.RESTPath
+		if !served[route] {
+			t.Errorf("%s declares the unserved route %q", action.Name, route)
+		}
+	}
+}
+
+// Every action rejects undeclared positional input, so a stray argument can never
+// reach the backend as part of the path.
+func TestInventoryTypeActionsRejectExtraPositionalInput(t *testing.T) {
+	domain := findDomainByName(t, "inventory-type")
+
+	for _, action := range domain.Actions {
+		if !action.RejectExtraArgs {
+			t.Errorf("%s must reject extra positional input", action.Name)
 		}
 	}
 }
