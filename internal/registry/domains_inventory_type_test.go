@@ -21,6 +21,7 @@ import (
 //	GET   /api/inventory-type/{kind}/{typeGuid}
 //	POST  /api/inventory-type/{kind}
 //	PUT   /api/inventory-type/{kind}/{typeGuid}
+//	POST  /api/inventory-type/{kind}/catalogue
 //	POST  /api/inventory-type/{kind}/{typeGuid}/fields
 //	PUT   /api/inventory-type/{kind}/{typeGuid}/fields/{fieldGuid}
 //	GET   /api/inventory-type/{kind}/items/{itemGuid}
@@ -34,14 +35,15 @@ func TestInventoryTypeActionsMirrorTheExactApiRoutes(t *testing.T) {
 	expected := map[string]struct {
 		method, path, tool string
 	}{
-		"list":         {"GET", "{kind}", "UteamupInventoryTypeList"},
-		"get":          {"GET", "{kind}/{typeGuid}", "UteamupInventoryTypeGet"},
-		"create":       {"POST", "{kind}", "UteamupInventoryTypeCreate"},
-		"update":       {"PUT", "{kind}/{typeGuid}", "UteamupInventoryTypeUpdate"},
-		"field-create": {"POST", "{kind}/{typeGuid}/fields", "UteamupInventoryTypeFieldCreate"},
-		"field-update": {"PUT", "{kind}/{typeGuid}/fields/{fieldGuid}", "UteamupInventoryTypeFieldUpdate"},
-		"item-get":     {"GET", "{kind}/items/{itemGuid}", "UteamupInventoryTypeItemGet"},
-		"item-save":    {"PATCH", "{kind}/items/{itemGuid}", "UteamupInventoryTypeItemSave"},
+		"list":            {"GET", "{kind}", "UteamupInventoryTypeList"},
+		"get":             {"GET", "{kind}/{typeGuid}", "UteamupInventoryTypeGet"},
+		"create":          {"POST", "{kind}", "UteamupInventoryTypeCreate"},
+		"update":          {"PUT", "{kind}/{typeGuid}", "UteamupInventoryTypeUpdate"},
+		"catalogue-apply": {"POST", "{kind}/catalogue", "UteamupInventoryTypeCatalogueApply"},
+		"field-create":    {"POST", "{kind}/{typeGuid}/fields", "UteamupInventoryTypeFieldCreate"},
+		"field-update":    {"PUT", "{kind}/{typeGuid}/fields/{fieldGuid}", "UteamupInventoryTypeFieldUpdate"},
+		"item-get":        {"GET", "{kind}/items/{itemGuid}", "UteamupInventoryTypeItemGet"},
+		"item-save":       {"PATCH", "{kind}/items/{itemGuid}", "UteamupInventoryTypeItemSave"},
 	}
 
 	if len(domain.Actions) != len(expected) {
@@ -71,6 +73,7 @@ func TestInventoryTypeDeclaresNoRouteTheBackendDoesNotServe(t *testing.T) {
 		"GET {kind}/{typeGuid}":                    true,
 		"POST {kind}":                              true,
 		"PUT {kind}/{typeGuid}":                    true,
+		"POST {kind}/catalogue":                    true,
 		"POST {kind}/{typeGuid}/fields":            true,
 		"PUT {kind}/{typeGuid}/fields/{fieldGuid}": true,
 		"GET {kind}/items/{itemGuid}":              true,

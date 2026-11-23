@@ -87,6 +87,15 @@ func init() {
 				},
 			},
 			{
+				Name:            "catalogue-apply",
+				Description:     "Add the shipped type catalogue of one kind to the tenant; types the tenant already has are skipped",
+				ToolName:        "UteamupInventoryTypeCatalogueApply",
+				HTTPMethod:      "POST",
+				RESTPath:        "{kind}/catalogue",
+				RejectExtraArgs: true,
+				Args:            []ArgDef{inventoryTypeKindArg()},
+			},
+			{
 				Name:            "field-create",
 				Description:     "Add a field definition to a type (the field key and data type are the field's immutable identity)",
 				ToolName:        "UteamupInventoryTypeFieldCreate",
