@@ -19,6 +19,14 @@ package registry
 //	PUT    /api/inventory-type/{kind}/{typeGuid}/fields/{fieldGuid}
 //	GET    /api/inventory-type/{kind}/items/{itemGuid}
 //	PATCH  /api/inventory-type/{kind}/items/{itemGuid}
+//
+// The type owns the built-in technical specification, never the item: the type
+// selects catalog keys with specificationFields and holds their values with
+// specificationValues, and the item reads them from its type. Create and update
+// therefore take the whole type model as one reviewed JSON file — the same shape
+// the API binds and the same shape the MCP tool takes — so the selected keys and
+// their values stay in one consistent document and an empty selection can be
+// expressed. This mirrors the asset-type domain, whose contract is identical.
 func init() {
 	Register(&Domain{
 		Name:        "inventory-type",
@@ -54,23 +62,17 @@ func init() {
 			},
 			{
 				Name:            "create",
-				Description:     "Create a type definition for one inventory kind",
+				Description:     "Create a type definition for one inventory kind from a reviewed type model",
 				ToolName:        "UteamupInventoryTypeCreate",
 				HTTPMethod:      "POST",
 				RESTPath:        "{kind}",
 				RejectExtraArgs: true,
 				Args:            []ArgDef{inventoryTypeKindArg()},
-				Flags: []FlagDef{
-					{Name: "name", Description: "Type name (max 200 characters)", Required: true, Type: "string"},
-					{Name: "description", Description: "Type description (max 2000 characters, optional)", Type: "string"},
-					{Name: "icon-name", Description: "Icon name (max 100 characters, optional)", Type: "string"},
-					{Name: "is-active", Description: "Whether the type is selectable (default: true)", Default: true, Type: "bool"},
-					{Name: "display-order", Description: "Sort order (default: 0)", Default: 0, Type: "int"},
-				},
+				Flags:           []FlagDef{inventoryTypeModelFileFlag()},
 			},
 			{
 				Name:            "update",
-				Description:     "Update a type definition, or archive it with --is-active=false",
+				Description:     "Update a type definition, or archive it by sending isActive=false, from a reviewed type model",
 				ToolName:        "UteamupInventoryTypeUpdate",
 				HTTPMethod:      "PUT",
 				RESTPath:        "{kind}/{typeGuid}",
@@ -79,13 +81,7 @@ func init() {
 					inventoryTypeKindArg(),
 					{Name: "typeGuid", Description: "Type GUID", Required: true, Type: "non-empty-uuid"},
 				},
-				Flags: []FlagDef{
-					{Name: "name", Description: "Type name (max 200 characters)", Required: true, Type: "string"},
-					{Name: "description", Description: "Type description (max 2000 characters, optional)", Type: "string"},
-					{Name: "icon-name", Description: "Icon name (max 100 characters, optional)", Type: "string"},
-					{Name: "is-active", Description: "Whether the type is selectable; false archives it", Default: true, Type: "bool"},
-					{Name: "display-order", Description: "Sort order (default: 0)", Default: 0, Type: "int"},
-				},
+				Flags: []FlagDef{inventoryTypeModelFileFlag()},
 			},
 			{
 				Name:            "catalogue-apply",
@@ -183,5 +179,29 @@ func inventoryTypeKindArg() ArgDef {
 	return ArgDef{
 		Name: "kind", Description: "Inventory kind: part, tool or chemical", Required: true, Type: "string",
 		AllowedValues: []string{"part", "tool", "chemical"},
+	}
+}
+
+// inventoryTypeModelFileFlag is the type model the create and update actions send.
+// The file is the request body root, exactly as the API binds it, so the selected
+// specification keys and their values travel in one document and cannot disagree.
+//
+// The built-in technical specification belongs to the type: specificationFields
+// selects keys from the shipped catalog and specificationValues holds their
+// values. The keys are the catalog's own "group.field" names, for example
+// "electricalSpecs.ratedVoltage" or "thermalSpecs.maxTemperature"; the catalog
+// lists them all under GET /api/asset-type/specification-fields and the MCP tool
+// uteamup_equipment_specification_fields. A value whose key is not selected is
+// dropped, so the two belong together in the same file.
+func inventoryTypeModelFileFlag() FlagDef {
+	return FlagDef{
+		Name:  "request-file",
+		Short: "f",
+		Description: "JSON file containing the type model: {\"name\":...,\"description\":...,\"iconName\":...," +
+			"\"isActive\":true,\"displayOrder\":0,\"specificationFields\":[\"electricalSpecs.ratedVoltage\",...]," +
+			"\"specificationValues\":{\"electricalSpecs\":{\"ratedVoltage\":400}}}",
+		Required:           true,
+		Type:               "string",
+		RootJSONObjectFile: true,
 	}
 }

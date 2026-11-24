@@ -242,6 +242,7 @@ func TestInventoryTypeTransportBuildsTheRealRoutes(t *testing.T) {
 	for _, scenario := range []struct {
 		name       string
 		args       []string
+		modelFile  string
 		wantMethod string
 		wantPath   string
 		wantQuery  map[string]string
@@ -257,12 +258,14 @@ func TestInventoryTypeTransportBuildsTheRealRoutes(t *testing.T) {
 			wantMethod: "GET", wantPath: "/api/inventory-type/tool/" + typeGuid,
 		},
 		{
-			name: "create", args: []string{"create", "chemical", "--name", "Coolant"},
+			name: "create", args: []string{"create", "chemical"},
+			modelFile:  `{"name":"Coolant","isActive":true,"displayOrder":0}`,
 			wantMethod: "POST", wantPath: "/api/inventory-type/chemical",
 			wantBody: map[string]any{"name": "Coolant", "isActive": true, "displayOrder": float64(0)},
 		},
 		{
-			name: "update", args: []string{"update", "part", typeGuid, "--name", "Hydraulic", "--is-active=false"},
+			name: "update", args: []string{"update", "part", typeGuid},
+			modelFile:  `{"name":"Hydraulic","isActive":false,"displayOrder":0}`,
 			wantMethod: "PUT", wantPath: "/api/inventory-type/part/" + typeGuid,
 			wantBody: map[string]any{"name": "Hydraulic", "isActive": false, "displayOrder": float64(0)},
 		},
@@ -287,6 +290,15 @@ func TestInventoryTypeTransportBuildsTheRealRoutes(t *testing.T) {
 			home := t.TempDir()
 			t.Setenv("HOME", home)
 			t.Setenv("USERPROFILE", home)
+
+			args := scenario.args
+			if scenario.modelFile != "" {
+				path := filepath.Join(t.TempDir(), "type-model.json")
+				if err := os.WriteFile(path, []byte(scenario.modelFile), 0o600); err != nil {
+					t.Fatalf("write type model: %v", err)
+				}
+				args = append(append([]string{}, args...), "--request-file", path)
+			}
 
 			var received *http.Request
 			var receivedBody []byte
@@ -321,7 +333,7 @@ func TestInventoryTypeTransportBuildsTheRealRoutes(t *testing.T) {
 			command.SetErr(os.Stderr)
 			command.SilenceErrors = true
 			command.SilenceUsage = true
-			command.SetArgs(scenario.args)
+			command.SetArgs(args)
 
 			if err := command.Execute(); err != nil {
 				t.Fatalf("%s error = %v", scenario.name, err)
@@ -500,5 +512,134 @@ func TestInventoryTypeRefusesAnUnknownKind(t *testing.T) {
 
 	if err := command.Execute(); err == nil {
 		t.Fatal("an unknown kind must be refused")
+	}
+}
+
+// The built-in technical specification belongs to the type, never to the item. The
+// type selects catalog keys and holds their values, so the type write carries both
+// in one document: the selected keys and their values can then never disagree.
+func TestInventoryTypeTypeWriteCarriesTheTypeHeldSpecification(t *testing.T) {
+	for _, name := range []string{"create", "update"} {
+		action := findDomainAction(t, "inventory-type", name)
+		file := actionFlagByName(t, action, "request-file")
+		if !file.Required || !file.RootJSONObjectFile {
+			t.Fatalf("%s request-file is miswired: %+v", name, file)
+		}
+		if file.BodyName != "" || file.JSONFile {
+			t.Fatalf("%s request-file must not wrap the type model: %+v", name, file)
+		}
+	}
+}
+
+// The item owns the values of the fields its types declare, but no technical
+// specification: the per-item surface offers only the selection patch, so there is
+// no way to write a built-in spec onto an item.
+func TestInventoryTypeOffersNoPerItemTechnicalSpecification(t *testing.T) {
+	itemSave := findDomainAction(t, "inventory-type", "item-save")
+	for _, flag := range itemSave.Flags {
+		if flag.Name != "file" {
+			t.Errorf("item-save exposes a per-item flag beyond the selection patch: %+v", flag)
+		}
+	}
+
+	for _, action := range findDomainByName(t, "inventory-type").Actions {
+		for _, flag := range action.Flags {
+			switch flag.Name {
+			case "specification-fields", "specification-values", "thermal-specs",
+				"electrical-specs", "mechanical-specs", "environmental-specs":
+				t.Errorf("%s exposes a specification flag on the wrong surface: %+v", action.Name, flag)
+			}
+		}
+	}
+}
+
+// The selected keys and their values reach the API at the request body root, so the
+// API receives them exactly as the type model declares them.
+func TestInventoryTypeTypeWriteSendsTheSpecificationToTheApi(t *testing.T) {
+	const typeGuid = "11111111-1111-4111-8111-111111111111"
+	const model = `{"name":"Pump","isActive":true,"displayOrder":0,` +
+		`"specificationFields":["electricalSpecs.ratedVoltage","thermalSpecs.maxTemperature"],` +
+		`"specificationValues":{"electricalSpecs":{"ratedVoltage":400},"thermalSpecs":{"maxTemperature":85}}}`
+
+	for _, scenario := range []struct {
+		name string
+		args []string
+	}{
+		{name: "create", args: []string{"create", "part"}},
+		{name: "update", args: []string{"update", "part", typeGuid}},
+	} {
+		t.Run(scenario.name, func(t *testing.T) {
+			home := t.TempDir()
+			t.Setenv("HOME", home)
+			t.Setenv("USERPROFILE", home)
+
+			path := filepath.Join(t.TempDir(), "type-model.json")
+			if err := os.WriteFile(path, []byte(model), 0o600); err != nil {
+				t.Fatalf("write type model: %v", err)
+			}
+
+			var receivedBody []byte
+			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				receivedBody, _ = io.ReadAll(r.Body)
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{}`))
+			}))
+			t.Cleanup(server.Close)
+
+			if err := auth.SaveToken(&auth.TokenData{
+				APIOrigin:   server.URL,
+				AccessToken: "inventory-type-token",
+				ExpiresAt:   time.Now().Add(time.Hour),
+				TenantGUID:  "55555555-5555-4555-8555-555555555555",
+			}); err != nil {
+				t.Fatalf("save test token: %v", err)
+			}
+
+			apiClient := client.NewAPIClient(server.URL, time.Second, true,
+				client.RetryOptions{MaxRetries: 0}, logging.New(logging.LevelError))
+			format := "json"
+			command := buildDomainCommand(
+				findDomainByName(t, "inventory-type"),
+				func() (*client.APIClient, error) { return apiClient, nil },
+				logging.New(logging.LevelError),
+				&format,
+				&ExportConfig{},
+			)
+			command.SetOut(os.Stdout)
+			command.SetErr(os.Stderr)
+			command.SilenceErrors = true
+			command.SilenceUsage = true
+			command.SetArgs(append(append([]string{}, scenario.args...), "--request-file", path))
+
+			if err := command.Execute(); err != nil {
+				t.Fatalf("%s error = %v", scenario.name, err)
+			}
+
+			var body map[string]any
+			if err := json.Unmarshal(receivedBody, &body); err != nil {
+				t.Fatalf("decode body: %v", err)
+			}
+
+			fields, ok := body["specificationFields"].([]any)
+			if !ok || len(fields) != 2 {
+				t.Fatalf("specificationFields = %#v, want two selected keys", body["specificationFields"])
+			}
+			if fields[0] != "electricalSpecs.ratedVoltage" || fields[1] != "thermalSpecs.maxTemperature" {
+				t.Errorf("specificationFields = %#v", fields)
+			}
+
+			values, ok := body["specificationValues"].(map[string]any)
+			if !ok {
+				t.Fatalf("specificationValues = %#v, want an object", body["specificationValues"])
+			}
+			electrical, ok := values["electricalSpecs"].(map[string]any)
+			if !ok || electrical["ratedVoltage"] != float64(400) {
+				t.Errorf("specificationValues.electricalSpecs = %#v", values["electricalSpecs"])
+			}
+			thermal, ok := values["thermalSpecs"].(map[string]any)
+			if !ok || thermal["maxTemperature"] != float64(85) {
+				t.Errorf("specificationValues.thermalSpecs = %#v", values["thermalSpecs"])
+			}
+		})
 	}
 }
