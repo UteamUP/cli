@@ -56,3 +56,6 @@ firebase-debug.log
 cleanup_report.md
 # MSBuild binary logs
 *.binlog
+
+# Paperclip attachment staging residue (fail-closed guard, UTE-1629)
+.paperclip-inbound/
