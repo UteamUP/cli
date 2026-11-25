@@ -56,3 +56,6 @@ firebase-debug.log
 cleanup_report.md
 # MSBuild binary logs
 *.binlog
+
+# Paperclip attachment staging (never commit live run payload)
+.paperclip-inbound/
