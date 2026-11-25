@@ -8,7 +8,8 @@ func TestDocumentUploadDomainIssuesAndReadsTickets(t *testing.T) {
 	if domain == nil {
 		t.Fatal("document-upload domain is not registered")
 	}
-	want := map[string]string{"ticket": "UteamupDocumentCreateUploadTicket", "status": "UteamupDocumentUploadTicketGet"}
+	want := map[string]string{"ticket": "UteamupDocumentCreateUploadTicket", "status": "UteamupDocumentUploadTicketGet",
+		"download-link": "UteamupDocumentCreateDownloadLink"}
 	if len(domain.Actions) != len(want) {
 		t.Fatalf("actions = %d, want %d", len(domain.Actions), len(want))
 	}
