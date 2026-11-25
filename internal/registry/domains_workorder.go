@@ -173,6 +173,28 @@ func init() {
 				},
 			},
 			{
+				Name:        "add-documents",
+				Description: "Attach existing documents to a workorder by public GUID",
+				ToolName:    "UteamupWorkorderAddDocuments",
+				MCPOnly:     true,
+				Args: []ArgDef{
+					{Name: "workorderGuid", Description: "Workorder GUID", Required: true, Type: "uuid"},
+				},
+				Flags: []FlagDef{
+					{Name: "document-guids", BodyName: "documentGuids", Description: "Document GUIDs to attach (1-50), repeatable or comma-separated", Required: true, Type: "stringSlice"},
+				},
+			},
+			{
+				Name:        "remove-document",
+				Description: "Remove one document link from a workorder (the document is kept)",
+				ToolName:    "UteamupWorkorderRemoveDocument",
+				MCPOnly:     true,
+				Args: []ArgDef{
+					{Name: "workorderGuid", Description: "Workorder GUID", Required: true, Type: "uuid"},
+					{Name: "documentGuid", Description: "Linked document GUID", Required: true, Type: "uuid"},
+				},
+			},
+			{
 				Name:        "closeout-complete",
 				Description: "Complete an evidence-bound closeout after authorized sign-off",
 				ToolName:    "UteamupWorkorderCompleteCloseoutByGuid",
