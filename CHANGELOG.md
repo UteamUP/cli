@@ -5,6 +5,24 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.9.0](https://github.com/UteamUP/cli/compare/6.8.0...6.9.0) (2026-11-25)
+
+
+### Features
+
+* **document-upload:** add download-link for single-use document downloads ([0f5fd43](https://github.com/UteamUP/cli/commit/0f5fd43b176346781922e7ed2005146031267d32))
+* **integrations:** expose saved integration status reads (UTE-1637) ([#215](https://github.com/UteamUP/cli/issues/215)) ([ec9cbc5](https://github.com/UteamUP/cli/commit/ec9cbc598c8ae5ccd4ad7ef6fd9a513a5d02b2af))
+* **registry:** add agent-skill domain for UteamUP workflow skills ([e171c30](https://github.com/UteamUP/cli/commit/e171c303b4785f02fbb9d39d25a9d664f06f4903))
+* **registry:** add document-upload domain for upload tickets ([83f3cf0](https://github.com/UteamUP/cli/commit/83f3cf0e8296a9e90f10709b2db1d2b10611fc32))
+* **registry:** add the inventory type domain to the CLI (UTE-1221) ([#214](https://github.com/UteamUP/cli/issues/214)) ([78b00bf](https://github.com/UteamUP/cli/commit/78b00bf4074eb01a0be44d4fe2f398c19d25f07d))
+* **registry:** add work permit, sustainability, workforce time and operations domains ([36ff884](https://github.com/UteamUP/cli/commit/36ff8849c3e9a55517aa0316ef1b1c3c0d4a6bbe))
+* **registry:** add workorder add-documents and remove-document actions ([400e7d5](https://github.com/UteamUP/cli/commit/400e7d523cea0fd22a4af3c33c93f8a84eb642a2))
+
+
+### Miscellaneous
+
+* **paperclip:** ignore .paperclip-inbound attachment staging ([5bd106e](https://github.com/UteamUP/cli/commit/5bd106e2f21b51e24649de758bb4cd5db1c16561))
+
 ## [6.5.0](https://github.com/UteamUP/cli/compare/6.4.1...6.5.0) (2026-11-17)
 
 
