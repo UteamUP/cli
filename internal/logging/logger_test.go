@@ -33,3 +33,16 @@ func TestDeviceTokenRouteRedactsTheTokenFromRequestLogs(t *testing.T) {
 		t.Fatalf("ordinary request context was not preserved: %s", got)
 	}
 }
+
+func TestMcpCapabilityRoutesRedactTokensFromDiagnostics(t *testing.T) {
+	input := `PUT https://api.uteamup.com/api/mcp/upload-tickets/secret-upload-canary GET https://api.uteamup.com/api/mcp/download-links/secret-download-canary`
+	got := SafeDiagnostic(input)
+	for _, canary := range []string{"secret-upload-canary", "secret-download-canary"} {
+		if strings.Contains(got, canary) {
+			t.Fatalf("MCP capability token survived redaction: %s", got)
+		}
+	}
+	if !strings.Contains(got, "/api/mcp/upload-tickets/[REDACTED]") || !strings.Contains(got, "/api/mcp/download-links/[REDACTED]") {
+		t.Fatalf("redacted MCP capability route markers missing: %s", got)
+	}
+}
