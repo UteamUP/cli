@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.9.1](https://github.com/UteamUP/cli/compare/6.9.0...6.9.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* **security:** redact MCP upload-ticket and download-link path tokens in CLI diagnostics ([7cfabaa](https://github.com/UteamUP/cli/commit/7cfabaa33d7f856faa8c61afd0cad761525515ea))
+
 ## [6.9.0](https://github.com/UteamUP/cli/compare/6.8.0...6.9.0) (2026-11-25)
 
 
