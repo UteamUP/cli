@@ -102,6 +102,18 @@ func init() {
 				},
 			},
 			{
+				Name:        "verification-set",
+				Description: "Ask (or stop asking) the reporter to verify a fix (global-admin only). With --requested the reporter is notified with the steps once the report is Fixed and can confirm it works (Confirmed) or report it does not (back to New). Steps are required when requested.",
+				ToolName:    "uteamup_bugsandfeatures_update_verification",
+				HTTPMethod:  "PATCH",
+				RESTPath:    "{externalGuid}/verification",
+				Args:        []ArgDef{{Name: "externalGuid", Description: "ExternalGuid (format: 00000000-0000-0000-0000-000000000000)", Required: true, Type: "string"}},
+				Flags: []FlagDef{
+					{Name: "requested", BodyName: "verificationRequested", Description: "Ask the reporter to verify the fix (omit or --requested=false to withdraw)", Default: false, Type: "bool"},
+					{Name: "steps", BodyName: "verificationSteps", Description: "Steps the reporter follows to verify the fix. Required with --requested. Max 4,000 chars.", Type: "string"},
+				},
+			},
+			{
 				Name:        "increment-hit",
 				Description: "Manually record a hit (occurrence) for an existing submission (global-admin only). Atomically increments OccurrenceCount and updates LastSeenAtUtc; appends a [manual-hit] audit row carrying the optional route/environment/evidence/note metadata. Returns before/after counters so uteamup-validate reports can prove the hit was recorded without spoofing frontend auto-capture.",
 				ToolName:    "uteamup_bugsandfeatures_increment_hit",

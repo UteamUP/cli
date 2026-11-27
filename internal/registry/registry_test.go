@@ -722,3 +722,36 @@ func TestReportDomainAliasesAreUniqueAcrossRegistry(t *testing.T) {
 		}
 	}
 }
+
+// TestBugsAndFeaturesVerificationSetDeclaration locks in `verification-set` (UTE-2101): a REST
+// PATCH to {externalGuid}/verification carrying verificationRequested + verificationSteps.
+func TestBugsAndFeaturesVerificationSetDeclaration(t *testing.T) {
+	var action *Action
+	for _, d := range DefaultRegistry.Domains() {
+		if d.Name != "bugsandfeatures" {
+			continue
+		}
+		for i := range d.Actions {
+			if d.Actions[i].Name == "verification-set" {
+				action = &d.Actions[i]
+			}
+		}
+		got, _ := buildRESTPath(d, Action{Name: "verification-set", RESTPath: "{externalGuid}/verification"}, map[string]any{"externalGuid": "g1"})
+		if got != "/api/bugsandfeatures/g1/verification" {
+			t.Errorf("REST path = %q, want /api/bugsandfeatures/g1/verification", got)
+		}
+	}
+	if action == nil {
+		t.Fatal("verification-set action not registered")
+	}
+	if action.ToolName != "uteamup_bugsandfeatures_update_verification" || action.HTTPMethod != "PATCH" {
+		t.Errorf("ToolName/HTTPMethod = %q/%q", action.ToolName, action.HTTPMethod)
+	}
+	bodies := map[string]string{}
+	for _, f := range action.Flags {
+		bodies[f.Name] = f.BodyName
+	}
+	if bodies["requested"] != "verificationRequested" || bodies["steps"] != "verificationSteps" {
+		t.Errorf("flag body names = %v", bodies)
+	}
+}
