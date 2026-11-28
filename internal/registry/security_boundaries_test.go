@@ -1,12 +1,17 @@
 package registry
 
 import (
-	"github.com/uteamup/cli/internal/client"
-	"github.com/uteamup/cli/internal/logging"
+	"encoding/json"
+	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"sync/atomic"
 	"testing"
+
+	"github.com/uteamup/cli/internal/client"
+	"github.com/uteamup/cli/internal/logging"
 )
 
 func TestRouteValuesRejectEncodedAndLiteralSyntax(t *testing.T) {
@@ -99,6 +104,79 @@ func TestCredentialActionsDisableExport(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestDocumentCapabilityActionsDisableExport(t *testing.T) {
+	for _, name := range []string{"ticket", "download-link"} {
+		if !findDomainAction(t, "document-upload", name).DisableResponseExport {
+			t.Errorf("document-upload %s must not export capability URLs", name)
+		}
+	}
+}
+
+func TestDocumentUploadResponseExportBoundary(t *testing.T) {
+	const guid = "11111111-1111-4111-8111-111111111111"
+	for _, tc := range []struct {
+		name    string
+		args    []string
+		payload string
+		export  bool
+	}{
+		{"ticket", []string{"--file-name", "report.pdf", "--content-type", "application/pdf", "--size-bytes", "42"},
+			`{"uploadUrl":"https://api.uteamup.com/api/mcp/upload-tickets/upload-canary"}`, false},
+		{"download-link", []string{guid},
+			`{"downloadUrl":"https://api.uteamup.com/api/mcp/download-links/download-canary"}`, false},
+		{"status", []string{guid}, `{"status":"pending"}`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			action := findDomainAction(t, "document-upload", tc.name)
+			var calls atomic.Int32
+			apiClient := projectTransportClient(t, "apikey", client.RetryOptions{MaxRetries: 0}, func(w http.ResponseWriter, r *http.Request) {
+				calls.Add(1)
+				var request struct {
+					ID     int                   `json:"id"`
+					Method string                `json:"method"`
+					Params client.ToolCallParams `json:"params"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+					t.Errorf("decode request: %v", err)
+				}
+				if r.Method != http.MethodPost || r.URL.Path != "/mcp" || request.Method != "tools/call" || request.Params.Name != mcpToolName(action.ToolName) {
+					t.Error("request did not reach the registered MCP tool")
+				}
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"jsonrpc": "2.0", "id": request.ID,
+					"result": map[string]any{"content": []map[string]string{{"type": "text", "text": tc.payload}}},
+				})
+			})
+			exportDir := t.TempDir()
+			format := "json"
+			command := buildActionCommand(findDomain("document-upload"), *action,
+				func() (*client.APIClient, error) { return apiClient, nil }, logging.New(logging.LevelError),
+				&format, &ExportConfig{Enabled: true, Dir: exportDir})
+			command.SetArgs(tc.args)
+			var runErr error
+			stdout := captureRegistryStdout(t, func() { runErr = command.Execute() })
+			if runErr != nil || calls.Load() != 1 {
+				t.Fatalf("execution error = %v, requests = %d; want one successful request", runErr, calls.Load())
+			}
+			var got, want map[string]any
+			if err := json.Unmarshal([]byte(stdout), &got); err != nil {
+				t.Fatalf("decode stdout: %v", err)
+			}
+			if err := json.Unmarshal([]byte(tc.payload), &want); err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, want) {
+				t.Fatal("response must remain available on stdout")
+			}
+			if tc.export {
+				assertOnlyFiles(t, exportDir, "document-upload_status.json")
+			} else {
+				assertOnlyFiles(t, exportDir)
+			}
+		})
 	}
 }
 
