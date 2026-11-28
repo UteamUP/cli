@@ -16,6 +16,7 @@ func TestWeatherDomainResolvesToRealControllerRoutes(t *testing.T) {
 		{"list", "UteamupWeatherGetAll", nil, "/api/weather/locations"},
 		{"get", "UteamupWeatherGetForLocation", map[string]any{"locationGuid": locationGUID}, "/api/weather/locations/" + locationGUID},
 		{"coordinates", "UteamupWeatherGetForCoordinates", nil, "/api/weather/coordinates"},
+		{"seismic", "UteamupWeatherGetSeismic", map[string]any{"locationGuid": locationGUID}, "/api/weather/locations/" + locationGUID + "/seismic"},
 		{"alerts", "UteamupWeatherGetAlerts", nil, "/api/weather/alerts"},
 		{"windows", "UteamupWeatherSiteWindows", nil, "/api/weather/windows"},
 	}
@@ -114,5 +115,21 @@ func TestWeatherCoordinatesSendsRequiredFloatQueryParameters(t *testing.T) {
 	got := appendQueryParameters(path, map[string]any{"latitude": 64.15, "longitude": -21.94})
 	if want := "/api/weather/coordinates?latitude=64.15&longitude=-21.94"; got != want {
 		t.Fatalf("coordinates URL = %q, want %q", got, want)
+	}
+}
+
+func TestWeatherSeismicSendsBoundedQueryFlags(t *testing.T) {
+	action := findAction(findDomain("weather"), "seismic")
+	if action == nil || len(action.Args) != 1 || action.Args[0].Type != "non-empty-uuid" || !action.Args[0].Required {
+		t.Fatal("seismic requires a public location GUID")
+	}
+	if len(action.Flags) != 2 || action.Flags[0].Name != "days" || action.Flags[0].QueryName != "days" || action.Flags[0].Default != 7 ||
+		action.Flags[1].Name != "radius-km" || action.Flags[1].QueryName != "radiusKm" || action.Flags[1].Default != 50 {
+		t.Fatal("seismic must send days=7 and radiusKm=50 defaults")
+	}
+	path, _ := buildRESTPath(findDomain("weather"), *action, map[string]any{"locationGuid": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"})
+	got := appendQueryParameters(path, map[string]any{"days": 3, "radiusKm": 25})
+	if want := "/api/weather/locations/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/seismic?days=3&radiusKm=25"; got != want {
+		t.Fatalf("seismic URL = %q, want %q", got, want)
 	}
 }
