@@ -84,6 +84,12 @@ func init() {
 			{Name: "get", Description: "Current weather for one location by GUID", ToolName: "UteamupWeatherGetForLocation", HTTPMethod: "GET", RESTPath: "locations/{locationGuid}", Args: []ArgDef{
 				{Name: "locationGuid", Description: "Public location GUID", Required: true, Type: "non-empty-uuid"},
 			}},
+			{Name: "seismic", Description: "Nearby earthquakes and ground-motion sensor readings (days 1–30, radius 5–300 km)", ToolName: "UteamupWeatherGetSeismic", HTTPMethod: "GET", RESTPath: "locations/{locationGuid}/seismic", Args: []ArgDef{
+				{Name: "locationGuid", Description: "Public location GUID", Required: true, Type: "non-empty-uuid"},
+			}, Flags: []FlagDef{
+				{Name: "days", Description: "Lookback days, 1–30", Type: "int", Default: 7, QueryName: "days"},
+				{Name: "radius-km", Description: "Radius in kilometres, 5–300", Type: "int", Default: 50, QueryName: "radiusKm"},
+			}},
 			{Name: "coordinates", Description: "Current weather at a coordinate that is not a location (rounded to about 1 km)", ToolName: "UteamupWeatherGetForCoordinates", HTTPMethod: "GET", RESTPath: "coordinates", Flags: []FlagDef{
 				{Name: "latitude", Description: "Latitude in decimal degrees, -90 to 90", Type: "float", Required: true, QueryName: "latitude"},
 				{Name: "longitude", Description: "Longitude in decimal degrees, -180 to 180", Type: "float", Required: true, QueryName: "longitude"},
