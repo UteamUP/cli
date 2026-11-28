@@ -5,6 +5,13 @@ All notable changes to the UteamUP CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.11.0](https://github.com/UteamUP/cli/compare/6.10.0...6.11.0) (2026-11-28)
+
+
+### Features
+
+* **registry:** add billing-catalog domain for maker-checker price approvals (UTE-1606) ([8637284](https://github.com/UteamUP/cli/commit/86372848f80ba09db87db418365c77631cc548a3))
+
 ## [6.9.1](https://github.com/UteamUP/cli/compare/6.9.0...6.9.1) (2026-11-26)
 
 
